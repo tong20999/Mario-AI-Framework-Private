@@ -44,11 +44,27 @@ class MarioAgent:
     def train_short_memory(self, state, action, reward, next_state, done):
         self.trainer.train_step(state, action, reward, next_state, done)
 
-    def __get_state(self, state):
-        s = state.getScreenCompleteObservation()
+    def get_state(self):
+        state = self.agent.getState().getScreenCompleteObservation()
+        return np.array(state, dtype=int)
+    
+    def get_action(self, state):
+        
+        self.epsilon = 80 - self.n_games
+        final_move = [False, False, False, False, False]
+        if random.randint(0, 200) < self.epsilon:
+            move = random.randint(0, 4)
+            final_move[move] = True
+        else:
+            state0 = torch.tensor(state, dtype=torch.float)
+            prediction = self.model(state0)
+            indiceMax = torch.argmax(prediction, dim=1)
+            move = torch.argmax(prediction[indiceMax]).item()
+            final_move[move] = True
+        return final_move
 
     def getActions(self, state):
-        s = state.getScreenCompleteObservation()
+        screenCompleteObservation = state.getScreenCompleteObservation()
         # s0:list[int] = s[0]
         # marioMode = state.getMarioMode()
         # coin = state.getNumCollectedCoins()
@@ -58,14 +74,13 @@ class MarioAgent:
         final_move = [False, False, False, False, False]
         if random.randint(0, 200) < self.epsilon:
             move = random.randint(0, 4)
-            print(move)
             final_move[move] = True
         else:
-            state0 = torch.tensor(s, dtype=torch.float)
+            state0 = torch.tensor(screenCompleteObservation, dtype=torch.float)
             flat = torch.flatten(state0)
+            l = len(flat)
             prediction = self.model(flat)
             move = torch.argmax(prediction).item()
-            print(move)
             final_move[move] = True
 
         java_list = ListConverter().convert(final_move, self.gateway._gateway_client)

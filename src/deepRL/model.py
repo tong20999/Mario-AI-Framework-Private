@@ -46,24 +46,34 @@ class QTrainer:
         reward = torch.tensor(reward, dtype=torch.float)
         # (n, x)
 
-        if len(state.shape) == 1:
-            # (1, x)
-            state = torch.unsqueeze(state, 0)
-            next_state = torch.unsqueeze(next_state, 0)
-            action = torch.unsqueeze(action, 0)
-            reward = torch.unsqueeze(reward, 0)
-            done = (done, )
+        # if len(state.shape) == 1:
+        #     # (1, x)
+        #     flatstate = torch.flatten(state)
+        #     flatstate_next = torch.flatten(next_state)
+        #     state = torch.unsqueeze(state, 0)
+        #     next_state = torch.unsqueeze(next_state, 0)
+        #     action = torch.unsqueeze(action, 0)
+        #     reward = torch.unsqueeze(reward, 0)
+        #     done = (done, )
 
         # 1: predicted Q values with current state
+        
         pred = self.model(state)
 
         target = pred.clone()
-        for idx in range(len(done)):
-            Q_new = reward[idx]
-            if not done[idx]:
-                Q_new = reward[idx] + self.gamma * torch.max(self.model(next_state[idx]))
+        if type(done) is bool:
+            Q_new = reward
+            if not done:
+                Q_new = reward + self.gamma * torch.max(self.model(next_state))
 
-            target[idx][torch.argmax(action).item()] = Q_new
+            target[torch.argmax(action).item()] = Q_new
+        else:
+            for idx in range(len(done)):
+                Q_new = reward[idx]
+                if not done[idx]:
+                    Q_new = reward[idx] + self.gamma * torch.max(self.model(next_state[idx]))
+
+                target[idx][torch.argmax(action).item()] = Q_new
 
         # 2: Q_new = r + y * max(next_predicted Q value) -> only do this if not done
         # pred.clone()
