@@ -87,4 +87,4 @@ class MarioAgent:
         return java_list
 
     class Java:
-        implements = ["agents.chuiploy.AgentListener"]
+        implements = ["agents.myAgent.AgentListener"]
