@@ -1,4 +1,4 @@
-package agents.myAgent.myAgentMachineLearning;
+package agents.myAgentMachineLearning;
 
 import engine.core.MarioForwardModel;
 

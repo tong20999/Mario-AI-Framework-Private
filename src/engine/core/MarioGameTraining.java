@@ -1,6 +1,5 @@
 package engine.core;
 
-import agents.human.Agent;
 import engine.helper.GameStatus;
 import engine.helper.MarioActions;
 
@@ -10,7 +9,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.image.VolatileImage;
 import java.util.ArrayList;
 
-public class MarioGamePy4j {
+public class MarioGameTraining {
     /**
      * the maximum time that agent takes for each step
      */
@@ -59,7 +58,7 @@ public class MarioGamePy4j {
     /**
      * Create a mario game to be played
      */
-    public MarioGamePy4j() {
+    public MarioGameTraining() {
 
     }
 
@@ -68,7 +67,7 @@ public class MarioGamePy4j {
      *
      * @param killEvents events that will kill the player
      */
-    public MarioGamePy4j(MarioEvent[] killEvents) {
+    public MarioGameTraining(MarioEvent[] killEvents) {
         this.killEvents = killEvents;
     }
 
@@ -186,13 +185,13 @@ public class MarioGamePy4j {
         Graphics backBuffer = null;
         Graphics currentBuffer = null;
         if (visual) {
-            renderTarget = this.render.createVolatileImage(MarioGamePy4j.width, MarioGamePy4j.height);
+            renderTarget = this.render.createVolatileImage(MarioGameTraining.width, MarioGameTraining.height);
             backBuffer = this.render.getGraphics();
             currentBuffer = renderTarget.getGraphics();
             this.render.addFocusListener(this.render);
         }
 
-        MarioTimer agentTimer = new MarioTimer(MarioGamePy4j.maxTime);
+        MarioTimer agentTimer = new MarioTimer(MarioGameTraining.maxTime);
         this.agent.initialize(new MarioForwardModel(this.world.clone()), agentTimer);
 
         ArrayList<MarioEvent> gameEvents = new ArrayList<>();
@@ -200,11 +199,11 @@ public class MarioGamePy4j {
         while (this.world.gameStatus == GameStatus.RUNNING) {
             if (!this.pause) {
                 //get actions
-                agentTimer = new MarioTimer(MarioGamePy4j.maxTime);
+                agentTimer = new MarioTimer(MarioGameTraining.maxTime);
                 var currentState = new MarioForwardModel(this.world.clone());
                 boolean[] actions = this.agent.getActions(currentState, agentTimer);
-                if (MarioGamePy4j.verbose) {
-                    if (agentTimer.getRemainingTime() < 0 && Math.abs(agentTimer.getRemainingTime()) > MarioGamePy4j.graceTime) {
+                if (MarioGameTraining.verbose) {
+                    if (agentTimer.getRemainingTime() < 0 && Math.abs(agentTimer.getRemainingTime()) > MarioGameTraining.graceTime) {
                         System.out.println("The Agent is slowing down the game by: "
                                 + Math.abs(agentTimer.getRemainingTime()) + " msec.");
                     }

@@ -23,10 +23,10 @@ def train():
     record = 0
 
     gateway = JavaGateway(callback_server_parameters=CallbackServerParameters())
-    game = gateway.entry_point.getMarioGame()
+    game = gateway.entry_point.getMarioGameTraining()
     level = gateway.entry_point.getLevel()
-    javaAgent = gateway.entry_point.getAgent()
-    agent = MarioAgent(gateway, javaAgent, game)
+    javaAgent = gateway.entry_point.getTraningAgent()
+    agent = MarioAgent(gateway, javaAgent)
     while True:
         result = game.runGame(javaAgent, level, 100, 0, True, 60)
         agent.n_games += 1
@@ -41,7 +41,7 @@ def train():
         mean_score = total_score / agent.n_games
         plot_mean_score.append(mean_score)
         plot(plot_scores, plot_mean_score)
-        
+
     # result = game.runGame(javaAgent, level, 100, 0, True)
     # while True:
     #     # get old state
@@ -81,6 +81,15 @@ def train():
     #         mean_score = total_score / agent.n_games
     #         plot_mean_score.append(mean_score)
     #         # plot(plot_scores, plot_mean_score)
+
+
+def play():
+    gateway = JavaGateway(callback_server_parameters=CallbackServerParameters())
+    game = gateway.entry_point.getMarioGame()
+    level = gateway.entry_point.getLevel()
+    javaAgent = gateway.entry_point.getAgent()
+    agent = MarioAgent(gateway, javaAgent)
+    result = game.runGame(javaAgent, level, 100, 0, True, 60)
 
 if __name__ == '__main__':
     train()

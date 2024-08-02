@@ -1,4 +1,4 @@
-package agents.myAgent.myAgentMachineLearning;
+package agents.myAgentMachineLearning;
 
 import engine.core.MarioAgentPy4j;
 import engine.core.MarioForwardModel;
@@ -33,7 +33,7 @@ public class Agent implements MarioAgentPy4j {
 
     @Override
     public boolean[] getActions(MarioForwardModel model, MarioTimer timer) {
-        List<Boolean> o = (List<Boolean>)listener.getActions(model.getMarioCompleteObservation());
+        List<Boolean> o = (List<Boolean>)listener.getTrainingActions(model.getMarioCompleteObservation());
         boolean[] actions = new boolean[o.size()];
         for (int i = 0; i < o.size(); i++) {
             actions[i] = o.get(i);

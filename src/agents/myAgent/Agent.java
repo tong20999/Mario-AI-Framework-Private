@@ -1,8 +1,7 @@
-package agents.myAgentMachineLearning;
+package agents.myAgent;
 
-import agents.myAgent.myAgentMachineLearning.AgentListener;
+import agents.myAgentMachineLearning.AgentListener;
 import engine.core.*;
-import py4j.GatewayServer;
 
 import java.util.List;
 
@@ -13,8 +12,12 @@ public class Agent implements MarioAgent {
     AgentListener listener;
     MarioForwardModel model;
 
-    public Agent getAgent(){
+    public agents.myAgent.Agent getAgent(){
         return this;
+    }
+
+    public void registerListener(AgentListener listener) {
+        this.listener = listener;
     }
 
     @Override
