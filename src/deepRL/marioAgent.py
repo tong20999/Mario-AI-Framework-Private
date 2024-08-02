@@ -11,17 +11,14 @@ MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
 LR = 0.001
 DISCOUNT = 0.9
-
-class A:
-    def getValue():
-        return "A"
-
+record = 0
 
 class MarioAgent:
 
-    def __init__(self, gateway, agent) -> None:
+    def __init__(self, gateway, agent, game) -> None:
         self.gateway = gateway
         self.agent = agent
+        self.game = game
         self.n_games = 0
         self.epsilon = 0 # randomness
         self.memory = deque(maxlen=MAX_MEMORY) # popleft()
@@ -65,18 +62,16 @@ class MarioAgent:
         return final_move
     
     def update(self, play_step_result, old_state, final_move, next_state, timer):
-        start = time.time()
         
         reward = play_step_result.getReward()
         done = play_step_result.isDone()
+        score = play_step_result.getScore()
         o = old_state.getMarioCompleteObservation()
         n = next_state.getMarioCompleteObservation()
         self.train_short_memory(o, final_move, reward, n, done)
         
-        # # remember
-        self.remember(old_state, final_move, reward, next_state, done)
-        end = time.time()
-        print('update',end - start)
+        # # # remember
+        self.remember(o, final_move, reward, n, done)
 
     def getActions(self, state):
         # s0:list[int] = s[0]
@@ -94,7 +89,10 @@ class MarioAgent:
             prediction = self.model(state0)
             indiceMax = torch.argmax(prediction, dim=1)
             move = torch.argmax(prediction[indiceMax]).item()
-            final_move[move] = True
+            try:
+                final_move[move] = True
+            except:
+                print(move)
 
         java_list = ListConverter().convert(final_move, self.gateway._gateway_client)
         return java_list

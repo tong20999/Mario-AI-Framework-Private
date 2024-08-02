@@ -26,8 +26,22 @@ def train():
     game = gateway.entry_point.getMarioGame()
     level = gateway.entry_point.getLevel()
     javaAgent = gateway.entry_point.getAgent()
-    agent = MarioAgent(gateway, javaAgent)
-    result = game.runGame(javaAgent, level, 100, 0, True, 60)
+    agent = MarioAgent(gateway, javaAgent, game)
+    while True:
+        result = game.runGame(javaAgent, level, 100, 0, True, 60)
+        agent.n_games += 1
+        agent.train_long_memory()
+
+        if result.getCompletionPercentage() > record:
+            record = result.getCompletionPercentage()
+            agent.model.save()
+
+        plot_scores.append(result.getCompletionPercentage())
+        total_score += result.getCompletionPercentage()
+        mean_score = total_score / agent.n_games
+        plot_mean_score.append(mean_score)
+        plot(plot_scores, plot_mean_score)
+        
     # result = game.runGame(javaAgent, level, 100, 0, True)
     # while True:
     #     # get old state

@@ -154,7 +154,9 @@ public class MarioGamePy4j {
      */
     public MarioResult runGame(MarioAgentPy4j agent, String level, int timer, int marioState, boolean visuals, int fps, float scale) {
         if (visuals) {
-            this.window = new JFrame("Mario AI Framework");
+            if(this.window == null){
+                this.window = new JFrame("Mario AI Framework");
+            }
             this.render = new MarioRender(scale);
             this.window.setContentPane(this.render);
             this.window.pack();

@@ -5,19 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="first implement">
-      <change afterPath="$PROJECT_DIR$/src/engine/core/MarioAgentPy4j.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/engine/core/MarioGamePy4j.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/marioAgent.py" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/marioAgent.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Py4JEntryPoint.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Py4JEntryPoint.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/agents/myAgent/Agent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/myAgent/Agent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/agents/myAgent/AgentListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/myAgent/AgentListener.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/deepRL/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/deepRL/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/deepRL/marioAgent.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/deepRL/marioAgent.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGamePlayStep.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGamePlayStep.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioPlayStepResult.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioPlayStepResult.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deepRL/model/model.pth" beforeDir="false" afterPath="$PROJECT_DIR$/src/deepRL/model/model.pth" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGamePy4j.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGamePy4j.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

@@ -29,7 +29,7 @@ public class Py4JEntryPoint {
     }
 
     public String getLevel(){
-        return getLevel("./levels/original/lvl-1.txt");
+        return getLevel("./levels/original/lvl-10.txt");
     }
 
     public static void main(String[] args) {
