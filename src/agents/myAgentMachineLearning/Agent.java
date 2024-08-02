@@ -1,15 +1,16 @@
-package agents.myAgentMachineLearning;
+package agents.myAgent.myAgentMachineLearning;
 
-import agents.myAgent.myAgentMachineLearning.AgentListener;
-import engine.core.*;
-import py4j.GatewayServer;
+import engine.core.MarioAgentPy4j;
+import engine.core.MarioForwardModel;
+import engine.core.MarioPlayStepResult;
+import engine.core.MarioTimer;
 
 import java.util.List;
 
 /**
  * @author RobinBaumgarten
  */
-public class Agent implements MarioAgent {
+public class Agent implements MarioAgentPy4j {
     AgentListener listener;
     MarioForwardModel model;
 
@@ -20,6 +21,14 @@ public class Agent implements MarioAgent {
     @Override
     public void initialize(MarioForwardModel model, MarioTimer timer) {
         this.model = model;
+    }
+
+    public void registerListener(AgentListener listener) {
+        this.listener = listener;
+    }
+
+    public MarioForwardModel getState(){
+        return this.model;
     }
 
     @Override
@@ -35,5 +44,10 @@ public class Agent implements MarioAgent {
     @Override
     public String getAgentName() {
         return "MyAgent";
+    }
+
+    @Override
+    public void update(MarioPlayStepResult playstepResult, MarioForwardModel oldState, boolean[] actions, MarioForwardModel nextState, MarioTimer timer) {
+        listener.update(playstepResult, oldState, actions, nextState, timer);
     }
 }

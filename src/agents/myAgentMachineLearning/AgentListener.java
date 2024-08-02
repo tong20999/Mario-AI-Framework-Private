@@ -1,7 +1,4 @@
-package agents.myAgent;
-
-import engine.core.MarioPlayStepResult;
-import engine.core.MarioTimer;
+package agents.myAgent.myAgentMachineLearning;
 
 public interface AgentListener {
     Object getActions(Object source);
