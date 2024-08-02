@@ -3,11 +3,13 @@ package engine.core;
 import engine.helper.GameStatus;
 
 public class MarioPlayStepResult {
-    GameStatus gameStatus;
     int reward;
-    public MarioPlayStepResult(int reward, GameStatus gameStatus){
-        this.gameStatus = gameStatus;
+    boolean done;
+    int score;
+    public MarioPlayStepResult(int reward, boolean done, int score){
         this.reward = reward;
+        this.done = done;
+        this.score = score;
     }
 
     public int getScore() {
@@ -15,13 +17,10 @@ public class MarioPlayStepResult {
     }
 
     public boolean isDone() {
-        return this.gameStatus == GameStatus.LOSE;
+        return done;
     }
 
     public int getReward() {
         return this.reward;
     }
-
-    boolean done;
-    int score;
 }

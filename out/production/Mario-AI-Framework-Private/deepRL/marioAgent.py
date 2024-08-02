@@ -1,3 +1,4 @@
+import time
 from py4j.java_collections import ListConverter
 from collections import deque
 import torch
@@ -62,9 +63,22 @@ class MarioAgent:
             move = torch.argmax(prediction[indiceMax]).item()
             final_move[move] = True
         return final_move
+    
+    def update(self, play_step_result, old_state, final_move, next_state, timer):
+        start = time.time()
+        
+        reward = play_step_result.getReward()
+        done = play_step_result.isDone()
+        o = old_state.getMarioCompleteObservation()
+        n = next_state.getMarioCompleteObservation()
+        self.train_short_memory(o, final_move, reward, n, done)
+        
+        # # remember
+        self.remember(old_state, final_move, reward, next_state, done)
+        end = time.time()
+        print('update',end - start)
 
     def getActions(self, state):
-        screenCompleteObservation = state.getScreenCompleteObservation()
         # s0:list[int] = s[0]
         # marioMode = state.getMarioMode()
         # coin = state.getNumCollectedCoins()
@@ -76,11 +90,10 @@ class MarioAgent:
             move = random.randint(0, 4)
             final_move[move] = True
         else:
-            state0 = torch.tensor(screenCompleteObservation, dtype=torch.float)
-            flat = torch.flatten(state0)
-            l = len(flat)
-            prediction = self.model(flat)
-            move = torch.argmax(prediction).item()
+            state0 = torch.tensor(state, dtype=torch.float)
+            prediction = self.model(state0)
+            indiceMax = torch.argmax(prediction, dim=1)
+            move = torch.argmax(prediction[indiceMax]).item()
             final_move[move] = True
 
         java_list = ListConverter().convert(final_move, self.gateway._gateway_client)

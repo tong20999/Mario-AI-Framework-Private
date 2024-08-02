@@ -4,23 +4,20 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/legacy_logos.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/py4j0_10_9_7.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Mario-AI-Framework-Private.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Py4JEntryPoint.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/agents/myAgent/Agent.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/agents/myAgent/AgentListener.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/agents/myAgent/State.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/engine/core/MarioGamePlayStep.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/engine/core/MarioPlayStepResult.java" afterDir="false" />
+    <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="first implement">
+      <change afterPath="$PROJECT_DIR$/src/engine/core/MarioAgentPy4j.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/engine/core/MarioGamePy4j.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/marioAgent.py" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/marioAgent.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Py4JEntryPoint.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Py4JEntryPoint.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/agents/myAgent/Agent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/myAgent/Agent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/agents/myAgent/AgentListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/myAgent/AgentListener.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/deepRL/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/deepRL/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/deepRL/marioAgent.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/deepRL/marioAgent.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGamePlayStep.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGamePlayStep.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioPlayStepResult.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioPlayStepResult.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -31,34 +28,44 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Class" />
+        <option value="Interface" />
       </list>
     </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 8
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 8
+}</component>
   <component name="ProjectId" id="2jg7ielOIut5WXV8xGLbv2TQ8by" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.Py4JEntryPoint.executor": "Debug",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "develop",
-    "kotlin-language-version-configured": "true",
-    "settings.editor.selected.configurable": "preferences.lookFeel"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.Py4JEntryPoint.executor&quot;: &quot;Debug&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;develop&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyClassDialog.RECENTS_KEY">
       <recent name="engine.core" />
     </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="Py4JEntryPoint" type="Application" factoryName="Application">
+      <option name="MAIN_CLASS_NAME" value="Py4JEntryPoint" />
+      <module name="Mario-AI-Framework-Private" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -69,6 +76,27 @@
       <option name="presentableId" value="Default" />
       <updated>1721796995671</updated>
     </task>
+    <task id="LOCAL-00001" summary="first implement">
+      <option name="closed" value="true" />
+      <created>1721806608610</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1721806608610</updated>
+    </task>
+    <task id="LOCAL-00002" summary="first implement">
+      <option name="closed" value="true" />
+      <created>1721806636456</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1721806636456</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="first implement" />
+    <option name="LAST_COMMIT_MESSAGE" value="first implement" />
   </component>
 </project>

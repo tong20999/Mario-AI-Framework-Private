@@ -4,12 +4,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import engine.core.MarioGamePlayStep;
+import engine.core.MarioGamePy4j;
 import py4j.GatewayServer;
 
 public class Py4JEntryPoint {
 
-    private final MarioGamePlayStep game = new MarioGamePlayStep();
+    private final MarioGamePy4j game = new MarioGamePy4j();
 
     public static String getLevel(String filepath) {
         String content = "";
@@ -20,7 +20,7 @@ public class Py4JEntryPoint {
         return content;
     }
 
-    public MarioGame getMarioGame(){
+    public MarioGamePy4j getMarioGame(){
         return game;
     }
 

@@ -1,17 +1,21 @@
 package agents.myAgent;
 
-import engine.core.MarioAgent;
-import engine.core.MarioForwardModel;
-import engine.core.MarioTimer;
+import engine.core.*;
 import engine.helper.MarioActions;
+import py4j.GatewayServer;
+
+import java.util.List;
 
 /**
  * @author RobinBaumgarten
  */
-public class Agent implements MarioAgent {
+public class Agent implements MarioAgentPy4j {
     AgentListener listener;
     MarioForwardModel model;
-    boolean[] actions = new boolean[MarioActions.numberOfActions()];
+
+    public Agent getAgent(){
+        return this;
+    }
 
     @Override
     public void initialize(MarioForwardModel model, MarioTimer timer) {
@@ -28,18 +32,21 @@ public class Agent implements MarioAgent {
 
     @Override
     public boolean[] getActions(MarioForwardModel model, MarioTimer timer) {
-//        List<Boolean> o = (List<Boolean>)listener.getActions(State.make(model));
-//        boolean[] actions = new boolean[5];
-//        for (int i = 0; i < o.size(); i++) {
-//            actions[i] = o.get(i);
-//        }
-//        return actions;
-        this.model = model;
-        return this.actions;
+        List<Boolean> o = (List<Boolean>)listener.getActions(model.getMarioCompleteObservation());
+        boolean[] actions = new boolean[o.size()];
+        for (int i = 0; i < o.size(); i++) {
+            actions[i] = o.get(i);
+        }
+        return actions;
     }
 
     @Override
     public String getAgentName() {
         return "MyAgent";
+    }
+
+    @Override
+    public void update(MarioPlayStepResult playstepResult, MarioForwardModel oldState, boolean[] actions, MarioForwardModel nextState, MarioTimer timer) {
+        listener.update(playstepResult, oldState, actions, nextState, timer);
     }
 }

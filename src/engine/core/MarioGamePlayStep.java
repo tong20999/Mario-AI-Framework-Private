@@ -166,7 +166,7 @@ public class MarioGamePlayStep extends MarioGame {
             }
         }
         var reward = calculateReward(new MarioForwardModel(this.world.clone()));
-        return new MarioPlayStepResult(reward, this.world.gameStatus);
+        return new MarioPlayStepResult(reward, this.world.gameStatus == GameStatus.LOSE, 0);
     }
 
     private int calculateReward(MarioForwardModel model){
