@@ -5,19 +5,41 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="first implement">
-      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/Agent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/py4j0_10_9_7.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/py4j0_10_9_7.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/marioAgent.py" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/marioAgent.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/.vscode/launch.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/agent.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/arial.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/game.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/helper.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/main.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/marioAgent.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/model.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/model/model.pth" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/requirements.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/test.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/GenerateLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/GenerateLevel.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Py4JEntryPoint.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Py4JEntryPoint.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/agents/myAgent/Agent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/myAgent/Agent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/agents/myAgent/AgentListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/AgentListener.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/agents/myAgent/State.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/State.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deepRL/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/deepRL/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deepRL/marioAgent.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/deepRL/marioAgent.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deepRL/model/model.pth" beforeDir="false" afterPath="$PROJECT_DIR$/src/deepRL/model/model.pth" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGamePy4j.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/agents/human/Agent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/human/Agent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/Agent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/Agent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/AgentListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/AgentListener.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deepRL/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deepRL/.vscode/launch.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deepRL/agent.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deepRL/arial.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deepRL/game.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deepRL/helper.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deepRL/main.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deepRL/marioAgent.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deepRL/model.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deepRL/model/model.pth" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deepRL/requirements.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deepRL/test.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioForwardModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioForwardModel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioWorld.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioWorld.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,25 +57,22 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo">{
-  &quot;associatedIndex&quot;: 8
-}</component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
   <component name="ProjectId" id="2jg7ielOIut5WXV8xGLbv2TQ8by" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.Py4JEntryPoint.executor": "Debug",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "develop",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/tchuiploy/source/repos/Mario-AI-Framework-Private/src/agents/myAgent",
-    "settings.editor.selected.configurable": "preferences.lookFeel"
-  }
-}]]></component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/deepRL/.venv/share/py4j/py4j0.10.9.7.jar" />
+    <property name="project.structure.last.edited" value="Libraries" />
+    <property name="project.structure.proportion" value="0.0" />
+    <property name="project.structure.side.proportion" value="0.2" />
+  </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\tchuiploy\source\repos\Mario-AI-Framework-Private\src\agents\myAgent" />
@@ -62,7 +81,14 @@
       <recent name="engine.core" />
     </key>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Application.Py4JEntryPoint">
+    <configuration name="GenerateLevel" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="GenerateLevel" />
+      <module name="Mario-AI-Framework-Private" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="Py4JEntryPoint" type="Application" factoryName="Application">
       <option name="MAIN_CLASS_NAME" value="Py4JEntryPoint" />
       <module name="Mario-AI-Framework-Private" />
@@ -70,6 +96,11 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.GenerateLevel" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -99,8 +130,33 @@
     <option name="localTasksCounter" value="3" />
     <servers />
   </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="first implement" />
     <option name="LAST_COMMIT_MESSAGE" value="first implement" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/agents/human/Agent.java</url>
+          <line>63</line>
+          <option name="timeStamp" value="7" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/Mario_AI_Framework_Private$Py4JEntryPoint.ic" NAME="Py4JEntryPoint Coverage Results" MODIFIED="1723178718289" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
   </component>
 </project>

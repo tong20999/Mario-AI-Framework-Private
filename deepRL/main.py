@@ -5,6 +5,9 @@ import torch
 from helper import plot
 from marioAgent import MarioAgent
 
+# เดินไปข้างหน้า เล่นให้จบพอ
+# ลดขนาด observation ลง
+
 
 def printResult(result):
     print("****************************************************************")
@@ -24,20 +27,24 @@ def train():
 
     gateway = JavaGateway(callback_server_parameters=CallbackServerParameters())
     game = gateway.entry_point.getMarioGameTraining()
-    level = gateway.entry_point.getLevel()
     javaAgent = gateway.entry_point.getTraningAgent()
     agent = MarioAgent(gateway, javaAgent)
     while True:
-        result = game.runGame(javaAgent, level, 100, 0, True, 60)
+        level = gateway.entry_point.getFirstLevel()
+        result = game.runGame(javaAgent, level, 200, 0, True, 1000)
         agent.n_games += 1
         agent.train_long_memory()
 
-        if result.getCompletionPercentage() > record:
-            record = result.getCompletionPercentage()
-            agent.model.save()
+        #score = result.getCompletionPercentage() + result.getCurrentCoins() * 0.1 + result.getKillsTotal() * 0.1
+        score = result.getCompletionPercentage()
 
-        plot_scores.append(result.getCompletionPercentage())
-        total_score += result.getCompletionPercentage()
+        if score > record:
+            record = score
+            agent.model.save()
+            print('save model')
+
+        plot_scores.append(score)
+        total_score += score
         mean_score = total_score / agent.n_games
         plot_mean_score.append(mean_score)
         plot(plot_scores, plot_mean_score)

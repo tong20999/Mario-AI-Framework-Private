@@ -8,7 +8,8 @@
             "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",
-            "program": "./main.py",
+            "program": "C:/Users/WARDESKTOP/source/repos/Mario-AI-Framework-Private/deepRL/main.py",
+            "python": "C:/Users/WARDESKTOP/source/repos/Mario-AI-Framework-Private/deepRL/.venv/Scripts/python.exe",
             "console": "integratedTerminal"
         }
     ]

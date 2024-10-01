@@ -16,8 +16,11 @@ public class Agent extends KeyAdapter implements MarioAgent {
         actions = new boolean[MarioActions.numberOfActions()];
     }
 
+    private MarioForwardModel model;
+
     @Override
     public boolean[] getActions(MarioForwardModel model, MarioTimer timer) {
+        this.model = model;
         return actions;
     }
 
@@ -55,6 +58,10 @@ public class Agent extends KeyAdapter implements MarioAgent {
                 break;
             case KeyEvent.VK_A:
                 this.actions[MarioActions.SPEED.getValue()] = isPressed;
+                break;
+            case KeyEvent.VK_M:
+                var completeObservation = this.model.getMarioCompleteObservation();
+                int a = 5;
                 break;
         }
     }

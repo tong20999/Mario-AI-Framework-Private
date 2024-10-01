@@ -1,5 +1,6 @@
 package engine.core;
 
+import engine.helper.EventType;
 import engine.helper.GameStatus;
 import engine.helper.MarioActions;
 
@@ -168,6 +169,11 @@ public class MarioGameTraining {
         return this.gameLoop(level, timer, marioState, visuals, fps);
     }
 
+    long currentTimeNeedToAdvance = 0;
+    float expectPositionX = 0;
+    int timeNeedToAdvance = 5000;
+    int distanceNeedToAdvance = 1;
+
     private MarioResult gameLoop(String level, int timer, int marioState, boolean visual, int fps) {
         this.world = new MarioWorld(this.killEvents);
         this.world.visuals = visual;
@@ -196,6 +202,12 @@ public class MarioGameTraining {
 
         ArrayList<MarioEvent> gameEvents = new ArrayList<>();
         ArrayList<MarioAgentEvent> agentEvents = new ArrayList<>();
+
+        currentTotalKill = 0;
+        this.currentTimeNeedToAdvance = 0;
+        this.expectPositionX = 0;
+        this.lastPositionX = this.lastframeposition = new MarioForwardModel(this.world.clone()).getMarioFloatPos()[0];
+
         while (this.world.gameStatus == GameStatus.RUNNING) {
             if (!this.pause) {
                 //get actions
@@ -215,8 +227,20 @@ public class MarioGameTraining {
                         this.world.mario.y, (this.world.mario.isLarge ? 1 : 0) + (this.world.mario.isFire ? 1 : 0),
                         this.world.mario.onGround, this.world.currentTick));
 
+                int baseReward = 0;
+                var diff = System.currentTimeMillis() - this.currentTimeNeedToAdvance;
+                if(diff > timeNeedToAdvance){
+                    this.currentTimeNeedToAdvance = System.currentTimeMillis();
+                    if(this.expectPositionX > lastPositionX){
+                        this.world.lose();
+                        baseReward = -100;
+                    } else {
+                        this.expectPositionX += distanceNeedToAdvance + lastPositionX;
+                    }
+                }
+
                 var nextState = new MarioForwardModel(this.world.clone());
-                var playStepReward = getPlayStepResult(nextState);
+                var playStepReward = getPlayStepResult(nextState, baseReward);
                 this.agent.update(playStepReward, currentState, actions, nextState, agentTimer);
             }
 
@@ -237,24 +261,89 @@ public class MarioGameTraining {
         return new MarioResult(this.world, gameEvents, agentEvents);
     }
 
-    private MarioPlayStepResult getPlayStepResult(MarioForwardModel nextState){
-        int reward = calculateMovementReward(nextState);
+    private MarioPlayStepResult getPlayStepResult(MarioForwardModel nextState, int baseReward){
+        int reward = calculateReward(nextState, baseReward);
         return new MarioPlayStepResult(reward, this.world.gameStatus == GameStatus.LOSE, 0);
     }
 
     float lastPositionX;
 
-    private int calculateMovementReward(MarioForwardModel model){
-        int reward = 0;
-        var currentPositionX = model.getMarioFloatPos()[0];
-        if(currentPositionX - lastPositionX > 0){
-            reward -= 1;
-        } else{
-            reward += 1;
+//    private int calculateMovementReward(MarioForwardModel model){
+//        int reward = 0;
+//        var currentPositionX = model.getMarioFloatPos()[0];
+//        if(currentPositionX - lastPositionX > 0){
+//            reward -= 5;
+//        } else{
+//            reward += 5;
+//        }
+//
+//        lastPositionX = currentPositionX;
+//        return calculateEnemiesKillReward(model, reward);
+//    }
+
+    int bonusReward = 100;
+    int winReward = 10000;
+    int loseReward = 0;
+    int currentTotalKill = 0;
+    float lastframeposition = 0;
+    private int calculateReward(MarioForwardModel model, int baseReward){
+        int reward = baseReward;
+        if(this.world.lastFrameEvents.isEmpty()){
+            var currentPositionX = model.getMarioFloatPos()[0];
+            if(currentPositionX - this.lastframeposition > 0.1){
+                this.lastframeposition = currentPositionX;
+                reward += 1;
+            } else {
+                //reward -= 1;
+                this.lastframeposition = currentPositionX;
+            }
+            return reward;
         }
 
-        lastPositionX = currentPositionX;
-        return calculateGameStateReward(reward);
+        for (MarioEvent e : this.world.lastFrameEvents) {
+            if (e.getEventType() == EventType.BUMP.getValue()) {
+                reward += bonusReward;
+            }
+            if (e.getEventType() == EventType.STOMP_KILL.getValue()) {
+                reward += bonusReward;
+            }
+            if (e.getEventType() == EventType.FIRE_KILL.getValue()) {
+                reward += bonusReward;
+            }
+            if (e.getEventType() == EventType.SHELL_KILL.getValue()) {
+                reward += bonusReward;
+            }
+            if (e.getEventType() == EventType.FALL_KILL.getValue()) {
+                reward += bonusReward;
+            }
+//            if (e.getEventType() == EventType.JUMP.getValue()) {
+//                reward += 0;
+//            }
+//
+//            if (e.getEventType() == EventType.LAND.getValue()) {
+//                reward += 0;
+//            }
+
+            if (e.getEventType() == EventType.COLLECT.getValue()) {
+                reward += bonusReward;
+            }
+            if (e.getEventType() == EventType.HURT.getValue()) {
+                reward -= bonusReward;
+            }
+
+            if (e.getEventType() == EventType.KICK.getValue()){
+                reward += bonusReward;
+            }
+            if (e.getEventType() == EventType.WIN.getValue()) {
+                reward += winReward;
+            }
+
+            if (e.getEventType() == EventType.LOSE.getValue()) {
+                reward = loseReward;
+                break;
+            }
+        }
+        return reward;
     }
 
     private int calculateGameStateReward(int reward){
@@ -264,4 +353,6 @@ public class MarioGameTraining {
         }
         return reward;
     }
+
+
 }

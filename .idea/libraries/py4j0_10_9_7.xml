@@ -1,7 +1,7 @@
 <component name="libraryTable">
   <library name="py4j0.10.9.7">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/src/deepRL/.venv/share/py4j/py4j0.10.9.7.jar!/" />
+      <root url="jar://$PROJECT_DIR$/deepRL/.venv/share/py4j/py4j0.10.9.7.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

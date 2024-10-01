@@ -8,14 +8,13 @@ import os
 class Linear_QNet(nn.Module):
     
     def __init__(self, input_size, hidden_size, output_size) -> None:
-        super().__init__()
-        self.linear1 = nn.Linear(input_size, hidden_size)
-        self.linear2 = nn.Linear(hidden_size, output_size)
+        super(Linear_QNet, self).__init__()
+        self.layer1 = nn.Linear(input_size, hidden_size)
+        self.layer2 = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
-        x = F.relu(self.linear1(x))
-        x = self.linear2(x)
-        return x
+            x = F.relu(self.layer1(x))
+            return self.layer2(x)
     
     def save(self, file_name='model.pth'):
         model_folder_path = './model'
@@ -45,34 +44,53 @@ class QTrainer:
         next_state = torch.tensor(next_state, dtype=torch.float)
         action = torch.tensor(action, dtype=torch.long)
         reward = torch.tensor(reward, dtype=torch.float)
-        # (n, x)
 
-        # if len(state.shape) == 1:
-        #     # (1, x)
-        #     flatstate = torch.flatten(state)
-        #     flatstate_next = torch.flatten(next_state)
-        #     state = torch.unsqueeze(state, 0)
-        #     next_state = torch.unsqueeze(next_state, 0)
-        #     action = torch.unsqueeze(action, 0)
-        #     reward = torch.unsqueeze(reward, 0)
-        #     done = (done, )
+        if len(state.shape) == 1:
+            state = torch.unsqueeze(state, 0)
+            next_state = torch.unsqueeze(next_state, 0)
+            action = torch.unsqueeze(action, 0)
+            reward = torch.unsqueeze(reward, 0)
+            done = (done, )
 
-        # 1: predicted Q values with current state  
-
-        pred = self.model(state)
+        pred = self.model(state.to().cuda())
 
         target = pred.clone()
+        for idx in range(len(done)):
+            Q_new = reward[idx]
+            if not done[idx]:
+                Q_new = reward[idx] + self.gamma * torch.max(self.model(next_state[idx].to().cuda()))
+
+            target[idx][torch.argmax(action[idx]).item()] = Q_new
+    
+        # 2: Q_new = r + y * max(next_predicted Q value) -> only do this if not done
+        # pred.clone()
+        # preds[argmax(action)] = Q_new
+        self.optimizer.zero_grad()
+        loss = self.criterion(target, pred)
+        loss.backward()
+
+        self.optimizer.step()
+
+    def __train_single_state(self,done:bool, state: torch.Tensor, next_state:torch.Tensor, reward:torch.Tensor, action:torch.Tensor):
+        pred = self.model(state.to().cuda())
+
+        target = pred.clone()
+        Q_new = reward
+        if not done:
+            Q_new = reward + self.gamma * torch.max(self.model(next_state.to().cuda()))
+        target[torch.argmax(action).item()] = Q_new
+
         if type(done) is bool:
             Q_new = reward
             if not done:
-                Q_new = reward + self.gamma * torch.max(self.model(next_state))
+                Q_new = reward + self.gamma * torch.max(self.model(next_state.to().cuda()))
 
             target[torch.argmax(action).item()] = Q_new
         else:
             for idx in range(len(done)):
                 Q_new = reward[idx]
                 if not done[idx]:
-                    Q_new = reward[idx] + self.gamma * torch.max(self.model(next_state[idx]))
+                    Q_new = reward[idx] + self.gamma * torch.max(self.model(next_state[idx].to().cuda()))
 
                 target[idx][torch.argmax(action).item()] = Q_new
 
@@ -85,4 +103,3 @@ class QTrainer:
         loss.backward()
 
         self.optimizer.step()
-

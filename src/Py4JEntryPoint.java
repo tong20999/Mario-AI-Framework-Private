@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 
 import agents.myAgentMachineLearning.Agent;
 import engine.core.MarioAgent;
@@ -40,8 +41,31 @@ public class Py4JEntryPoint {
         return new Agent();
     }
 
+    private static String getFileFromLevel(String file){
+        String content = "";
+        try {
+            content = new String(Files.readAllBytes(Paths.get(file)));
+        } catch (IOException e) {
+        }
+        return content;
+    }
+
     public static String getLevel(){
-        return getLevel("./levels/original/lvl-1.txt");
+        var randomLevel = randomLevel();
+        return getFileFromLevel(randomLevel);
+    }
+
+    public static String getFirstLevel(){
+        var level1 = "./levels/original/lvl-1.txt";
+        return getFileFromLevel(level1);
+    }
+
+    private static String randomLevel(){
+        var min = 1;
+        var max = 15;
+        var random = (int) ((Math.random() * (max - min)) + min);
+        var level = MessageFormat.format("./levels/original/lvl-{0}.txt",random);
+        return level;
     }
 
     public static void main(String[] args) {
