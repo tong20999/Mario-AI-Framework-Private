@@ -5,41 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="first implement">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/py4j0_10_9_7.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/py4j0_10_9_7.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/.vscode/launch.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/agent.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/arial.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/game.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/helper.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/main.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/marioAgent.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/model.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/model/model.pth" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/requirements.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Mario-AI-Framework-Private/deepRL/test.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/GenerateLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/GenerateLevel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Py4JEntryPoint.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Py4JEntryPoint.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/agents/human/Agent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/human/Agent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/Agent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/Agent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/AgentListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/AgentListener.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deepRL/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deepRL/.vscode/launch.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deepRL/agent.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deepRL/arial.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deepRL/game.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deepRL/helper.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deepRL/main.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deepRL/marioAgent.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deepRL/model.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deepRL/model/model.pth" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deepRL/requirements.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deepRL/test.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioForwardModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioForwardModel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioWorld.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioWorld.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
