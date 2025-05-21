@@ -5,6 +5,52 @@ from py4j.java_gateway import JavaGateway, CallbackServerParameters
 
 from game import Game
 
+all_possible_input:list[list[bool]] = [
+    # [LEFT, RIGHT , DOWN, SPEED, JUMP]
+    [False, False, False, False, False], # Do nothing (reset jump)
+    [False, True, False, False, False],  # move right
+    [False, True, False, False, True], # move right and jump
+    [False, True, False, True, False], # move right and speed
+    [False, True, False, True, True],  # move right and speed and jump
+     
+    # [False, False, False, False, False],
+    # [False, False, False, False, True], # Jump only
+    # [False, False, False, True, False], # fire flower only
+    # [False, False, False, True, True],
+    # [False, False, True, False, False],  # Duck only
+    # [False, False, True, False, True], # Duck and Jump
+    # [False, False, True, True, False],
+    # [False, False, True, True, True],
+    # [True, False, False, False, False], # move left
+    # [True, False, False, False, True], # move left and jump
+    # [True, False, False, True, False], # move left and speed
+    # [True, False, False, True, True],  # move left and speed and jump
+    
+    # [False, True, True, False, False],
+    # [False, True, True, False, True],
+    # [False, True, True, True, False],
+    # [False, True, True, True, True],
+    
+    # [True, False, True, False, False],
+    # [True, False, True, False, True],
+    # [True, False, True, True, False],
+    # [True, False, True, True, True],
+    # [True, True, False, False, False],
+    # [True, True, False, False, True],
+    # [True, True, False, True, False],
+    # [True, True, False, True, True],
+    # [True, True, True, False, False],
+    # [True, True, True, False, True],
+    # [True, True, True, True, False],
+    # [True, True, True, True, True],
+]
+
+state_len = 8 + 63 + 4
+#state_len = 63 + 4
+# state_len = 256 + 4
+# state_len = 8 + 9 + 3 + 3 + 4
+# state_len = 9 + 4 + 3 + 4
+
 value_model_fn = lambda nS, nA: FCQ(nS, nA, hidden_dims=(512,128))
 value_optimizer_fn = lambda net, lr: optim.RMSprop(net.parameters(), lr=lr)
 value_optimizer_lr = 0.0005
@@ -43,4 +89,4 @@ javaAgent = gateway.entry_point.getTraningAgent() # type: ignore
 game:Game = Game(javaGame)
 
 result, final_eval_score, training_time, wallclock_time = agent.train(
-    gamma, max_minutes, max_episodes, goal_mean_100_reward, game, javaAgent, level)
+    gamma, max_minutes, max_episodes, goal_mean_100_reward, game, javaAgent, level, state_len, all_possible_input)

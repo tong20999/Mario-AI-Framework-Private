@@ -18,52 +18,6 @@ import struct
 LEAVE_PRINT_EVERY_N_SECS = 60
 ERASE_LINE = '\x1b[2K'
 
-all_possible_input:list[list[bool]] = [
-    # [LEFT, RIGHT , DOWN, SPEED, JUMP]
-    [False, False, False, False, False], # Do nothing (reset jump)
-    [False, True, False, False, False],  # move right
-    [False, True, False, False, True], # move right and jump
-    [False, True, False, True, False], # move right and speed
-    [False, True, False, True, True],  # move right and speed and jump
-     
-    # [False, False, False, False, False],
-    # [False, False, False, False, True], # Jump only
-    # [False, False, False, True, False], # fire flower only
-    # [False, False, False, True, True],
-    # [False, False, True, False, False],  # Duck only
-    # [False, False, True, False, True], # Duck and Jump
-    # [False, False, True, True, False],
-    # [False, False, True, True, True],
-    # [True, False, False, False, False], # move left
-    # [True, False, False, False, True], # move left and jump
-    # [True, False, False, True, False], # move left and speed
-    # [True, False, False, True, True],  # move left and speed and jump
-    
-    # [False, True, True, False, False],
-    # [False, True, True, False, True],
-    # [False, True, True, True, False],
-    # [False, True, True, True, True],
-    
-    # [True, False, True, False, False],
-    # [True, False, True, False, True],
-    # [True, False, True, True, False],
-    # [True, False, True, True, True],
-    # [True, True, False, False, False],
-    # [True, True, False, False, True],
-    # [True, True, False, True, False],
-    # [True, True, False, True, True],
-    # [True, True, True, False, False],
-    # [True, True, True, False, True],
-    # [True, True, True, True, False],
-    # [True, True, True, True, True],
-]
-
-state_len = 8 + 63 + 4
-#state_len = 63 + 4
-# state_len = 256 + 4
-# state_len = 8 + 9 + 3 + 3 + 4
-# state_len = 9 + 4 + 3 + 4
-
 plt.ion()
 
 class FCQ(nn.Module):
@@ -286,7 +240,7 @@ class DDQN():
             pass
 
     def train(self, gamma, 
-              max_minutes, max_episodes, goal_mean_100_reward,env:Game, javaAgent, level):
+              max_minutes, max_episodes, goal_mean_100_reward,env:Game, javaAgent, level, state_len, available_actions):
         training_start, last_debug_time = time.time(), float('-inf')
         self.javaAgent = javaAgent
         self.javaAgent.registerListener(self)
@@ -294,8 +248,9 @@ class DDQN():
             os.mkdir('./model')
         self.checkpoint_dir = './model'
         self.gamma = gamma
-        # nS, nA = state_len - 8 + 2, len(all_possible_input)
-        nS, nA = state_len, len(all_possible_input)
+        self.state_len = state_len
+        self.available_actions = available_actions
+        nS, nA = self.state_len, len(self.available_actions)
         self.episode_timestep = []
         self.episode_reward = []
         self.episode_seconds = []
@@ -304,8 +259,8 @@ class DDQN():
         
         self.target_model:FCQ = self.value_model_fn(nS, nA)
         self.online_model:FCQ = self.value_model_fn(nS, nA)
-        self.online_model.load_state_dict(torch.load('./model/model.941.tar', weights_only=True))
-        self.online_model.eval()
+        # self.online_model.load_state_dict(torch.load('./model/model.941.tar', weights_only=True))
+        # self.online_model.eval()
         self.update_network()
 
         self.value_optimizer = self.value_optimizer_fn(self.online_model, 
@@ -410,7 +365,7 @@ class DDQN():
         # velocityY = struct.unpack('>f', output[14: 14 + 4])[0]
         # state = [x for x in output[18: 18 + state_len - 8]]
         # states = [velocityX, velocityY] + state
-        states = [x for x in output[10: 10 + state_len]]
+        states = [x for x in output[10: 10 + self.state_len]]
 
         # nstart_byte = 18 + state_len - 8
         # nvelocityX = struct.unpack('>f', output[nstart_byte: nstart_byte + 4])[0]
@@ -418,7 +373,7 @@ class DDQN():
         # nstate_byte = nstart_byte + 8
         # nstate = [x for x in output[nstate_byte: nstate_byte + state_len - 8]]
         # new_states = [nvelocityX, nvelocityY] + nstate
-        new_states = [x for x in output[10 + state_len: 10 + state_len + state_len]]
+        new_states = [x for x in output[10 + self.state_len: 10 + self.state_len + self.state_len]]
 
         is_failure = is_terminal
         experience = (states, actions, reward, new_states, float(is_failure))
@@ -444,7 +399,7 @@ class DDQN():
         # states = [velocityX, velocityY] + state
         states = [x for x in output]
         action = self.training_strategy.select_action(self.online_model, states)
-        final_move = all_possible_input[int(action)]
+        final_move = self.available_actions[int(action)]
         return bytes(final_move)
 
     def getEvaluateTrainingActions(self, output:bytes):
@@ -454,7 +409,7 @@ class DDQN():
         # states = [velocityX, velocityY] + state
         states = [x for x in output]
         action = self.evaluation_strategy.select_action(self.online_model, states)
-        final_move = all_possible_input[int(action)]
+        final_move = self.available_actions[int(action)]
         return bytes(final_move)
     
     def evaluate(self, env:Game, level, javaAgent, n_episodes=1):
