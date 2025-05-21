@@ -4,16 +4,11 @@ import java.nio.file.Paths;
 import java.text.MessageFormat;
 
 import agents.myAgentMachineLearning.Agent;
-import engine.core.MarioAgent;
-import engine.core.MarioGame;
 import engine.core.MarioGameTraining;
 import engine.core.MarioResult;
 import py4j.GatewayServer;
 
 public class Py4JEntryPoint {
-
-    private static final agents.myAgent.Agent agent = new agents.myAgent.Agent();
-
     private final MarioGameTraining marioGameTraining = new MarioGameTraining();
 
     public static String getLevel(String filepath) {
@@ -27,14 +22,6 @@ public class Py4JEntryPoint {
 
     public MarioGameTraining getMarioGameTraining(){
         return marioGameTraining;
-    }
-
-    public MarioGame getMarioGame(){
-        return new MarioGame();
-    }
-
-    public agents.myAgent.Agent getAgent(){
-        return agent;
     }
 
     public Agent getTraningAgent(){

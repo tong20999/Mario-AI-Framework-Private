@@ -63,6 +63,11 @@ public class MarioForwardModel {
     public static final int OBS_SPECIAL_ITEM = 12;
     // Enemies Detail 2
     public static final int OBS_ENEMY = 1;
+    public boolean evaluation;
+
+    public int getMarioFacing(){
+        return this.world.mario.facing;
+    }
 
     public static int getSpriteTypeGeneralization(SpriteType sprite, int detail) {
         switch (detail) {

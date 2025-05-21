@@ -23,6 +23,7 @@ public class MarioBackground extends MarioGraphics {
 
         image = graphicsConfiguration.createCompatibleImage(width, height, Transparency.BITMASK);
         g = (Graphics2D) image.getGraphics();
+
         g.setComposite(AlphaComposite.Src);
 
         updateArea(indeces);

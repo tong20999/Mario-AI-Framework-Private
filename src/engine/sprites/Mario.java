@@ -12,7 +12,7 @@ import engine.helper.TileFeature;
 
 public class Mario extends MarioSprite {
     public boolean isLarge, isFire;
-    public boolean onGround, wasOnGround, isDucking, canShoot, mayJump;
+    public boolean onGround = true, wasOnGround = false, isDucking = false, canShoot = false, mayJump = true;
     public boolean[] actions = null;
     public int jumpTime = 0;
 
@@ -283,14 +283,14 @@ public class Mario extends MarioSprite {
                 jumpTime++;
             } else if (onGround && mayJump) {
                 xJumpSpeed = 0;
-                yJumpSpeed = -1.9f;
-                jumpTime = 7;
-                ya = jumpTime * yJumpSpeed;
-                onGround = false;
-                if (!(isBlocking(x, y - 4 - height, 0, -4) || isBlocking(x - width, y - 4 - height, 0, -4)
-                        || isBlocking(x + width, y - 4 - height, 0, -4))) {
-                    this.xJumpStart = this.x;
-                    this.world.addEvent(EventType.JUMP, 0);
+                    yJumpSpeed = -1.9f;
+                    jumpTime = 7;
+                    ya = jumpTime * yJumpSpeed;
+                    onGround = false;
+                    if (!(isBlocking(x, y - 4 - height, 0, -4) || isBlocking(x - width, y - 4 - height, 0, -4)
+                            || isBlocking(x + width, y - 4 - height, 0, -4))) {
+                        this.xJumpStart = this.x;
+                        this.world.addEvent(EventType.JUMP, 0);
                 }
             } else if (jumpTime > 0) {
                 xa += xJumpSpeed;

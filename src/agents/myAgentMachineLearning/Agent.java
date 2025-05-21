@@ -2,13 +2,14 @@ package agents.myAgentMachineLearning;
 
 import engine.core.MarioAgentPy4j;
 import engine.core.MarioForwardModel;
-import engine.core.MarioPlayStepResult;
 import engine.core.MarioTimer;
 import engine.helper.MarioActions;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.List;
+import java.util.stream.IntStream;
+
+import static engine.core.MarioForwardModel.*;
 
 /**
  * @author RobinBaumgarten
@@ -36,24 +37,19 @@ public class Agent implements MarioAgentPy4j {
 
     @Override
     public boolean[] getActions(MarioForwardModel model, MarioTimer timer) {
-        var data = getState(model);
-
-        var o = (byte[])listener.getTrainingActions(data);
+        //byte[] data = State.make(model).toByte();
+        byte[] data = State.toByte(model);
+        byte[] o;
+        if(model.evaluation){
+            o = (byte[])listener.getEvaluateTrainingActions(data);
+        } else {
+            o = (byte[])listener.getTrainingActions(data);
+        }
         boolean[] actions = new boolean[o.length];
         for (int i = 0; i < o.length; i++) {
-            actions[i] = o[i] == 0;
+            actions[i] = o[i] == 1;
         }
-        actions[MarioActions.DOWN.getValue()] = false;
         return actions;
-        //return new boolean[]{false,true,false,false,false};
-    }
-
-    private byte[] intArrayToBytes(int[] input){
-        byte[] byteArray = new byte[input.length];
-        for (int i = 0; i < input.length; i++) {
-            byteArray[i] = (byte)input[i];
-        }
-        return byteArray;
     }
 
     public static final byte[] intToByteArray(int value) {
@@ -70,13 +66,13 @@ public class Agent implements MarioAgentPy4j {
     }
 
     @Override
-    public void update(MarioPlayStepResult playstepResult, MarioForwardModel oldState, boolean[] actions, MarioForwardModel nextState, MarioTimer timer) {
-        byte[] oldStateBytes = getState(oldState);
-        byte[] newStateBytes = getState(nextState);
-
-        var reward = intToByteArray(playstepResult.getReward());
-        //byte score = (byte) playstepResult.getScore();
-        byte isDone = (byte) (playstepResult.isDone() ? 1 : 0);
+    public void update(boolean[] actions, MarioForwardModel state, MarioForwardModel nextState, float reward, boolean isTerminate) {
+        //byte[] oldStateBytes = State.make(state).toByte();
+        //byte[] newStateBytes = State.make(nextState).toByte();
+        byte[] oldStateBytes = State.toByte(state);
+        byte[] newStateBytes = State.toByte(nextState);
+        var rewardByte = State.float2ByteArray(reward);
+        byte isDone = (byte) (isTerminate ? 1 : 0);
 
         byte[] actionsBytes = new byte[actions.length];
         for (int i = 0; i < actions.length; i++) {
@@ -84,70 +80,18 @@ public class Agent implements MarioAgentPy4j {
         }
 
         ByteBuffer buffer = ByteBuffer.allocate(
-                reward.length //reward
+                rewardByte.length //reward
                 + 1 //isDone
                 + actionsBytes.length
                 + oldStateBytes.length
                 + newStateBytes.length
         );
-        buffer.put(reward);
+
+        buffer.put(rewardByte);
         buffer.put(isDone);
         buffer.put(actionsBytes);
         buffer.put(oldStateBytes);
         buffer.put(newStateBytes);
         listener.update(buffer.array());
-    }
-
-    private byte[] getState(MarioForwardModel model){
-
-        int[] flatOldState = Arrays.stream(model.getMarioCompleteObservation(1,1))
-                .flatMapToInt(Arrays::stream)
-                .toArray();
-
-        byte[] oldState = intArrayToBytes(flatOldState);
-        byte[] positionX = float2ByteArray(model.getMarioFloatPos()[0]);
-        byte[] positionY = float2ByteArray(model.getMarioFloatPos()[1]);
-        byte[] velocityX = float2ByteArray(model.getMarioFloatVelocity()[0]);
-        byte[] velocityY = float2ByteArray(model.getMarioFloatVelocity()[1]);
-        byte killTotal = (byte) model.getKillsTotal();
-        byte canJumpHigher = (byte) (model.getMarioCanJumpHigher() ? 1 : 0);
-        byte coinCollect = (byte) model.getNumCollectedCoins();
-        byte flowerCollect = (byte) model.getNumCollectedFireflower();
-        byte mushroomsCollect = (byte) model.getNumCollectedMushrooms();
-        byte destroyBrick = (byte) model.getNumDestroyedBricks();
-        byte marioMode = (byte) model.getMarioMode();
-
-        ByteBuffer buffer = ByteBuffer.allocate(
-                oldState.length
-                + positionX.length
-                + positionY.length
-                + velocityX.length
-                + velocityY.length
-                + 1 //killTotal
-                + 1 //canJumpHigher
-                + 1 //coinCollect
-                + 1 //flowerCollect
-                + 1 //mushroomsCollect
-                + 1 //destroyBrick
-                + 1 //marioMode
-        );
-        buffer.put(oldState);
-        buffer.put(positionX);
-        buffer.put(positionY);
-        buffer.put(velocityX);
-        buffer.put(velocityY);
-        buffer.put(killTotal);
-        buffer.put(canJumpHigher);
-        buffer.put(coinCollect);
-        buffer.put(flowerCollect);
-        buffer.put(mushroomsCollect);
-        buffer.put(destroyBrick);
-        buffer.put(marioMode);
-        return buffer.array();
-    }
-
-    public static byte [] float2ByteArray (float value)
-    {
-        return ByteBuffer.allocate(4).putFloat(value).array();
     }
 }

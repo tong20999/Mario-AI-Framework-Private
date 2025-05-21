@@ -3,13 +3,12 @@ package engine.core;
 import java.awt.Graphics;
 import java.awt.GraphicsConfiguration;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import engine.effects.*;
 import engine.graphics.MarioBackground;
-import engine.helper.EventType;
-import engine.helper.GameStatus;
-import engine.helper.SpriteType;
-import engine.helper.TileFeature;
+import engine.helper.*;
 import engine.sprites.*;
 
 public class MarioWorld {
@@ -25,6 +24,10 @@ public class MarioWorld {
     public int currentTick;
     //Status
     public int coins, lives;
+
+    //AI
+    public float totalReward = 0;
+    public String episode = "0";
     public ArrayList<MarioEvent> lastFrameEvents;
 
     private MarioEvent[] killEvents;

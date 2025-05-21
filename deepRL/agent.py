@@ -1,165 +1,499 @@
+import torch.nn as nn
 import torch
+import torch.nn.functional as F
+import tempfile
 import random
+import time
 import numpy as np
-from collections import deque
-from game import BLOCK_SIZE, SnakeGameAI, Direction, Point
-from model import Linear_QNet, QTrainer
-from helper import plot
+from collections.abc import Callable
+from itertools import cycle, count
+import gc
+import os
+import glob
+from game import Game
+import matplotlib.pyplot as plt
+from IPython import display
+import struct
 
-MAX_MEMORY = 100_000
-BATCH_SIZE = 1000
-LR = 0.001
-DISCOUNT = 0.9
+LEAVE_PRINT_EVERY_N_SECS = 60
+ERASE_LINE = '\x1b[2K'
 
-class Agent:
+all_possible_input:list[list[bool]] = [
+    # [LEFT, RIGHT , DOWN, SPEED, JUMP]
+    [False, False, False, False, False], # Do nothing (reset jump)
+    [False, True, False, False, False],  # move right
+    [False, True, False, False, True], # move right and jump
+    [False, True, False, True, False], # move right and speed
+    [False, True, False, True, True],  # move right and speed and jump
+     
+    # [False, False, False, False, False],
+    # [False, False, False, False, True], # Jump only
+    # [False, False, False, True, False], # fire flower only
+    # [False, False, False, True, True],
+    # [False, False, True, False, False],  # Duck only
+    # [False, False, True, False, True], # Duck and Jump
+    # [False, False, True, True, False],
+    # [False, False, True, True, True],
+    # [True, False, False, False, False], # move left
+    # [True, False, False, False, True], # move left and jump
+    # [True, False, False, True, False], # move left and speed
+    # [True, False, False, True, True],  # move left and speed and jump
+    
+    # [False, True, True, False, False],
+    # [False, True, True, False, True],
+    # [False, True, True, True, False],
+    # [False, True, True, True, True],
+    
+    # [True, False, True, False, False],
+    # [True, False, True, False, True],
+    # [True, False, True, True, False],
+    # [True, False, True, True, True],
+    # [True, True, False, False, False],
+    # [True, True, False, False, True],
+    # [True, True, False, True, False],
+    # [True, True, False, True, True],
+    # [True, True, True, False, False],
+    # [True, True, True, False, True],
+    # [True, True, True, True, False],
+    # [True, True, True, True, True],
+]
 
-    def __init__(self) -> None:
-        self.n_games = 0
-        self.epsilon = 0 # randomness
-        self.memory = deque(maxlen=MAX_MEMORY) # popleft()
-        self.model = Linear_QNet(11, 256, 3)
-        self.model.load()
-        self.trainer = QTrainer(self.model, LR, DISCOUNT)
+state_len = 8 + 63 + 4
+#state_len = 63 + 4
+# state_len = 256 + 4
+# state_len = 8 + 9 + 3 + 3 + 4
+# state_len = 9 + 4 + 3 + 4
+
+plt.ion()
+
+class FCQ(nn.Module):
+    def __init__(self, 
+                 input_dim, 
+                 output_dim, 
+                 hidden_dims=(32,32), 
+                 activation_fc=F.relu):
+        super(FCQ, self).__init__()
+        self.activation_fc = activation_fc
+
+        self.input_layer = nn.Linear(input_dim, hidden_dims[0])
+
+        self.hidden_layers = nn.ModuleList()
+        for i in range(len(hidden_dims)-1):
+            hidden_layer = nn.Linear(hidden_dims[i], hidden_dims[i+1])
+            self.hidden_layers.append(hidden_layer)
+        self.output_layer = nn.Linear(hidden_dims[-1], output_dim)
+
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = device
+        self.to(self.device)
+        
+    def _format(self, state):
+        x = state
+        if not isinstance(x, torch.Tensor):
+            x = torch.tensor(x, 
+                             device=self.device, 
+                             dtype=torch.float32)
+            x = x.unsqueeze(0)
+        return x
+
+    def forward(self, state):
+        x = self._format(state)
+        x = self.activation_fc(self.input_layer(x))
+        for hidden_layer in self.hidden_layers:
+            x = self.activation_fc(hidden_layer(x))
+        x = self.output_layer(x)
+        return x
+    
+    def numpy_float_to_device(self, variable):
+        variable = torch.from_numpy(variable).float().to(self.device)
+        return variable
+    
+    def load(self, experiences):
+        states, actions, rewards, new_states, is_terminals = experiences
+        states = torch.from_numpy(states).float().to(self.device)
+        actions = torch.from_numpy(actions).long().to(self.device)
+        new_states = torch.from_numpy(new_states).float().to(self.device)
+        rewards = torch.from_numpy(rewards).float().to(self.device)
+        is_terminals = torch.from_numpy(is_terminals).float().to(self.device)
+        return states, actions, rewards, new_states, is_terminals
+
+class ReplayBuffer():
+    def __init__(self, 
+                 max_size=10000, 
+                 batch_size=64):
+        self.ss_mem = np.empty(shape=(max_size), dtype=np.ndarray)
+        self.as_mem = np.empty(shape=(max_size), dtype=np.ndarray)
+        self.rs_mem = np.empty(shape=(max_size), dtype=np.ndarray)
+        self.ps_mem = np.empty(shape=(max_size), dtype=np.ndarray)
+        self.ds_mem = np.empty(shape=(max_size), dtype=np.ndarray)
+
+        self.max_size = max_size
+        self.batch_size = batch_size
+        self._idx = 0
+        self.size = 0
+    
+    def store(self, sample):
+        s, a, r, p, d = sample
+        self.ss_mem[self._idx] = s
+        self.as_mem[self._idx] = a
+        self.rs_mem[self._idx] = r
+        self.ps_mem[self._idx] = p
+        self.ds_mem[self._idx] = d
+        
+        self._idx += 1
+        self._idx = self._idx % self.max_size
+
+        self.size += 1
+        self.size = min(self.size, self.max_size)
+
+    def sample(self, batch_size=None):
+        if batch_size == None:
+            batch_size = self.batch_size
+
+        idxs = np.random.choice(
+            self.size, batch_size, replace=False)
+        experiences = np.vstack(self.ss_mem[idxs]), \
+                      np.vstack(self.as_mem[idxs]), \
+                      np.vstack(self.rs_mem[idxs]), \
+                      np.vstack(self.ps_mem[idxs]), \
+                      np.vstack(self.ds_mem[idxs])
+        return experiences
+
+    def __len__(self):
+        return self.size
+
+class EGreedyExpStrategy():
+    def __init__(self, init_epsilon=1.0, min_epsilon=0.1, decay_steps=20000):
+        self.epsilon = init_epsilon
+        self.init_epsilon = init_epsilon
+        self.decay_steps = decay_steps
+        self.min_epsilon = min_epsilon
+        self.epsilons = 0.01 / np.logspace(-2, 0, decay_steps, endpoint=False) - 0.01
+        self.epsilons = self.epsilons * (init_epsilon - min_epsilon) + min_epsilon
+        self.t = 0
+        self.exploratory_action_taken = None
+
+    def _epsilon_update(self):
+        self.epsilon = self.min_epsilon if self.t >= self.decay_steps else self.epsilons[self.t]
+        self.t += 1
+        return self.epsilon
+
+    def select_action(self, model, state):
+        self.exploratory_action_taken = False
+        with torch.no_grad():
+            q_values = model(state).detach().cpu().numpy().squeeze()
+
+        if np.random.rand() > self.epsilon:
+            action = np.argmax(q_values)
+        else:
+            action = np.random.randint(len(q_values))
+
+        self._epsilon_update()
+        self.exploratory_action_taken = action != np.argmax(q_values)
+        return action
+
+class GreedyStrategy():
+    def __init__(self):
+        self.exploratory_action_taken = False
+
+    def select_action(self, model:FCQ, state):
+        with torch.no_grad():
+            q_values = model(state).detach().cpu().numpy().squeeze()
+            action = np.argmax(q_values)
+            return action
         
 
-    def get_state(self, game:SnakeGameAI):
-        head = game.snake[0]
-        point_l = Point(head.x - BLOCK_SIZE, head.y)
-        point_r = Point(head.x + BLOCK_SIZE, head.y)
-        point_u = Point(head.x, head.y - BLOCK_SIZE)
-        point_d = Point(head.x, head.y + BLOCK_SIZE)
+class DDQN():
+    def __init__(self, 
+                 replay_buffer_fn, 
+                 value_model_fn:Callable, 
+                 value_optimizer_fn, 
+                 value_optimizer_lr,
+                 max_gradient_norm,
+                 training_strategy_fn,
+                 evaluation_strategy_fn,
+                 n_warmup_batches,
+                 update_target_every_steps):
+        self.replay_buffer_fn = replay_buffer_fn
+        self.value_model_fn = value_model_fn
+        self.value_optimizer_fn = value_optimizer_fn
+        self.value_optimizer_lr = value_optimizer_lr
+        self.max_gradient_norm = max_gradient_norm
+        self.training_strategy_fn = training_strategy_fn
+        self.evaluation_strategy_fn = evaluation_strategy_fn
+        self.n_warmup_batches = n_warmup_batches
+        self.update_target_every_steps = update_target_every_steps
 
-        dir_l = game.direction == Direction.LEFT
-        dir_r = game.direction == Direction.RIGHT
-        dir_u = game.direction == Direction.UP
-        dir_d = game.direction == Direction.DOWN
+    def optimize_model(self, experiences):
+        states, actions, rewards, next_states, is_terminals = experiences
+        batch_size = len(is_terminals)
+        
+        # argmax_a_q_sp = self.target_model(next_states).max(1)[1]
+        argmax_a_q_sp = self.online_model(next_states).max(1)[1]
+        q_sp = self.target_model(next_states).detach()
+        max_a_q_sp = q_sp[
+            np.arange(batch_size), argmax_a_q_sp].unsqueeze(1)
+        target_q_sa = rewards + (self.gamma * max_a_q_sp * (1 - is_terminals))
+        q_sa = self.online_model(states).gather(1, actions)
 
-        state = [
-            (dir_r and game.is_collision(point_r)) or
-            (dir_l and game.is_collision(point_l)) or
-            (dir_u and game.is_collision(point_u)) or
-            (dir_d and game.is_collision(point_d)),
+        td_error = q_sa - target_q_sa
+        value_loss = td_error.pow(2).mul(0.5).mean()
+        self.value_optimizer.zero_grad()
+        value_loss.backward()        
+        torch.nn.utils.clip_grad_norm_(self.online_model.parameters(), 
+                                       self.max_gradient_norm)
+        self.value_optimizer.step()
 
-            (dir_u and game.is_collision(point_r)) or
-            (dir_d and game.is_collision(point_l)) or
-            (dir_l and game.is_collision(point_u)) or
-            (dir_r and game.is_collision(point_d)),
+    def interaction_step(self, state, env:Game):
+        action = self.training_strategy.select_action(self.online_model, state)
+        new_state, reward, is_terminal, _ = env.step(action)
+        # is_truncated = 'TimeLimit.truncated' in info and info['TimeLimit.truncated']
+        is_failure = is_terminal
+        experience = (state, action, reward, new_state, float(is_failure))
 
-            (dir_d and game.is_collision(point_r)) or
-            (dir_u and game.is_collision(point_l)) or
-            (dir_r and game.is_collision(point_u)) or
-            (dir_l and game.is_collision(point_d)),
-
-            dir_l,
-            dir_r,
-            dir_u,
-            dir_d,
-
-            game.food.x < game.head.x,
-            game.food.x > game.head.x,
-            game.food.y < game.head.y,
-            game.food.y > game.head.y,
-        ]
-
-        return np.array(state, dtype=int)
-
-    def remember(self, state, action, reward, next_state, done):
-        self.memory.append((state, action, reward, next_state, done))
-
-    def train_long_memory(self):
-        if len(self.memory) > BATCH_SIZE:
-            mini_sample = random.sample(self.memory, BATCH_SIZE) # list of tuples
-        else:
-            mini_sample = self.memory
-
-        states, actions, rewards, next_states, dones = zip(*mini_sample)
-        self.trainer.train_step(states, actions, rewards, next_states, dones)
+        self.replay_buffer.store(experience)
+        self.episode_reward[-1] += reward
+        self.episode_timestep[-1] += 1
+        self.episode_exploration[-1] += int(self.training_strategy.exploratory_action_taken)
+        return new_state, is_terminal
     
-    def train_short_memory(self, state, action, reward, next_state, done):
-        self.trainer.train_step(state, action, reward, next_state, done)
+    def update_network(self):
+        for target, online in zip(self.target_model.parameters(), 
+                                  self.online_model.parameters()):
+            target.data.copy_(online.data)
 
-    def get_action(self, state):
-        # random moves: tradeoff exploration / exploitation
-        self.epsilon = 80 - self.n_games
-        final_move = [0,0,0]
-        if random.randint(0, 200) < self.epsilon:
-            move = random.randint(0, 2)
-            final_move[move] = 1
-        else:
-            state0 = torch.tensor(state, dtype=torch.float)
-            prediction = self.model(state0)
-            move = torch.argmax(prediction).item()
-            final_move[move] = 1
+    def plot(self, reward, mean10_reward, mean100_reward):
+        fig = plt.gcf()
+        display.clear_output(wait=True)
+        display.display(fig)
+        plt.clf()
+        plt.title('Result')
+        plt.xlabel('Episode')
+        plt.ylabel('Reward')
+        plt.plot(reward)
+        plt.plot(mean10_reward)
+        plt.plot(mean100_reward)
+        plt.text(len(reward)-1, reward[-1], str(reward[-1]))
+        plt.text(len(mean10_reward)-1, mean10_reward[-1], str(mean10_reward[-1]))
+        plt.text(len(mean100_reward)-1, mean100_reward[-1], str(mean100_reward[-1]))
+        plt.show(block=False)
+        plt.pause(1)
+        # Try to send the window to the background so it doesn’t grab focus:
+        try:
+            manager = fig.canvas.manager
+            manager.window.lower()
+        except Exception:
+            pass
 
-        return final_move
+    def train(self, gamma, 
+              max_minutes, max_episodes, goal_mean_100_reward,env:Game, javaAgent, level):
+        training_start, last_debug_time = time.time(), float('-inf')
+        self.javaAgent = javaAgent
+        self.javaAgent.registerListener(self)
+        if not os.path.exists('./model'):
+            os.mkdir('./model')
+        self.checkpoint_dir = './model'
+        self.gamma = gamma
+        # nS, nA = state_len - 8 + 2, len(all_possible_input)
+        nS, nA = state_len, len(all_possible_input)
+        self.episode_timestep = []
+        self.episode_reward = []
+        self.episode_seconds = []
+        self.evaluation_scores = []        
+        self.episode_exploration = []
+        
+        self.target_model:FCQ = self.value_model_fn(nS, nA)
+        self.online_model:FCQ = self.value_model_fn(nS, nA)
+        self.online_model.load_state_dict(torch.load('./model/model.941.tar', weights_only=True))
+        self.online_model.eval()
+        self.update_network()
+
+        self.value_optimizer = self.value_optimizer_fn(self.online_model, 
+                                                       self.value_optimizer_lr)
+
+        self.replay_buffer = self.replay_buffer_fn()
+        self.training_strategy:EGreedyExpStrategy = self.training_strategy_fn()
+        self.evaluation_strategy:GreedyStrategy = self.evaluation_strategy_fn() 
+                    
+        result = np.empty((max_episodes, 5))
+        result[:] = np.nan
+        training_time = 0
+        self.mean10 = []
+        self.mean100 = []
+        self.myepisode_reward = []
+        for episode in range(1, max_episodes + 1):
+            episode_start = time.time()
+            
+            self.episode_reward.append(0.0)
+            self.episode_timestep.append(0.0)
+            self.episode_exploration.append(0.0)
+            info = env.runGame(level, javaAgent, episode)
+            gc.collect()
+            # stats
+            episode_elapsed = time.time() - episode_start
+            self.episode_seconds.append(episode_elapsed)
+            training_time += episode_elapsed
+            evaluation_score, _ = self.evaluate(env, level, javaAgent)
+            self.save_checkpoint(episode-1, self.online_model)
+            
+            total_step = int(np.sum(self.episode_timestep))
+            self.evaluation_scores.append(evaluation_score)
+            
+            mean_10_reward = np.mean(self.episode_reward[-10:])
+            std_10_reward = np.std(self.episode_reward[-10:])
+            mean_100_reward = np.mean(self.episode_reward[-100:])
+            std_100_reward = np.std(self.episode_reward[-100:])
+            mean_100_eval_score = np.mean(self.evaluation_scores[-100:])
+            std_100_eval_score = np.std(self.evaluation_scores[-100:])
+            lst_100_exp_rat = np.array(
+                self.episode_exploration[-100:])/np.array(self.episode_timestep[-100:])
+            mean_100_exp_rat = np.mean(lst_100_exp_rat)
+            std_100_exp_rat = np.std(lst_100_exp_rat)
+
+            
+            self.myepisode_reward.append(info.getRewards())
+            self.mean10.append(np.mean(self.myepisode_reward[-10:]))
+            self.mean100.append(np.mean(self.myepisode_reward[-100:]))
+            if(episode % 20 == 0):
+                self.plot(self.myepisode_reward, self.mean10, self.mean100)
+            
+            wallclock_elapsed = time.time() - training_start
+            result[episode-1] = total_step, mean_100_reward, \
+                mean_100_eval_score, training_time, wallclock_elapsed
+            
+            reached_debug_time = time.time() - last_debug_time >= LEAVE_PRINT_EVERY_N_SECS
+            reached_max_minutes = wallclock_elapsed >= max_minutes * 60
+            reached_max_episodes = episode >= max_episodes
+            reached_goal_mean_reward = mean_100_eval_score >= goal_mean_100_reward
+            training_is_over = reached_max_minutes or \
+                               reached_max_episodes or \
+                               reached_goal_mean_reward
+
+            elapsed_str = time.strftime("%H:%M:%S", time.gmtime(time.time() - training_start))
+            debug_message = 'el {}, ep {:04}, ts {:06}, '
+            debug_message += 'ar 10 {:05.1f}\u00B1{:05.1f}, '
+            debug_message += '100 {:05.1f}\u00B1{:05.1f}, '
+            debug_message += 'ex 100 {:02.1f}\u00B1{:02.1f}, '
+            debug_message += 'ev {:05.1f}\u00B1{:05.1f}'
+            debug_message = debug_message.format(
+                elapsed_str, episode-1, total_step, mean_10_reward, std_10_reward, 
+                mean_100_reward, std_100_reward, mean_100_exp_rat, std_100_exp_rat,
+                mean_100_eval_score, std_100_eval_score)
+            print(debug_message, end='\r', flush=True)
+            if reached_debug_time or training_is_over:
+                print(ERASE_LINE + debug_message, flush=True)
+                last_debug_time = time.time()
+            if training_is_over:
+                if reached_max_minutes: print(u'--> reached_max_minutes \u2715')
+                if reached_max_episodes: print(u'--> reached_max_episodes \u2715')
+                if reached_goal_mean_reward: print(u'--> reached_goal_mean_reward \u2713')
+                break
+                
+        final_eval_score, score_std = self.evaluate(env, level, javaAgent, n_episodes=100)
+        wallclock_time = time.time() - training_start
+        print('Training complete.')
+        print('Final evaluation score {:.2f}\u00B1{:.2f} in {:.2f}s training time,'
+              ' {:.2f}s wall-clock time.\n'.format(
+                  final_eval_score, score_std, training_time, wallclock_time))
+        # env.close() ; del env
+        self.get_cleaned_checkpoints()
+        return result, final_eval_score, training_time, wallclock_time
     
-    def get_real_action(self, state):
-        final_move = [0,0,0]
-        state0 = torch.tensor(state, dtype=torch.float)
-        prediction = self.model(state0)
-        move = torch.argmax(prediction).item()
-        final_move[move] = 1
+    def update(self, output:bytes):
+        # reward = int.from_bytes([output[0], output[1], output[2], output[3]], byteorder='big', signed=True)
+        reward:float = struct.unpack('>f', output[0:4])[0]
+        is_terminal = True if output[4] else False
+        actions = [x for x in output[5: 5 + 5]]
+        actions = [True if x == 1 else False for x in actions]
+        
+        # velocityX = struct.unpack('>f', output[10: 14])[0]
+        # velocityY = struct.unpack('>f', output[14: 14 + 4])[0]
+        # state = [x for x in output[18: 18 + state_len - 8]]
+        # states = [velocityX, velocityY] + state
+        states = [x for x in output[10: 10 + state_len]]
 
-        return final_move
+        # nstart_byte = 18 + state_len - 8
+        # nvelocityX = struct.unpack('>f', output[nstart_byte: nstart_byte + 4])[0]
+        # nvelocityY = struct.unpack('>f', output[nstart_byte + 4: nstart_byte + 8])[0]
+        # nstate_byte = nstart_byte + 8
+        # nstate = [x for x in output[nstate_byte: nstate_byte + state_len - 8]]
+        # new_states = [nvelocityX, nvelocityY] + nstate
+        new_states = [x for x in output[10 + state_len: 10 + state_len + state_len]]
 
-def train():
-    plot_scores = []
-    plot_mean_score = []
-    total_score = 0
-    record = 0
-    agent = Agent()
-    game = SnakeGameAI()
-    while True:
-        # get old state
-        state_old = agent.get_state(game)
+        is_failure = is_terminal
+        experience = (states, actions, reward, new_states, float(is_failure))
 
-        # get move
-        final_move = agent.get_action(state_old)
+        self.replay_buffer.store(experience)
+        self.episode_reward[-1] += reward
+        self.episode_timestep[-1] += 1
+        self.episode_exploration[-1] += int(self.training_strategy.exploratory_action_taken)
 
-        # perform move and get new state
-        reward, done, score = game.play_step(final_move)
-        state_new = agent.get_state(game)
+        min_samples = self.replay_buffer.batch_size * self.n_warmup_batches
+        if len(self.replay_buffer) > min_samples:
+            experiences = self.replay_buffer.sample()
+            experiences = self.online_model.load(experiences)
+            self.optimize_model(experiences)
+        
+        if np.sum(self.episode_timestep) % self.update_target_every_steps == 0:
+            self.update_network()
 
-        # train short memory
-        agent.train_short_memory(state_old, final_move, reward, state_new, done)
+    def getTrainingActions(self, output:bytes):
+        # velocityX = struct.unpack('>f', output[0: 4])[0]
+        # velocityY = struct.unpack('>f', output[4: 8])[0]
+        # state = [x for x in output[8: 8 + state_len - 8]]
+        # states = [velocityX, velocityY] + state
+        states = [x for x in output]
+        action = self.training_strategy.select_action(self.online_model, states)
+        final_move = all_possible_input[int(action)]
+        return bytes(final_move)
 
-        # remember
-        agent.remember(state_old, final_move, reward, state_new, done)
+    def getEvaluateTrainingActions(self, output:bytes):
+        # velocityX = struct.unpack('>f', output[0: 4])[0]
+        # velocityY = struct.unpack('>f', output[4: 8])[0]
+        # state = [x for x in output[8: 8 + state_len - 8]]
+        # states = [velocityX, velocityY] + state
+        states = [x for x in output]
+        action = self.evaluation_strategy.select_action(self.online_model, states)
+        final_move = all_possible_input[int(action)]
+        return bytes(final_move)
+    
+    def evaluate(self, env:Game, level, javaAgent, n_episodes=1):
+        rs = []
+        for episode in range(n_episodes):
+            rs.append(0)
+            result = env.runEvaluation(level, javaAgent, episode)
+            totalReward = result.getRewards()
+            rs[-1] = totalReward
+            # for _ in count():
+            #     a = self.evaluation_strategy.select_action(eval_policy_model, s)
+            #     s, r, d, _ = eval_env.step(a)
+            #     rs[-1] += r
+            #     if d: break
+        return np.mean(rs), np.std(rs)
 
-        if done:
-            # train long memory
-            game.reset()
-            agent.n_games += 1
-            agent.train_long_memory()
+    def get_cleaned_checkpoints(self, n_checkpoints=5):
+        try: 
+            return self.checkpoint_paths
+        except AttributeError:
+            self.checkpoint_paths = {}
 
-            if score > record:
-                record = score
-                agent.model.save()
+        paths = glob.glob(os.path.join(self.checkpoint_dir, '*.tar'))
+        paths_dic = {int(path.split('.')[-2]):path for path in paths}
+        last_ep = max(paths_dic.keys())
+        # checkpoint_idxs = np.geomspace(1, last_ep+1, n_checkpoints, endpoint=True, dtype=np.int)-1
+        checkpoint_idxs = np.linspace(1, last_ep+1, n_checkpoints, endpoint=True, dtype=int)-1
 
-            print('Game', agent.n_games, 'Score', score, 'Record:', record)
+        for idx, path in paths_dic.items():
+            if idx in checkpoint_idxs:
+                self.checkpoint_paths[idx] = path
+            else:
+                os.unlink(path)
 
-            plot_scores.append(score)
-            total_score += score
-            mean_score = total_score / agent.n_games
-            plot_mean_score.append(mean_score)
-            plot(plot_scores, plot_mean_score)
+        return self.checkpoint_paths
 
-
-def play():
-    record = 0
-    agent = Agent()
-    game = SnakeGameAI()
-    while True:
-        # get old state
-        state_old = agent.get_state(game)
-
-        # get move
-        final_move = agent.get_real_action(state_old)
-
-        # perform move and get new state
-        reward, done, score = game.play_step(final_move)
-
-        print('Record:', score)
-
-if __name__ == '__main__':
-    train()
+    def save_checkpoint(self, episode_idx, model):
+        torch.save(model.state_dict(), 
+                   os.path.join(self.checkpoint_dir, 'model.{}.tar'.format(episode_idx)))
+        
+    class Java:
+        implements = ["agents.myAgentMachineLearning.AgentListener"]

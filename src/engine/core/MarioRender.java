@@ -2,6 +2,7 @@ package engine.core;
 
 import javax.swing.*;
 
+import agents.myAgentMachineLearning.State;
 import engine.helper.Assets;
 import engine.helper.MarioActions;
 
@@ -43,9 +44,13 @@ public class MarioRender extends JComponent implements FocusListener {
     public void renderWorld(MarioWorld world, Image image, Graphics g, Graphics og) {
         og.fillRect(0, 0, 256, 240);
         world.render(og);
+        double completePercentage = world.mario.x / (world.level.exitTileX * 16);
         drawStringDropShadow(og, "Lives: " + world.lives, 0, 0, 7);
         drawStringDropShadow(og, "Coins: " + world.coins, 11, 0, 7);
         drawStringDropShadow(og, "Time: " + (world.currentTimer == -1 ? "Inf" : (int) Math.ceil(world.currentTimer / 1000f)), 22, 0, 7);
+        drawStringDropShadow(og, "R: " + String.format("%.2f", world.totalReward), 0, 2, 7);
+        drawStringDropShadow(og, "Episode: " + world.episode, 14, 2, 7);
+        drawStringDropShadow(og, "Complete: " + String.format("%.2f", completePercentage), 0, 4, 7);
         if (MarioGame.verbose) {
             String pressedButtons = "";
             for (int i = 0; i < world.mario.actions.length; i++) {

@@ -2,11 +2,16 @@ package agents.human;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.text.MessageFormat;
+import java.util.Arrays;
 
+import agents.myAgentMachineLearning.State;
 import engine.core.MarioAgent;
 import engine.core.MarioForwardModel;
 import engine.core.MarioTimer;
 import engine.helper.MarioActions;
+
+import static engine.core.MarioForwardModel.*;
 
 public class Agent extends KeyAdapter implements MarioAgent {
     private boolean[] actions = null;
@@ -60,8 +65,10 @@ public class Agent extends KeyAdapter implements MarioAgent {
                 this.actions[MarioActions.SPEED.getValue()] = isPressed;
                 break;
             case KeyEvent.VK_M:
-                var completeObservation = this.model.getMarioCompleteObservation();
-                int a = 5;
+                var completeObservation = this.model.getMarioCompleteObservation(1,2);
+                var state = State.make(this.model);
+                System.out.println("--------------------------");
+                System.out.println(state.toString());
                 break;
         }
     }
