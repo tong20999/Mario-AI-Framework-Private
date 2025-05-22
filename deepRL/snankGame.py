@@ -41,5 +41,12 @@ javaGame = gateway.entry_point.getTraining() # type: ignore
 javaAgent = gateway.entry_point.getAgent() # type: ignore
 game:Game = Game(javaGame)
 
+all_possible_input:list[list[bool]] = [
+    [True, False, False, False],
+    [False, True, False, False],
+    [False, False, True, False],
+    [False, False, False, True]
+]
 result, final_eval_score, training_time, wallclock_time = agent.train(
-    gamma, max_minutes, max_episodes, goal_mean_100_reward, game, javaAgent, "", 10, [0,1,2,3])
+    gamma, max_minutes, max_episodes, goal_mean_100_reward, 
+    game, javaAgent, "", 10, all_possible_input, 100)

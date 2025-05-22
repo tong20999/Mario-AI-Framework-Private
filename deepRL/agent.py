@@ -240,7 +240,8 @@ class DDQN():
             pass
 
     def train(self, gamma, 
-              max_minutes, max_episodes, goal_mean_100_reward,env:Game, javaAgent, level, state_len, available_actions):
+              max_minutes, max_episodes, goal_mean_100_reward,
+              env:Game, javaAgent, level, state_len, available_actions, fps):
         training_start, last_debug_time = time.time(), float('-inf')
         self.javaAgent = javaAgent
         self.javaAgent.registerListener(self)
@@ -249,6 +250,7 @@ class DDQN():
         self.checkpoint_dir = './model'
         self.gamma = gamma
         self.state_len = state_len
+        self.fps = fps
         self.available_actions = available_actions
         nS, nA = self.state_len, len(self.available_actions)
         self.episode_timestep = []
@@ -282,7 +284,7 @@ class DDQN():
             self.episode_reward.append(0.0)
             self.episode_timestep.append(0.0)
             self.episode_exploration.append(0.0)
-            info = env.runGame(level, javaAgent, episode)
+            info = env.runGame(level, javaAgent, episode, self.fps)
             gc.collect()
             # stats
             episode_elapsed = time.time() - episode_start
@@ -306,11 +308,11 @@ class DDQN():
             std_100_exp_rat = np.std(lst_100_exp_rat)
 
             
-            self.myepisode_reward.append(info.getRewards())
-            self.mean10.append(np.mean(self.myepisode_reward[-10:]))
-            self.mean100.append(np.mean(self.myepisode_reward[-100:]))
-            if(episode % 20 == 0):
-                self.plot(self.myepisode_reward, self.mean10, self.mean100)
+            # self.myepisode_reward.append(info.getRewards())
+            # self.mean10.append(np.mean(self.myepisode_reward[-10:]))
+            # self.mean100.append(np.mean(self.myepisode_reward[-100:]))
+            # if(episode % 20 == 0):
+            #     self.plot(self.myepisode_reward, self.mean10, self.mean100)
             
             wallclock_elapsed = time.time() - training_start
             result[episode-1] = total_step, mean_100_reward, \
@@ -358,14 +360,14 @@ class DDQN():
         # reward = int.from_bytes([output[0], output[1], output[2], output[3]], byteorder='big', signed=True)
         reward:float = struct.unpack('>f', output[0:4])[0]
         is_terminal = True if output[4] else False
-        actions = [x for x in output[5: 5 + 5]]
+        actions = [x for x in output[5: 5 + 4]]
         actions = [True if x == 1 else False for x in actions]
         
         # velocityX = struct.unpack('>f', output[10: 14])[0]
         # velocityY = struct.unpack('>f', output[14: 14 + 4])[0]
         # state = [x for x in output[18: 18 + state_len - 8]]
         # states = [velocityX, velocityY] + state
-        states = [x for x in output[10: 10 + self.state_len]]
+        states = [x for x in output[9: 9 + self.state_len]]
 
         # nstart_byte = 18 + state_len - 8
         # nvelocityX = struct.unpack('>f', output[nstart_byte: nstart_byte + 4])[0]
@@ -416,7 +418,7 @@ class DDQN():
         rs = []
         for episode in range(n_episodes):
             rs.append(0)
-            result = env.runEvaluation(level, javaAgent, episode)
+            result = env.runEvaluation(level, javaAgent, episode, self.fps)
             totalReward = result.getRewards()
             rs[-1] = totalReward
             # for _ in count():
