@@ -18,7 +18,6 @@ class SocketEnv(gym.Env):
         # op_code 
         # 01 reset
         # 02 get_observation
-        # 03 step
         assert len(op_code) == 2 and payload is not None
         buffer = op_code.encode('utf-8') + payload.ljust(1022, b'\x00')  # pad to 1024
         assert len(buffer) == 1024
