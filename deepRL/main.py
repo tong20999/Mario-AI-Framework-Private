@@ -1,46 +1,8 @@
 from ddqn import DDQN, FCQ, EGreedyExpStrategy, GreedyStrategy, ReplayBuffer
 import torch.optim as optim
-from snankGame import SnakeGame
+from marioGame import MarioGame
 
-all_possible_input:list[list[bool]] = [
-    # [LEFT, RIGHT , DOWN, SPEED, JUMP]
-    [False, False, False, False, False], # Do nothing (reset jump)
-    [False, True, False, False, False],  # move right
-    [False, True, False, False, True], # move right and jump
-    [False, True, False, True, False], # move right and speed
-    [False, True, False, True, True],  # move right and speed and jump
-     
-    # [False, False, False, False, False],
-    # [False, False, False, False, True], # Jump only
-    # [False, False, False, True, False], # fire flower only
-    # [False, False, False, True, True],
-    # [False, False, True, False, False],  # Duck only
-    # [False, False, True, False, True], # Duck and Jump
-    # [False, False, True, True, False],
-    # [False, False, True, True, True],
-    # [True, False, False, False, False], # move left
-    # [True, False, False, False, True], # move left and jump
-    # [True, False, False, True, False], # move left and speed
-    # [True, False, False, True, True],  # move left and speed and jump
-    
-    # [False, True, True, False, False],
-    # [False, True, True, False, True],
-    # [False, True, True, True, False],
-    # [False, True, True, True, True],
-    
-    # [True, False, True, False, False],
-    # [True, False, True, False, True],
-    # [True, False, True, True, False],
-    # [True, False, True, True, True],
-    # [True, True, False, False, False],
-    # [True, True, False, False, True],
-    # [True, True, False, True, False],
-    # [True, True, False, True, True],
-    # [True, True, True, False, False],
-    # [True, True, True, False, True],
-    # [True, True, True, True, False],
-    # [True, True, True, True, True],
-]
+
 
 state_len = 8 + 63 + 4
 #state_len = 63 + 4
@@ -82,6 +44,6 @@ agent = DDQN(replay_buffer_fn,
                 n_warmup_batches,
                 update_target_every_steps)
 
-env = SnakeGame()
+env = MarioGame()
 result, final_eval_score, training_time, wallclock_time = agent.train(
      env, gamma, max_minutes, max_episodes, goal_mean_100_reward)

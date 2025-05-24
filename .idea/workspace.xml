@@ -5,11 +5,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="first implement">
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_22_2025_11_52_AM__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_22_2025_11_52_AM__Changes_.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/GameServer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/Program.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/snankGame.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/snankGame.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/socketEnv.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/socketEnv.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/ddqn.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ddqn.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Py4JEntryPoint.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/agents/myAgent/Agent.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/Agent.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/AgentListener.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/State.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/State.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -54,10 +60,11 @@
       <recent name="C:\Users\tchuiploy\source\repos\Mario-AI-Framework-Private\src\agents\myAgent" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="" />
       <recent name="engine.core" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.Py4JEntryPoint">
+  <component name="RunManager" selected="Application.Program">
     <configuration name="GenerateLevel" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="GenerateLevel" />
       <module name="Mario-AI-Framework-Private" />
@@ -72,6 +79,13 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="Program" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="Program" />
+      <module name="Mario-AI-Framework-Private" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="Py4JEntryPoint" type="Application" factoryName="Application">
       <option name="MAIN_CLASS_NAME" value="Py4JEntryPoint" />
       <module name="Mario-AI-Framework-Private" />
@@ -81,6 +95,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.Program" />
         <item itemvalue="Application.PlayLevel" />
         <item itemvalue="Application.GenerateLevel" />
       </list>

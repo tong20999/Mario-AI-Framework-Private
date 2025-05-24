@@ -18,6 +18,7 @@ import struct
 LEAVE_PRINT_EVERY_N_SECS = 60
 ERASE_LINE = '\x1b[2K'
 
+
 class FCQ(nn.Module):
     def __init__(self, 
                  input_dim, 
@@ -223,7 +224,7 @@ class DDQN():
 
         self.gamma = gamma
     
-        nS, nA = env.observation_space.shape[0], env.action_space.n
+        nS, nA = env.observation_space.shape[0], env.action_space.shape[0]
         self.episode_timestep = []
         self.episode_reward = []
         self.episode_seconds = []
@@ -232,8 +233,8 @@ class DDQN():
         
         self.target_model = self.value_model_fn(nS, nA)
         self.online_model = self.value_model_fn(nS, nA)
-        self.online_model.load_state_dict(torch.load('./model/model.1290.tar', weights_only=True))
-        self.online_model.eval()
+        # self.online_model.load_state_dict(torch.load('./model/model.1290.tar', weights_only=True))
+        # self.online_model.eval()
         self.update_network()
 
         self.value_optimizer = self.value_optimizer_fn(self.online_model, 
@@ -343,7 +344,6 @@ class DDQN():
                 s, r, d, _, _ = eval_env.step(a)
                 rs[-1] += r
                 if d: break
-                time.sleep(0.1)
         return np.mean(rs), np.std(rs)
 
     def get_cleaned_checkpoints(self, n_checkpoints=5):

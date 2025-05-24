@@ -1,6 +1,10 @@
 package engine.core;
 
 import java.awt.image.VolatileImage;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
@@ -58,13 +62,20 @@ public class MarioGameTraining {
     //visualization
     private JFrame window = null;
     private MarioRender render = null;
-    private MarioAgentPy4j agent = null;
     private MarioWorld world = null;
     /**
      * Create a mario game to be played
      */
     public MarioGameTraining() {
-
+        this.window = new JFrame("Mario AI Framework");
+        this.window.setFocusableWindowState(false);
+        this.render = new MarioRender(2);
+        this.window.setContentPane(this.render);
+        this.window.pack();
+        this.window.setResizable(false);
+        this.window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.render.init();
+        this.window.setVisible(true);
     }
 
     /**
@@ -83,12 +94,12 @@ public class MarioGameTraining {
         return 1000 / fps;
     }
 
-    private void setAgent(MarioAgentPy4j agent) {
-        this.agent = agent;
-        if (agent instanceof KeyAdapter) {
-            this.render.addKeyListener((KeyAdapter) this.agent);
-        }
-    }
+//    private void setAgent(MarioAgentPy4j agent) {
+//        this.agent = agent;
+//        if (agent instanceof KeyAdapter) {
+//            this.render.addKeyListener((KeyAdapter) this.agent);
+//        }
+//    }
 
     /**
      * Run a certain mario level with a certain agent
@@ -124,7 +135,7 @@ public class MarioGameTraining {
             this.render.init();
             this.window.setVisible(true);
         }
-        this.setAgent(agent);
+        //this.setAgent(agent);
         return this.gameLoop(level, episode, timer, marioState, visuals, fps, evaluation);
     }
 
@@ -155,8 +166,8 @@ public class MarioGameTraining {
             this.render.addFocusListener(this.render);
         }
 
-        MarioTimer agentTimer = new MarioTimer(MarioGameTraining.maxTime);
-        this.agent.initialize(new MarioForwardModel(this.world.clone()), agentTimer);
+//        MarioTimer agentTimer = new MarioTimer(MarioGameTraining.maxTime);
+//        this.agent.initialize(new MarioForwardModel(this.world.clone()), agentTimer);
         int lastProgress = 0;
         int lastMilestone = 0;
         var start = timer * 1000L;
@@ -202,7 +213,7 @@ public class MarioGameTraining {
 //                }
 
                 if(frame % frameSkip == 0){
-                    actions = this.agent.getActions(state, agentTimer);
+                    //actions = this.agent.getActions(state, agentTimer);
                 }
 
                 // update world
@@ -236,7 +247,7 @@ public class MarioGameTraining {
 
                 if(!evaluation){
                     MarioForwardModel nextState = new MarioForwardModel(this.world.clone());
-                    this.agent.update(actions, state, nextState, reward, this.world.gameStatus != GameStatus.RUNNING);
+                    //this.agent.update(actions, state, nextState, reward, this.world.gameStatus != GameStatus.RUNNING);
                 }
                 frame += 1;
             }
@@ -258,5 +269,94 @@ public class MarioGameTraining {
         }
 
         return new MarioTrainingResult(this.world, gameEvents);
+    }
+
+    MarioTimer agentTimer;
+    int timer = 200;
+
+    //initialize graphics
+    VolatileImage renderTarget = null;
+    Graphics backBuffer = null;
+    Graphics currentBuffer = null;
+    boolean visual = true;
+    long currentTime = 0;
+    int fps = 1000;
+    public byte[] reset() throws Exception {
+        this.world = new MarioWorld(this.killEvents);
+        this.world.visuals = visual;
+        this.timer = 200;
+        this.world.initializeLevel(getFirstLevel(), 1000 * this.timer);
+        if (visual) {
+            this.world.initializeVisuals(this.render.getGraphicsConfiguration());
+        }
+        this.world.mario.isLarge = false;
+        this.world.mario.isFire = false;
+        this.world.update(new boolean[MarioActions.numberOfActions()]);
+
+        if (visual) {
+            renderTarget = this.render.createVolatileImage(MarioGameTraining.width, MarioGameTraining.height);
+            backBuffer = this.render.getGraphics();
+            currentBuffer = renderTarget.getGraphics();
+            this.render.addFocusListener(this.render);
+        }
+
+        this.agentTimer = new MarioTimer(MarioGameTraining.maxTime);
+
+        this.currentTime = System.currentTimeMillis();
+        return State.toByte(new MarioForwardModel(this.world.clone()));
+    }
+
+    public void miniStep(boolean[] action) throws Exception {
+        this.world.update(action);
+        if (visual) {
+            this.render.renderWorld(this.world, renderTarget, backBuffer, currentBuffer);
+        }
+    }
+
+    public byte[] step(boolean[] action) throws Exception {
+        float reward = 0;
+        miniStep(action);
+        miniStep(action);
+        miniStep(action);
+        miniStep(action);
+//        miniStep(action);
+//        miniStep(action);
+//        miniStep(action);
+
+        if (this.world.gameStatus == GameStatus.LOSE || this.world.gameStatus == GameStatus.TIME_OUT) {
+            reward -= 1f;
+        } else if (this.world.gameStatus == GameStatus.WIN) {
+            reward += 1f;
+        }
+
+        var nextState = State.toByte(new MarioForwardModel(this.world.clone()));
+        return stepResult(nextState, reward, this.world.gameStatus != GameStatus.RUNNING);
+    }
+
+    private static byte[] stepResult(byte[] nextState, float reward, boolean is_terminate) {
+        ByteBuffer buffer = ByteBuffer.allocate(4 + 1 + nextState.length);
+        buffer.put(float2ByteArray(reward));
+        buffer.put((byte)(is_terminate ? 1 : 0));
+        buffer.put(nextState);
+        return buffer.array();
+    }
+
+    public static byte [] float2ByteArray (float value)
+    {
+        return ByteBuffer.allocate(4).putFloat(value).array();
+    }
+
+    private static String getFileFromLevel(String file){
+        String content = "";
+        try {
+            content = new String(Files.readAllBytes(Paths.get(file)));
+        } catch (IOException e) {
+        }
+        return content;
+    }
+
+    public static String getFirstLevel(){
+        var level1 = "./levels/original/lvl-1.txt";
+        return getFileFromLevel(level1);
     }
 }

@@ -93,12 +93,25 @@ public class State {
         return s;
     }
 
-    private static byte[] intArrayToBytes(int[] input){
+    private static byte[] intArrayToBytes(int[] input) throws Exception {
         byte[] byteArray = new byte[input.length];
         for (int i = 0; i < input.length; i++) {
-            byteArray[i] = (byte)input[i];
+            int mapValue = mapState(input[i]);
+            byteArray[i] = (byte)mapValue;
         }
         return byteArray;
+    }
+
+    private static int mapState(int i) throws Exception {
+        if(i == 0){
+            return 0;
+        } else if(i == 1){
+            return 1;
+        } else if(i == 100){
+            return 100;
+        }
+
+        throw new Exception("map error");
     }
 
     public static byte [] float2ByteArray (float value)
@@ -106,8 +119,8 @@ public class State {
         return ByteBuffer.allocate(4).putFloat(value).array();
     }
 
-    public static byte[] toByte(MarioForwardModel model){
-        var detail = model.getMarioCompleteObservation(1,2);
+    public static byte[] toByte(MarioForwardModel model) throws Exception {
+        var detail = model.getMarioCompleteObservation(2,2);
         int[][] sliced = new int[9][7]; // 9 columns × 7 rows
 
         for (int col = 0; col < 9; col++) {
@@ -116,27 +129,30 @@ public class State {
         int[] flatState = Arrays.stream(sliced)
             .flatMapToInt(Arrays::stream)
             .toArray();
+
+
         byte[] state = intArrayToBytes(flatState);
-        byte facing = (byte) model.getMarioFacing();
-        byte isMarioOnGround = (byte) (model.isMarioOnGround() ? 1: 0);
-        byte mayMarioJump = (byte) (model.mayMarioJump() ? 1: 0);
-        byte getMarioCanJumpHigher = (byte) (model.getMarioCanJumpHigher() ? 1: 0);
-        byte[] velocityX = float2ByteArray(model.getMarioFloatVelocity()[0]);
-        byte[] velocityY = float2ByteArray(model.getMarioFloatVelocity()[1]);
+//        byte facing = (byte) model.getMarioFacing();
+//        byte isMarioOnGround = (byte) (model.isMarioOnGround() ? 1: 0);
+//        byte mayMarioJump = (byte) (model.mayMarioJump() ? 1: 0);
+//        byte getMarioCanJumpHigher = (byte) (model.getMarioCanJumpHigher() ? 1: 0);
+//        byte[] velocityX = float2ByteArray(model.getMarioFloatVelocity()[0]);
+//        byte[] velocityY = float2ByteArray(model.getMarioFloatVelocity()[1]);
+
         ByteBuffer buffer = ByteBuffer.allocate(
                 state.length
-                + velocityX.length
-                + velocityX.length
-                        + 4
+//                + velocityX.length
+//                + velocityX.length
+//                        + 4
         );
 
-        buffer.put(velocityX);
-        buffer.put(velocityY);
+//        buffer.put(velocityX);
+//        buffer.put(velocityY);
         buffer.put(state);
-        buffer.put(facing);
-        buffer.put(isMarioOnGround);
-        buffer.put(mayMarioJump);
-        buffer.put(getMarioCanJumpHigher);
+//        buffer.put(facing);
+//        buffer.put(isMarioOnGround);
+//        buffer.put(mayMarioJump);
+//        buffer.put(getMarioCanJumpHigher);
         return buffer.array();
     }
 
