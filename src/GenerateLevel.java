@@ -36,9 +36,10 @@ public class GenerateLevel {
 
     public static void main(String[] args) {
         MarioLevelGenerator generator = new levelGenerators.notch.LevelGenerator();
-        String level = generator.getGeneratedLevel(new MarioLevelModel(150, 16), new MarioTimer(5 * 60 * 60 * 1000));
         MarioGame game = new MarioGame();
         // printResults(game.playGame(level, 200, 0));
-        printResults(game.runGame(new agents.human.Agent(), getLevel("./levels/original/lvl-1.txt"), 20, 0, true, 30));
+        var original = "./levels/original/lvl-1.txt";
+        var training = "./levels/training/lvl-1.txt";
+        printResults(game.runGame(new agents.human.Agent(), getLevel(original), 200, 0, true, 30));
     }
 }
