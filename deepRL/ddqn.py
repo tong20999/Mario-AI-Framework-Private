@@ -176,6 +176,29 @@ class DDQN():
         self.n_warmup_batches = n_warmup_batches
         self.update_target_every_steps = update_target_every_steps
 
+    def plot(self, reward, mean10_reward, mean100_reward):
+        fig = plt.gcf()
+        display.clear_output(wait=True)
+        display.display(fig)
+        plt.clf()
+        plt.title('Result')
+        plt.xlabel('Episode')
+        plt.ylabel('Reward')
+        plt.plot(reward)
+        plt.plot(mean10_reward)
+        plt.plot(mean100_reward)
+        plt.text(len(reward)-1, reward[-1], str(reward[-1]))
+        plt.text(len(mean10_reward)-1, mean10_reward[-1], str(mean10_reward[-1]))
+        plt.text(len(mean100_reward)-1, mean100_reward[-1], str(mean100_reward[-1]))
+        plt.show(block=False)
+        plt.pause(1)
+        # Try to send the window to the background so it doesn’t grab focus:
+        try:
+            manager = fig.canvas.manager
+            manager.window.lower()
+        except Exception:
+            pass
+
     def optimize_model(self, experiences):
         states, actions, rewards, next_states, is_terminals = experiences
         batch_size = len(is_terminals)
@@ -233,8 +256,8 @@ class DDQN():
         
         self.target_model = self.value_model_fn(nS, nA)
         self.online_model = self.value_model_fn(nS, nA)
-        #self.online_model.load_state_dict(torch.load('./model/model.221.tar', weights_only=True))
-         #self.online_model.eval()
+        self.online_model.load_state_dict(torch.load('./model/model.780.tar', weights_only=True))
+        self.online_model.eval()
         self.update_network()
 
         self.value_optimizer = self.value_optimizer_fn(self.online_model, 
@@ -247,6 +270,9 @@ class DDQN():
         result = np.empty((max_episodes, 5))
         result[:] = np.nan
         training_time = 0
+        self.mean10 = []
+        self.mean100 = []
+        self.myepisode_reward = []
         for episode in range(1, max_episodes + 1):
             episode_start = time.time()
             info = {"episode" : episode, "evaluation" : False}
@@ -291,6 +317,12 @@ class DDQN():
                 self.episode_exploration[-100:])/np.array(self.episode_timestep[-100:])
             mean_100_exp_rat = np.mean(lst_100_exp_rat)
             std_100_exp_rat = np.std(lst_100_exp_rat)
+
+            self.myepisode_reward.append(self.episode_reward[-1])
+            self.mean10.append(np.mean(self.myepisode_reward[-10:]))
+            self.mean100.append(np.mean(self.myepisode_reward[-100:]))
+            if(episode % 20 == 0):
+                self.plot(self.myepisode_reward, self.mean10, self.mean100)
             
             wallclock_elapsed = time.time() - training_start
             result[episode-1] = total_step, mean_100_reward, \
@@ -368,5 +400,6 @@ class DDQN():
         return self.checkpoint_paths
 
     def save_checkpoint(self, episode_idx, model):
-        torch.save(model.state_dict(), 
-                   os.path.join(self.checkpoint_dir, 'model.{}.tar'.format(episode_idx)))
+        if(episode_idx % 20 == 0):
+            torch.save(model.state_dict(), 
+                        os.path.join(self.checkpoint_dir, 'model.{}.tar'.format(episode_idx)))

@@ -4,10 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="">
+    <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="add human debug">
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-3.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/GenerateLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/GenerateLevel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/agents/human/Agent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/human/Agent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/ddqn.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ddqn.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/marioGame.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/marioGame.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/lvl-1.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/State.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/State.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -44,10 +49,11 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Application.GenerateLevel.executor": "Debug",
+    "Application.Program.executor": "Debug",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "develop",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/WARDESKTOP/source/repos/Mario-AI-Framework-Private/levels/training",
+    "last_opened_file_path": "C:/Git/Mario-AI-Framework-Private/levels/training",
     "project.structure.last.edited": "Modules",
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.2862069"
@@ -55,6 +61,7 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Git\Mario-AI-Framework-Private\levels\training" />
       <recent name="C:\Users\WARDESKTOP\source\repos\Mario-AI-Framework-Private\levels\training" />
       <recent name="C:\Users\WARDESKTOP\source\repos\Mario-AI-Framework-Private\levels\evaluation" />
       <recent name="C:\Users\tchuiploy\source\repos\Mario-AI-Framework-Private\src\agents\myAgent" />
@@ -64,7 +71,7 @@
       <recent name="engine.core" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.GenerateLevel">
+  <component name="RunManager" selected="Application.Program">
     <configuration name="GenerateLevel" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="GenerateLevel" />
       <module name="Mario-AI-Framework-Private" />
@@ -95,8 +102,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.GenerateLevel" />
         <item itemvalue="Application.Program" />
+        <item itemvalue="Application.GenerateLevel" />
         <item itemvalue="Application.PlayLevel" />
       </list>
     </recent_temporary>
@@ -134,7 +141,15 @@
       <option name="project" value="LOCAL" />
       <updated>1748106560006</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="add human debug">
+      <option name="closed" value="true" />
+      <created>1748513652216</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1748513652216</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -151,7 +166,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="first implement" />
     <MESSAGE value="update use step" />
-    <option name="LAST_COMMIT_MESSAGE" value="update use step" />
+    <MESSAGE value="add human debug" />
+    <option name="LAST_COMMIT_MESSAGE" value="add human debug" />
   </component>
   <component name="XDebuggerManager">
     <pin-to-top-manager>

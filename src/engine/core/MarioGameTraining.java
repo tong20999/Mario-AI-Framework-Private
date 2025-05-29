@@ -342,7 +342,7 @@ public class MarioGameTraining {
 
     public byte[] step(boolean[] action) throws Exception {
         float reward = 0;
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 7; i++) {
             miniStep(action);
         }
 //        this.remaining -= 30;
@@ -355,9 +355,9 @@ public class MarioGameTraining {
 //            this.nextTrigger -= this.interval;
 //        }
 
-        var mileStoneReward = mileStoneReward();
+        //var mileStoneReward = mileStoneReward();
         //var timePenalty = timePenalty();
-        reward += mileStoneReward;
+        //reward += mileStoneReward;
         //reward += timePenalty;
 
         if (this.world.gameStatus == GameStatus.LOSE || this.world.gameStatus == GameStatus.TIME_OUT) {

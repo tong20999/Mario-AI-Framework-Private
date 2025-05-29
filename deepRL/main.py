@@ -2,14 +2,6 @@ from ddqn import DDQN, FCQ, EGreedyExpStrategy, GreedyStrategy, ReplayBuffer
 import torch.optim as optim
 from marioGame import MarioGame
 
-
-
-state_len = 8 + 63 + 4
-#state_len = 63 + 4
-# state_len = 256 + 4
-# state_len = 8 + 9 + 3 + 3 + 4
-# state_len = 9 + 4 + 3 + 4
-
 environment_settings = {
         'env_name': 'CartPole-v1',
         'gamma': 1.00,
@@ -28,7 +20,7 @@ training_strategy_fn = lambda: EGreedyExpStrategy(init_epsilon=1.0,
                                                     decay_steps=20000)
 evaluation_strategy_fn = lambda: GreedyStrategy()
 
-replay_buffer_fn = lambda: ReplayBuffer(max_size=50000, batch_size=256)
+replay_buffer_fn = lambda: ReplayBuffer(max_size=500000, batch_size=64)
 n_warmup_batches = 5
 update_target_every_steps = 10
 
