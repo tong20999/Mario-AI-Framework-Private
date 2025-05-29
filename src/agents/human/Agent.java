@@ -64,12 +64,6 @@ public class Agent extends KeyAdapter implements MarioAgent {
             case KeyEvent.VK_A:
                 this.actions[MarioActions.SPEED.getValue()] = isPressed;
                 break;
-            case KeyEvent.VK_M:
-                var completeObservation = this.model.getMarioCompleteObservation(1,2);
-                var state = State.make(this.model);
-                System.out.println("--------------------------");
-                System.out.println(state.toString());
-                break;
         }
     }
 

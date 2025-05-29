@@ -1,10 +1,12 @@
 import engine.core.MarioGameTraining;
+import info.Info;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
@@ -53,7 +55,8 @@ public class GameServer {
 
                     switch (opCode) {
                         case "01": // reset
-                            var state = game.reset();
+                            Info info = getEpisode(payload);
+                            var state = game.reset(info);
                             sendResponse(output, "01", state);
                             break;
                         case "02": // step
@@ -78,6 +81,16 @@ public class GameServer {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private Info getEpisode(byte[] payload) {
+        ByteBuffer buffer = ByteBuffer.wrap(payload);
+        buffer.order(java.nio.ByteOrder.BIG_ENDIAN);
+
+        int episode = buffer.getInt();
+        byte boolByte = buffer.get();       // 5th byte
+        boolean evaluation = boolByte != 0;
+        return new Info(episode, evaluation);
     }
 
     private boolean[] getActionFromPayload(byte[] payload) {

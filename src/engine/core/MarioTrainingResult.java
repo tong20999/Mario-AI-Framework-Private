@@ -11,7 +11,7 @@ public class MarioTrainingResult {
     private ArrayList<MarioEvent> gameEvents;
 
     public float getRewards() {
-        return this.world.totalReward;
+        return this.world.reward;
     }
 
     /**

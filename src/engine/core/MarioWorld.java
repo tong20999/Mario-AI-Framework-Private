@@ -3,8 +3,6 @@ package engine.core;
 import java.awt.Graphics;
 import java.awt.GraphicsConfiguration;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 import engine.effects.*;
 import engine.graphics.MarioBackground;
@@ -26,8 +24,8 @@ public class MarioWorld {
     public int coins, lives;
 
     //AI
-    public float totalReward = 0;
-    public String episode = "0";
+    public float reward = 0;
+    public int episode = 0;
     public ArrayList<MarioEvent> lastFrameEvents;
 
     private MarioEvent[] killEvents;

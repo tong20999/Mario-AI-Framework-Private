@@ -233,8 +233,8 @@ class DDQN():
         
         self.target_model = self.value_model_fn(nS, nA)
         self.online_model = self.value_model_fn(nS, nA)
-        # self.online_model.load_state_dict(torch.load('./model/model.1290.tar', weights_only=True))
-        # self.online_model.eval()
+        #self.online_model.load_state_dict(torch.load('./model/model.221.tar', weights_only=True))
+         #self.online_model.eval()
         self.update_network()
 
         self.value_optimizer = self.value_optimizer_fn(self.online_model, 
@@ -249,8 +249,8 @@ class DDQN():
         training_time = 0
         for episode in range(1, max_episodes + 1):
             episode_start = time.time()
-            
-            state, is_terminal = env.reset(), False
+            info = {"episode" : episode, "evaluation" : False}
+            state, is_terminal = env.reset(options=info), False
             self.episode_reward.append(0.0)
             self.episode_timestep.append(0.0)
             self.episode_exploration.append(0.0)
@@ -337,7 +337,8 @@ class DDQN():
     def evaluate(self, eval_policy_model, eval_env, n_episodes=1):
         rs = []
         for _ in range(n_episodes):
-            s, d = eval_env.reset(), False
+            info = {"episode" : 0, "evaluation" : True}
+            s, d = eval_env.reset(options =info), False
             rs.append(0)
             for _ in count():
                 a = self.evaluation_strategy.select_action(eval_policy_model, s)

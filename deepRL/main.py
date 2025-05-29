@@ -28,7 +28,7 @@ training_strategy_fn = lambda: EGreedyExpStrategy(init_epsilon=1.0,
                                                     decay_steps=20000)
 evaluation_strategy_fn = lambda: GreedyStrategy()
 
-replay_buffer_fn = lambda: ReplayBuffer(max_size=50000, batch_size=64)
+replay_buffer_fn = lambda: ReplayBuffer(max_size=50000, batch_size=256)
 n_warmup_batches = 5
 update_target_every_steps = 10
 

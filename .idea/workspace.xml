@@ -4,18 +4,24 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="first implement">
-      <change afterPath="$PROJECT_DIR$/src/GameServer.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Program.java" afterDir="false" />
+    <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/levels/evaluation/lvl-1.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/evaluation/lvl-2.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-1.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-2.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/info/EndInfo.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/info/Info.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deepRL/ddqn.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ddqn.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deepRL/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Py4JEntryPoint.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/agents/myAgent/Agent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/Agent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/AgentListener.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/marioGame.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/marioGame.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/GameServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/GameServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/agents/human/Agent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/human/Agent.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/State.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/State.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioRender.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioRender.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioTrainingResult.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioTrainingResult.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioWorld.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioWorld.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -44,19 +50,21 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;develop&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/WARDESKTOP/source/repos/snakejava&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2862069&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "develop",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/WARDESKTOP/source/repos/Mario-AI-Framework-Private/levels/training",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2862069"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\WARDESKTOP\source\repos\Mario-AI-Framework-Private\levels\training" />
+      <recent name="C:\Users\WARDESKTOP\source\repos\Mario-AI-Framework-Private\levels\evaluation" />
       <recent name="C:\Users\tchuiploy\source\repos\Mario-AI-Framework-Private\src\agents\myAgent" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
@@ -126,7 +134,15 @@
       <option name="project" value="LOCAL" />
       <updated>1721806636456</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="update use step">
+      <option name="closed" value="true" />
+      <created>1748106560006</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1748106560006</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -142,7 +158,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="first implement" />
-    <option name="LAST_COMMIT_MESSAGE" value="first implement" />
+    <MESSAGE value="update use step" />
+    <option name="LAST_COMMIT_MESSAGE" value="update use step" />
   </component>
   <component name="XDebuggerManager">
     <pin-to-top-manager>
