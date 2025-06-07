@@ -72,8 +72,8 @@ class MarioGame(SocketEnv):
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
         1, 1, 1, 1, # time remaining
-        1, 1, 1, 1, # velocity x
-        1, 1, 1, 1, # velocity y
+        # 1, 1, 1, 1, # velocity x
+        #  1, 1, 1, 1, # velocity y
         1 # game status
         ])
 

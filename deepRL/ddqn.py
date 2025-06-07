@@ -256,7 +256,7 @@ class DDQN():
         
         self.target_model = self.value_model_fn(nS, nA)
         self.online_model = self.value_model_fn(nS, nA)
-        self.online_model.load_state_dict(torch.load('./model/model.499.tar', weights_only=True))
+        self.online_model.load_state_dict(torch.load('./model.499.tar', weights_only=True))
         self.online_model.eval()
         self.update_network()
 
