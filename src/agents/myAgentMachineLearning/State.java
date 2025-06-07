@@ -31,34 +31,49 @@ public class State {
     public static byte[] toByte(MarioForwardModel model) throws Exception {
         var detail = model.getMarioCompleteObservation(0,0);
 
-        int[][] slices = new int[11][14]; // 11 columns (5..15), 14 rows (2..15)
-
-        for (int col = 5; col <= 15; col++) {
-            System.arraycopy(detail[col], 2, slices[col - 5], 0, 14);
-        }
-
-        int[] flatState = Arrays.stream(slices)
+        int[] flatState = Arrays.stream(detail)
             .flatMapToInt(Arrays::stream)
             .toArray();
 
-        int timeRemaingInSec = model.getRemainingTime() / 1000;
+
         byte[] state = intArrayToBytes(flatState);
-        byte[] timeRemain = int2ByteArray(timeRemaingInSec);
-        //byte[] velocityX = float2ByteArray(model.getMarioFloatVelocity()[0]);
-        //byte[] velocityY = float2ByteArray(model.getMarioFloatVelocity()[1]);
+
+        int timeRemainingInSec = model.getRemainingTime() / 1000;
+        byte[] timeRemain = int2ByteArray(timeRemainingInSec);
+
+        byte marioMode = (byte) model.getMarioMode();
+        byte isMarioOnGround = (byte)(model.isMarioOnGround() ? 1 : 0);
+        byte isMarioCanJumpHigher = (byte) (model.getMarioCanJumpHigher() ? 1 : 0);
+        byte marioFacing = (byte) (model.getMarioFacing());
+
+        byte velocityXSign = (byte)(model.getMarioFloatVelocity()[0] > 0 ? 1 : 0);
+        byte velocityYSign = (byte)(model.getMarioFloatVelocity()[1] > 0 ? 1 : 0);
+        byte[] velocityX = float2ByteArray(model.getMarioFloatVelocity()[0]);
+        byte[] velocityY = float2ByteArray(model.getMarioFloatVelocity()[1]);
+
         byte gameStatus = (byte)(model.getGameStatus().ordinal());
 
         ByteBuffer buffer = ByteBuffer.allocate(
                 state.length
                 + timeRemain.length
-                //+ 8
+                + 4
+                + 10
                 + 1
         );
 
         buffer.put(state);
         buffer.put(timeRemain);
-        //buffer.put(velocityX);
-        //buffer.put(velocityY);
+
+        buffer.put(marioMode);
+        buffer.put(isMarioOnGround);
+        buffer.put(isMarioCanJumpHigher);
+        buffer.put(marioFacing);
+
+        buffer.put(velocityXSign);
+        buffer.put(velocityYSign);
+        buffer.put(velocityX);
+        buffer.put(velocityY);
+
         buffer.put(gameStatus);
         return buffer.array();
     }

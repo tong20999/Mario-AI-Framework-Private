@@ -6,7 +6,7 @@ environment_settings = {
         'env_name': 'CartPole-v1',
         'gamma': 0.99,
         'max_minutes': 60,
-        'max_episodes': 1000,
+        'max_episodes': 500,
         'goal_mean_100_reward': 475
     }
 
@@ -17,7 +17,7 @@ max_gradient_norm = float('inf')
 
 training_strategy_fn = lambda: EGreedyExpStrategy(init_epsilon=0.10,  
                                                     min_epsilon=0.10, 
-                                                    decay_steps=10000 * 4)
+                                                    decay_steps=10000)
 evaluation_strategy_fn = lambda: GreedyStrategy()
 
 replay_buffer_fn = lambda: ReplayBuffer(max_size=50000, batch_size=64)

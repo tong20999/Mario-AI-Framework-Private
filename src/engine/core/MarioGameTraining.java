@@ -94,6 +94,7 @@ public class MarioGameTraining {
 //    long nextTrigger = 0;
 //    float expectPositionX = 0;
     int lastMilestone;
+    int lastCoinCount;
     int episode = -1;
 
     boolean evaluation = false;
@@ -116,8 +117,9 @@ public class MarioGameTraining {
         this.evaluation = info.isEvaluation();
         this.world = new MarioWorld(this.killEvents);
         this.world.visuals = visual;
-        this.timer = 30;
+        this.timer = 40;
         this.lastMilestone = 0;
+        this.lastCoinCount = 0;
         this.world.initializeLevel(getTrainingLevel(2), 1000 * this.timer);
         if (visual) {
             this.world.initializeVisuals(this.render.getGraphicsConfiguration());
@@ -158,64 +160,54 @@ public class MarioGameTraining {
         MarioForwardModel modelAfter = new MarioForwardModel(this.world.clone());
 
         // =================================================================================
-        // --- 4. Calculate the reward based on what changed (REWARD SHAPING LOGIC) ---
+        // --- "COMPLETIONIST" REWARD LOGIC ---
         // =================================================================================
-        float reward = 0;
+        float reward = 0.0f;
+        // --- 1. Small penalty for time passing to encourage efficiency ---
+        reward -= 0.015f;
 
-        // --- Principle 1: Encourage Progress, but don't force speed ---
-        // A small reward for moving to the right. This gives a gentle push in the correct direction.
-        float progress = modelAfter.getMarioFloatPos()[0] - modelBefore.getMarioFloatPos()[0];
-        if (progress > 0) {
-            reward += progress * 0.01f; // Small coefficient to not overpower other rewards
+        // --- 2. Reward for skillful actions (building the "score") ---
+        // Milestone progress reward (fixed bonus per milestone)
+        int currentMilestone = (int)((modelAfter.getCompletionPercentage()) * 10);
+        if (currentMilestone > this.lastMilestone) {
+            reward += (currentMilestone - this.lastMilestone) * 1.0f;
+
+            this.lastMilestone = currentMilestone;
         }
 
-        // --- Principle 2: Encourage Skillful Play and Interaction ---
-        // Loop through all game events that happened in the last step to reward/penalize specific actions.
-        for (MarioEvent e : this.world.lastFrameEvents) {
-
-            // Reward for killing enemies (a sign of competence)
-            if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
-                    e.getEventType() == EventType.FIRE_KILL.getValue() ||
-                    e.getEventType() == EventType.SHELL_KILL.getValue()) {
-                reward += 0.3f;
-            }
-
-            // Reward for collecting a power-up (encourages becoming stronger)
-            if (e.getEventType() == EventType.COLLECT.getValue()) {
-                if (e.getEventParam() == SpriteType.FIRE_FLOWER.getValue() ||
-                        e.getEventParam() == SpriteType.MUSHROOM.getValue()) {
-                    reward += 0.5f;
-                }
-            }
+        // Coin collection reward
+        int currentCoins = modelAfter.getNumCollectedCoins();
+        if (currentCoins > this.lastCoinCount) {
+            reward += (currentCoins - this.lastCoinCount) * 0.5f; // +0.5 reward per coin
+            this.lastCoinCount = currentCoins;
         }
 
-        // --- Principle 3: Encourage Survival and Avoiding Mistakes ---
+        // Event-based rewards (kills, power-ups) and penalties (hurt, walls)
         for (MarioEvent e : this.world.lastFrameEvents) {
-
-            // Penalize for getting hurt (a competent agent should avoid damage)
+            if (e.getEventType() == EventType.STOMP_KILL.getValue() || e.getEventType() == EventType.FIRE_KILL.getValue()) {
+                reward += 2.0f; // +2 reward per kill
+            }
+            if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == SpriteType.FIRE_FLOWER.getValue()) {
+                reward += 5.0f; // +5 for a power-up
+            }
             if (e.getEventType() == EventType.HURT.getValue()) {
-                reward -= 0.5f;
+                reward -= 1.0f; // -1 for taking damage
             }
-
-            // Penalize for running into a wall or obstacle (a common failure mode)
             if (e.getEventType() == EventType.HIT_WALL.getValue()) {
                 reward -= 0.2f;
             }
         }
 
-        // --- Principle 4: Define Ultimate Success and Failure ---
-        // A large terminal reward for winning the level
+        // --- 3. Define the outcome: Keep your score or lose it all ---
         if (this.world.gameStatus == GameStatus.WIN) {
+            // The reward for winning is that you get to keep the score you earned.
+            // We can add a small bonus to break ties, but the bulk of the score is from the run itself.
             reward += 10.0f;
         }
-        // A large terminal penalty for losing or running out of time
         else if (this.world.gameStatus == GameStatus.LOSE || this.world.gameStatus == GameStatus.TIME_OUT) {
-            reward -= 2.0f;
+            // A massive penalty that ensures any failure is always worse than even the "laziest" win.
+            reward -= 50.0f;
         }
-
-        // =================================================================================
-        // --- End of Reward Shaping Logic ---
-        // =================================================================================
 
         if(this.evaluation){
             this.evaluationReward += reward;
@@ -231,6 +223,26 @@ public class MarioGameTraining {
         printInfo();
         var nextState = State.toByte(modelAfter);
         return stepResult(nextState, reward, this.world.gameStatus != GameStatus.RUNNING);
+    }
+
+    private float timePenalty() {
+        float reward = this.world.currentTimer - this.currentTimer;
+        this.currentTimer = this.world.currentTimer;
+        if(reward >= 0){
+            return 0;
+        }
+        var timePenalty = reward * 0.0002f;
+        return timePenalty;
+    }
+
+    private double mileStoneReward() {
+        double completePercentage = this.world.mario.x / (this.world.level.exitTileX * 16.0);
+        int milestone = (int)(completePercentage * 10);
+        if (milestone > lastMilestone) {
+            lastMilestone = milestone;
+            return milestone;
+        }
+        return 0;
     }
 
     private void printInfo() {

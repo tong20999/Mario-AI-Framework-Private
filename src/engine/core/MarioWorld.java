@@ -249,21 +249,43 @@ public class MarioWorld {
 
         for (int y = centerYInMap - MarioGame.tileHeight / 2, obsY = 0; y < centerYInMap + MarioGame.tileHeight / 2; y++, obsY++) {
             for (int x = centerXInMap - MarioGame.tileWidth / 2, obsX = 0; x < centerXInMap + MarioGame.tileWidth / 2; x++, obsX++) {
+
+                // --- START OF NEW, ROBUST LOGIC ---
                 int currentX = x;
-                if (currentX < 0) {
-                    currentX = 0;
+                if (currentX < 0) currentX = 0;
+                if (currentX >= this.level.tileWidth) currentX = this.level.tileWidth - 1;
+
+                // Is the tile outside the map's vertical boundary? If so, it's a pit.
+                if (y >= this.level.tileHeight) {
+                    ret[obsX][obsY] = -1;
+                    continue;
                 }
-                if (currentX > level.tileWidth - 1) {
-                    currentX = level.tileWidth - 1;
+
+                // Get the block type at the current location.
+                int block = this.level.getBlock(currentX, y);
+
+                // Is the block an empty space (like sky or a gap)?
+                if (block == 0) {
+                    boolean solidGroundFoundBelow = false;
+                    // Check every tile directly below this one, all the way to the bottom of the map.
+                    for (int i = y + 1; i < this.level.tileHeight; i++) {
+                        if (this.level.getBlock(currentX, i) != 0) {
+                            solidGroundFoundBelow = true;
+                            break; // Found solid ground, so this is just sky. Stop checking.
+                        }
+                    }
+
+                    // If we checked all the way down and found no ground, it's a deadly pit.
+                    if (!solidGroundFoundBelow) {
+                        ret[obsX][obsY] = -1;
+                    } else {
+                        ret[obsX][obsY] = 0; // It's just safe, empty sky.
+                    }
+                } else {
+                    // It's a non-empty block, so get its normal value.
+                    ret[obsX][obsY] = MarioForwardModel.getBlockValueGeneralization(block, sceneDetail);
                 }
-                int currentY = y;
-                if (currentY < 0) {
-                    currentY = 0;
-                }
-                if (currentY > level.tileHeight - 1) {
-                    currentY = level.tileHeight - 1;
-                }
-                ret[obsX][obsY] = MarioForwardModel.getBlockValueGeneralization(this.level.getBlock(x, y), sceneDetail);
+                // --- END OF NEW, ROBUST LOGIC ---
             }
         }
 
