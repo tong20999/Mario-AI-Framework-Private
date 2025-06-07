@@ -36,15 +36,23 @@ public class Agent extends KeyAdapter implements MarioAgent {
 
     @Override
     public void keyPressed(KeyEvent e) {
-        toggleKey(e.getKeyCode(), true);
+        try {
+            toggleKey(e.getKeyCode(), true);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
-        toggleKey(e.getKeyCode(), false);
+        try {
+            toggleKey(e.getKeyCode(), false);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
-    private void toggleKey(int keyCode, boolean isPressed) {
+    private void toggleKey(int keyCode, boolean isPressed) throws Exception {
         if (this.actions == null) {
             return;
         }
@@ -66,7 +74,7 @@ public class Agent extends KeyAdapter implements MarioAgent {
                 break;
             case KeyEvent.VK_M:
                 var complate = model.getMarioCompleteObservation(0,0);
-                int a = 5;
+                var a = State.toByte(model);
                 break;
         }
     }

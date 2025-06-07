@@ -55,6 +55,7 @@ public class MarioRender extends JComponent implements FocusListener {
             drawStringDropShadow(og, "Evaluation", 14, 2, 7);
         }
         drawStringDropShadow(og, "Complete: " + String.format("%.2f", completePercentage), 0, 4, 7);
+        drawStringDropShadow(og, "Epsilon: " + String.format("%.2f", world.epsilon), 15, 4, 7);
         if (MarioGame.verbose) {
             String pressedButtons = "";
             for (int i = 0; i < world.mario.actions.length; i++) {

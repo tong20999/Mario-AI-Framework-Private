@@ -27,6 +27,7 @@ public class MarioWorld {
     public float reward = 0;
     public int episode = 0;
     public ArrayList<MarioEvent> lastFrameEvents;
+    public float epsilon = 0.0f;
 
     private MarioEvent[] killEvents;
     private ArrayList<MarioSprite> sprites;

@@ -5,14 +5,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="add human debug">
-      <change afterPath="$PROJECT_DIR$/levels/training/lvl-3.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_22_2025_11_52_AM_[Changes]/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_5_22_2025_11_52_AM__Changes_.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/.vscode/launch.json" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/.vscode/launch.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deepRL/ddqn.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ddqn.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deepRL/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deepRL/marioGame.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/marioGame.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/levels/training/lvl-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/lvl-1.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/GameServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/GameServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/PlayLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/PlayLevel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/agents/human/Agent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/human/Agent.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/State.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/State.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioRender.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioRender.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioWorld.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioWorld.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/info/Info.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/info/Info.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -46,19 +54,19 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.GenerateLevel.executor": "Debug",
-    "Application.Program.executor": "Debug",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "develop",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Git/Mario-AI-Framework-Private/levels/training",
-    "project.structure.last.edited": "Modules",
-    "project.structure.proportion": "0.15",
-    "project.structure.side.proportion": "0.2862069"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.GenerateLevel.executor&quot;: &quot;Debug&quot;,
+    &quot;Application.Program.executor&quot;: &quot;Debug&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;develop&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Git/Mario-AI-Framework-Private/levels/training&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2862069&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Git\Mario-AI-Framework-Private\levels\training" />
@@ -103,8 +111,8 @@
     <recent_temporary>
       <list>
         <item itemvalue="Application.Program" />
-        <item itemvalue="Application.GenerateLevel" />
         <item itemvalue="Application.PlayLevel" />
+        <item itemvalue="Application.GenerateLevel" />
       </list>
     </recent_temporary>
   </component>
@@ -177,11 +185,6 @@
         <PinnedItemInfo parentTag="engine.core.MarioWorld" memberName="level" />
       </pinned-members>
     </pin-to-top-manager>
-    <watches-manager>
-      <configuration name="Application">
-        <watch expression="((Mario)((MarioWorld)((MarioGameTraining)this).world).mario).mayJump" custom="engine.core.MarioGameTraining,engine.core.MarioWorld,engine.sprites.Mario" />
-      </configuration>
-    </watches-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Mario_AI_Framework_Private$Py4JEntryPoint.ic" NAME="Py4JEntryPoint Coverage Results" MODIFIED="1723178718289" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />

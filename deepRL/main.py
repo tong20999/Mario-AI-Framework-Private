@@ -4,9 +4,9 @@ from marioGame import MarioGame
 
 environment_settings = {
         'env_name': 'CartPole-v1',
-        'gamma': 1.00,
+        'gamma': 0.99,
         'max_minutes': 20,
-        'max_episodes': 10000,
+        'max_episodes': 500,
         'goal_mean_100_reward': 475
     }
 
@@ -16,11 +16,11 @@ value_optimizer_lr = 0.0005
 max_gradient_norm = float('inf')
 
 training_strategy_fn = lambda: EGreedyExpStrategy(init_epsilon=1.0,  
-                                                    min_epsilon=0.3, 
-                                                    decay_steps=20000)
+                                                    min_epsilon=0.10, 
+                                                    decay_steps=10000 * 4)
 evaluation_strategy_fn = lambda: GreedyStrategy()
 
-replay_buffer_fn = lambda: ReplayBuffer(max_size=500000, batch_size=64)
+replay_buffer_fn = lambda: ReplayBuffer(max_size=1000, batch_size=64)
 n_warmup_batches = 5
 update_target_every_steps = 10
 

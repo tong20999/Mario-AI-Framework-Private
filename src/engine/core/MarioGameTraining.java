@@ -297,6 +297,8 @@ public class MarioGameTraining {
     public float episodeReward = 0;
     int episodeTimer = 0;
     int evaluationTimer = 0;
+
+    float epsilon;
     public byte[] reset(Info info) throws Exception {
         this.gameEvents = new ArrayList<>();
         if(!info.isEvaluation()){
@@ -337,12 +339,14 @@ public class MarioGameTraining {
         } else {
             this.evaluationReward = 0;
         }
+        this.epsilon = info.getEpsilon();
+        this.world.epsilon = this.epsilon;
         return State.toByte(new MarioForwardModel(this.world.clone()));
     }
 
     public byte[] step(boolean[] action) throws Exception {
         float reward = 0;
-        for (int i = 0; i < 7; i++) {
+        for (int i = 0; i < 4; i++) {
             miniStep(action);
         }
 //        this.remaining -= 30;
@@ -355,15 +359,21 @@ public class MarioGameTraining {
 //            this.nextTrigger -= this.interval;
 //        }
 
-        //var mileStoneReward = mileStoneReward();
-        //var timePenalty = timePenalty();
-        //reward += mileStoneReward;
-        //reward += timePenalty;
+//        var mileStoneReward = mileStoneReward();
+//        var timePenalty = timePenalty();
+//        reward += mileStoneReward;
+//        reward += timePenalty;
 
-        if (this.world.gameStatus == GameStatus.LOSE || this.world.gameStatus == GameStatus.TIME_OUT) {
+//        if(action[4]){
+//            reward -= 1;
+//        }
+
+        if (this.world.gameStatus == GameStatus.LOSE) {
             reward -= 1;
         } else if (this.world.gameStatus == GameStatus.WIN) {
             reward += 1;
+        } else if (this.world.gameStatus == GameStatus.TIME_OUT){
+            reward -= 1;
         }
 
         if(this.evaluation){
@@ -431,7 +441,8 @@ public class MarioGameTraining {
         if(reward >= 0){
             return 0;
         }
-        return reward/1000f;
+        var timePenalty = reward/5000f;
+        return timePenalty;
     }
 
     private double mileStoneReward() {
@@ -439,7 +450,7 @@ public class MarioGameTraining {
         int milestone = (int)(completePercentage * 10);       // 0..10
         if (milestone > lastMilestone) {
             lastMilestone = milestone;
-            return 0.1f;
+            return 1f;
         }
         return 0;
     }

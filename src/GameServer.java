@@ -51,21 +51,20 @@ public class GameServer {
             while ((bytesRead = input.read(buffer)) != -1) {
                 if (bytesRead == 1024) {
                     String opCode = new String(buffer, 0, 2, StandardCharsets.UTF_8);
-                    byte[] payload = Arrays.copyOfRange(buffer, 2, 7);
 
+                    byte[] payload;
                     switch (opCode) {
                         case "01": // reset
+                            payload = Arrays.copyOfRange(buffer, 2, 11);
                             Info info = getEpisode(payload);
                             var state = game.reset(info);
                             sendResponse(output, "01", state);
                             break;
                         case "02": // step
+                            payload = Arrays.copyOfRange(buffer, 2, 7);
                             boolean[] actions = getActionFromPayload(payload); // fix: use payload[0], not [2]
                             var result = game.step(actions);
                             sendResponse(output, "02", result);
-                            break;
-                        case "03": // get observation
-                            sendResponse(output, "03", null);
                             break;
                         default:
                             System.out.println("Unknown op: " + opCode);
@@ -88,9 +87,10 @@ public class GameServer {
         buffer.order(java.nio.ByteOrder.BIG_ENDIAN);
 
         int episode = buffer.getInt();
+        float epsilon = buffer.getFloat();
         byte boolByte = buffer.get();       // 5th byte
         boolean evaluation = boolByte != 0;
-        return new Info(episode, evaluation);
+        return new Info(episode, evaluation, epsilon);
     }
 
     private boolean[] getActionFromPayload(byte[] payload) {

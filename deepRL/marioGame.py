@@ -21,7 +21,7 @@ all_possible_input:list[list[bool]] = [
     # [False, False, True, False, False],  # Duck only
     # [False, False, True, False, True], # Duck and Jump
     # [False, False, True, True, False],
-    [False, False, True, True, True], # move left
+    [True, False, False, False, False], # move left
     # [True, False, False, False, True], # move left and jump
     # [True, False, False, True, False], # move left and speed
     # [True, False, False, True, True],  # move left and speed and jump
@@ -33,28 +33,60 @@ class MarioGame(SocketEnv):
         self.fps = fps
         # Observations are dictionaries with the agent's and the target's location.
         # Each location is encoded as an element of {0, ..., `size`-1}^2
+        # self.observation_space = gym.spaces.MultiDiscrete([ 
+        #         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        #         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        #         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        #         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        #         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        #         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        #         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        #         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        #         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        #         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        #         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        #         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        #         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        #         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        #         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        #         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        #         1, 1, 1, 1, # time remaining
+        #         1, 1, 1, 1, # velocity x
+        #         1, 1, 1, 1, # velocity y
+        #         1 # game status
+        #         ])
+
         self.observation_space = gym.spaces.MultiDiscrete([ 
-                256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256,
-                256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256,
-                256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256,
-                256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256,
-                256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256,
-                256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256,
-                256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256,
-                256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256,
-                256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256,
-                256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256,
-                256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256,
-                256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256,
-                256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256,
-                256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256,
-                256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256,
-                256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256,
-                256, 256, 256, 256, # time remaining
-                256, 256, 256, 256, # velocity x
-                256, 256, 256, 256, # velocity x
-                256 # game status
-                ])
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, # time remaining
+        1, 1, 1, 1, # velocity x
+        1, 1, 1, 1, # velocity y
+        1 # game status
+        ])
+
+        # self.observation_space = gym.spaces.MultiDiscrete([ 
+        #      1, 1, 1, 1, 1, 1, 1, 1, 1,
+        #      1, 1, 1, 1,
+        #      1, 1, 1,
+        #      1, 1,
+        #      1, 1, 1, 1,
+        #      1, 1, 1, 1, 1, 1, 1, 1,
+        #      1, 1, 1, 1,
+        #      1
+        # ])
 
         actions:list[int] = []
         for i in range(len(all_possible_input)):
@@ -93,7 +125,8 @@ class MarioGame(SocketEnv):
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None) -> list[int]:
         episode = options.get("episode") if options else 0
         evaluation = options.get("evaluation") if options else False
-        payload = struct.pack('>Ib', episode, evaluation)
+        epsilon = options.get("epsilon") if options else 0
+        payload = struct.pack('>if?', episode, epsilon, evaluation)
         self._send_operation('01', payload)
         observation = self._receive_reset()
         return observation
