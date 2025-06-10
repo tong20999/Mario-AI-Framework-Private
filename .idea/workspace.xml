@@ -4,7 +4,40 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="add human debug" />
+    <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="add human debug">
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-10-block-2.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-11-ramp-2.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-2-velocity-low-1.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-2-velocity-low-2.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-2-velocity-low-3.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-3-velocity-high-1.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-3-velocity-high-2.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-3-velocity-high-3.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-4-obstacle-1.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-4-obstacle-2.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-4-obstacle-3.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-5-block-1.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-5-block-3.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-6-ramp-1.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-6-ramp-2.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-6-ramp-3.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-7-velocity-low-2.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-8-velocity-high-2.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-9-obstacle-2.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/ddqn.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ddqn.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/per.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/per.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/lvl-1-basic-move-right.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/lvl-5-block-2.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-3.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/GenerateLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/GenerateLevel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/PlayLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/PlayLevel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioWorld.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioWorld.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/helper/EventType.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/helper/EventType.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/info/EndInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/info/EndInfo.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />

@@ -338,6 +338,7 @@ public class MarioWorld {
         for (MarioSprite sprite : sprites) {
             if (sprite.x < cameraX - 64 || sprite.x > cameraX + MarioGame.width + 64 || sprite.y > this.level.height + 32) {
                 if (sprite.type == SpriteType.MARIO) {
+                    this.addEvent(EventType.FALL_PIT, sprite.type.getValue());
                     this.lose();
                 }
                 this.removeSprite(sprite);

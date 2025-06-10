@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.awt.*;
+import java.util.Random;
 import java.util.stream.IntStream;
 
 import javax.swing.JFrame;
@@ -111,8 +112,9 @@ public class MarioGameTraining {
     int evaluationTimer = 0;
     
     float epsilon;
+    int frameSkip = 5;
 
-    float winReward = 50;
+    float winReward = 30;
     float mileStoneReward = 0.1f;
     float jumpOverPitReward = 0f;
     float killReward = 2;
@@ -121,9 +123,10 @@ public class MarioGameTraining {
     float mushroomReward = 2;
     float lifeMushroomReward = 5;
     float loseReward = -15f;
-    float loseTimeoutReward = -25f;
+    float loseTimeoutReward = -30f;
     float hurtReward = -1f;
-    float hitWallReward = -0.25f;
+    float hitWallReward = -0.2f;
+    float fallPitReward = -10f;
     float timePenaltyRewardCoefficient = 0.00005f;
     public byte[] reset(Info info) throws Exception {
         this.gameEvents = new ArrayList<>();
@@ -133,10 +136,14 @@ public class MarioGameTraining {
         this.evaluation = info.isEvaluation();
         this.world = new MarioWorld(this.killEvents);
         this.world.visuals = visual;
-        this.timer = 100;
+        this.timer = 30;
         this.lastMilestone = 0;
         this.lastCoinCount = 0;
-        this.world.initializeLevel(getTrainingLevel("9"), 1000 * this.timer);
+        //this.world.initializeLevel(getOriginalLevel(1), 1000 * this.timer);
+        Random random = new Random();
+        int randomNumber = random.nextInt(3) + 1;
+        var shuffle = MessageFormat.format("5-block-{0}", randomNumber);
+        this.world.initializeLevel(getTrainingLevel(shuffle), 1000 * this.timer);
         if (visual) {
             this.world.initializeVisuals(this.render.getGraphicsConfiguration());
         }
@@ -167,7 +174,7 @@ public class MarioGameTraining {
         var state = new MarioForwardModel(this.world.clone());
         // for frame skip the agent will only send one action per 3 frames to make agent jump longer
         // because it needs to hold the jump button
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < this.frameSkip; i++) {
             miniStep(action);
         }
 
@@ -207,6 +214,9 @@ public class MarioGameTraining {
             }
             if (e.getEventType() == EventType.HIT_WALL.getValue()) {
                 reward += hitWallReward;
+            }
+            if (e.getEventType() == EventType.FALL_PIT.getValue()) {
+                reward += fallPitReward;
             }
         }
 
@@ -287,6 +297,10 @@ public class MarioGameTraining {
                     .filter(e -> e.getEventType() == EventType.HURT.getValue())
                     .count();
 
+            int fallPit = (int) gameEvents.stream()
+                    .filter(e -> e.getEventType() == EventType.FALL_PIT.getValue())
+                    .count();
+
             int collect = (int) gameEvents.stream()
                     .filter(e -> e.getEventType() == EventType.COLLECT.getValue())
                     .count();
@@ -302,6 +316,7 @@ public class MarioGameTraining {
                 evaluationInfo.win += win;
                 evaluationInfo.lose += lose;
                 evaluationInfo.hurt += hurt;
+                evaluationInfo.fallPit += fallPit;
                 evaluationInfo.fallKill += fallKill;
                 evaluationInfo.stompKill += stompKill;
                 evaluationInfo.shellKill += shellKill;
@@ -313,6 +328,7 @@ public class MarioGameTraining {
                 episodeInfo.win += win;
                 episodeInfo.lose += lose;
                 episodeInfo.hurt += hurt;
+                episodeInfo.fallPit += fallPit;
                 episodeInfo.fallKill += fallKill;
                 episodeInfo.stompKill += stompKill;
                 episodeInfo.shellKill += shellKill;
@@ -354,7 +370,8 @@ public class MarioGameTraining {
                         COLLECT_LIFE_MUSHROOM {9}
                         HURT {10}
                         HIT_WALL {11}
-                        TIME_PENALTY_COEFFICIENT {12}
+                        FALL_PIT {12}
+                        TIME_PENALTY_COEFFICIENT {13}
                         """,
                 this.winReward,
                 this.loseReward,
@@ -368,6 +385,7 @@ public class MarioGameTraining {
                 this.lifeMushroomReward,
                 this.hurtReward,
                 this.hitWallReward,
+                this.fallPitReward,
                 this.timePenaltyRewardCoefficient);
     }
 
@@ -403,7 +421,7 @@ public class MarioGameTraining {
     }
 
     public static String getFirstLevel(){
-        var level1 = "./levels/original/lvl-1.txt";
+        var level1 = "./levels/original/lvl-1-basic-move-right.txt";
         return getFileFromLevel(level1);
     }
 

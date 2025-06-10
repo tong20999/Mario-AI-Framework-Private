@@ -38,8 +38,7 @@ public class GenerateLevel {
         MarioLevelGenerator generator = new levelGenerators.notch.LevelGenerator();
         MarioGame game = new MarioGame();
         // printResults(game.playGame(level, 200, 0));
-        var original = "./levels/original/lvl-1.txt";
-        var training = "./levels/training/lvl-1.txt";
+        var original = "./levels/original/lvl-1-basic-move-right.txt";
         printResults(game.runGame(new agents.human.Agent(), getLevel(original), 200, 0, true, 30));
     }
 }

@@ -6,18 +6,18 @@ environment_settings = {
         'env_name': 'CartPole-v1',
         'gamma': 0.99,
         'max_minutes': 60,
-        'max_episodes': 500,
+        'max_episodes': 1000,
         'goal_mean_100_reward': 475
     }
 
 value_model_fn = lambda nS, nA: FCQ(nS, nA, hidden_dims=(512,128))
 value_optimizer_fn = lambda net, lr: optim.RMSprop(net.parameters(), lr=lr)
-value_optimizer_lr = 0.00001
+value_optimizer_lr = 0.00005
 max_gradient_norm = float('inf')
 
-training_strategy_fn = lambda: EGreedyExpStrategy(init_epsilon=1.00,  
+training_strategy_fn = lambda: EGreedyExpStrategy(init_epsilon=0.20,  
                                                     min_epsilon=0.10, 
-                                                    decay_steps=10000)
+                                                    decay_steps=10000 * 4)
 evaluation_strategy_fn = lambda: GreedyStrategy()
 
 replay_buffer_fn = lambda: ReplayBuffer(max_size=50000, batch_size=64)

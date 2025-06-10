@@ -190,9 +190,12 @@ class DDQN():
         plt.text(len(eva100_reward)-1, eva100_reward[-1], str(eva100_reward[-1]))
         plt.text(len(mean100_reward)-1, mean100_reward[-1], str(mean100_reward[-1]))
         plt.text(len(epsilon)-1, epsilon[-1], str(epsilon[-1]))
+
+        if len(eva100_reward) == 250 or len(eva100_reward) == 500 or len(eva100_reward) == 750 or len(eva100_reward) == 1000:
+            plt.savefig('C:/thesis_data/result_plot_episode_{}.png'.format(len(eva100_reward)))
+
         plt.show(block=False)
         plt.pause(1)
-        # Try to send the window to the background so it doesn’t grab focus:
         try:
             manager = fig.canvas.manager
             manager.window.lower()
@@ -256,8 +259,8 @@ class DDQN():
         
         self.target_model = self.value_model_fn(nS, nA)
         self.online_model = self.value_model_fn(nS, nA)
-        # self.online_model.load_state_dict(torch.load('./model.499.tar', weights_only=True))
-        # self.online_model.eval()
+        self.online_model.load_state_dict(torch.load('./model.tar', weights_only=True))
+        self.online_model.eval()
         self.update_network()
 
         self.value_optimizer = self.value_optimizer_fn(self.online_model, 
@@ -322,7 +325,7 @@ class DDQN():
             self.myepisode_reward.append(self.episode_reward[-1])
             self.eva100.append(np.mean(self.evaluation_scores[-100:]))
             self.mean100.append(np.mean(self.myepisode_reward[-100:]))
-            if(episode % 20 == 0):
+            if(episode % 10 == 0):
                 self.plot(self.eva100, self.mean100, self.epsilons)
             
             wallclock_elapsed = time.time() - training_start
@@ -401,5 +404,10 @@ class DDQN():
         return self.checkpoint_paths
 
     def save_checkpoint(self, episode_idx, model):
-        torch.save(model.state_dict(), 
-                        os.path.join(self.checkpoint_dir, 'model.{}.tar'.format(episode_idx)))
+        if (episode_idx + 1) % 20 == 0:
+            torch.save(model.state_dict(), 
+                            os.path.join(self.checkpoint_dir, 'model.{}.tar'.format(episode_idx + 1)))
+        
+        if (episode_idx + 1) % 50 == 0:
+            torch.save(model.state_dict(), 
+                        os.path.join('C:/thesis_data', 'model.{}.tar'.format(episode_idx + 1)))

@@ -135,9 +135,12 @@ class PER():
         plt.text(len(eva100_reward)-1, eva100_reward[-1], str(eva100_reward[-1]))
         plt.text(len(mean100_reward)-1, mean100_reward[-1], str(mean100_reward[-1]))
         plt.text(len(epsilon)-1, epsilon[-1], str(epsilon[-1]))
+
+        if len(eva100_reward) == 250 or len(eva100_reward) == 500 or len(eva100_reward) == 750 or len(eva100_reward) == 1000:
+            plt.savefig('C:/thesis_data/result_plot_episode_{}.png'.format(len(eva100_reward)))
+
         plt.show(block=False)
         plt.pause(1)
-        # Try to send the window to the background so it doesn’t grab focus:
         try:
             manager = fig.canvas.manager
             manager.window.lower()
@@ -206,6 +209,8 @@ class PER():
         
         self.target_model = self.value_model_fn(nS, nA)
         self.online_model = self.value_model_fn(nS, nA)
+        self.online_model.load_state_dict(torch.load('./model.tar', weights_only=True))
+        self.online_model.eval()
         self.update_network(tau=1.0)
 
         self.value_optimizer = self.value_optimizer_fn(self.online_model, 
@@ -273,7 +278,7 @@ class PER():
             self.myepisode_reward.append(self.episode_reward[-1])
             self.eva100.append(np.mean(self.evaluation_scores[-100:]))
             self.mean100.append(np.mean(self.myepisode_reward[-100:]))
-            if(episode % 20 == 0):
+            if(episode % 10 == 0):
                 self.plot(self.eva100, self.mean100, self.epsilons)
             
             wallclock_elapsed = time.time() - training_start
@@ -352,8 +357,13 @@ class PER():
         return self.checkpoint_paths
 
     def save_checkpoint(self, episode_idx, model):
-        torch.save(model.state_dict(), 
-                   os.path.join(self.checkpoint_dir, 'model.{}.tar'.format(episode_idx)))
+        if (episode_idx + 1) % 20 == 0:
+            torch.save(model.state_dict(), 
+                            os.path.join(self.checkpoint_dir, 'model.{}.tar'.format(episode_idx + 1)))
+        
+        if (episode_idx + 1) % 50 == 0:
+            torch.save(model.state_dict(), 
+                        os.path.join('C:/thesis_data', 'model.{}.tar'.format(episode_idx + 1)))
 
 class FCDuelingQ(nn.Module):
     def __init__(self, 
@@ -450,31 +460,28 @@ class GreedyStrategy():
             return np.argmax(q_values)
 
 environment_settings = {
-        'gamma': 1.00,
-        'max_minutes': 30,
-        'max_episodes': 500,
+        'gamma': 0.99,
+        'max_minutes': 60,
+        'max_episodes': 1000,
         'goal_mean_100_reward': 475
     }
 
 value_model_fn = lambda nS, nA: FCDuelingQ(nS, nA, hidden_dims=(512,128))
 value_optimizer_fn = lambda net, lr: optim.RMSprop(net.parameters(), lr=lr)
-value_optimizer_lr = 0.0001
+value_optimizer_lr = 0.00005
 max_gradient_norm = float('inf')
 
-training_strategy_fn = lambda: EGreedyExpStrategy(init_epsilon=1.0,  
+training_strategy_fn = lambda: EGreedyExpStrategy(init_epsilon=0.5,  
                                                     min_epsilon=0.3, 
                                                     decay_steps=20000)
 evaluation_strategy_fn = lambda: GreedyStrategy()
 
-# replay_buffer_fn = lambda: ReplayBuffer(max_size=10000, batch_size=64)
-# replay_buffer_fn = lambda: PrioritizedReplayBuffer(
-#     max_samples=10000, batch_size=64, rank_based=True, 
-#     alpha=0.6, beta0=0.1, beta_rate=0.99995)
+
 replay_buffer_fn = lambda: PrioritizedReplayBuffer(
     max_samples=20000, batch_size=64, rank_based=False,
     alpha=0.6, beta0=0.1, beta_rate=0.99995)
 n_warmup_batches = 5
-update_target_every_steps = 1
+update_target_every_steps = 100
 tau = 0.01
 
 gamma, max_minutes, \

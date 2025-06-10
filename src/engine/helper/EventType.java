@@ -13,7 +13,8 @@ public enum EventType {
     KICK(10),
     LOSE(11),
     WIN(12),
-    HIT_WALL(13);
+    HIT_WALL(13),
+    FALL_PIT(14);
 
     private int value;
 
