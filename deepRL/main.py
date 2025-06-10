@@ -12,10 +12,10 @@ environment_settings = {
 
 value_model_fn = lambda nS, nA: FCQ(nS, nA, hidden_dims=(512,128))
 value_optimizer_fn = lambda net, lr: optim.RMSprop(net.parameters(), lr=lr)
-value_optimizer_lr = 0.0001
+value_optimizer_lr = 0.00001
 max_gradient_norm = float('inf')
 
-training_strategy_fn = lambda: EGreedyExpStrategy(init_epsilon=0.10,  
+training_strategy_fn = lambda: EGreedyExpStrategy(init_epsilon=1.00,  
                                                     min_epsilon=0.10, 
                                                     decay_steps=10000)
 evaluation_strategy_fn = lambda: GreedyStrategy()
