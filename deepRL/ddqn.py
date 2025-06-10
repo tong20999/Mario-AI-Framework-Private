@@ -18,6 +18,65 @@ import struct
 LEAVE_PRINT_EVERY_N_SECS = 60
 ERASE_LINE = '\x1b[2K'
 
+class CNN_FCQ(nn.Module):
+    def __init__(self, vector_input_dim, output_dim, activation_fc=F.relu):
+        super(CNN_FCQ, self).__init__()
+        self.activation_fc = activation_fc
+
+        # CNN head for the 16x16 grid
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=1)
+        # After two convolutions on a 16x16 grid, the output size will still be 16x16
+        # The flattened size is 64 (out_channels) * 16 * 16 = 16384
+        self.cnn_output_size = 64 * 16 * 16
+        
+        # MLP head for the vector data
+        self.vector_fc1 = nn.Linear(vector_input_dim, 64)
+
+        # Combiner - takes flattened CNN output and vector MLP output
+        self.combiner_fc1 = nn.Linear(self.cnn_output_size + 64, 512)
+        self.combiner_fc2 = nn.Linear(512, output_dim)
+
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = device
+        self.to(self.device)
+
+    def _format(self, grid_state, vector_state):
+        # Convert to tensor if they are not already
+        if not isinstance(grid_state, torch.Tensor):
+            grid_state = torch.tensor(grid_state, device=self.device, dtype=torch.float32)
+        
+        if not isinstance(vector_state, torch.Tensor):
+            vector_state = torch.tensor(vector_state, device=self.device, dtype=torch.float32)
+
+        # If the grid state is 3D (C, H, W), add a batch dimension to make it 4D
+        if len(grid_state.shape) == 3:
+            grid_state = grid_state.unsqueeze(0)
+
+        # If the vector state is 1D, add a batch dimension to make it 2D
+        if len(vector_state.shape) == 1:
+            vector_state = vector_state.unsqueeze(0)
+            
+        return grid_state, vector_state
+
+    def forward(self, grid_state, vector_state):
+        grid, vec = self._format(grid_state, vector_state)
+
+        # Process grid through CNN
+        x_grid = F.relu(self.conv1(grid))
+        x_grid = F.relu(self.conv2(x_grid))
+        x_grid = torch.flatten(x_grid, start_dim=1) # Flatten the CNN output
+
+        # Process vector through MLP
+        x_vec = F.relu(self.vector_fc1(vec))
+
+        # Concatenate the outputs of both heads
+        x_combined = torch.cat((x_grid, x_vec), dim=1)
+
+        # Process through the final combiner layers
+        x = F.relu(self.combiner_fc1(x_combined))
+        x = self.combiner_fc2(x)
+        return x
 
 class FCQ(nn.Module):
     def __init__(self, 
@@ -72,13 +131,24 @@ class FCQ(nn.Module):
 
 class ReplayBuffer():
     def __init__(self, 
-                 max_size=10000, 
-                 batch_size=64):
-        self.ss_mem = np.empty(shape=(max_size), dtype=np.ndarray)
-        self.as_mem = np.empty(shape=(max_size), dtype=np.ndarray)
-        self.rs_mem = np.empty(shape=(max_size), dtype=np.ndarray)
-        self.ps_mem = np.empty(shape=(max_size), dtype=np.ndarray)
-        self.ds_mem = np.empty(shape=(max_size), dtype=np.ndarray)
+                 max_size=50000, 
+                 batch_size=64,
+                 grid_shape=(1, 16, 16), # Add shape info
+                 vector_size=19):      # Add shape info
+
+        # --- START OF MODIFICATIONS ---
+        # Create separate memory for grid and vector states
+        self.s_grid_mem = np.empty(shape=(max_size, *grid_shape), dtype=np.uint8)
+        self.s_vec_mem = np.empty(shape=(max_size, vector_size), dtype=np.uint8)
+
+        self.p_grid_mem = np.empty(shape=(max_size, *grid_shape), dtype=np.uint8)
+        self.p_vec_mem = np.empty(shape=(max_size, vector_size), dtype=np.uint8)
+        
+        # Action, reward, and done memory are the same
+        self.as_mem = np.empty(shape=(max_size, 1), dtype=np.int64)
+        self.rs_mem = np.empty(shape=(max_size, 1), dtype=np.float32)
+        self.ds_mem = np.empty(shape=(max_size, 1), dtype=np.float32)
+        # --- END OF MODIFICATIONS ---
 
         self.max_size = max_size
         self.batch_size = batch_size
@@ -87,10 +157,18 @@ class ReplayBuffer():
     
     def store(self, sample):
         s, a, r, p, d = sample
-        self.ss_mem[self._idx] = s
+        
+        # --- MODIFICATION ---
+        # Store the grid and vector parts of the state separately
+        self.s_grid_mem[self._idx] = s['grid']
+        self.s_vec_mem[self._idx] = s['vector']
+        
         self.as_mem[self._idx] = a
         self.rs_mem[self._idx] = r
-        self.ps_mem[self._idx] = p
+
+        self.p_grid_mem[self._idx] = p['grid']
+        self.p_vec_mem[self._idx] = p['vector']
+        
         self.ds_mem[self._idx] = d
         
         self._idx += 1
@@ -103,13 +181,17 @@ class ReplayBuffer():
         if batch_size == None:
             batch_size = self.batch_size
 
-        idxs = np.random.choice(
-            self.size, batch_size, replace=False)
-        experiences = np.vstack(self.ss_mem[idxs]), \
-                      np.vstack(self.as_mem[idxs]), \
-                      np.vstack(self.rs_mem[idxs]), \
-                      np.vstack(self.ps_mem[idxs]), \
-                      np.vstack(self.ds_mem[idxs])
+        idxs = np.random.choice(self.size, batch_size, replace=False)
+        
+        # --- MODIFICATION ---
+        # Sample from each memory array and return a structured tuple
+        experiences = (
+            (self.s_grid_mem[idxs], self.s_vec_mem[idxs]), # States (grid, vector)
+            self.as_mem[idxs],
+            self.rs_mem[idxs],
+            (self.p_grid_mem[idxs], self.p_vec_mem[idxs]), # Next States (grid, vector)
+            self.ds_mem[idxs]
+        )
         return experiences
 
     def __len__(self):
@@ -131,16 +213,14 @@ class EGreedyExpStrategy():
         self.t += 1
         return self.epsilon
 
-    def select_action(self, model:FCQ, state):
+    def select_action(self, model, grid_state, vector_state):
         self.exploratory_action_taken = False
         with torch.no_grad():
-            q_values = model(state).squeeze()
-
+            q_values = model(grid_state, vector_state).squeeze()
         if np.random.rand() > self.epsilon:
             action = torch.argmax(q_values).item()
         else:
             action = torch.randint(0, q_values.shape[0], (1,)).item()
-
         self._epsilon_update()
         self.exploratory_action_taken = action !=  torch.argmax(q_values).item()
         return action
@@ -149,9 +229,9 @@ class GreedyStrategy():
     def __init__(self):
         self.exploratory_action_taken = False
 
-    def select_action(self, model:FCQ, state):
+    def select_action(self, model, grid_state, vector_state):
         with torch.no_grad():
-            q_values = model(state).squeeze()
+            q_values = model(grid_state, vector_state).squeeze()
             action = torch.argmax(q_values).item()
             return action
         
@@ -190,9 +270,12 @@ class DDQN():
         plt.text(len(eva100_reward)-1, eva100_reward[-1], str(eva100_reward[-1]))
         plt.text(len(mean100_reward)-1, mean100_reward[-1], str(mean100_reward[-1]))
         plt.text(len(epsilon)-1, epsilon[-1], str(epsilon[-1]))
+
+        if len(eva100_reward) == 250 or len(eva100_reward) == 500 or len(eva100_reward) == 750 or len(eva100_reward) == 1000:
+            plt.savefig('C:/thesis_data/result_plot_episode_{}.png'.format(len(eva100_reward)))
+
         plt.show(block=False)
         plt.pause(1)
-        # Try to send the window to the background so it doesn’t grab focus:
         try:
             manager = fig.canvas.manager
             manager.window.lower()
@@ -201,15 +284,30 @@ class DDQN():
 
     def optimize_model(self, experiences):
         states, actions, rewards, next_states, is_terminals = experiences
+
+        # Unpack the dictionaries into separate grid and vector batches
+        grid_states, vector_states = states
+        grid_next_states, vector_next_states = next_states  
+
+        # Convert to tensors
+        grid_states = torch.from_numpy(grid_states).float().to(self.online_model.device)
+        vector_states = torch.from_numpy(vector_states).float().to(self.online_model.device)
+        grid_next_states = torch.from_numpy(grid_next_states).float().to(self.online_model.device)
+        vector_next_states = torch.from_numpy(vector_next_states).float().to(self.online_model.device)
+        
+        actions = torch.from_numpy(actions).long().to(self.online_model.device)
+        rewards = torch.from_numpy(rewards).float().to(self.online_model.device)
+        is_terminals = torch.from_numpy(is_terminals).float().to(self.online_model.device)
+        
         batch_size = len(is_terminals)
         
-        # argmax_a_q_sp = self.target_model(next_states).max(1)[1]
-        argmax_a_q_sp = self.online_model(next_states).max(1)[1]
-        q_sp = self.target_model(next_states).detach()
-        max_a_q_sp = q_sp[
-            np.arange(batch_size), argmax_a_q_sp].unsqueeze(1)
+        # Pass both parts of the state to the model
+        argmax_a_q_sp = self.online_model(grid_next_states, vector_next_states).max(1)[1]
+        q_sp = self.target_model(grid_next_states, vector_next_states).detach()
+        # ... The rest of the Q-value calculation is the same ...
+        max_a_q_sp = q_sp[np.arange(batch_size), argmax_a_q_sp].unsqueeze(1)
         target_q_sa = rewards + (self.gamma * max_a_q_sp * (1 - is_terminals))
-        q_sa = self.online_model(states).gather(1, actions)
+        q_sa = self.online_model(grid_states, vector_states).gather(1, actions)
 
         td_error = q_sa - target_q_sa
         value_loss = td_error.pow(2).mul(0.5).mean()
@@ -220,9 +318,12 @@ class DDQN():
         self.value_optimizer.step()
 
     def interaction_step(self, state, env):
-        action = self.training_strategy.select_action(self.online_model, state)
+        # The 'state' is now a dict, pass its parts to the model
+        action = self.training_strategy.select_action(self.online_model, 
+                                                       state['grid'], 
+                                                       state['vector'])
+        # ... The rest of the method is the same ...
         new_state, reward, is_terminal, truncated, info = env.step(action)
-        # is_truncated = 'TimeLimit.truncated' in info and info['TimeLimit.truncated']
         is_failure = is_terminal
         experience = (state, action, reward, new_state, float(is_failure))
 
@@ -247,17 +348,18 @@ class DDQN():
 
         self.gamma = gamma
     
-        nS, nA = env.observation_space.shape[0], env.action_space.shape[0]
+        nA = env.action_space.n
         self.episode_timestep = []
         self.episode_reward = []
         self.episode_seconds = []
         self.evaluation_scores = []        
         self.episode_exploration = []
         
-        self.target_model = self.value_model_fn(nS, nA)
-        self.online_model = self.value_model_fn(nS, nA)
-        # self.online_model.load_state_dict(torch.load('./model.499.tar', weights_only=True))
-        # self.online_model.eval()
+        self.target_model = self.value_model_fn(nA)
+        self.online_model = self.value_model_fn(nA)
+        self.online_model.load_state_dict(torch.load('./model.500.tar', weights_only=True))
+        # self.online_model.load_state_dict(torch.load('./model.1000.tar', weights_only=True))
+        self.online_model.eval()
         self.update_network()
 
         self.value_optimizer = self.value_optimizer_fn(self.online_model, 
@@ -287,7 +389,7 @@ class DDQN():
                 min_samples = self.replay_buffer.batch_size * self.n_warmup_batches
                 if len(self.replay_buffer) > min_samples:
                     experiences = self.replay_buffer.sample()
-                    experiences = self.online_model.load(experiences)
+                    # experiences = self.online_model.load(experiences)
                     self.optimize_model(experiences)
                 
                 if np.sum(self.episode_timestep) % self.update_target_every_steps == 0:
@@ -322,7 +424,7 @@ class DDQN():
             self.myepisode_reward.append(self.episode_reward[-1])
             self.eva100.append(np.mean(self.evaluation_scores[-100:]))
             self.mean100.append(np.mean(self.myepisode_reward[-100:]))
-            if(episode % 20 == 0):
+            if(episode % 10 == 0):
                 self.plot(self.eva100, self.mean100, self.epsilons)
             
             wallclock_elapsed = time.time() - training_start
@@ -356,7 +458,9 @@ class DDQN():
                 if reached_max_episodes: print(u'--> reached_max_episodes \u2715')
                 if reached_goal_mean_reward: print(u'--> reached_goal_mean_reward \u2713')
                 break
-                
+
+
+
         final_eval_score, score_std = self.evaluate(self.online_model, env, n_episodes=100)
         wallclock_time = time.time() - training_start
         print('Training complete.')
@@ -374,7 +478,7 @@ class DDQN():
             s, d = eval_env.reset(options =info), False
             rs.append(0)
             for _ in count():
-                a = self.evaluation_strategy.select_action(eval_policy_model, s)
+                a = self.evaluation_strategy.select_action(eval_policy_model, s['grid'], s['vector'])
                 s, r, d, _, _ = eval_env.step(a)
                 rs[-1] += r
                 if d: break
@@ -401,5 +505,10 @@ class DDQN():
         return self.checkpoint_paths
 
     def save_checkpoint(self, episode_idx, model):
-        torch.save(model.state_dict(), 
-                        os.path.join(self.checkpoint_dir, 'model.{}.tar'.format(episode_idx)))
+        if (episode_idx + 1) % 20 == 0:
+            torch.save(model.state_dict(), 
+                            os.path.join(self.checkpoint_dir, 'model.{}.tar'.format(episode_idx + 1)))
+        
+        if (episode_idx + 1) % 50 == 0:
+            torch.save(model.state_dict(), 
+                        os.path.join('C:/thesis_data', 'model.{}.tar'.format(episode_idx + 1)))

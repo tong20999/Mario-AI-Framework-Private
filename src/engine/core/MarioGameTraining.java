@@ -2,12 +2,14 @@ package engine.core;
 
 import java.awt.image.VolatileImage;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.awt.*;
+import java.util.stream.IntStream;
 
 import javax.swing.JFrame;
 
@@ -107,8 +109,24 @@ public class MarioGameTraining {
     public float episodeReward = 0;
     int episodeTimer = 0;
     int evaluationTimer = 0;
-
+    boolean wasOverPit = false;
+    boolean enableJumpReward = true;
+    int jumpRewardTimer = 0;
     float epsilon;
+
+    float winReward = 50;
+    float mileStoneReward = 0.1f;
+    float jumpOverPitReward = 0f;
+    float killReward = 2;
+    float coinReward = 2;
+    float fireworkReward = 5;
+    float mushroomReward = 2;
+    float lifeMushroomReward = 5;
+    float loseReward = -15f;
+    float loseTimeoutReward = -25f;
+    float hurtReward = -1f;
+    float hitWallReward = -0.25f;
+    float timePenaltyRewardCoefficient = 0.00005f;
     public byte[] reset(Info info) throws Exception {
         this.gameEvents = new ArrayList<>();
         if(!info.isEvaluation()){
@@ -117,10 +135,11 @@ public class MarioGameTraining {
         this.evaluation = info.isEvaluation();
         this.world = new MarioWorld(this.killEvents);
         this.world.visuals = visual;
-        this.timer = 40;
+        this.timer = 100;
         this.lastMilestone = 0;
         this.lastCoinCount = 0;
-        this.world.initializeLevel(getTrainingLevel(2), 1000 * this.timer);
+        this.wasOverPit = false;
+        this.world.initializeLevel(getTrainingLevel("9"), 1000 * this.timer);
         if (visual) {
             this.world.initializeVisuals(this.render.getGraphicsConfiguration());
         }
@@ -136,7 +155,8 @@ public class MarioGameTraining {
         }
 
         this.agentTimer = new MarioTimer(MarioGameTraining.maxTime);
-        this.currentTimer = this.world.currentTimer;
+        this.currentTimer = this.jumpRewardTimer = this.world.currentTimer;
+
 
         if(!this.evaluation){
             this.episodeReward = 0;
@@ -149,52 +169,56 @@ public class MarioGameTraining {
     }
 
     public byte[] step(boolean[] action) throws Exception {
-        MarioForwardModel modelBefore = new MarioForwardModel(this.world.clone());
+        var state = new MarioForwardModel(this.world.clone());
         // for frame skip the agent will only send one action per 3 frames to make agent jump longer
         // because it needs to hold the jump button
         for (int i = 0; i < 4; i++) {
             miniStep(action);
         }
 
+        resetJumpReward(action);
+
         // --- 3. Get the state of the world AFTER the action is taken ---
-        MarioForwardModel modelAfter = new MarioForwardModel(this.world.clone());
+        MarioForwardModel nextState = new MarioForwardModel(this.world.clone());
 
         // =================================================================================
         // --- "COMPLETIONIST" REWARD LOGIC ---
         // =================================================================================
         float reward = 0.0f;
         // --- 1. Small penalty for time passing to encourage efficiency ---
-        reward -= 0.015f;
-
-        // --- 2. Reward for skillful actions (building the "score") ---
-        // Milestone progress reward (fixed bonus per milestone)
-        int currentMilestone = (int)((modelAfter.getCompletionPercentage()) * 10);
-        if (currentMilestone > this.lastMilestone) {
-            reward += (currentMilestone - this.lastMilestone) * 1.0f;
-
-            this.lastMilestone = currentMilestone;
-        }
+        reward += timePenalty();
+        reward += mileStoneReward();
+        reward += jumpOverPit(nextState);
 
         // Coin collection reward
-        int currentCoins = modelAfter.getNumCollectedCoins();
+        int currentCoins = nextState.getNumCollectedCoins();
         if (currentCoins > this.lastCoinCount) {
-            reward += (currentCoins - this.lastCoinCount) * 0.5f; // +0.5 reward per coin
+            reward += coinReward; // +0.5 reward per coin
             this.lastCoinCount = currentCoins;
         }
 
         // Event-based rewards (kills, power-ups) and penalties (hurt, walls)
         for (MarioEvent e : this.world.lastFrameEvents) {
-            if (e.getEventType() == EventType.STOMP_KILL.getValue() || e.getEventType() == EventType.FIRE_KILL.getValue()) {
-                reward += 2.0f; // +2 reward per kill
+            if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
+                    e.getEventType() == EventType.FIRE_KILL.getValue() ||
+                    e.getEventType() == EventType.SHELL_KILL.getValue() ||
+                    e.getEventType() == EventType.FALL_KILL.getValue()) {
+                reward += killReward; // +2 reward per kill
             }
             if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == SpriteType.FIRE_FLOWER.getValue()) {
-                reward += 5.0f; // +5 for a power-up
+                reward += fireworkReward; // +5 for a power-up
+            }
+            if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == SpriteType.MUSHROOM.getValue()) {
+                reward += mushroomReward; // +2 for a mushroom
+            }
+            if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == SpriteType.LIFE_MUSHROOM.getValue()) {
+                reward += lifeMushroomReward; // +5 for a life
             }
             if (e.getEventType() == EventType.HURT.getValue()) {
-                reward -= 1.0f; // -1 for taking damage
+                reward += hurtReward; // -1 for taking damage
             }
             if (e.getEventType() == EventType.HIT_WALL.getValue()) {
-                reward -= 0.2f;
+                reward += hitWallReward;
             }
         }
 
@@ -202,11 +226,14 @@ public class MarioGameTraining {
         if (this.world.gameStatus == GameStatus.WIN) {
             // The reward for winning is that you get to keep the score you earned.
             // We can add a small bonus to break ties, but the bulk of the score is from the run itself.
-            reward += 10.0f;
-        }
-        else if (this.world.gameStatus == GameStatus.LOSE || this.world.gameStatus == GameStatus.TIME_OUT) {
+            reward += winReward;
+        } else if (this.world.gameStatus == GameStatus.TIME_OUT) {
             // A massive penalty that ensures any failure is always worse than even the "laziest" win.
-            reward -= 50.0f;
+            reward += loseTimeoutReward;
+        } else if (this.world.gameStatus == GameStatus.LOSE) {
+            // A massive penalty that ensures any failure is always worse than even the "laziest" win.
+            reward += loseReward;
+            reward += distanceToFlag(nextState);
         }
 
         if(this.evaluation){
@@ -221,8 +248,43 @@ public class MarioGameTraining {
 
         this.world.episode = this.evaluation ? -1 : this.episode;
         printInfo();
-        var nextState = State.toByte(modelAfter);
-        return stepResult(nextState, reward, this.world.gameStatus != GameStatus.RUNNING);
+        return stepResult(State.toByte(nextState), reward, this.world.gameStatus != GameStatus.RUNNING);
+    }
+
+    private float distanceToFlag(MarioForwardModel model) {
+        var complete = model.getCompletionPercentage() * 10;
+        return complete;
+    }
+
+    private void resetJumpReward(boolean[] action){
+        // Prevent jump exploit
+        var timePassSecond = (this.jumpRewardTimer - this.world.currentTimer) * 0.001;
+
+        if(timePassSecond > 0.5 && action[4]){
+            this.enableJumpReward = true;
+        }
+    }
+
+    private float jumpOverPit(MarioForwardModel model) {
+        var isOnGround = model.isMarioOnGround();
+        float reward = 0;
+        if (isOnGround && this.wasOverPit && this.enableJumpReward) {
+            this.wasOverPit = false;
+            this.enableJumpReward = false;
+            this.jumpRewardTimer = this.world.currentTimer;
+            reward = jumpOverPitReward;
+        }
+
+        int[][] observation = model.getMarioCompleteObservation(0, 0);
+        var tileUnderMario = IntStream.range(10, 15)
+                .allMatch(row -> observation[8][row] == 0);
+
+        if (tileUnderMario) {
+            // If the tile below is a pit, set the flag for the next time step.
+            this.wasOverPit = true;
+        }
+
+        return reward;
     }
 
     private float timePenalty() {
@@ -231,29 +293,45 @@ public class MarioGameTraining {
         if(reward >= 0){
             return 0;
         }
-        var timePenalty = reward * 0.0002f;
+        var timePenalty = reward * timePenaltyRewardCoefficient;
         return timePenalty;
     }
 
     private double mileStoneReward() {
         double completePercentage = this.world.mario.x / (this.world.level.exitTileX * 16.0);
-        int milestone = (int)(completePercentage * 10);
+        int milestone = (int)(completePercentage * 100);
         if (milestone > lastMilestone) {
             lastMilestone = milestone;
-            return milestone;
+            return mileStoneReward;
         }
         return 0;
     }
 
     private void printInfo() {
         if(this.world.gameStatus != GameStatus.RUNNING){
-            String msg = "";
-            int fallKill = gameEvents.stream()
-                    .anyMatch(e -> e.getEventType() == EventType.FALL_KILL.getValue()) ? 1 : 0;
+            long fallKill = gameEvents.stream()
+                    .filter(e -> e.getEventType() == EventType.FALL_KILL.getValue())
+                    .count();
+
+            long shellKill = gameEvents.stream()
+                    .filter(e -> e.getEventType() == EventType.SHELL_KILL.getValue())
+                    .count();
+
+            long stompKill = gameEvents.stream()
+                    .filter(e -> e.getEventType() == EventType.STOMP_KILL.getValue())
+                    .count();
+
+            long fireKill = gameEvents.stream()
+                    .filter(e -> e.getEventType() == EventType.FIRE_KILL.getValue())
+                    .count();
 
             // hurt may not dead
             int hurt = (int) gameEvents.stream()
                     .filter(e -> e.getEventType() == EventType.HURT.getValue())
+                    .count();
+
+            int collect = (int) gameEvents.stream()
+                    .filter(e -> e.getEventType() == EventType.COLLECT.getValue())
                     .count();
 
             int lose = this.world.gameStatus == GameStatus.LOSE ? 1 : 0;
@@ -268,24 +346,72 @@ public class MarioGameTraining {
                 evaluationInfo.lose += lose;
                 evaluationInfo.hurt += hurt;
                 evaluationInfo.fallKill += fallKill;
+                evaluationInfo.stompKill += stompKill;
+                evaluationInfo.shellKill += shellKill;
+                evaluationInfo.fireKill += fireKill;
+                evaluationInfo.collect += collect;
                 evaluationInfo.timeout += timeout;
-
             }
             else {
                 episodeInfo.win += win;
                 episodeInfo.lose += lose;
                 episodeInfo.hurt += hurt;
                 episodeInfo.fallKill += fallKill;
+                episodeInfo.stompKill += stompKill;
+                episodeInfo.shellKill += shellKill;
+                episodeInfo.fireKill += fireKill;
+                episodeInfo.collect += collect;
                 episodeInfo.timeout += timeout;
-
             }
 
             if(this.evaluation){
                 var evaluationMsg = MessageFormat.format("Evaluation {0} time {1} reward {2}", evaluationInfo, this.evaluationTimer/1000, String.format("%.2f", this.evaluationReward));
                 var episodeMsg = MessageFormat.format("Episode {0} {1} time {2} reward {3}", this.episode, episodeInfo, this.episodeTimer/1000, String.format("%.2f", this.episodeReward));
                 System.out.println(episodeMsg + "   |   " + evaluationMsg);
+                var rewardTable = getRewardsInformation();
+                if(this.episode == 500 || this.episode == 1000){
+                    try (PrintWriter out = new PrintWriter("C:\\thesis_data\\result.txt")) {
+                        out.println(episodeMsg);
+                        out.println(evaluationMsg);
+                        out.println(rewardTable);
+                    } catch (IOException e) {
+                        System.err.println("Error writing to file: " + e.getMessage());
+                    }
+                }
             }
         }
+    }
+
+    private String getRewardsInformation() {
+        return MessageFormat.format("""
+                        REWARDS
+                        WIN {0}
+                        LOSE {1}
+                        TIME_OUT {2}
+                        MILESTONE {3}
+                        JumpOverPit {4}
+                        KILL {5}
+                        COLLECT_COIN {6}
+                        COLLECT_FIREWORK {7}
+                        COLLECT_MUSHROOM {8}
+                        COLLECT_LIFE_MUSHROOM {9}
+                        HURT {10}
+                        HIT_WALL {11}
+                        TIME_PENALTY_COEFFICIENT {12}
+                        """,
+                this.winReward,
+                this.loseReward,
+                this.loseTimeoutReward,
+                this.mileStoneReward,
+                this.jumpOverPitReward,
+                this.killReward,
+                this.coinReward,
+                this.fireworkReward,
+                this.mushroomReward,
+                this.lifeMushroomReward,
+                this.hurtReward,
+                this.hitWallReward,
+                this.timePenaltyRewardCoefficient);
     }
 
     public void miniStep(boolean[] action) throws Exception {
@@ -323,13 +449,19 @@ public class MarioGameTraining {
         return getFileFromLevel(level1);
     }
 
-    public static String getTrainingLevel(int level){
+    public static String getTrainingLevel(String level){
         var levelLocation = MessageFormat.format("./levels/training/lvl-{0}.txt", level);
         return getFileFromLevel(levelLocation);
     }
 
     public static String getEvaluationLevel(int level){
         var levelLocation = MessageFormat.format("./levels/evaluation/lvl-{0}.txt", level);
+        return getFileFromLevel(levelLocation);
+    }
+
+
+    private String getOriginalLevel(int level) {
+        var levelLocation = MessageFormat.format("./levels/original/lvl-{0}.txt", level);
         return getFileFromLevel(levelLocation);
     }
 }
