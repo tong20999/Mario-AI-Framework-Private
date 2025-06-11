@@ -34,7 +34,7 @@ public class PlayLevel {
     public static void main(String[] args) {
         MarioGame game = new MarioGame();
         // printResults(game.playGame(getLevel("../levels/original/lvl-1-basic-move-right.txt"), 200, 0));
-        var training = getLevel("./levels/training/lvl-2.txt");
+        var training = getLevel("./levels/training/lvl-6-ramp-3.txt");
         var original = getLevel("./levels/original/lvl-1-basic-move-right.txt");
         printResults(game.runGame(new agents.human.Agent(), training, 200, 0, true));
     }

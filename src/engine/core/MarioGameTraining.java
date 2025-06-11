@@ -142,7 +142,7 @@ public class MarioGameTraining {
         //this.world.initializeLevel(getOriginalLevel(1), 1000 * this.timer);
         Random random = new Random();
         int randomNumber = random.nextInt(3) + 1;
-        var shuffle = MessageFormat.format("5-block-{0}", randomNumber);
+        var shuffle = MessageFormat.format("7-velocity-low-high-1", randomNumber);
         this.world.initializeLevel(getTrainingLevel(shuffle), 1000 * this.timer);
         if (visual) {
             this.world.initializeVisuals(this.render.getGraphicsConfiguration());
@@ -171,15 +171,15 @@ public class MarioGameTraining {
     }
 
     public byte[] step(boolean[] action) throws Exception {
-        var state = new MarioForwardModel(this.world.clone());
+        var worldState = this.world.clone();
+        var state = new MarioForwardModel(worldState);
         // for frame skip the agent will only send one action per 3 frames to make agent jump longer
         // because it needs to hold the jump button
         for (int i = 0; i < this.frameSkip; i++) {
             miniStep(action);
         }
-
-        // --- 3. Get the state of the world AFTER the action is taken ---
-        MarioForwardModel nextState = new MarioForwardModel(this.world.clone());
+        var nextWorldState = this.world.clone();
+        var nextState = new MarioForwardModel(nextWorldState);
 
         float reward = 0.0f;
         reward += timePenalty();
@@ -342,7 +342,7 @@ public class MarioGameTraining {
                 var episodeMsg = MessageFormat.format("Episode {0} {1} time {2} reward {3}", this.episode, episodeInfo, this.episodeTimer/1000, String.format("%.2f", this.episodeReward));
                 System.out.println(episodeMsg + "   |   " + evaluationMsg);
                 var rewardTable = getRewardsInformation();
-                if(this.episode == 500 || this.episode == 1000){
+                if(this.episode == 500 || this.episode == 1000 || this.episode == 1500 || this.episode == 2000){
                     try (PrintWriter out = new PrintWriter("C:\\thesis_data\\result.txt")) {
                         out.println(episodeMsg);
                         out.println(evaluationMsg);

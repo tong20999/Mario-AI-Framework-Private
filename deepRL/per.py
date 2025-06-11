@@ -136,7 +136,7 @@ class PER():
         plt.text(len(mean100_reward)-1, mean100_reward[-1], str(mean100_reward[-1]))
         plt.text(len(epsilon)-1, epsilon[-1], str(epsilon[-1]))
 
-        if len(eva100_reward) == 250 or len(eva100_reward) == 500 or len(eva100_reward) == 750 or len(eva100_reward) == 1000:
+        if len(eva100_reward) % 250 == 0:
             plt.savefig('C:/thesis_data/result_plot_episode_{}.png'.format(len(eva100_reward)))
 
         plt.show(block=False)
@@ -461,18 +461,18 @@ class GreedyStrategy():
 
 environment_settings = {
         'gamma': 0.99,
-        'max_minutes': 60,
-        'max_episodes': 1000,
+        'max_minutes': 400,
+        'max_episodes': 2000,
         'goal_mean_100_reward': 475
     }
 
 value_model_fn = lambda nS, nA: FCDuelingQ(nS, nA, hidden_dims=(512,128))
 value_optimizer_fn = lambda net, lr: optim.RMSprop(net.parameters(), lr=lr)
-value_optimizer_lr = 0.00005
+value_optimizer_lr = 0.000005
 max_gradient_norm = float('inf')
 
-training_strategy_fn = lambda: EGreedyExpStrategy(init_epsilon=0.5,  
-                                                    min_epsilon=0.3, 
+training_strategy_fn = lambda: EGreedyExpStrategy(init_epsilon=0.1,  
+                                                    min_epsilon=0.1, 
                                                     decay_steps=20000)
 evaluation_strategy_fn = lambda: GreedyStrategy()
 
@@ -481,7 +481,7 @@ replay_buffer_fn = lambda: PrioritizedReplayBuffer(
     max_samples=20000, batch_size=64, rank_based=False,
     alpha=0.6, beta0=0.1, beta_rate=0.99995)
 n_warmup_batches = 5
-update_target_every_steps = 100
+update_target_every_steps = 1000
 tau = 0.01
 
 gamma, max_minutes, \
