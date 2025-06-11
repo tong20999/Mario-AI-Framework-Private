@@ -1,6 +1,8 @@
 package engine.core;
 
 import java.awt.image.VolatileImage;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
@@ -69,12 +71,23 @@ public class MarioGameTraining {
     /**
      * Create a mario game to be played
      */
-    public MarioGameTraining() {
+    public MarioGameTraining(Integer col, Integer row) {
+        int columns = 4;
+        int rows = 2;
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int screenWidth = screenSize.width;
+        int screenHeight = screenSize.height;
+        int windowWidth = screenWidth / columns;
+        int windowHeight = screenHeight / rows;
         this.window = new JFrame("Mario AI Framework");
         this.window.setFocusableWindowState(false);
         this.render = new MarioRender(2);
         this.window.setContentPane(this.render);
         this.window.pack();
+        if(col != null || row != null){
+            window.setSize(windowWidth, windowHeight);
+            window.setLocation(col * windowWidth, row * windowHeight);
+        }
         this.window.setResizable(false);
         this.window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.render.init();
@@ -104,7 +117,6 @@ public class MarioGameTraining {
 //    float expectPositionX = 0;
     int lastMilestone;
     int lastCoinCount;
-    int episode = -1;
 
     boolean evaluation = false;
     ArrayList<MarioEvent> gameEvents;
@@ -120,36 +132,34 @@ public class MarioGameTraining {
     float epsilon;
     int frameSkip = 5;
 
-    float winReward = 30;
+    float winReward = 1;
     float mileStoneReward = 0.1f;
     float jumpOverPitReward = 0f;
-    float killReward = 2;
-    float coinReward = 2;
-    float fireworkReward = 5;
-    float mushroomReward = 2;
-    float lifeMushroomReward = 5;
+    float killReward = 2 * 5;
+    float coinReward = 2 * 5;
+    float fireworkReward = 5 * 5;
+    float mushroomReward = 2 * 5;
+    float lifeMushroomReward = 5 * 5;
     float loseReward = -15f;
     float loseTimeoutReward = -30f;
     float hurtReward = -1f;
     float hitWallReward = -0.2f;
     float fallPitReward = -10f;
     float timePenaltyRewardCoefficient = 0.00005f;
+    int episode = -1;
     public byte[] reset(Info info) throws Exception {
-        this.gameEvents = new ArrayList<>();
         if(!info.isEvaluation()){
             this.episode = info.getEpisode();
         }
+        this.gameEvents = new ArrayList<>();
         this.evaluation = info.isEvaluation();
         this.world = new MarioWorld(this.killEvents);
         this.world.visuals = visual;
-        this.timer = 30;
+        this.timer = 100;
         this.lastMilestone = 0;
         this.lastCoinCount = 0;
         //this.world.initializeLevel(getOriginalLevel(1), 1000 * this.timer);
-        Random random = new Random();
-        int randomNumber = random.nextInt(3) + 1;
-        var shuffle = MessageFormat.format("2-velocity-low-1", randomNumber);
-        this.world.initializeLevel(getTrainingLevel(shuffle), 1000 * this.timer);
+        this.world.initializeLevel(getTrainingLevel("10-block-2"), 1000 * this.timer);
         if (visual) {
             this.world.initializeVisuals(this.render.getGraphicsConfiguration());
         }
@@ -171,14 +181,12 @@ public class MarioGameTraining {
         } else {
             this.evaluationReward = 0;
         }
-        this.epsilon = info.getEpsilon();
-        this.world.epsilon = this.epsilon;
+        //this.epsilon = info.getEpsilon();
+        //this.world.epsilon = this.epsilon;
         return State.toByte(new MarioForwardModel(this.world.clone()));
     }
 
     public byte[] step(boolean[] action) throws Exception {
-        var worldState = this.world.clone();
-        var state = new MarioForwardModel(worldState);
         // for frame skip the agent will only send one action per 3 frames to make agent jump longer
         // because it needs to hold the jump button
         for (int i = 0; i < this.frameSkip; i++) {
@@ -329,6 +337,18 @@ public class MarioGameTraining {
                 evaluationInfo.fireKill += fireKill;
                 evaluationInfo.collect += collect;
                 evaluationInfo.timeout += timeout;
+                var evaluationMsg = MessageFormat.format("Evaluation {0} time {1} reward {2}", evaluationInfo, this.evaluationTimer/1000, String.format("%.2f", this.evaluationReward));
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\thesis_data\\evaluation_log.txt", true))) {
+                    writer.write(evaluationMsg);
+                    writer.newLine();
+                    if(this.episode % 500 == 0 && this.episode != 0){
+                        var rewardTable = getRewardsInformation();
+                        writer.write(rewardTable);
+                        writer.newLine();
+                    }
+                } catch (IOException e) {
+                    System.err.println("Error writing to file: " + e.getMessage());
+                }
             }
             else {
                 episodeInfo.win += win;
@@ -341,21 +361,12 @@ public class MarioGameTraining {
                 episodeInfo.fireKill += fireKill;
                 episodeInfo.collect += collect;
                 episodeInfo.timeout += timeout;
-            }
-
-            if(this.evaluation){
-                var evaluationMsg = MessageFormat.format("Evaluation {0} time {1} reward {2}", evaluationInfo, this.evaluationTimer/1000, String.format("%.2f", this.evaluationReward));
                 var episodeMsg = MessageFormat.format("Episode {0} {1} time {2} reward {3}", this.episode, episodeInfo, this.episodeTimer/1000, String.format("%.2f", this.episodeReward));
-                System.out.println(episodeMsg + "   |   " + evaluationMsg);
-                var rewardTable = getRewardsInformation();
-                if(this.episode == 500 || this.episode == 1000 || this.episode == 1500 || this.episode == 2000){
-                    try (PrintWriter out = new PrintWriter("C:\\thesis_data\\result.txt")) {
-                        out.println(episodeMsg);
-                        out.println(evaluationMsg);
-                        out.println(rewardTable);
-                    } catch (IOException e) {
-                        System.err.println("Error writing to file: " + e.getMessage());
-                    }
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\thesis_data\\episode_log.txt", true))) {
+                    writer.write(episodeMsg);
+                    writer.newLine();
+                } catch (IOException e) {
+                    System.err.println("Error writing to file: " + e.getMessage());
                 }
             }
         }

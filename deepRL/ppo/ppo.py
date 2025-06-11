@@ -1,3 +1,4 @@
+import random
 from typing import Callable
 import torch
 import numpy as np
@@ -5,6 +6,10 @@ import time
 import os
 import glob
 from itertools import cycle, count
+import matplotlib.pyplot as plt
+from IPython import display
+
+from ppo.episodebuffer import EpisodeBuffer
 
 LEAVE_PRINT_EVERY_N_SECS = 300
 ERASE_LINE = '\x1b[2K'
@@ -28,7 +33,7 @@ class PPO():
                  value_sample_ratio,
                  value_clip_range,
                  value_stopping_mse,
-                 episode_buffer_fn,
+                 episode_buffer_fn:Callable[[], EpisodeBuffer],
                  max_buffer_episodes,
                  max_buffer_episode_steps,
                  entropy_loss_weight,
@@ -125,19 +130,41 @@ class PPO():
                 if mse.item() > self.value_stopping_mse:
                     break
 
+    def plot(self, eva100_reward):
+        fig = plt.gcf()
+        display.clear_output(wait=True)
+        display.display(fig)
+        plt.clf()
+        plt.title('Result')
+        plt.xlabel('Episode')
+        plt.ylabel('Reward')
+        plt.plot(eva100_reward)
+        plt.text(len(eva100_reward)-1, eva100_reward[-1], str(eva100_reward[-1]))
+
+        if len(eva100_reward) % 20 == 0:
+            plt.savefig('C:/thesis_data/result_plot_episode_{}.png'.format(len(eva100_reward)))   
+
+        plt.show(block=False)
+        plt.pause(1)
+        try:
+            manager = fig.canvas.manager
+            manager.window.lower()
+        except Exception:
+            pass
+
     def train(self, make_envs_fn:Callable, make_env_fn:Callable, gamma, 
               max_minutes, max_episodes, goal_mean_100_reward):
         training_start, last_debug_time = time.time(), float('-inf')
 
-        if not os.path.exists('./model'):
-            os.mkdir('./model')
-        self.checkpoint_dir = './model'
         self.make_envs_fn = make_envs_fn
         self.make_env_fn = make_env_fn
         self.gamma = gamma
         
         env = self.make_env_fn()
         envs = self.make_envs_fn(make_env_fn, self.n_workers)
+        SEEDS = (12, 34, 56, 78, 90)
+        seed = random.choice(SEEDS)
+        torch.manual_seed(seed) ; np.random.seed(seed) ; random.seed(seed)
     
         nS, nA = env.observation_space.shape, env.action_space.shape[0]
         self.episode_timestep, self.episode_reward = [], []
@@ -150,7 +177,13 @@ class PPO():
         self.value_model = self.value_model_fn(nS)
         self.value_optimizer = self.value_optimizer_fn(self.value_model, self.value_optimizer_lr)
 
-        self.episode_buffer = self.episode_buffer_fn(nS, self.gamma, self.tau,
+        #self.policy_model.load_state_dict(torch.load('./model.policy.tar', weights_only=True))
+        #self.policy_model.eval()
+
+        #self.value_model.load_state_dict(torch.load('./model.value.tar', weights_only=True))
+        #self.value_model.eval()
+
+        self.episode_buffer:EpisodeBuffer = self.episode_buffer_fn(nS, self.gamma, self.tau,
                                                      self.n_workers, 
                                                      self.max_buffer_episodes,
                                                      self.max_buffer_episode_steps)
@@ -159,11 +192,11 @@ class PPO():
         result[:] = np.nan
         training_time = 0
         episode = 0
-
+        eva100 = []
         # collect n_steps rollout
         while True:
             episode_timestep, episode_reward, episode_exploration, \
-            episode_seconds = self.episode_buffer.fill(envs, self.policy_model, self.value_model)
+            episode_seconds = self.episode_buffer.fill(envs, self.policy_model, self.value_model, episode)
             
             n_ep_batch = len(episode_timestep)
             self.episode_timestep.extend(episode_timestep)
@@ -175,10 +208,18 @@ class PPO():
 
             # stats
             evaluation_score, _ = self.evaluate(self.policy_model, env)
+            
             self.evaluation_scores.extend([evaluation_score,] * n_ep_batch)
-            for e in range(episode, episode + n_ep_batch):
-                self.save_checkpoint(e, self.policy_model)
+            # for e in range(episode, episode + n_ep_batch):
+                
             training_time += episode_seconds.sum()
+            with open("C:/thesis_data/result.txt", "a") as file:
+                file.write("n_ep_batch {}\n".format(n_ep_batch))
+                file.write("episode_timestep {}\n".format(episode_timestep))
+                file.write("episode_reward {}\n".format(np.round(episode_reward, 2)))
+                file.write("episode_exploration {}\n".format(np.round(episode_exploration, 2)))
+                file.write("episode_seconds {}\n".format(np.round(episode_seconds, 2)))
+                file.write("training_time {}\n".format(training_time))
 
             mean_10_reward = np.mean(self.episode_reward[-10:])
             std_10_reward = np.std(self.episode_reward[-10:])
@@ -195,6 +236,12 @@ class PPO():
                 mean_100_eval_score, training_time, wallclock_elapsed
 
             episode += n_ep_batch
+
+            eva100.append(mean_100_eval_score)
+            if len(eva100) % 5 == 0:
+                self.save_checkpoint(len(eva100), self.policy_model, 'policy')
+                self.save_checkpoint(len(eva100), self.value_model, 'value')
+                self.plot(eva100)
 
             # debug stuff
             reached_debug_time = time.time() - last_debug_time >= LEAVE_PRINT_EVERY_N_SECS
@@ -232,13 +279,13 @@ class PPO():
                   final_eval_score, score_std, training_time, wallclock_time))
         env.close() ; del env
         envs.close() ; del envs
-        self.get_cleaned_checkpoints()
         return result, final_eval_score, training_time, wallclock_time
 
     def evaluate(self, eval_model, eval_env, n_episodes=1, greedy=True):
         rs = []
         for _ in range(n_episodes):
-            s, d = eval_env.reset(), False
+            info = {"episode" : 0, "evaluation" : True, "epsilon" : 0}
+            s, d = eval_env.reset(options=info), False
             rs.append(0)
             for _ in count():
                 if greedy:
@@ -250,26 +297,8 @@ class PPO():
                 if d: break
         return np.mean(rs), np.std(rs)
 
-    def get_cleaned_checkpoints(self, n_checkpoints=4):
-        try: 
-            return self.checkpoint_paths
-        except AttributeError:
-            self.checkpoint_paths = {}
-
-        paths = glob.glob(os.path.join(self.checkpoint_dir, '*.tar'))
-        paths_dic = {int(path.split('.')[-2]):path for path in paths}
-        last_ep = max(paths_dic.keys())
-        # checkpoint_idxs = np.geomspace(1, last_ep+1, n_checkpoints, endpoint=True, dtype=np.int)-1
-        checkpoint_idxs = np.linspace(1, last_ep+1, n_checkpoints, endpoint=True, dtype=int)-1
-
-        for idx, path in paths_dic.items():
-            if idx in checkpoint_idxs:
-                self.checkpoint_paths[idx] = path
-            else:
-                os.unlink(path)
-
-        return self.checkpoint_paths
-
-    def save_checkpoint(self, episode_idx, model):
-        torch.save(model.state_dict(),
-                   os.path.join(self.checkpoint_dir, 'model.{}.tar'.format(episode_idx)))
+    def save_checkpoint(self, evaluation_idx, model, suffix):
+        if evaluation_idx > 30:
+            torch.save(model.state_dict(), 
+                            os.path.join('C:/thesis_data', 'model.{}.{}.tar'.format(suffix, evaluation_idx)))
+            

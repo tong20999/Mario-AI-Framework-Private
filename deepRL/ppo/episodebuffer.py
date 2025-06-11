@@ -3,6 +3,8 @@ import torch
 import time
 import gc
 
+from ppo.multiprocessenv import MultiprocessEnv
+
 class EpisodeBuffer():
     def __init__(self,
                  state_dim,
@@ -60,8 +62,8 @@ class EpisodeBuffer():
         gc.collect()
 
 
-    def fill(self, envs, policy_model, value_model):
-        states = envs.reset()
+    def fill(self, envs:MultiprocessEnv, policy_model, value_model, episodeStart):
+        states = envs.reset(ranks=None, episodeStart=episodeStart)
 
         worker_rewards = np.zeros(shape=(self.n_workers, self.max_episode_steps), dtype=np.float32)
         worker_exploratory = np.zeros(shape=(self.n_workers, self.max_episode_steps), dtype=np.bool)
@@ -69,7 +71,8 @@ class EpisodeBuffer():
         worker_seconds = np.array([time.time(),] * self.n_workers, dtype=np.float64)
 
         buffer_full = False
-        while not buffer_full and len(self.episode_steps[self.episode_steps > 0]) < self.max_episodes/2:
+        length = len(self.episode_steps[self.episode_steps > 0])
+        while not buffer_full and length < self.max_episodes/2:
             with torch.no_grad():
                 actions, logpas, are_exploratory = policy_model.np_pass(states)
                 values = value_model(states)
@@ -101,7 +104,7 @@ class EpisodeBuffer():
             worker_steps += 1
 
             if terminals.sum():
-                new_states = envs.reset(ranks=idx_terminals)
+                new_states = envs.reset(ranks=idx_terminals, episodeStart=episodeStart)
                 states[idx_terminals] = new_states
 
                 for w_idx in range(self.n_workers):

@@ -7,17 +7,11 @@ logging.basicConfig(level=logging.INFO)
 
 class SocketEnv(gym.Env):
     def __init__(self, host='localhost', port=4455):
-        """
-        Initializes the environment state without creating the socket.
-        """
         self.host = host
         self.port = port
         self.client_socket = None  # Socket will be created lazily.
 
     def _connect(self):
-        """
-        Creates and connects the socket. This will be called on first use.
-        """
         if self.client_socket is not None:
             return  # Already connected
 
@@ -51,9 +45,6 @@ class SocketEnv(gym.Env):
         return b''.join(chunks)
     
     def close(self):
-        """
-        Cleanly closes the socket connection.
-        """
         if self.client_socket:
             pid = os.getpid()
             logging.info(f"Process {pid}: Closing socket.")

@@ -16,6 +16,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class GameServer {
     private final ExecutorService clientPool = Executors.newFixedThreadPool(16);
+    private int totalWindows = 0;
     public void start() throws Exception {
         // Start server thread
         Thread serverThread = new Thread(this::startSocketServer);
@@ -35,7 +36,17 @@ public class GameServer {
     }
 
     private void handleClient(Socket socket) {
-        MarioGameTraining clientGame = new MarioGameTraining();
+        int columns = 4;
+        int col = totalWindows % columns;
+        int row = totalWindows / columns;
+        totalWindows++;
+        MarioGameTraining clientGame = null;
+        if(totalWindows == 9){
+            clientGame = new MarioGameTraining(null, null);
+        }
+        else {
+            clientGame = new MarioGameTraining(col, row);
+        }
         try (
                 InputStream input = socket.getInputStream();
                 OutputStream output = socket.getOutputStream()

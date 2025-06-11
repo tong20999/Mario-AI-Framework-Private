@@ -12,5 +12,5 @@
 --------------------------
 ----------------------F---
 ---M------------------#---
-XXXXXXXXXXXX-----XXXXXXXXX
-XXXXXXXXXXXX-----XXXXXXXXX
+XXXXXXXXXX------XXXXXXXXXX
+XXXXXXXXXX------XXXXXXXXXX

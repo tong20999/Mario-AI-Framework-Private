@@ -62,12 +62,15 @@ class MultiprocessEnv(object):
     # The rest of the class now only interacts through the pipes
     # and does not need a 'work' method.
 
-    def reset(self, ranks=None, **kwargs):
+    def reset(self, ranks=None, episodeStart=None, **kwargs):
         if ranks is None:
             ranks = range(self.n_workers)
 
         # Send reset command to specified workers
         for rank in ranks:
+            episode = episodeStart + rank
+            info = {"episode" : episode, "evaluation" : False, "epsilon" :  0.0}
+            kwargs['options'] = info
             self.parent_pipes[rank].send(('reset', kwargs))
         
         # Receive results
