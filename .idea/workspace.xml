@@ -5,22 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="add human debug">
-      <change afterPath="$PROJECT_DIR$/levels/training/lvl-7-velocity-low-high-1.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/lvl-7-velocity-low-high-2.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/lvl-7-velocity-low-high-3.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/.vscode/launch.json" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/.vscode/launch.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/model.tar" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/model.tar" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/per.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/per.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-10-block-2.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-11-ramp-2.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-6-ramp-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/lvl-6-ramp-1.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-6-ramp-2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/lvl-6-ramp-2.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-6-ramp-3.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/lvl-6-ramp-3.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-7-velocity-low-2.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-8-velocity-high-2.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-9-obstacle-2.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/PlayLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/PlayLevel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/marioGame.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/marioGame.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/model.tar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/socketEnv.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/socketEnv.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-2-velocity-low-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/lvl-2-velocity-low-1.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/GameServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/GameServer.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -60,7 +51,7 @@
     "Application.GenerateLevel.executor": "Debug",
     "Application.Program.executor": "Debug",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "develop",
+    "git-widget-placeholder": "ppo",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/Users/WARDESKTOP/source/repos/Mario-AI-Framework-Private/levels/training",
     "project.structure.last.edited": "Modules",

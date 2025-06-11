@@ -81,6 +81,12 @@ public class MarioGameTraining {
         this.window.setVisible(true);
     }
 
+     public void close() {
+         if (this.window != null) {
+             this.window.dispose(); // This is the crucial call to close the window
+         }
+     }
+
     MarioTimer agentTimer;
     int timer;
 
@@ -142,7 +148,7 @@ public class MarioGameTraining {
         //this.world.initializeLevel(getOriginalLevel(1), 1000 * this.timer);
         Random random = new Random();
         int randomNumber = random.nextInt(3) + 1;
-        var shuffle = MessageFormat.format("7-velocity-low-high-1", randomNumber);
+        var shuffle = MessageFormat.format("2-velocity-low-1", randomNumber);
         this.world.initializeLevel(getTrainingLevel(shuffle), 1000 * this.timer);
         if (visual) {
             this.world.initializeVisuals(this.render.getGraphicsConfiguration());

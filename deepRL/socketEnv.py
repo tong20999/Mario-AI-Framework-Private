@@ -1,30 +1,45 @@
-from typing import Any, SupportsFloat
 import gymnasium as gym
-from typing import Optional
 import socket
-import numpy as np
-import asyncio
+import logging
+import os
+
+logging.basicConfig(level=logging.INFO)
 
 class SocketEnv(gym.Env):
-    def __init__(self):
-        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    def __init__(self, host='localhost', port=4455):
+        """
+        Initializes the environment state without creating the socket.
+        """
+        self.host = host
+        self.port = port
+        self.client_socket = None  # Socket will be created lazily.
+
+    def _connect(self):
+        """
+        Creates and connects the socket. This will be called on first use.
+        """
+        if self.client_socket is not None:
+            return  # Already connected
 
         try:
-            self.client_socket.connect(('localhost', 4455))
+            pid = os.getpid()
+            logging.info(f"Process {pid}: Connecting to {self.host}:{self.port}")
+            self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.client_socket.connect((self.host, self.port))
         except ConnectionRefusedError:
-            print("Connection refused. Ensure the server is running.")
+            pid = os.getpid()
+            logging.error(f"Process {pid}: Connection refused. Is the server at {self.host}:{self.port} running?")
+            raise
 
     def _send_operation(self, op_code: str, payload: bytes = b''):
-        # op_code 
-        # 01 reset
-        # 02 get_observation
+        self._connect()  # Ensure connection exists before sending.
         assert len(op_code) == 2 and payload is not None
-        buffer = op_code.encode('utf-8') + payload.ljust(1022, b'\x00')  # pad to 1024
+        buffer = op_code.encode('utf-8') + payload.ljust(1022, b'\x00')
         assert len(buffer) == 1024
         self.client_socket.sendall(buffer)
 
     def _receive_fixed(self, size: int = 1024) -> bytes:
-        """Receives exactly `size` bytes from the socket."""
+        self._connect() # Ensure connection exists before receiving.
         chunks = []
         bytes_recd = 0
         while bytes_recd < size:
@@ -34,4 +49,14 @@ class SocketEnv(gym.Env):
             chunks.append(chunk)
             bytes_recd += len(chunk)
         return b''.join(chunks)
-                                        
+    
+    def close(self):
+        """
+        Cleanly closes the socket connection.
+        """
+        if self.client_socket:
+            pid = os.getpid()
+            logging.info(f"Process {pid}: Closing socket.")
+            self.client_socket.close()
+            self.client_socket = None
+

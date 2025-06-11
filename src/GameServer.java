@@ -15,16 +15,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class GameServer {
-    private final ExecutorService clientPool = Executors.newFixedThreadPool(4);
-    private MarioGameTraining game;
+    private final ExecutorService clientPool = Executors.newFixedThreadPool(16);
     public void start() throws Exception {
         // Start server thread
         Thread serverThread = new Thread(this::startSocketServer);
         serverThread.start();
-
-        // Start game loop
-        game = new MarioGameTraining();
-
         serverThread.join();
     }
 
@@ -40,6 +35,7 @@ public class GameServer {
     }
 
     private void handleClient(Socket socket) {
+        MarioGameTraining clientGame = new MarioGameTraining();
         try (
                 InputStream input = socket.getInputStream();
                 OutputStream output = socket.getOutputStream()
@@ -57,13 +53,13 @@ public class GameServer {
                         case "01": // reset
                             payload = Arrays.copyOfRange(buffer, 2, 11);
                             Info info = getEpisode(payload);
-                            var state = game.reset(info);
+                            var state = clientGame.reset(info);
                             sendResponse(output, "01", state);
                             break;
                         case "02": // step
                             payload = Arrays.copyOfRange(buffer, 2, 7);
                             boolean[] actions = getActionFromPayload(payload); // fix: use payload[0], not [2]
-                            var result = game.step(actions);
+                            var result = clientGame.step(actions);
                             sendResponse(output, "02", result);
                             break;
                         default:
@@ -76,9 +72,21 @@ public class GameServer {
 
             System.out.println("Client disconnected.");
         } catch (IOException e) {
-            System.err.println("Client connection error: " + e.getMessage());
+            System.err.println("I/O error with client " + socket.getInetAddress() + ": " + e.getMessage());
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            System.err.println("An unexpected error occurred while handling client " + socket.getInetAddress());
+            e.printStackTrace();
+        } finally {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                // Ignore
+            }
+            System.out.println("Client disconnected: " + socket.getInetAddress());
+
+            // *** ADDED: Clean up the game instance when the client disconnects. ***
+            clientGame.close(); // You must implement this method in MarioGameTraining
+            System.out.println("Cleaned up game resources for client " + socket.getInetAddress());
         }
     }
 
