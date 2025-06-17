@@ -2,7 +2,7 @@ package info;
 public class Info {
     int episode = -1;
     boolean evaluation = false;
-    float epsilon = 0.0f;
+    String level;
 
     public int getEpisode() {
         return episode;
@@ -12,13 +12,13 @@ public class Info {
         return evaluation;
     }
 
-    public Info(int episode, boolean evaluation, float epsilon) {
+    public Info(int episode, boolean evaluation, String level) {
         this.episode = episode;
         this.evaluation = evaluation;
-        this.epsilon = epsilon;
+        this.level = level;
     }
 
-    public float getEpsilon() {
-        return this.epsilon;
+    public String getLevel() {
+        return this.level;
     }
 }

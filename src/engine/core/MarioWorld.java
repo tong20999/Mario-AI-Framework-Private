@@ -4,6 +4,7 @@ import java.awt.Graphics;
 import java.awt.GraphicsConfiguration;
 import java.util.ArrayList;
 
+import agents.myAgentMachineLearning.Objective;
 import engine.effects.*;
 import engine.graphics.MarioBackground;
 import engine.helper.*;
@@ -21,13 +22,15 @@ public class MarioWorld {
     public boolean visuals;
     public int currentTick;
     //Status
-    public int coins, lives;
+    public int coins, lives, bumpBlock;
 
     //AI
     public float reward = 0;
     public int episode = 0;
     public ArrayList<MarioEvent> lastFrameEvents;
     public float epsilon = 0.0f;
+    public Objective objective;
+    public boolean subGoalMet = false;
 
     private MarioEvent[] killEvents;
     private ArrayList<MarioSprite> sprites;
@@ -40,7 +43,7 @@ public class MarioWorld {
 
     private MarioBackground[] backgrounds = new MarioBackground[2];
 
-    public MarioWorld(MarioEvent[] killEvents) {
+    public MarioWorld(MarioEvent[] killEvents, Objective objective) {
         this.pauseTimer = 0;
         this.gameStatus = GameStatus.RUNNING;
         this.sprites = new ArrayList<>();
@@ -51,6 +54,7 @@ public class MarioWorld {
         this.effects = new ArrayList<>();
         this.lastFrameEvents = new ArrayList<>();
         this.killEvents = killEvents;
+        this.objective = objective;
     }
 
     public void initializeVisuals(GraphicsConfiguration graphicsConfig) {
@@ -108,7 +112,7 @@ public class MarioWorld {
     }
 
     public MarioWorld clone() {
-        MarioWorld world = new MarioWorld(this.killEvents);
+        MarioWorld world = new MarioWorld(this.killEvents, this.objective);
         world.visuals = false;
         world.cameraX = this.cameraX;
         world.cameraY = this.cameraY;
@@ -146,6 +150,17 @@ public class MarioWorld {
         this.lastFrameEvents.add(new MarioEvent(eventType, eventParam, mario.x, mario.y, marioState, this.currentTick));
     }
 
+    public void addEvent(EventType eventType, int eventParam, String initialCode) {
+        int marioState = 0;
+        if (this.mario.isLarge) {
+            marioState = 1;
+        }
+        if (this.mario.isFire) {
+            marioState = 2;
+        }
+        this.lastFrameEvents.add(new MarioEvent(eventType, eventParam, mario.x, mario.y, marioState, this.currentTick, initialCode));
+    }
+
     public void addEffect(MarioEffect effect) {
         this.effects.add(effect);
     }
@@ -174,8 +189,10 @@ public class MarioWorld {
     }
 
     public void win() {
-        this.addEvent(EventType.WIN, 0);
-        this.gameStatus = GameStatus.WIN;
+        if(this.subGoalMet){
+            this.addEvent(EventType.WIN, 0);
+            this.gameStatus = GameStatus.WIN;
+        }
     }
 
     public void lose() {
@@ -451,6 +468,7 @@ public class MarioWorld {
         ArrayList<TileFeature> features = TileFeature.getTileType(block);
 
         if (features.contains(TileFeature.BUMPABLE)) {
+            this.bumpBlock++;
             bumpInto(xTile, yTile - 1);
             this.addEvent(EventType.BUMP, MarioForwardModel.OBS_QUESTION_BLOCK);
             level.setBlock(xTile, yTile, 14);
@@ -475,6 +493,7 @@ public class MarioWorld {
         if (features.contains(TileFeature.BREAKABLE)) {
             bumpInto(xTile, yTile - 1);
             if (canBreakBricks) {
+                this.bumpBlock++;
                 this.addEvent(EventType.BUMP, MarioForwardModel.OBS_BRICK);
                 level.setBlock(xTile, yTile, 0);
                 if (this.visuals) {

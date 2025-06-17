@@ -1,8 +1,6 @@
 import torch.multiprocessing as mp
 import numpy as np
 
-# ✅ STEP 1: Move the worker logic to a top-level function.
-# It is no longer a method of the class.
 def worker_process(rank, worker_end, make_env_fn):
     """
     This function runs in a separate process.
@@ -62,14 +60,18 @@ class MultiprocessEnv(object):
     # The rest of the class now only interacts through the pipes
     # and does not need a 'work' method.
 
-    def reset(self, ranks=None, episodeStart=None, **kwargs):
+    def reset(self, ranks=None, episodeStart=None, levels: list = None, **kwargs):
         if ranks is None:
             ranks = range(self.n_workers)
 
+        if levels:
+            assert len(ranks) == len(levels) , "Must provide one level per rank."
+
         # Send reset command to specified workers
-        for rank in ranks:
+        for i, rank in enumerate(ranks):
             episode = episodeStart + rank
-            info = {"episode" : episode, "evaluation" : False, "epsilon" :  0.0}
+            level_name = levels[i]
+            info = {"episode" : episode, "evaluation" : False, "level" :  level_name}
             kwargs['options'] = info
             self.parent_pipes[rank].send(('reset', kwargs))
         

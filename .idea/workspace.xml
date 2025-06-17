@@ -5,39 +5,34 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="add human debug">
-      <change afterPath="$PROJECT_DIR$/levels/training/lvl-10-block-2.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/lvl-11-original-2.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/lvl-7-half-level-1.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/lvl-8-original-1.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/lvl-9-velocity-low-2.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-1-obj-block-basic.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-1-obj-coin-basic.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-11-obstacle-2.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-12-block-2.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-2-obj-block.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/Objective.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/.vscode/launch.json" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/.vscode/launch.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/chapter-12.ipynb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/main.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/main_ppo.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/main_ppo.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deepRL/marioGame.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/marioGame.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deepRL/ppo/episodebuffer.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ppo/episodebuffer.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deepRL/ppo/multiprocessenv.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ppo/multiprocessenv.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deepRL/ppo/ppo.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ppo/ppo.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/socketEnv.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/socketEnv.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-2-velocity-low-2.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-2-velocity-low-3.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-3-velocity-high-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/lvl-3-velocity-high-1.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-3-velocity-high-2.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-3-velocity-high-3.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-4-obstacle-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/lvl-4-obstacle-1.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-4-obstacle-2.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-4-obstacle-3.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-5-block-2.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-5-block-3.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-6-ramp-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/lvl-6-ramp-1.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-6-ramp-2.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-6-ramp-3.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-7-velocity-low-high-1.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-7-velocity-low-high-2.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-7-velocity-low-high-3.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-1-basic-move-right.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/lvl-1-obj-flag-basic-move.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-10-block-2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/lvl-10-velocity-high-2.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-11-original-2.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-2-velocity-low-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/lvl-2-obj-flag-velocity-low-1.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-8-original-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/lvl-8-original-1.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-9-velocity-low-2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/lvl-9-velocity-low-2.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/GameServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/GameServer.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/PlayLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/PlayLevel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/State.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/myAgentMachineLearning/State.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioEvent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGame.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGame.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioLevel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioWorld.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioWorld.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/sprites/Enemy.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/sprites/Enemy.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/info/Info.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/info/Info.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,6 +44,7 @@
       <list>
         <option value="Interface" />
         <option value="Class" />
+        <option value="Enum" />
       </list>
     </option>
   </component>
@@ -71,20 +67,21 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.GenerateLevel.executor": "Debug",
-    "Application.PlayLevel.executor": "Debug",
-    "Application.Program.executor": "Debug",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "ppo",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Git/Mario-AI-Framework-Private/levels/training",
-    "project.structure.last.edited": "Modules",
-    "project.structure.proportion": "0.15",
-    "project.structure.side.proportion": "0.2862069"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.GenerateLevel.executor&quot;: &quot;Debug&quot;,
+    &quot;Application.PlayLevel.executor&quot;: &quot;Debug&quot;,
+    &quot;Application.Program.executor&quot;: &quot;Debug&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;ppo&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Git/Mario-AI-Framework-Private/levels/training&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2862069&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Git\Mario-AI-Framework-Private\levels\training" />
@@ -196,15 +193,6 @@
     <option name="LAST_COMMIT_MESSAGE" value="add human debug" />
   </component>
   <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/agents/human/Agent.java</url>
-          <line>76</line>
-          <option name="timeStamp" value="18" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
     <pin-to-top-manager>
       <pinned-members>
         <PinnedItemInfo parentTag="engine.core.MarioWorld" memberName="sprites" />

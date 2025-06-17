@@ -4,18 +4,18 @@ import java.awt.image.VolatileImage;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.awt.*;
-import java.util.Random;
-import java.util.stream.IntStream;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.JFrame;
 
+import agents.myAgentMachineLearning.Objective;
 import agents.myAgentMachineLearning.State;
 import engine.helper.EventType;
 import engine.helper.GameStatus;
@@ -110,11 +110,7 @@ public class MarioGameTraining {
     boolean visual = true;
     int currentTimer;
 
-    // idle kill
-//    int interval = 10000;
-//    long remaining = 0;
-//    long nextTrigger = 0;
-//    float expectPositionX = 0;
+    private Set<String> clearedSpawnPointsThisEpisode;
     int lastMilestone;
     int lastCoinCount;
 
@@ -132,7 +128,7 @@ public class MarioGameTraining {
     float epsilon;
     int frameSkip = 5;
 
-    float winReward = 1;
+    float winReward = 10;
     float mileStoneReward = 0.1f;
     float jumpOverPitReward = 0f;
     float killReward = 2 * 5;
@@ -147,19 +143,27 @@ public class MarioGameTraining {
     float fallPitReward = -10f;
     float timePenaltyRewardCoefficient = 0.00005f;
     int episode = -1;
+    boolean isNormalSpeed = false;
+    Objective objective = Objective.FLAG;
     public byte[] reset(Info info) throws Exception {
         if(!info.isEvaluation()){
             this.episode = info.getEpisode();
         }
+        var level = info.getLevel();
+        this.clearedSpawnPointsThisEpisode = new HashSet<>();
+        this.objective = getObjective(level);
         this.gameEvents = new ArrayList<>();
         this.evaluation = info.isEvaluation();
-        this.world = new MarioWorld(this.killEvents);
+        this.world = new MarioWorld(this.killEvents, this.objective);
         this.world.visuals = visual;
-        this.timer = 100;
+        // timer by level width
+        this.timer = new MarioLevel(getTrainingLevel(level), false).exitTileX + 10;
         this.lastMilestone = 0;
         this.lastCoinCount = 0;
-        //this.world.initializeLevel(getOriginalLevel(1), 1000 * this.timer);
-        this.world.initializeLevel(getTrainingLevel("10-block-2"), 1000 * this.timer);
+        this.world.initializeLevel(getTrainingLevel(level), 1000 * this.timer);
+        if(objective == Objective.FLAG){
+            this.world.subGoalMet = true;
+        }
         if (visual) {
             this.world.initializeVisuals(this.render.getGraphicsConfiguration());
         }
@@ -186,6 +190,33 @@ public class MarioGameTraining {
         return State.toByte(new MarioForwardModel(this.world.clone()));
     }
 
+    private Objective getObjective(String level) {
+        if(level.contains("obj-flag")){
+            return Objective.FLAG;
+        }
+
+        if(level.contains("obj-coin")){
+            return Objective.COIN;
+        }
+
+        if(level.contains("obj-enemy")){
+            return Objective.ENEMY;
+        }
+
+        if(level.contains("obj-block")){
+            return Objective.BLOCK;
+        }
+
+        throw new IllegalArgumentException(level);
+    }
+
+    private int getDelay(int fps) {
+        if (fps <= 0) {
+            return 0;
+        }
+        return 1000 / fps;
+    }
+
     public byte[] step(boolean[] action) throws Exception {
         // for frame skip the agent will only send one action per 3 frames to make agent jump longer
         // because it needs to hold the jump button
@@ -210,9 +241,12 @@ public class MarioGameTraining {
         for (MarioEvent e : this.world.lastFrameEvents) {
             if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
                     e.getEventType() == EventType.FIRE_KILL.getValue() ||
-                    e.getEventType() == EventType.SHELL_KILL.getValue() ||
-                    e.getEventType() == EventType.FALL_KILL.getValue()) {
-                reward += killReward; // +2 reward per kill
+                    e.getEventType() == EventType.SHELL_KILL.getValue()) {
+                var sprintCode = e.getSprintCode();
+                if(sprintCode != null && !this.clearedSpawnPointsThisEpisode.contains(sprintCode)){
+                    clearedSpawnPointsThisEpisode.add(sprintCode);
+                    reward += killReward; // +2 reward per kill
+                }
             }
             if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == SpriteType.FIRE_FLOWER.getValue()) {
                 reward += fireworkReward; // +5 for a power-up
@@ -233,6 +267,8 @@ public class MarioGameTraining {
                 reward += fallPitReward;
             }
         }
+
+        checkSubGoalMet();
 
         // --- 3. Define the outcome: Keep your score or lose it all ---
         if (this.world.gameStatus == GameStatus.WIN) {
@@ -261,6 +297,27 @@ public class MarioGameTraining {
         this.world.episode = this.evaluation ? -1 : this.episode;
         printInfo();
         return stepResult(State.toByte(nextState), reward, this.world.gameStatus != GameStatus.RUNNING);
+    }
+
+    private void checkSubGoalMet() {
+        if(this.objective == Objective.COIN){
+            if(this.world.level.totalCoins == this.world.coins){
+                this.world.subGoalMet = true;
+            }
+        }
+
+        if(this.objective == Objective.BLOCK){
+            if(this.world.level.totalBumpBlock == this.world.bumpBlock){
+                //this.world.win();
+                this.world.subGoalMet = true;
+            }
+        }
+
+        if(this.objective == Objective.ENEMY){
+//            if(this.world.level.totalEnemies == this.world.kill){
+//                this.world.win();
+//            }
+        }
     }
 
     private float distanceToFlag(MarioForwardModel model) {
@@ -407,10 +464,23 @@ public class MarioGameTraining {
     }
 
     public void miniStep(boolean[] action) throws Exception {
+        long currentTime = System.currentTimeMillis();
         this.world.update(action);
         this.gameEvents.addAll(this.world.lastFrameEvents);
         if (visual) {
             this.render.renderWorld(this.world, renderTarget, backBuffer, currentBuffer);
+        }
+
+        if(this.isNormalSpeed)
+        {
+            if (this.getDelay(30) > 0) {
+                try {
+                    currentTime += this.getDelay(30);
+                    Thread.sleep(Math.max(0, currentTime - System.currentTimeMillis()));
+                } catch (InterruptedException e) {
+
+                }
+            }
         }
     }
 
@@ -443,7 +513,7 @@ public class MarioGameTraining {
     }
 
     public static String getTrainingLevel(String level){
-        var levelLocation = MessageFormat.format("./levels/training/lvl-{0}.txt", level);
+        var levelLocation = MessageFormat.format("./levels/training/{0}", level);
         return getFileFromLevel(levelLocation);
     }
 

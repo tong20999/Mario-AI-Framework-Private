@@ -62,8 +62,8 @@ public class GameServer {
                     byte[] payload;
                     switch (opCode) {
                         case "01": // reset
-                            payload = Arrays.copyOfRange(buffer, 2, 11);
-                            Info info = getEpisode(payload);
+                            //payload = Arrays.copyOfRange(buffer, 2, 11);
+                            Info info = getEpisode(buffer);
                             var state = clientGame.reset(info);
                             sendResponse(output, "01", state);
                             break;
@@ -104,12 +104,24 @@ public class GameServer {
     private Info getEpisode(byte[] payload) {
         ByteBuffer buffer = ByteBuffer.wrap(payload);
         buffer.order(java.nio.ByteOrder.BIG_ENDIAN);
+        buffer.position(2);
 
         int episode = buffer.getInt();
-        float epsilon = buffer.getFloat();
-        byte boolByte = buffer.get();       // 5th byte
+        byte boolByte = buffer.get();
         boolean evaluation = boolByte != 0;
-        return new Info(episode, evaluation, epsilon);
+
+        // Read the length of the level string (int)
+        int levelLength = buffer.getInt();
+
+        // Create a byte array to hold the level string bytes
+        byte[] levelBytes = new byte[levelLength];
+        // Read the level string bytes into the array
+        buffer.get(levelBytes);
+
+        // Convert the level bytes to a String using UTF-8 encoding
+        String level = new String(levelBytes, StandardCharsets.UTF_8);
+
+        return new Info(episode, evaluation, level);
     }
 
     private boolean[] getActionFromPayload(byte[] payload) {

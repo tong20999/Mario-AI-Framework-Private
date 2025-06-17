@@ -38,9 +38,6 @@ public class State {
 
         byte[] state = intArrayToBytes(flatState);
 
-        int timeRemainingInSec = model.getRemainingTime() / 1000;
-        byte[] timeRemain = int2ByteArray(timeRemainingInSec);
-
         byte marioMode = (byte) model.getMarioMode();
         byte isMarioOnGround = (byte)(model.isMarioOnGround() ? 1 : 0);
         byte isMarioCanJumpHigher = (byte) (model.getMarioCanJumpHigher() ? 1 : 0);
@@ -51,18 +48,14 @@ public class State {
         byte[] velocityX = float2ByteArray(model.getMarioFloatVelocity()[0]);
         byte[] velocityY = float2ByteArray(model.getMarioFloatVelocity()[1]);
 
-        byte gameStatus = (byte)(model.getGameStatus().ordinal());
 
         ByteBuffer buffer = ByteBuffer.allocate(
                 state.length
-                + timeRemain.length
                 + 4
                 + 10
-                + 1
         );
 
         buffer.put(state);
-        buffer.put(timeRemain);
 
         buffer.put(marioMode);
         buffer.put(isMarioOnGround);
@@ -74,7 +67,6 @@ public class State {
         buffer.put(velocityX);
         buffer.put(velocityY);
 
-        buffer.put(gameStatus);
         return buffer.array();
     }
 }

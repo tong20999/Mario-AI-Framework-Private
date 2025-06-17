@@ -16,6 +16,7 @@ public class MarioLevel {
     public int height = MarioGame.height;
     public int tileHeight = MarioGame.height / 16;
     public int totalCoins = 0;
+    public int totalBumpBlock = 0;
     public int marioTileX, marioTileY, exitTileX, exitTileY;
 
     private int[][] levelTiles;
@@ -140,12 +141,14 @@ public class MarioLevel {
                     case '@':
                         //mushroom question block
                         this.levelTiles[x][y] = 8;
+                        this.totalBumpBlock += 1;
                         break;
                     case 'Q':
                     case '!':
                         //coin question block
                         this.totalCoins += 1;
                         this.levelTiles[x][y] = 11;
+                        this.totalBumpBlock += 1;
                         break;
                     case '1':
                         //invisible 1 up block
@@ -153,7 +156,7 @@ public class MarioLevel {
                         break;
                     case '2':
                         //invisible coin block
-                        this.totalCoins += 1;
+                        //this.totalCoins += 1;
                         this.levelTiles[x][y] = 49;
                         break;
                     case 'D':
@@ -163,19 +166,23 @@ public class MarioLevel {
                     case 'S':
                         //normal block
                         this.levelTiles[x][y] = 6;
+                        this.totalBumpBlock += 1;
                         break;
                     case 'C':
                         //coin block
                         this.totalCoins += 1;
                         this.levelTiles[x][y] = 7;
+                        this.totalBumpBlock += 1;
                         break;
                     case 'U':
                         //mushroom block
                         this.levelTiles[x][y] = 50;
+                        this.totalBumpBlock += 1;
                         break;
                     case 'L':
                         //1up block
                         this.levelTiles[x][y] = 51;
+                        this.totalBumpBlock += 1;
                         break;
                     case 'o':
                         //coin

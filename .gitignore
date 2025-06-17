@@ -3,3 +3,4 @@
 deepRL/.venv/
 src/deepRL/.venv/
 out/
+deepRL/model.*

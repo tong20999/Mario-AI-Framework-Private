@@ -9,6 +9,7 @@ public class MarioEvent {
     private float marioY;
     private int marioState;
     private int time;
+    private String sprintCode;
 
     public MarioEvent(EventType eventType) {
         this.eventType = eventType;
@@ -46,8 +47,22 @@ public class MarioEvent {
         this.time = time;
     }
 
+    public MarioEvent(EventType eventType, int eventParam, float x, float y, int state, int time, String initialCode){
+        this.eventType = eventType;
+        this.eventParam = eventParam;
+        this.marioX = x;
+        this.marioY = y;
+        this.marioState = state;
+        this.time = time;
+        this.sprintCode = initialCode;
+    }
+
     public int getEventType() {
         return this.eventType.getValue();
+    }
+
+    public String getSprintCode() {
+        return this.sprintCode;
     }
 
     public int getEventParam() {

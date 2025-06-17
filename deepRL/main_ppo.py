@@ -1,5 +1,6 @@
 from marioGame import MarioGame
 from ppo.episodebuffer import EpisodeBuffer
+from ppo.ewc import EWC
 from ppo.fcca import FCCA
 from ppo.fcv import FCV
 from ppo.multiprocessenv import MultiprocessEnv
@@ -7,19 +8,13 @@ import torch.optim as optim
 import torch.multiprocessing as mp
 from ppo.ppo import PPO
 
-# ✅ Define the function at the top level
 def make_env_fn():
   return MarioGame()
 
-# (Optional but recommended) Also make the lambda a top-level function
 def make_envs_fn(mef, n):
   return MultiprocessEnv(mef, n)
 
-# ===================================================================
-#  The main execution block MUST be inside this conditional
-# ===================================================================
 if __name__ == '__main__':
-    # The freeze_support() line is good practice for Windows, especially if you plan to package your app.
     mp.freeze_support() 
 
     environment_settings = {
@@ -48,6 +43,9 @@ if __name__ == '__main__':
     value_clip_range = float('inf')
     value_stopping_mse = 25
 
+    ewc_fn = lambda policy_model, ewc_lambda: EWC(policy_model, ewc_lambda)
+    ewc_lambda = 800.0
+
     episode_buffer_fn = lambda sd, g, t, nw, me, mes: EpisodeBuffer(sd, g, t, nw, me, mes)
     max_buffer_episodes = 16
     max_buffer_episode_steps = 1000
@@ -74,6 +72,8 @@ if __name__ == '__main__':
                 value_sample_ratio,
                 value_clip_range,
                 value_stopping_mse,
+                ewc_fn,
+                ewc_lambda,
                 episode_buffer_fn,
                 max_buffer_episodes,
                 max_buffer_episode_steps,
@@ -83,9 +83,20 @@ if __name__ == '__main__':
 
     # make_envs_fn = lambda mef, n: MultiprocessEnv(mef, n)
     # make_env_fn = get_make_env_fn()
-    result, final_eval_score, training_time, wallclock_time = agent.train(make_envs_fn,
-                                                                            make_env_fn,
-                                                                            gamma,
-                                                                            max_minutes,
-                                                                            max_episodes,
-                                                                            goal_mean_100_reward)
+
+    # current_level = "lvl-1-obj-flag-velocity-low-1.txt"
+    current_level = "lvl-2-obj-block.txt"
+    level_pool = ["lvl-1-obj-flag-basic-move.txt", "lvl-1-obj-block-basic.txt", "lvl-1-obj-coin-basic.txt", "lvl-2-obj-flag-velocity-low-1.txt"]
+    #"lvl-1-obj-flag-basic-move.txt", "lvl-1-obj-block-basic.txt", "lvl-1-obj-coin-basic.txt"
+
+    agent.train(make_envs_fn,
+                make_env_fn,
+                gamma,
+                max_minutes,
+                max_episodes,
+                goal_mean_100_reward,
+                current_level,
+                level_pool)
+
+    
+    agent.save_ewc(current_level)

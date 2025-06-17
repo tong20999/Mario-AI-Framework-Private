@@ -15,9 +15,7 @@ all_possible_input:list[list[bool]] = [
     [False, True, False, True, False], # move right and speed
     [False, True, False, True, True],  # move right and speed and jump
     [False, False, False, False, True], # Jump only
-    [True, False, False, False, False], # move left
     [True, False, False, False, True], # move left and jump
-    [True, False, False, True, False], # move left and speed
     [True, False, False, True, True],  # move left and speed and jump
 ]
 
@@ -49,13 +47,11 @@ class MarioGame(SocketEnv):
                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                1, 1, 1, 1, # time remaining
                 1, 1, 1, 1, # mario mode, is mario on ground, can jump higher, facing
                 1, # velocity x sign
                 1, # velocity y sign
                 1, 1, 1, 1, # velocity x
                 1, 1, 1, 1, # velocity y
-                1 # game status
                 ])
         self.action_space = gym.spaces.MultiDiscrete([2] * len(all_possible_input))
 
@@ -113,8 +109,14 @@ class MarioGame(SocketEnv):
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None) -> list[int]:
         episode = options.get("episode") if options else 0
         evaluation = options.get("evaluation") if options else False
-        epsilon = options.get("epsilon") if options else 0
-        payload = struct.pack('>if?', episode, epsilon, evaluation)
+        level = options.get("level") if options else ""
+
+         # Encode the level string to bytes
+        level_bytes = level.encode('utf-8')
+        # Get the length of the encoded string
+        level_length = len(level_bytes)
+
+        payload = struct.pack(f'>i?I{level_length}s', episode, evaluation, level_length, level_bytes)
         self._send_operation('01', payload)
         observation = self._receive_reset()
         return observation

@@ -1,3 +1,4 @@
+import random
 import numpy as np
 import torch
 import time
@@ -61,9 +62,36 @@ class EpisodeBuffer():
         self.current_ep_idxs = np.arange(self.n_workers, dtype=np.uint16)
         gc.collect()
 
+    # def split_ratio(self, denominator: int):
+    #     first = round(denominator * 2 / 3)   # approx 66.67%
+    #     second = denominator - first         # remainder (~33.33%)
+    #     return first, second
 
-    def fill(self, envs:MultiprocessEnv, policy_model, value_model, episodeStart):
-        states = envs.reset(ranks=None, episodeStart=episodeStart)
+    def assign_levels(self, current_level, level_pool, n_new_level_workers, n_rehearsal_workers):
+        # Create the list of levels to assign.
+        levels_to_assign = []
+
+        # 1. Add the new level for the primary workers.
+        levels_to_assign.extend([current_level] * n_new_level_workers)
+
+        # 2. Add random old levels for the rehearsal workers.
+        for _ in range(n_rehearsal_workers):
+            if not level_pool:
+                rehearsal_level = current_level
+            else:
+                rehearsal_level = random.choice(level_pool)
+            levels_to_assign.append(rehearsal_level)
+
+        # Shuffle so worker order is randomized.
+        random.shuffle(levels_to_assign)
+
+        return levels_to_assign
+
+    def fill(self, envs:MultiprocessEnv, policy_model, value_model, episodeStart,
+             current_level: str, level_pool: list):
+        n_new_level_workers, n_rehearsal_workers = self.n_workers//2, self.n_workers//2
+        levels_to_assign = self.assign_levels(current_level, level_pool, n_new_level_workers, n_rehearsal_workers)
+        states = envs.reset(ranks=None, episodeStart=episodeStart, levels=levels_to_assign)
 
         worker_rewards = np.zeros(shape=(self.n_workers, self.max_episode_steps), dtype=np.float32)
         worker_exploratory = np.zeros(shape=(self.n_workers, self.max_episode_steps), dtype=np.bool)
@@ -104,7 +132,20 @@ class EpisodeBuffer():
             worker_steps += 1
 
             if terminals.sum():
-                new_states = envs.reset(ranks=idx_terminals, episodeStart=episodeStart)
+                idx_terminals = np.flatnonzero(terminals)
+
+                # --- Create the list of levels for the workers that just finished ---
+                reset_levels = []
+                for _ in idx_terminals:
+                    # Decide if this worker should get the new level or a random old one
+                    if random.random() < (n_rehearsal_workers / self.n_workers):
+                        # This worker will do rehearsal
+                        reset_levels.append(random.choice(level_pool) if level_pool else current_level)
+                    else:
+                        # This worker will work on the new level
+                        reset_levels.append(current_level)
+
+                new_states = envs.reset(ranks=idx_terminals, episodeStart=episodeStart, levels=reset_levels)
                 states[idx_terminals] = new_states
 
                 for w_idx in range(self.n_workers):

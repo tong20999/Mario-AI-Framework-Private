@@ -219,7 +219,7 @@ public class MarioGame {
     }
 
     private MarioResult gameLoop(String level, int timer, int marioState, boolean visual, int fps) {
-        this.world = new MarioWorld(this.killEvents);
+        this.world = new MarioWorld(this.killEvents, null);
         this.world.visuals = visual;
         this.world.initializeLevel(level, 1000 * timer);
         if (visual) {
@@ -263,6 +263,10 @@ public class MarioGame {
                 agentEvents.add(new MarioAgentEvent(actions, this.world.mario.x,
                         this.world.mario.y, (this.world.mario.isLarge ? 1 : 0) + (this.world.mario.isFire ? 1 : 0),
                         this.world.mario.onGround, this.world.currentTick));
+            }
+
+            if(this.world.level.totalCoins == this.world.coins){
+                this.world.subGoalMet = true;
             }
 
             //render world
