@@ -188,10 +188,10 @@ public class MarioWorld {
     }
 
     public void win() {
-        if(this.subGoalMet){
+        //if(this.subGoalMet){
             this.addEvent(EventType.WIN, 0);
             this.gameStatus = GameStatus.WIN;
-        }
+        //}
     }
 
     public void lose() {

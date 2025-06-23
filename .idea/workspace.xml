@@ -5,31 +5,32 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="add human debug">
-      <change afterPath="$PROJECT_DIR$/levels/training/lvl-2-obj-coin.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/lvl-3-obj-coin.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/lvl-4-obj-block.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/platformer-1/lvl-1-obj-flag-obstacle.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/platformer-1/lvl-1-obj-flag-pit.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/platformer-1/lvl-1-obj-flag-velocity-high-1.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-2-basic-jump.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-3-basic-obstacle.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/lvl-4-ramp.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/platformer-1/lvl-1-obj-flag-evaluation.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deepRL/main_ppo.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/main_ppo.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deepRL/marioGame.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/marioGame.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/ppo/episodebuffer.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ppo/episodebuffer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/ppo/multiprocessenv.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ppo/multiprocessenv.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/ppo/ppo.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ppo/ppo.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-1-obj-flag-basic-move.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/platformer-1/lvl-1-obj-flag-basic-move.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-2-obj-flag-velocity-low-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/platformer-1/lvl-1-obj-flag-velocity-low-1.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-3-velocity-high-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/lvl-3-obj-block.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-4-obstacle-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/lvl-4-obj-flag-enemy.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-6-ramp-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/platformer-1/lvl-1-obj-flag-ramp.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-8-original-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/lvl-8-obj-flag-original-1.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-1-obj-block-basic.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-1-obj-coin-basic.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/old/lvl-1-obj-coin-basic.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-10-velocity-high-2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/old/lvl-10-velocity-high-2.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-11-obstacle-2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/old/lvl-11-obstacle-2.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-12-block-2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/old/lvl-12-block-2.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-2-obj-block.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/lvl-1-obj-block.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-2-obj-coin.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/old/lvl-2-obj-coin.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-3-obj-block.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/old/lvl-3-obj-block.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-3-obj-coin.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/old/lvl-3-obj-coin.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-4-obj-block.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/old/lvl-4-obj-block.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-4-obj-flag-enemy.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/old/lvl-4-obj-flag-enemy.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-5-block-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/old/lvl-5-block-1.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-7-half-level-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/old/lvl-7-half-level-1.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-8-obj-flag-original-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/old/lvl-8-obj-flag-original-1.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/lvl-9-velocity-low-2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/old/lvl-9-velocity-low-2.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/platformer-1/lvl-1-obj-flag-basic-move.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/lvl-0-obj-flag-basic-move.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/GameServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/GameServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/PlayLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/PlayLevel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGame.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGame.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioRender.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioRender.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/engine/core/MarioWorld.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioWorld.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/info/Info.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/info/Info.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -87,6 +88,8 @@
       <recent name="C:\Users\tchuiploy\source\repos\Mario-AI-Framework-Private\src\agents\myAgent" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Git\Mario-AI-Framework-Private\levels\training" />
+      <recent name="C:\Git\Mario-AI-Framework-Private\levels\training\old" />
       <recent name="C:\Git\Mario-AI-Framework-Private\levels\training\platformer" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">

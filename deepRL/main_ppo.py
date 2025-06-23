@@ -20,9 +20,9 @@ if __name__ == '__main__':
     environment_settings = {
         'env_name': 'LunarLander-v2',
         'gamma': 0.99,
-        'max_minutes': 20,
+        'max_minutes': 60,
         'max_episodes': 10000,
-        'goal_mean_100_reward': 250
+        'goal_mean_100_reward': 2500
     }
 
     policy_model_fn = lambda nS, nA: FCCA(nS, nA, hidden_dims=(256,256))
@@ -47,12 +47,12 @@ if __name__ == '__main__':
     ewc_lambda = 800.0
 
     episode_buffer_fn = lambda sd, g, t, nw, me, mes: EpisodeBuffer(sd, g, t, nw, me, mes)
-    max_buffer_episodes = 24
-    max_buffer_episode_steps = 3000
+    max_buffer_episodes = 8*4
+    max_buffer_episode_steps = 1000*10
 
     entropy_loss_weight = 0.01
     tau = 0.97
-    n_workers = 12
+    n_workers = 16
 
     env_name, gamma, max_minutes, \
     max_episodes, goal_mean_100_reward = environment_settings.values()
@@ -84,9 +84,14 @@ if __name__ == '__main__':
     # make_envs_fn = lambda mef, n: MultiprocessEnv(mef, n)
     # make_env_fn = get_make_env_fn()
 
-    # current_level = "lvl-1-obj-flag-velocity-low-1.txt"
-    current_level = "platformer-1/lvl-1-obj-flag-ramp.txt"
-    level_pool = []
+    current_level = "lvl-1-obj-block.txt"
+    # current_level = "lvl-4-ramp.txt"
+    level_pool = [
+      "lvl-0-obj-flag-basic-move.txt",
+      # "lvl-1-obj-block.txt",
+      # "lvl-2-basic-jump.txt",
+      # "lvl-3-basic-obstacle.txt"
+       ]
     #"lvl-1-obj-flag-basic-move.txt", "lvl-1-obj-block-basic.txt", "lvl-1-obj-coin-basic.txt"
 
 
@@ -100,4 +105,4 @@ if __name__ == '__main__':
                 level_pool)
 
     
-    #agent.save_ewc(current_level)
+    agent.save_ewc(current_level)

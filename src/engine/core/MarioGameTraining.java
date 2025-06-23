@@ -99,17 +99,19 @@ public class MarioGameTraining {
     float epsilon;
     int frameSkip = 5;
 
-    float winReward = 25;
+    float bonusBlock = 50;
+    float bonusCoin = 50;
+    float winReward = 50;
     float mileStoneReward = 0.1f;
     float jumpOverPitReward = 0f;
-    float killReward = 2 * 5;
-    float coinReward = 2 * 5;
-    float fireworkReward = 5 * 5;
-    float mushroomReward = 2 * 5;
-    float lifeMushroomReward = 5 * 5;
-    float loseReward = -15f;
+    float killReward = 5;
+    float coinReward = 5;
+    float fireworkReward = 5;
+    float mushroomReward = 5;
+    float lifeMushroomReward = 5;
+    float loseReward = -20f;
     float loseTimeoutReward = -30f;
-    float hurtReward = -1f;
+    float hurtReward = -10f;
     float hitWallReward = -0.2f;
     float fallPitReward = -10f;
     float timePenaltyRewardCoefficient = 0.00005f;
@@ -132,14 +134,14 @@ public class MarioGameTraining {
     public byte[] reset(Info info) throws Exception {
         this.visual = info.isVisual();
         if(this.visual){
-            setupWindow();
+            setupWindow(info.getEpisode());
         }
         if(!info.isEvaluation()){
             this.episode = info.getEpisode();
         }
         var level = info.getLevel();
         this.clearedSpawnPointsThisEpisode = new HashSet<>();
-        this.objective = getObjective(level);
+        this.objective = Objective.FLAG;
         this.gameEvents = new ArrayList<>();
         this.evaluation = info.isEvaluation();
         this.world = new MarioWorld(this.killEvents, this.objective);
@@ -178,7 +180,7 @@ public class MarioGameTraining {
         return State.toByte(new MarioForwardModel(this.world.clone()));
     }
 
-    private void setupWindow() {
+    private void setupWindow(int episode) {
         if(this.window != null){
             return;
         }
@@ -190,6 +192,33 @@ public class MarioGameTraining {
         this.window.setResizable(false);
         this.window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.render.init();
+        // === NEW LOGIC FOR WINDOW PLACEMENT STARTS HERE ===
+
+        // 1. Get a unique ID for this worker (from 0 to 7)
+        // We assume getEpisode() returns the unique worker number.
+        int workerId = episode;
+
+        // 2. Define the grid dimensions
+        final int NUM_COLS = 4; // We want 4 windows per row
+
+        // 3. Calculate the row and column for this worker
+        // Integer division gives the row number (0 for top row, 1 for bottom row)
+        int row = workerId / NUM_COLS;
+        // Modulo operator gives the column number (0, 1, 2, or 3)
+        int col = workerId % NUM_COLS;
+
+        // 4. Get the size of one game window
+        int windowWidth = this.window.getWidth();
+        int windowHeight = this.window.getHeight();
+
+        // 5. Calculate the exact X and Y coordinates on the screen
+        int xPosition = col * windowWidth;
+        int yPosition = row * windowHeight;
+
+        // 6. Set the window's location on the screen
+        this.window.setLocation(xPosition, yPosition);
+
+        // This makes the window visible at its new position
         this.window.setVisible(this.visual);
     }
 
@@ -250,6 +279,8 @@ public class MarioGameTraining {
         if (this.world.gameStatus == GameStatus.WIN) {
             // The reward for winning is that you get to keep the score you earned.
             // We can add a small bonus to break ties, but the bulk of the score is from the run itself.
+            reward += calculateNonlinearBonus(this.world.level.totalBumpBlock, this.world.bumpBlock, this.bonusBlock);
+            reward += calculateNonlinearBonus(this.world.level.totalCoins, this.world.coins, this.bonusCoin);
             reward += winReward;
         } else if (this.world.gameStatus == GameStatus.TIME_OUT) {
             // A massive penalty that ensures any failure is always worse than even the "laziest" win.
@@ -504,30 +535,49 @@ public class MarioGameTraining {
         return getFileFromLevel(levelLocation);
     }
 
-    private Objective getObjective(String level) {
-        if(level.contains("obj-flag")){
-            return Objective.FLAG;
-        }
-
-        if(level.contains("obj-coin")){
-            return Objective.COIN;
-        }
-
-        if(level.contains("obj-enemy")){
-            return Objective.ENEMY;
-        }
-
-        if(level.contains("obj-block")){
-            return Objective.BLOCK;
-        }
-
-        throw new IllegalArgumentException(level);
-    }
+//    private Objective getObjective(String level) {
+//        if(level.contains("obj-flag")){
+//            return Objective.FLAG;
+//        }
+//
+//        if(level.contains("obj-coin")){
+//            return Objective.COIN;
+//        }
+//
+//        if(level.contains("obj-enemy")){
+//            return Objective.ENEMY;
+//        }
+//
+//        if(level.contains("obj-block")){
+//            return Objective.BLOCK;
+//        }
+//
+//        throw new IllegalArgumentException(level);
+//    }
 
     private int getDelay(int fps) {
         if (fps <= 0) {
             return 0;
         }
         return 1000 / fps;
+    }
+
+    public static float calculateNonlinearBonus(int total, int achieve, float maxBonus) {
+        if (total == 0) {
+            return 0.0f; // Avoid division by zero if a level has no blocks
+        }
+
+        // Crucial cast to float: In Java, dividing two integers (e.g., 3 / 5) results in 0.
+        // We cast to float to get the correct decimal result (e.g., 0.6f).
+        float completionRatio = (float) achieve / total;
+
+        // Apply a non-linear scaling using Math.pow() for squaring the ratio.
+        // Math.pow returns a double, so we cast it back to a float.
+        float scaledRatio = (float) Math.pow(completionRatio, 2);
+
+        // Calculate the final bonus
+        float bonusEarned = maxBonus * scaledRatio;
+
+        return bonusEarned;
     }
 }
