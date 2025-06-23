@@ -68,37 +68,8 @@ public class MarioGameTraining {
     private JFrame window = null;
     private MarioRender render = null;
     private MarioWorld world = null;
-    /**
-     * Create a mario game to be played
-     */
-    public MarioGameTraining(Integer col, Integer row) {
-        int columns = 4;
-        int rows = 2;
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        int screenWidth = screenSize.width;
-        int screenHeight = screenSize.height;
-        int windowWidth = screenWidth / columns;
-        int windowHeight = screenHeight / rows;
-        this.window = new JFrame("Mario AI Framework");
-        this.window.setFocusableWindowState(false);
-        this.render = new MarioRender(2);
-        this.window.setContentPane(this.render);
-        this.window.pack();
-        if(col != null || row != null){
-            window.setSize(windowWidth, windowHeight);
-            window.setLocation(col * windowWidth, row * windowHeight);
-        }
-        this.window.setResizable(false);
-        this.window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.render.init();
-        this.window.setVisible(true);
-    }
 
-     public void close() {
-         if (this.window != null) {
-             this.window.dispose(); // This is the crucial call to close the window
-         }
-     }
+
 
     MarioTimer agentTimer;
     int timer;
@@ -124,11 +95,11 @@ public class MarioGameTraining {
     public float episodeReward = 0;
     int episodeTimer = 0;
     int evaluationTimer = 0;
-    
+
     float epsilon;
     int frameSkip = 5;
 
-    float winReward = 10;
+    float winReward = 25;
     float mileStoneReward = 0.1f;
     float jumpOverPitReward = 0f;
     float killReward = 2 * 5;
@@ -145,7 +116,24 @@ public class MarioGameTraining {
     int episode = -1;
     boolean isNormalSpeed = false;
     Objective objective = Objective.FLAG;
+    /**
+     * Create a mario game to be played
+     */
+    public MarioGameTraining() {
+
+    }
+
+     public void close() {
+         if (this.window != null) {
+             this.window.dispose(); // This is the crucial call to close the window
+         }
+     }
+
     public byte[] reset(Info info) throws Exception {
+        this.visual = info.isVisual();
+        if(this.visual){
+            setupWindow();
+        }
         if(!info.isEvaluation()){
             this.episode = info.getEpisode();
         }
@@ -190,31 +178,19 @@ public class MarioGameTraining {
         return State.toByte(new MarioForwardModel(this.world.clone()));
     }
 
-    private Objective getObjective(String level) {
-        if(level.contains("obj-flag")){
-            return Objective.FLAG;
+    private void setupWindow() {
+        if(this.window != null){
+            return;
         }
-
-        if(level.contains("obj-coin")){
-            return Objective.COIN;
-        }
-
-        if(level.contains("obj-enemy")){
-            return Objective.ENEMY;
-        }
-
-        if(level.contains("obj-block")){
-            return Objective.BLOCK;
-        }
-
-        throw new IllegalArgumentException(level);
-    }
-
-    private int getDelay(int fps) {
-        if (fps <= 0) {
-            return 0;
-        }
-        return 1000 / fps;
+        this.window = new JFrame("Mario AI Framework");
+        this.window.setFocusableWindowState(false);
+        this.render = new MarioRender(2);
+        this.window.setContentPane(this.render);
+        this.window.pack();
+        this.window.setResizable(false);
+        this.window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.render.init();
+        this.window.setVisible(this.visual);
     }
 
     public byte[] step(boolean[] action) throws Exception {
@@ -297,6 +273,27 @@ public class MarioGameTraining {
         this.world.episode = this.evaluation ? -1 : this.episode;
         printInfo();
         return stepResult(State.toByte(nextState), reward, this.world.gameStatus != GameStatus.RUNNING);
+    }
+
+    public void miniStep(boolean[] action) throws Exception {
+        long currentTime = System.currentTimeMillis();
+        this.world.update(action);
+        this.gameEvents.addAll(this.world.lastFrameEvents);
+        if (visual) {
+            this.render.renderWorld(this.world, renderTarget, backBuffer, currentBuffer);
+        }
+
+        if(this.isNormalSpeed)
+        {
+            if (this.getDelay(30) > 0) {
+                try {
+                    currentTime += this.getDelay(30);
+                    Thread.sleep(Math.max(0, currentTime - System.currentTimeMillis()));
+                } catch (InterruptedException e) {
+
+                }
+            }
+        }
     }
 
     private void checkSubGoalMet() {
@@ -463,27 +460,6 @@ public class MarioGameTraining {
                 this.timePenaltyRewardCoefficient);
     }
 
-    public void miniStep(boolean[] action) throws Exception {
-        long currentTime = System.currentTimeMillis();
-        this.world.update(action);
-        this.gameEvents.addAll(this.world.lastFrameEvents);
-        if (visual) {
-            this.render.renderWorld(this.world, renderTarget, backBuffer, currentBuffer);
-        }
-
-        if(this.isNormalSpeed)
-        {
-            if (this.getDelay(30) > 0) {
-                try {
-                    currentTime += this.getDelay(30);
-                    Thread.sleep(Math.max(0, currentTime - System.currentTimeMillis()));
-                } catch (InterruptedException e) {
-
-                }
-            }
-        }
-    }
-
     private static byte[] stepResult(byte[] nextState, float reward, boolean is_terminate) {
         ByteBuffer buffer = ByteBuffer.allocate(4 + 1 + nextState.length);
         buffer.put(float2ByteArray(reward));
@@ -526,5 +502,32 @@ public class MarioGameTraining {
     private String getOriginalLevel(int level) {
         var levelLocation = MessageFormat.format("./levels/original/lvl-{0}.txt", level);
         return getFileFromLevel(levelLocation);
+    }
+
+    private Objective getObjective(String level) {
+        if(level.contains("obj-flag")){
+            return Objective.FLAG;
+        }
+
+        if(level.contains("obj-coin")){
+            return Objective.COIN;
+        }
+
+        if(level.contains("obj-enemy")){
+            return Objective.ENEMY;
+        }
+
+        if(level.contains("obj-block")){
+            return Objective.BLOCK;
+        }
+
+        throw new IllegalArgumentException(level);
+    }
+
+    private int getDelay(int fps) {
+        if (fps <= 0) {
+            return 0;
+        }
+        return 1000 / fps;
     }
 }

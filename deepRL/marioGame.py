@@ -109,6 +109,7 @@ class MarioGame(SocketEnv):
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None) -> list[int]:
         episode = options.get("episode") if options else 0
         evaluation = options.get("evaluation") if options else False
+        visual = options.get("visual") if options else False
         level = options.get("level") if options else ""
 
          # Encode the level string to bytes
@@ -116,7 +117,7 @@ class MarioGame(SocketEnv):
         # Get the length of the encoded string
         level_length = len(level_bytes)
 
-        payload = struct.pack(f'>i?I{level_length}s', episode, evaluation, level_length, level_bytes)
+        payload = struct.pack(f'>i??I{level_length}s', episode, evaluation, visual, level_length, level_bytes)
         self._send_operation('01', payload)
         observation = self._receive_reset()
         return observation

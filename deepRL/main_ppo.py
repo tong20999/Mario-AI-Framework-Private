@@ -47,12 +47,12 @@ if __name__ == '__main__':
     ewc_lambda = 800.0
 
     episode_buffer_fn = lambda sd, g, t, nw, me, mes: EpisodeBuffer(sd, g, t, nw, me, mes)
-    max_buffer_episodes = 16
-    max_buffer_episode_steps = 1000
+    max_buffer_episodes = 24
+    max_buffer_episode_steps = 3000
 
     entropy_loss_weight = 0.01
     tau = 0.97
-    n_workers = 8
+    n_workers = 12
 
     env_name, gamma, max_minutes, \
     max_episodes, goal_mean_100_reward = environment_settings.values()
@@ -85,9 +85,10 @@ if __name__ == '__main__':
     # make_env_fn = get_make_env_fn()
 
     # current_level = "lvl-1-obj-flag-velocity-low-1.txt"
-    current_level = "lvl-2-obj-block.txt"
-    level_pool = ["lvl-1-obj-flag-basic-move.txt", "lvl-1-obj-block-basic.txt", "lvl-1-obj-coin-basic.txt", "lvl-2-obj-flag-velocity-low-1.txt"]
+    current_level = "platformer-1/lvl-1-obj-flag-ramp.txt"
+    level_pool = []
     #"lvl-1-obj-flag-basic-move.txt", "lvl-1-obj-block-basic.txt", "lvl-1-obj-coin-basic.txt"
+
 
     agent.train(make_envs_fn,
                 make_env_fn,
@@ -99,4 +100,4 @@ if __name__ == '__main__':
                 level_pool)
 
     
-    agent.save_ewc(current_level)
+    #agent.save_ewc(current_level)

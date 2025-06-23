@@ -221,14 +221,14 @@ class PPO():
         training_time = 0
         episode = 0
         self.eva100 = []
-        # ls = level_pool = ["lvl-9-velocity-low-2.txt", "lvl-10-velocity-high-2.txt", "lvl-11-obstacle-2.txt", "lvl-12-block-2.txt", "lvl-6-ramp-1.txt", "lvl-7-half-level-1.txt", "lvl-8-original-1.txt"]
+        # ls = level_pool = ["lvl-8-obj-flag-original-1.txt"]
         # for i in ls:
         #     final_eval_score, score_std = self.evaluate(self.policy_model, env, i, n_episodes=1)
        
         try:
             while True:
                 episode_timestep, episode_reward, episode_exploration, \
-                episode_seconds = self.episode_buffer.fill(envs, self.policy_model, self.value_model, episode, current_level, level_pool)
+                episode_seconds = self.episode_buffer.fill(envs, self.policy_model, self.value_model, episode, current_level, level_pool, visual=False)
                 
                 n_ep_batch = len(episode_timestep)
                 self.episode_timestep.extend(episode_timestep)
@@ -253,6 +253,8 @@ class PPO():
                 training_time += episode_seconds.sum()
                 wallclock_time = time.time() - training_start
                 with open("C:/thesis_data/result.txt", "a") as file:
+                    file.write("level {}\n".format(current_level))
+                    file.write("pool [{}]\n".format(', '.join(level_pool)))
                     file.write("n_ep_batch {}\n".format(n_ep_batch))
                     file.write("episode_timestep {}\n".format(episode_timestep))
                     file.write("episode_reward {}\n".format(np.round(episode_reward, 2)))
@@ -327,7 +329,7 @@ class PPO():
     def evaluate(self, eval_model, eval_env, level:str, n_episodes=1, greedy=True):
         rs = []
         for _ in range(n_episodes):
-            info = {"episode" : 0, "evaluation" : True, "level" : level}
+            info = {"episode" : 0, "evaluation" : True, "visual":True, "level" : level}
             s, d = eval_env.reset(options=info), False
             rs.append(0)
             for _ in count():

@@ -15,7 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class GameServer {
-    private final ExecutorService clientPool = Executors.newFixedThreadPool(16);
+    private final ExecutorService clientPool = Executors.newFixedThreadPool(30);
     private int totalWindows = 0;
     public void start() throws Exception {
         // Start server thread
@@ -42,10 +42,10 @@ public class GameServer {
         totalWindows++;
         MarioGameTraining clientGame = null;
         if(totalWindows == 9){
-            clientGame = new MarioGameTraining(null, null);
+            clientGame = new MarioGameTraining();
         }
         else {
-            clientGame = new MarioGameTraining(col, row);
+            clientGame = new MarioGameTraining();
         }
         try (
                 InputStream input = socket.getInputStream();
@@ -107,8 +107,11 @@ public class GameServer {
         buffer.position(2);
 
         int episode = buffer.getInt();
-        byte boolByte = buffer.get();
-        boolean evaluation = boolByte != 0;
+        byte boolEvaluationByte = buffer.get();
+        boolean evaluation = boolEvaluationByte != 0;
+
+        byte boolVisualByte = buffer.get();
+        boolean visual = boolVisualByte != 0;
 
         // Read the length of the level string (int)
         int levelLength = buffer.getInt();
@@ -121,7 +124,7 @@ public class GameServer {
         // Convert the level bytes to a String using UTF-8 encoding
         String level = new String(levelBytes, StandardCharsets.UTF_8);
 
-        return new Info(episode, evaluation, level);
+        return new Info(episode, evaluation, visual, level);
     }
 
     private boolean[] getActionFromPayload(byte[] payload) {

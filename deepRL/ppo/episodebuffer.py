@@ -88,10 +88,10 @@ class EpisodeBuffer():
         return levels_to_assign
 
     def fill(self, envs:MultiprocessEnv, policy_model, value_model, episodeStart,
-             current_level: str, level_pool: list):
+             current_level: str, level_pool: list, visual: bool = True):
         n_new_level_workers, n_rehearsal_workers = self.n_workers//2, self.n_workers//2
         levels_to_assign = self.assign_levels(current_level, level_pool, n_new_level_workers, n_rehearsal_workers)
-        states = envs.reset(ranks=None, episodeStart=episodeStart, levels=levels_to_assign)
+        states = envs.reset(ranks=None, episodeStart=episodeStart, visual=visual, levels=levels_to_assign)
 
         worker_rewards = np.zeros(shape=(self.n_workers, self.max_episode_steps), dtype=np.float32)
         worker_exploratory = np.zeros(shape=(self.n_workers, self.max_episode_steps), dtype=np.bool)

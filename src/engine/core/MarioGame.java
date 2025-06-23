@@ -265,7 +265,12 @@ public class MarioGame {
                         this.world.mario.onGround, this.world.currentTick));
             }
 
-            if(this.world.level.totalCoins == this.world.coins){
+//            if(this.world.level.totalCoins == this.world.coins){
+//                this.world.subGoalMet = true;
+//            }
+
+            if(this.world.level.totalBumpBlock == this.world.bumpBlock){
+                //this.world.win();
                 this.world.subGoalMet = true;
             }
 
