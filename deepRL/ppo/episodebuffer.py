@@ -88,9 +88,12 @@ class EpisodeBuffer():
         return levels_to_assign
 
     def fill(self, envs:MultiprocessEnv, policy_model, value_model, episodeStart,
-             current_level: str, level_pool: list, visual: bool = True):
-        n_new_level_workers, n_rehearsal_workers = self.n_workers//2, self.n_workers//2
-        levels_to_assign = self.assign_levels(current_level, level_pool, n_new_level_workers, n_rehearsal_workers)
+             level_pool: list, visual: bool = True):
+        # n_new_level_workers, n_rehearsal_workers = self.n_workers//2, self.n_workers//2
+        levels_to_assign = []
+        for _ in range(self.n_workers):
+            levels_to_assign.append(random.choice(level_pool))
+        random.shuffle(levels_to_assign)
         states = envs.reset(ranks=None, episodeStart=episodeStart, visual=visual, levels=levels_to_assign)
 
         worker_rewards = np.zeros(shape=(self.n_workers, self.max_episode_steps), dtype=np.float32)
@@ -137,13 +140,8 @@ class EpisodeBuffer():
                 # --- Create the list of levels for the workers that just finished ---
                 reset_levels = []
                 for _ in idx_terminals:
-                    # Decide if this worker should get the new level or a random old one
-                    if random.random() < (n_rehearsal_workers / self.n_workers):
-                        # This worker will do rehearsal
-                        reset_levels.append(random.choice(level_pool) if level_pool else current_level)
-                    else:
-                        # This worker will work on the new level
-                        reset_levels.append(current_level)
+                    reset_levels.append(random.choice(levels_to_assign))
+                        
 
                 new_states = envs.reset(ranks=idx_terminals, episodeStart=episodeStart, levels=reset_levels)
                 states[idx_terminals] = new_states

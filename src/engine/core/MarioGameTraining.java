@@ -101,6 +101,7 @@ public class MarioGameTraining {
 
     float bonusBlock = 50;
     float bonusCoin = 50;
+    float bonusKill = 50;
     float winReward = 50;
     float mileStoneReward = 0.1f;
     float jumpOverPitReward = 0f;
@@ -140,17 +141,20 @@ public class MarioGameTraining {
             this.episode = info.getEpisode();
         }
         var level = info.getLevel();
+        var levelFileName = level.substring(level.lastIndexOf("/") + 1);
+
         this.clearedSpawnPointsThisEpisode = new HashSet<>();
         this.objective = Objective.FLAG;
         this.gameEvents = new ArrayList<>();
         this.evaluation = info.isEvaluation();
         this.world = new MarioWorld(this.killEvents, this.objective);
+        this.world.levelName = levelFileName;
         this.world.visuals = visual;
         // timer by level width
-        this.timer = new MarioLevel(getTrainingLevel(level), false).exitTileX + 10;
+        this.timer = ((new MarioLevel(getLevel(level), false).exitTileX)/2) + 10;
         this.lastMilestone = 0;
         this.lastCoinCount = 0;
-        this.world.initializeLevel(getTrainingLevel(level), 1000 * this.timer);
+        this.world.initializeLevel(getLevel(level), 1000 * this.timer);
         if(objective == Objective.FLAG){
             this.world.subGoalMet = true;
         }
@@ -247,11 +251,12 @@ public class MarioGameTraining {
             if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
                     e.getEventType() == EventType.FIRE_KILL.getValue() ||
                     e.getEventType() == EventType.SHELL_KILL.getValue()) {
-                var sprintCode = e.getSprintCode();
-                if(sprintCode != null && !this.clearedSpawnPointsThisEpisode.contains(sprintCode)){
-                    clearedSpawnPointsThisEpisode.add(sprintCode);
-                    reward += killReward; // +2 reward per kill
-                }
+//                var sprintCode = e.getSprintCode();
+//                if(sprintCode != null && !this.clearedSpawnPointsThisEpisode.contains(sprintCode)){
+//                    clearedSpawnPointsThisEpisode.add(sprintCode);
+//                    reward += killReward; // +2 reward per kill
+//                }
+                reward += killReward;
             }
             if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == SpriteType.FIRE_FLOWER.getValue()) {
                 reward += fireworkReward; // +5 for a power-up
@@ -279,8 +284,9 @@ public class MarioGameTraining {
         if (this.world.gameStatus == GameStatus.WIN) {
             // The reward for winning is that you get to keep the score you earned.
             // We can add a small bonus to break ties, but the bulk of the score is from the run itself.
-            reward += calculateNonlinearBonus(this.world.level.totalBumpBlock, this.world.bumpBlock, this.bonusBlock);
-            reward += calculateNonlinearBonus(this.world.level.totalCoins, this.world.coins, this.bonusCoin);
+            reward += calculateNonlinearBonus(this.world.level.totalBumpBlock, this.world.bumpBlock, this.bonusBlock, "BLOCK");
+            reward += calculateNonlinearBonus(this.world.level.totalCoins, this.world.coins, this.bonusCoin, "COIN");
+            reward += calculateNonlinearBonus(this.world.level.totalEnemies, this.world.kill, this.bonusKill, "ENEMY");
             reward += winReward;
         } else if (this.world.gameStatus == GameStatus.TIME_OUT) {
             // A massive penalty that ensures any failure is always worse than even the "laziest" win.
@@ -316,9 +322,9 @@ public class MarioGameTraining {
 
         if(this.isNormalSpeed)
         {
-            if (this.getDelay(30) > 0) {
+            if (this.getDelay(60) > 0) {
                 try {
-                    currentTime += this.getDelay(30);
+                    currentTime += this.getDelay(60);
                     Thread.sleep(Math.max(0, currentTime - System.currentTimeMillis()));
                 } catch (InterruptedException e) {
 
@@ -474,6 +480,9 @@ public class MarioGameTraining {
                         HIT_WALL {11}
                         FALL_PIT {12}
                         TIME_PENALTY_COEFFICIENT {13}
+                        BONUS COIN {14}
+                        BONUS BLOCK {15}
+                        BONUS KILL {16}
                         """,
                 this.winReward,
                 this.loseReward,
@@ -488,7 +497,11 @@ public class MarioGameTraining {
                 this.hurtReward,
                 this.hitWallReward,
                 this.fallPitReward,
-                this.timePenaltyRewardCoefficient);
+                this.timePenaltyRewardCoefficient,
+                this.bonusCoin,
+                this.bonusBlock,
+                this.bonusKill
+        );
     }
 
     private static byte[] stepResult(byte[] nextState, float reward, boolean is_terminate) {
@@ -519,8 +532,8 @@ public class MarioGameTraining {
         return getFileFromLevel(level1);
     }
 
-    public static String getTrainingLevel(String level){
-        var levelLocation = MessageFormat.format("./levels/training/{0}", level);
+    public static String getLevel(String level){
+        var levelLocation = MessageFormat.format("./levels/{0}", level);
         return getFileFromLevel(levelLocation);
     }
 
@@ -563,6 +576,10 @@ public class MarioGameTraining {
     }
 
     public static float calculateNonlinearBonus(int total, int achieve, float maxBonus) {
+        return calculateNonlinearBonus(total, achieve, maxBonus, null);
+    }
+
+    public static float calculateNonlinearBonus(int total, int achieve, float maxBonus, String subGoal) {
         if (total == 0) {
             return 0.0f; // Avoid division by zero if a level has no blocks
         }

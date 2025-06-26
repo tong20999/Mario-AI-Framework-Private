@@ -93,6 +93,7 @@ public class Enemy extends MarioSprite {
                                 this.world.addEffect(new SquishEffect(this.x, this.y - 7));
                             }
                         }
+                        this.world.kill++;
                         this.world.addEvent(EventType.STOMP_KILL, this.type.getValue(), this.initialCode);
                         this.world.removeSprite(this);
                     }
@@ -281,6 +282,7 @@ public class Enemy extends MarioSprite {
                 xa = shell.facing * 2;
                 ya = -5;
                 this.world.addEvent(EventType.SHELL_KILL, this.type.getValue(), this.initialCode);
+                this.world.kill++;
                 if (this.graphics != null) {
                     if (this.type == SpriteType.GREEN_KOOPA || this.type == SpriteType.GREEN_KOOPA_WINGED) {
                         this.world.addEffect(new DeathEffect(this.x, this.y, this.graphics.flipX, 42, -5));
@@ -315,6 +317,7 @@ public class Enemy extends MarioSprite {
                 xa = fireball.facing * 2;
                 ya = -5;
                 this.world.addEvent(EventType.FIRE_KILL, this.type.getValue(), this.initialCode);
+                this.world.kill++;
                 if (this.graphics != null) {
                     if (this.type == SpriteType.GREEN_KOOPA || this.type == SpriteType.GREEN_KOOPA_WINGED) {
                         this.world.addEffect(new DeathEffect(this.x, this.y, this.graphics.flipX, 42, -5));

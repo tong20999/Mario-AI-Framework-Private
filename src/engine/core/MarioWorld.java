@@ -22,7 +22,7 @@ public class MarioWorld {
     public boolean visuals;
     public int currentTick;
     //Status
-    public int coins, lives, bumpBlock;
+    public int coins, lives, bumpBlock, kill;
 
     //AI
     public float reward = 0;
@@ -30,6 +30,7 @@ public class MarioWorld {
     public ArrayList<MarioEvent> lastFrameEvents;
     public Objective objective;
     public boolean subGoalMet = false;
+    public String levelName;
 
     private MarioEvent[] killEvents;
     private ArrayList<MarioSprite> sprites;

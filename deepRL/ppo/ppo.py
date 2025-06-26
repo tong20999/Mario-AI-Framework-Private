@@ -171,7 +171,7 @@ class PPO():
         return None
 
     def train(self, make_envs_fn:Callable, make_env_fn:Callable, gamma, 
-              max_minutes, max_episodes, goal_mean_100_reward, current_level:str, level_pool:list):
+              max_minutes, max_episodes, goal_mean_100_reward, level_pool:list):
         training_start, last_debug_time = time.time(), float('-inf')
 
         self.make_envs_fn = make_envs_fn
@@ -221,14 +221,15 @@ class PPO():
         training_time = 0
         episode = 0
         self.eva100 = []
-        # ls = level_pool = ["lvl-8-obj-flag-original-1.txt"]
+        # ls = level_pool = [ 
+        #     ]
         # for i in ls:
         #     final_eval_score, score_std = self.evaluate(self.policy_model, env, i, n_episodes=1)
        
         try:
             while True:
                 episode_timestep, episode_reward, episode_exploration, \
-                episode_seconds = self.episode_buffer.fill(envs, self.policy_model, self.value_model, episode, current_level, level_pool, visual=False)
+                episode_seconds = self.episode_buffer.fill(envs, self.policy_model, self.value_model, episode, level_pool, visual=False)
                 
                 n_ep_batch = len(episode_timestep)
                 self.episode_timestep.extend(episode_timestep)
@@ -239,7 +240,7 @@ class PPO():
                 self.episode_buffer.clear()
 
                 # stats
-                evaluation_score, _ = self.evaluate(self.policy_model, env, current_level)
+                evaluation_score, _ = self.evaluate(self.policy_model, env, random.choice(level_pool))
 
                 self.eva100.append(np.mean(self.evaluation_scores[-100:]))
                 if len(self.eva100) % 5 == 0:
@@ -253,7 +254,6 @@ class PPO():
                 training_time += episode_seconds.sum()
                 wallclock_time = time.time() - training_start
                 with open("C:/thesis_data/result.txt", "a") as file:
-                    file.write("level {}\n".format(current_level))
                     file.write("pool [{}]\n".format(', '.join(level_pool)))
                     file.write("n_ep_batch {}\n".format(n_ep_batch))
                     file.write("episode_timestep {}\n".format(episode_timestep))
@@ -307,12 +307,6 @@ class PPO():
                     if reached_goal_mean_reward: print(u'--> reached_goal_mean_reward \u2713')
                     break
 
-            # final_eval_score, score_std = self.evaluate(self.policy_model, env, current_level, n_episodes=100)
-            # wallclock_time = time.time() - training_start
-            # print('Training complete.')
-            # print('Final evaluation score {:.2f}\u00B1{:.2f} in {:.2f}s training time,'
-            #     ' {:.2f}s wall-clock time.\n'.format(
-            #         final_eval_score, score_std, training_time, wallclock_time))
             env.close() ; del env
             envs.close() ; del envs
         
@@ -342,13 +336,7 @@ class PPO():
                 if d: break
         return np.mean(rs), np.std(rs)
 
-    def finish_task(self, task_level_name: str):
-        """
-        Signals the end of a curriculum task.
-        This method will use the current environment to collect a representative
-        dataset and then register it with the EWC object.
-        """
-        
+    def finish_task(self, level_pool: list):
         # Create a temporary buffer to collect data
         temp_buffer:EpisodeBuffer = self.episode_buffer_fn(
             self.nS,
@@ -362,9 +350,8 @@ class PPO():
         # Use existing environments to fill the buffer
         envs = self.make_envs_fn(self.make_env_fn, self.n_workers)
         temp_buffer.fill(envs, self.policy_model, self.value_model, 
-                        episodeStart=0, 
-                        current_level = task_level_name,
-                        level_pool=[])
+                        episodeStart=0,
+                        level_pool=level_pool)
         envs.close()
         
         # Get the collected states and actions
@@ -384,8 +371,8 @@ class PPO():
             torch.save(model.state_dict(), 
                             os.path.join('C:/thesis_data', 'model.{}.{}.tar'.format(suffix, evaluation_idx)))
             
-    def save_ewc(self, level):
-            self.finish_task(level)
+    def save_ewc(self, level_pool):
+            self.finish_task(level_pool=level_pool)
             torch.save(self.ewc.saved_tasks, 
                             os.path.join('C:/thesis_data', 'model.saved_tasks.{}.tar'.format(len(self.eva100))))
             

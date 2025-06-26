@@ -15,8 +15,7 @@ public class MarioLevel {
     public int tileWidth = MarioGame.width / 16;
     public int height = MarioGame.height;
     public int tileHeight = MarioGame.height / 16;
-    public int totalCoins = 0;
-    public int totalBumpBlock = 0;
+    public int totalCoins, totalBumpBlock, totalEnemies = 0;
     public int marioTileX, marioTileY, exitTileX, exitTileY;
 
     private int[][] levelTiles;
@@ -68,28 +67,36 @@ public class MarioLevel {
                         break;
                     case 'y':
                         this.spriteTemplates[x][y] = SpriteType.SPIKY;
+                        totalEnemies++;
                         break;
                     case 'Y':
                         this.spriteTemplates[x][y] = SpriteType.SPIKY_WINGED;
+                        totalEnemies++;
                         break;
                     case 'E':
                     case 'g':
                         this.spriteTemplates[x][y] = SpriteType.GOOMBA;
+                        totalEnemies++;
                         break;
                     case 'G':
                         this.spriteTemplates[x][y] = SpriteType.GOOMBA_WINGED;
+                        totalEnemies++;
                         break;
                     case 'k':
                         this.spriteTemplates[x][y] = SpriteType.GREEN_KOOPA;
+                        totalEnemies++;
                         break;
                     case 'K':
                         this.spriteTemplates[x][y] = SpriteType.GREEN_KOOPA_WINGED;
+                        totalEnemies++;
                         break;
                     case 'r':
                         this.spriteTemplates[x][y] = SpriteType.RED_KOOPA;
+                        totalEnemies++;
                         break;
                     case 'R':
                         this.spriteTemplates[x][y] = SpriteType.RED_KOOPA_WINGED;
+                        totalEnemies++;
                         break;
                     case 'X':
                         //floor
