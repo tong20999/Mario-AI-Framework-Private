@@ -4,26 +4,12 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
 class EWC:
-    """
-    Elastic Weight Consolidation (EWC) implementation.
-    
-    Args:
-        model (nn.Module): The model to be protected (in this case, the policy network).
-        ewc_lambda (float): The hyperparameter that controls the importance of the EWC penalty.
-    """
     def __init__(self, model: nn.Module, ewc_lambda: float):
         self.model = model
         self.ewc_lambda = ewc_lambda
         self.saved_tasks = []
 
     def _compute_fisher(self, dataset: TensorDataset, batch_size: int = 256):
-        """
-        Computes the diagonal of the Fisher Information Matrix (FIM).
-
-        Args:
-            dataset (TensorDataset): A dataset containing the states and actions from the completed task.
-            batch_size (int): The batch size to use for iterating through the dataset.
-        """
         fisher_matrix = {}
         for name, param in self.model.named_parameters():
             if param.requires_grad:
@@ -57,13 +43,6 @@ class EWC:
         return fisher_matrix
 
     def register_task(self, dataset: TensorDataset):
-        """
-        Call this method after a task is learned to compute and store its
-        Fisher matrix and optimal parameters.
-        
-        Args:
-            dataset (TensorDataset): The dataset (states, actions) from the completed task.
-        """
         # 1. Compute the Fisher Information Matrix for the current task
         fisher_matrix = self._compute_fisher(dataset)
 
@@ -80,10 +59,6 @@ class EWC:
         })
 
     def penalty(self) -> torch.Tensor:
-        """
-        Calculates the EWC penalty loss for all registered tasks.
-        This should be added to the main loss function during training of a new task.
-        """
         if not self.saved_tasks:
             return torch.tensor(0.0, device=self.model.device)
 

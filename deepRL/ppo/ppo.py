@@ -11,6 +11,7 @@ from IPython import display
 from torch.utils.data import TensorDataset
 
 from ppo.cnn import CNNActor
+from ppo.custom_dataset import CustomDictDataset
 from ppo.episodebuffer import EpisodeBuffer
 from ppo.ewc import EWC
 
@@ -360,9 +361,9 @@ class PPO():
         states, actions, _, _, _ = temp_buffer.get_stacks()
         
         # The EWC class needs a PyTorch TensorDataset
-        dataset = TensorDataset(
-            torch.tensor(states, device=self.policy_model.device, dtype=torch.float32),
-            torch.tensor(actions, device=self.policy_model.device, dtype=torch.long)
+        dataset = CustomDictDataset(
+            states_dict=states, 
+            actions_tensor=actions
         )
         
         # Register the task dataset with EWC
