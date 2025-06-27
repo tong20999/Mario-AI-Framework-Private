@@ -77,7 +77,9 @@ class MultiprocessEnv(object):
         
         # Receive results
         results = [self.parent_pipes[rank].recv() for rank in ranks]
-        return np.stack(results)
+        obs_batch = {key: np.stack([d[0][key] for d in results]) for key in results[0][0]}
+        info_batch = [d[1] for d in results]
+        return obs_batch
 
     def step(self, actions):
         assert len(actions) == self.n_workers, "Number of actions must match number of workers."
@@ -90,9 +92,9 @@ class MultiprocessEnv(object):
         results = [self.parent_pipes[rank].recv() for rank in range(self.n_workers)]
         
         # Unzip the results: (obs, reward, terminated, truncated, info)
-        obs, rewards, terminateds, truncateds, infos = zip(*results)
-        
-        return np.stack(obs), np.array(rewards), np.array(terminateds), np.array(truncateds), infos
+        obs_list, rewards, terminateds, truncateds, infos = zip(*results)
+        obs_batch = {key: np.stack([o[key] for o in obs_list]) for key in obs_list[0]}
+        return obs_batch, np.array(rewards), np.array(terminateds), np.array(truncateds), infos
 
     def close(self):
         # Send close command to all workers

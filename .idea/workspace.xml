@@ -5,111 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="add human debug">
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/100-basic-movement/lvl-2.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/100-basic-movement/lvl-3.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/101-basic-jump/lvl-1.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/101-basic-jump/lvl-2.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/101-basic-jump/lvl-3.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/101-basic-jump/lvl-4.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/101-basic-jump/lvl-5.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/101-basic-jump/lvl-7.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/101-basic-jump/lvl-8.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/101-basic-jump/lvl-9.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/102-basic-block/lvl-1.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/102-basic-block/lvl-2.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/102-basic-block/lvl-3.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/102-basic-block/lvl-4.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/102-basic-block/lvl-5.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/102-basic-block/lvl-6.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/102-basic-block/lvl-7.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/102-basic-block/lvl-8.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/102-basic-block/lvl-9.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/103-basic-obstacle/lvl-1.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/103-basic-obstacle/lvl-2.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/103-basic-obstacle/lvl-3.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/103-basic-obstacle/lvl-4.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/103-basic-obstacle/lvl-5.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/103-basic-obstacle/lvl-6.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/103-basic-obstacle/lvl-7.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/103-basic-obstacle/lvl-8.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/103-basic-obstacle/lvl-9.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/104-basic-enemy/lvl-1.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/104-basic-enemy/lvl-2.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/104-basic-enemy/lvl-3.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/104-basic-enemy/lvl-4.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/104-basic-enemy/lvl-5.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/104-basic-enemy/lvl-6.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/104-basic-enemy/lvl-7.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/104-basic-enemy/lvl-8.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/104-basic-enemy/lvl-9.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/105-basic-integrate/lvl-1.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/105-basic-integrate/lvl-2.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/105-basic-integrate/lvl-3.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/105-basic-integrate/lvl-4.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/105-basic-integrate/lvl-5.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/105-basic-integrate/lvl-6.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/105-basic-integrate/lvl-7.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/105-basic-integrate/lvl-8.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/105-basic-integrate/lvl-9.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/200-course/201-jump/lvl-1.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/200-course/201-jump/lvl-10.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/200-course/201-jump/lvl-11.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/200-course/201-jump/lvl-12.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/200-course/201-jump/lvl-2.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/200-course/201-jump/lvl-3.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/200-course/201-jump/lvl-4.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/200-course/201-jump/lvl-5.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/200-course/201-jump/lvl-6.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/200-course/201-jump/lvl-7.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/200-course/201-jump/lvl-8.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/200-course/201-jump/lvl-9.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/200-course/202-block/lvl-1.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/200-course/202-block/lvl-2.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/200-course/202-block/lvl-3.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/200-course/202-block/lvl-4.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/200-course/202-block/lvl-5.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/200-course/202-block/lvl-6.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/200-course/202-block/lvl-7.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/200-course/202-block/lvl-8.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/200-course/202-block/lvl-9.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/evaluation/platform_basic_jump/lvl-1.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/evaluation/platform_basic_jump/lvl-2.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/evaluation/platform_basic_jump/lvl-3.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/platform_basic_jump/lvl-14.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/platform_basic_jump/lvl-15.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/platform_basic_jump/lvl-16.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/platform_basic_jump/lvl-17.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/platform_basic_jump/lvl-18.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/platform_basic_jump/lvl-19.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/platform_basic_jump/lvl-20.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/platform_basic_jump/lvl-21.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/platform_basic_jump/lvl-22.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/platform_basic_jump/lvl-23.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/platform_basic_jump/lvl-24.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/platform_basic_jump/lvl-25.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/platform_level_02.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/levels/training/platform_level_04.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deepRL/main_ppo.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/main_ppo.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deepRL/marioGame.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/marioGame.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deepRL/ppo/episodebuffer.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ppo/episodebuffer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/ppo/multiprocessenv.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ppo/multiprocessenv.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deepRL/ppo/ppo.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ppo/ppo.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/evaluation/lvl-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/evaluation/lvl-1.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/evaluation/lvl-2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/evaluation/lvl-2.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/lvl-0-obj-flag-basic-move.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/100-basic/100-basic-movement/lvl-1.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/platformer-1/lvl-1-obj-flag-evaluation.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/platformer-1/lvl-1-obj-flag-obstacle.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/100-basic/101-basic-jump/lvl-6.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/platformer-1/lvl-1-obj-flag-pit.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/platformer-1/lvl-1-obj-flag-ramp.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/platformer-1/lvl-1-obj-flag-velocity-high-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/platform_level_03.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/levels/training/platformer-1/lvl-1-obj-flag-velocity-low-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/platform_level_01.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/GameServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/GameServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/PlayLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/PlayLevel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioLevel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioRender.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioRender.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioWorld.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioWorld.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/engine/sprites/Enemy.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/sprites/Enemy.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -144,21 +45,21 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.GenerateLevel.executor": "Debug",
-    "Application.PlayLevel.executor": "Debug",
-    "Application.Program.executor": "Debug",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "ppo",
-    "ignore.virus.scanning.warn.message": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Git/Mario-AI-Framework-Private/levels/training/200-course/202-block",
-    "project.structure.last.edited": "Modules",
-    "project.structure.proportion": "0.15",
-    "project.structure.side.proportion": "0.2862069"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.GenerateLevel.executor&quot;: &quot;Debug&quot;,
+    &quot;Application.PlayLevel.executor&quot;: &quot;Debug&quot;,
+    &quot;Application.Program.executor&quot;: &quot;Debug&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;ppo&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Git/Mario-AI-Framework-Private/levels/training/200-course/202-block&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2862069&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Git\Mario-AI-Framework-Private\levels\training\200-course\202-block" />

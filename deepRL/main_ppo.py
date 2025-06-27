@@ -1,4 +1,6 @@
+from dictgridstack import DictGridStack
 from marioGame import MarioGame
+from ppo.cnn import CNNActor, CNNCritic
 from ppo.episodebuffer import EpisodeBuffer
 from ppo.ewc import EWC
 from ppo.fcca import FCCA
@@ -9,7 +11,11 @@ import torch.multiprocessing as mp
 from ppo.ppo import PPO
 
 def make_env_fn():
-  return MarioGame()
+  # Wrap the base environment with our new frame stacker
+  env = MarioGame()
+  env = DictGridStack(env, num_stack=4)
+  return env
+
 
 def make_envs_fn(mef, n):
   return MultiprocessEnv(mef, n)
@@ -25,7 +31,7 @@ if __name__ == '__main__':
       'goal_mean_100_reward': 2500
   }
 
-  policy_model_fn = lambda nS, nA: FCCA(nS, nA, hidden_dims=(256,256))
+  policy_model_fn = lambda nS, nA: CNNActor(nS, nA, hidden_dims=(256,256))
   policy_model_max_grad_norm = float('inf')
   policy_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
   policy_optimizer_lr = 0.00005
@@ -34,7 +40,7 @@ if __name__ == '__main__':
   policy_clip_range = 0.1
   policy_stopping_kl = 0.02
 
-  value_model_fn = lambda nS: FCV(nS, hidden_dims=(256,256))
+  value_model_fn = lambda nS: CNNCritic(nS, hidden_dims=(256,256))
   value_model_max_grad_norm = float('inf')
   value_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
   value_optimizer_lr = 0.00005
@@ -52,7 +58,7 @@ if __name__ == '__main__':
 
   entropy_loss_weight = 0.02
   tau = 0.97
-  n_workers = 8
+  n_workers = 2
 
   env_name, gamma, max_minutes, \
   max_episodes, goal_mean_100_reward = environment_settings.values()
@@ -81,15 +87,6 @@ if __name__ == '__main__':
               tau,
               n_workers)
 
-  # make_envs_fn = lambda mef, n: MultiprocessEnv(mef, n)
-  # make_env_fn = get_make_env_fn()
-
-  current_level = None
-  # level_pool = [
-  #   "100-basic-movement/lvl-1.txt", 
-  #   "100-basic-movement/lvl-2.txt",
-  #   "100-basic-movement/lvl-3.txt"
-  # ]
   level_pool = [
     "training/200-course/202-block/lvl-1.txt", 
     "training/200-course/202-block/lvl-2.txt", 

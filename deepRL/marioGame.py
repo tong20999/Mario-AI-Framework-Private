@@ -31,31 +31,23 @@ class MarioGame(SocketEnv):
         self._init_spaces()
 
     def _init_spaces(self):
-        """Helper method to create the gym spaces."""
-        self.observation_space = gym.spaces.MultiDiscrete([ 
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                1, 1, 1, 1, # mario mode, is mario on ground, can jump higher, facing
-                1, # velocity x sign
-                1, # velocity y sign
-                1, 1, 1, 1, # velocity x
-                1, 1, 1, 1, # velocity y
-                ])
-        self.action_space = gym.spaces.MultiDiscrete([2] * len(all_possible_input))
+        # NEW: Define the space as a Dictionary
+        self.observation_space = gym.spaces.Dict({
+            # CNN part: 1 channel, 16x16 grid. Values are binary (0 or 1).
+            'grid': gym.spaces.Box(low=0, high=1, shape=(1, 16, 16), dtype=np.uint8),
+            # Vector part: 14 features. Values are binary.
+            'vector': gym.spaces.Box(low=0, high=14, shape=(14,), dtype=np.uint8) # Adjust high based on actual max values
+        })
+        
+        # The action space should be Discrete for FCCA's Categorical output
+        self.action_space = gym.spaces.Discrete(len(all_possible_input))
+
+    def _parse_observation(self, payload: bytes) -> dict:
+        """Helper to parse a flat byte payload into a dictionary observation."""
+        grid_size = 16 * 16
+        grid_part = np.array(list(payload[:grid_size]), dtype=np.uint8).reshape(1, 16, 16)
+        vector_part = np.array(list(payload[grid_size:]), dtype=np.uint8)
+        return {'grid': grid_part, 'vector': vector_part}
 
     def __getstate__(self):
         """
@@ -91,10 +83,12 @@ class MarioGame(SocketEnv):
     def _receive_reset(self):
         data = self._receive_fixed(1024)
         op_code = data[:2].decode('utf-8')
-        # Use self.observation_space.shape which is guaranteed to exist after __setstate__
-        payload = data[2:2 + self.observation_space.shape[0]]
+        # The total shape is now the sum of the sizes of the spaces
+        obs_shape = np.prod(self.observation_space['grid'].shape) + np.prod(self.observation_space['vector'].shape)
+        payload = data[2:2 + obs_shape]
         assert op_code == '01'
-        return [x for x in payload]
+        # NEW: Parse the observation into a dictionary
+        return self._parse_observation(payload)
     
     def _receive_step(self) -> tuple[Any, SupportsFloat, bool, bool, dict[str, Any]]:
         data = self._receive_fixed(1024)
@@ -104,8 +98,10 @@ class MarioGame(SocketEnv):
         rewardByte = payload[0:4]
         reward:float = struct.unpack('>f', rewardByte)[0]
         terminated = True if payload[4] else False
-        obs_bytes = payload[5: 5 + self.observation_space.shape[0]]
-        observation = [x for x in obs_bytes]
+        obs_shape = np.prod(self.observation_space['grid'].shape) + np.prod(self.observation_space['vector'].shape)
+        obs_bytes = payload[5: 5 + obs_shape]
+        # NEW: Parse the observation into a dictionary
+        observation = self._parse_observation(obs_bytes)
         return observation, reward, terminated, False, {}
         
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None) -> list[int]:
@@ -122,7 +118,7 @@ class MarioGame(SocketEnv):
         payload = struct.pack(f'>i??I{level_length}s', episode, evaluation, visual, level_length, level_bytes)
         self._send_operation('01', payload)
         observation = self._receive_reset()
-        return observation
+        return observation, {}
     
     def step(self, action:int | np.int64) -> tuple[list[int], SupportsFloat, bool, bool, dict[str, Any]]:
         value = action if isinstance(action, int) else np.int64(action).item()

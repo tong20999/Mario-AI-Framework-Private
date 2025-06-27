@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from IPython import display
 from torch.utils.data import TensorDataset
 
+from ppo.cnn import CNNActor
 from ppo.episodebuffer import EpisodeBuffer
 from ppo.ewc import EWC
 
@@ -77,20 +78,20 @@ class PPO():
 
     def optimize_model(self):
         states, actions, returns, gaes, logpas = self.episode_buffer.get_stacks()
-        values = self.value_model(states).detach()
+        with torch.no_grad():
+            values = self.value_model(states).detach()
         gaes = (gaes - gaes.mean()) / (gaes.std() + EPS)
         n_samples = len(actions)
         
         for _ in range(self.policy_optimization_epochs):
             batch_size = int(self.policy_sample_ratio * n_samples)
             batch_idxs = np.random.choice(n_samples, batch_size, replace=False)
-            states_batch = states[batch_idxs]
+            states_batch = {key: val[batch_idxs] for key, val in states.items()}
             actions_batch = actions[batch_idxs]
             gaes_batch = gaes[batch_idxs]
             logpas_batch = logpas[batch_idxs]
 
-            logpas_pred, entropies_pred = self.policy_model.get_predictions(states_batch,
-                                                                            actions_batch)
+            logpas_pred, entropies_pred = self.policy_model.get_predictions(states_batch, actions_batch)
 
             ratios = (logpas_pred - logpas_batch).exp()
             pi_obj = gaes_batch * ratios
@@ -118,7 +119,7 @@ class PPO():
         for _ in range(self.value_optimization_epochs):
             batch_size = int(self.value_sample_ratio * n_samples)
             batch_idxs = np.random.choice(n_samples, batch_size, replace=False)
-            states_batch = states[batch_idxs]
+            states_batch = {key: val[batch_idxs] for key, val in states.items()}
             returns_batch = returns[batch_idxs]
             values_batch = values[batch_idxs]
 
@@ -184,7 +185,7 @@ class PPO():
         seed = random.choice(SEEDS)
         torch.manual_seed(seed) ; np.random.seed(seed) ; random.seed(seed)
     
-        self.nS, nA = env.observation_space.shape, env.action_space.shape[0]
+        self.nS, nA = env.observation_space, env.action_space.n
         self.episode_timestep, self.episode_reward = [], []
         self.episode_seconds, self.episode_exploration = [], []
         self.evaluation_scores = []
@@ -320,11 +321,12 @@ class PPO():
             self.plot(self.eva100, True)
 
 
-    def evaluate(self, eval_model, eval_env, level:str, n_episodes=1, greedy=True):
+    def evaluate(self, eval_model:CNNActor, eval_env, level:str, n_episodes=1, greedy=True):
         rs = []
         for _ in range(n_episodes):
             info = {"episode" : 0, "evaluation" : True, "visual":True, "level" : level}
-            s, d = eval_env.reset(options=info), False
+            s, _  = eval_env.reset(options=info)
+            d = False
             rs.append(0)
             for _ in count():
                 if greedy:
