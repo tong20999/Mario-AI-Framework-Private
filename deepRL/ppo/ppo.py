@@ -1,5 +1,7 @@
 import random
+from scipy import stats
 from typing import Callable
+import pandas as pd
 import torch
 import numpy as np
 import time
@@ -143,19 +145,61 @@ class PPO():
                 if mse.item() > self.value_stopping_mse:
                     break
 
-    def plot(self, eva100_reward, save = False):
+    def plot(self, eva100_reward, save=False, early_stop_config=None):
+        """
+        Plots the rewards and optionally checks for an early stopping condition.
+        
+        Args:
+            eva100_reward (list): List of the 100-episode moving average rewards.
+            save (bool): Flag to force saving the plot.
+            early_stop_config (dict, optional): Configuration for early stopping.
+                Expected keys: 'enabled', 'min_episodes', 'window', 'threshold'.
+        """
         fig = plt.gcf()
         display.clear_output(wait=True)
         display.display(fig)
         plt.clf()
+        
+        # --- NEW: Plot both raw rewards and a smoothed moving average ---
+        # Convert to a pandas Series for easy rolling average calculation
+        rewards_series = pd.Series(eva100_reward)
+        moving_avg = rewards_series.rolling(window=50, min_periods=10).mean()
+
         plt.title('Result')
         plt.xlabel('Episode')
         plt.ylabel('Reward')
-        plt.plot(eva100_reward)
-        plt.text(len(eva100_reward)-1, eva100_reward[-1], str(eva100_reward[-1]))
+        
+        # Plot raw rewards with some transparency
+        plt.plot(eva100_reward, alpha=0.5, label='Episode Reward (Mean-100)')
+        # Plot the smoothed moving average
+        plt.plot(moving_avg, color='red', linewidth=2, label='Smoothed Average (50ep window)')
+        
+        # Annotate the last point of the moving average
+        last_ma_value = moving_avg.iloc[-1]
+        plt.text(len(eva100_reward)-1, last_ma_value, f'{last_ma_value:.2f}')
+        plt.legend()
 
+
+        if early_stop_config and early_stop_config.get('enabled', False):
+            min_episodes = early_stop_config.get('min_episodes', 200)
+            trend_window = early_stop_config.get('trend_window', 50) 
+            slope_threshold = early_stop_config.get('slope_threshold', 0.01) 
+
+            if len(eva100_reward) > min_episodes and len(moving_avg) > trend_window:
+                recent_trend_data = moving_avg.iloc[-trend_window:]
+                x_axis = np.arange(len(recent_trend_data))
+                slope, intercept, r_value, p_value, std_err = stats.linregress(x_axis, recent_trend_data)
+
+                if slope < slope_threshold:
+                    print(f"\n\n*** EARLY STOPPING CRITERION MET ***")
+                    print(f"Performance trend slope ({slope:.4f}) is below the threshold ({slope_threshold:.4f}).")
+                    print("Raising KeyboardInterrupt to gracefully end training.")
+                    plt.savefig('C:/thesis_data/result_plot_EARLY_STOP.png')
+                    raise KeyboardInterrupt
+
+        # --- Saving logic (unchanged) ---
         if len(eva100_reward) % 20 == 0 or save:
-            plt.savefig('C:/thesis_data/result_plot_episode_{}.png'.format(len(eva100_reward)))   
+            plt.savefig('C:/thesis_data/result_plot_episode_{}.png'.format(len(eva100_reward)))
 
         plt.show(block=False)
         plt.pause(1)
@@ -229,6 +273,13 @@ class PPO():
         #     ]
         # for i in ls:
         #     final_eval_score, score_std = self.evaluate(self.policy_model, env, i, n_episodes=1)
+
+        stop_config = {
+                    'enabled': True,          # Set to False to disable this feature
+                    'min_episodes': 300,      # Start checking after 300 episodes
+                    'window': 100,            # Analyze the last 100 episodes
+                    'threshold': 0.02         # Stop if improvement is less than 2%
+        }
        
         try:
             while True:
@@ -248,9 +299,7 @@ class PPO():
 
                 self.eva100.append(np.mean(self.evaluation_scores[-100:]))
                 if len(self.eva100) % 5 == 0:
-                    # self.save_checkpoint(len(self.eva100), self.policy_model, 'policy')
-                    # self.save_checkpoint(len(self.eva100), self.value_model, 'value')
-                    self.plot(self.eva100)
+                    self.plot(self.eva100, early_stop_config=stop_config)
                 
                 self.evaluation_scores.extend([evaluation_score,] * n_ep_batch)
                 # for e in range(episode, episode + n_ep_batch):
@@ -310,15 +359,16 @@ class PPO():
                     if reached_max_episodes: print(u'--> reached_max_episodes \u2715')
                     if reached_goal_mean_reward: print(u'--> reached_goal_mean_reward \u2713')
                     break
-
-            env.close() ; del env
-            envs.close() ; del envs
         
         except KeyboardInterrupt:
             print("!Ctrl+C detected! Saving progress before exiting...")
         finally:
-            env.close() ; del env
-            envs.close() ; del envs
+            if 'env' in locals():
+                env.close()
+                del env
+            if 'envs' in locals():
+                envs.close()
+                del envs
             self.save_checkpoint(len(self.eva100), self.policy_model, 'policy', True)
             self.save_checkpoint(len(self.eva100), self.value_model, 'value', True)
             self.plot(self.eva100, True)
