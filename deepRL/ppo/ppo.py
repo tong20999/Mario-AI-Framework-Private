@@ -39,7 +39,7 @@ class PPO():
                  value_stopping_mse,
                  ewc_fn,
                  ewc_lambda,
-                 episode_buffer_fn:Callable[[], EpisodeBuffer],
+                 episode_buffer_fn,
                  max_buffer_episodes,
                  max_buffer_episode_steps,
                  entropy_loss_weight,
@@ -209,9 +209,11 @@ class PPO():
             self.value_model.load_state_dict(torch.load(value_model_state, weights_only=True))
             self.value_model.eval()
 
-        ewc_saved_tasks = self.find_model_file_path('model.saved_tasks')
-        if ewc_saved_tasks is not None:
-            self.ewc.saved_tasks = torch.load(ewc_saved_tasks, map_location=self.policy_model.device)
+        ewc_state_path = self.find_model_file_path('model.ewc_state')
+        if ewc_state_path is not None:
+            ewc_state = torch.load(ewc_state_path, map_location=self.policy_model.device)
+            self.ewc.fisher_matrix = ewc_state.get('fisher', self.ewc.create_empty_clone())
+            self.ewc.optimal_params = ewc_state.get('params', {}) # Params can start as empty dict
 
         self.episode_buffer:EpisodeBuffer = self.episode_buffer_fn(self.nS, self.gamma, self.tau,
                                                      self.n_workers, 
@@ -375,7 +377,12 @@ class PPO():
                             os.path.join('C:/thesis_data', 'model.{}.{}.tar'.format(suffix, evaluation_idx)))
             
     def save_ewc(self, level_pool):
-            self.finish_task(level_pool=level_pool)
-            torch.save(self.ewc.saved_tasks, 
-                            os.path.join('C:/thesis_data', 'model.saved_tasks.{}.tar'.format(len(self.eva100))))
-            
+        self.finish_task(level_pool=level_pool)
+
+        ewc_state = {
+            'fisher': self.ewc.fisher_matrix,
+            'params': self.ewc.optimal_params
+        }
+        
+        save_path = os.path.join('C:/thesis_data', 'model.ewc_state.tar')
+        torch.save(ewc_state, save_path)

@@ -86,18 +86,30 @@ if __name__ == '__main__':
               entropy_loss_weight,
               tau,
               n_workers)
-
+  
   level_pool = [
-    "training/100-basic/101-basic-jump/lvl-1.txt", 
-    "training/100-basic/101-basic-jump/lvl-2.txt", 
-    "training/100-basic/101-basic-jump/lvl-3.txt",
-    "training/100-basic/101-basic-jump/lvl-4.txt",
-    "training/100-basic/101-basic-jump/lvl-5.txt",
-    "training/100-basic/101-basic-jump/lvl-6.txt",
-    "training/100-basic/101-basic-jump/lvl-7.txt",
-    "training/100-basic/101-basic-jump/lvl-8.txt",
-    "training/100-basic/101-basic-jump/lvl-9.txt",
+    "training/100-basic/100-basic-movement/lvl-1.txt", 
+    "training/100-basic/100-basic-movement/lvl-2.txt", 
+    "training/100-basic/100-basic-movement/lvl-3.txt",
+    # "training/100-basic/101-basic-jump/lvl-4.txt",
+    # "training/100-basic/101-basic-jump/lvl-5.txt",
+    # "training/100-basic/101-basic-jump/lvl-6.txt",
+    # "training/100-basic/101-basic-jump/lvl-7.txt",
+    # "training/100-basic/101-basic-jump/lvl-8.txt",
+    # "training/100-basic/101-basic-jump/lvl-9.txt",
                 ]
+
+  # level_pool = [
+  #   "training/100-basic/101-basic-jump/lvl-1.txt", 
+  #   "training/100-basic/101-basic-jump/lvl-2.txt", 
+  #   "training/100-basic/101-basic-jump/lvl-3.txt",
+  #   "training/100-basic/101-basic-jump/lvl-4.txt",
+  #   "training/100-basic/101-basic-jump/lvl-5.txt",
+  #   "training/100-basic/101-basic-jump/lvl-6.txt",
+  #   "training/100-basic/101-basic-jump/lvl-7.txt",
+  #   "training/100-basic/101-basic-jump/lvl-8.txt",
+  #   "training/100-basic/101-basic-jump/lvl-9.txt",
+  #               ]
 
 
   agent.train(make_envs_fn,
