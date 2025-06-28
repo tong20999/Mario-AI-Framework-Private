@@ -146,35 +146,17 @@ class PPO():
                     break
 
     def plot(self, eva100_reward, save=False, early_stop_config=None):
-        """
-        Plots the rewards and optionally checks for an early stopping condition.
-        
-        Args:
-            eva100_reward (list): List of the 100-episode moving average rewards.
-            save (bool): Flag to force saving the plot.
-            early_stop_config (dict, optional): Configuration for early stopping.
-                Expected keys: 'enabled', 'min_episodes', 'window', 'threshold'.
-        """
         fig = plt.gcf()
         display.clear_output(wait=True)
         display.display(fig)
         plt.clf()
-        
-        # --- NEW: Plot both raw rewards and a smoothed moving average ---
-        # Convert to a pandas Series for easy rolling average calculation
         rewards_series = pd.Series(eva100_reward)
         moving_avg = rewards_series.rolling(window=50, min_periods=10).mean()
-
         plt.title('Result')
         plt.xlabel('Episode')
         plt.ylabel('Reward')
-        
-        # Plot raw rewards with some transparency
         plt.plot(eva100_reward, alpha=0.5, label='Episode Reward (Mean-100)')
-        # Plot the smoothed moving average
         plt.plot(moving_avg, color='red', linewidth=2, label='Smoothed Average (50ep window)')
-        
-        # Annotate the last point of the moving average
         last_ma_value = moving_avg.iloc[-1]
         plt.text(len(eva100_reward)-1, last_ma_value, f'{last_ma_value:.2f}')
         plt.legend()
@@ -275,10 +257,10 @@ class PPO():
         #     final_eval_score, score_std = self.evaluate(self.policy_model, env, i, n_episodes=1)
 
         stop_config = {
-                    'enabled': True,          # Set to False to disable this feature
-                    'min_episodes': 300,      # Start checking after 300 episodes
-                    'window': 100,            # Analyze the last 100 episodes
-                    'threshold': 0.02         # Stop if improvement is less than 2%
+            'enabled': True,
+            'min_episodes': 250,
+            'trend_window': 50,
+            'slope_threshold': 0.05
         }
        
         try:
