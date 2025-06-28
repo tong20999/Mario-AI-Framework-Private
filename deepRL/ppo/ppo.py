@@ -257,10 +257,10 @@ class PPO():
         #     final_eval_score, score_std = self.evaluate(self.policy_model, env, i, n_episodes=1)
 
         stop_config = {
-            'enabled': True,
+            'enabled': False,
             'min_episodes': 250,
-            'trend_window': 50,
-            'slope_threshold': 0.05
+            'trend_window': 20,
+            'slope_threshold': 0.01
         }
        
         try:

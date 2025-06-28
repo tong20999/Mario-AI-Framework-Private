@@ -56,7 +56,7 @@ if __name__ == '__main__':
   max_buffer_episodes = 16
   max_buffer_episode_steps = 1000
 
-  entropy_loss_weight = 0.02
+  entropy_loss_weight = 0.01
   tau = 0.97
   n_workers = 8
 
@@ -100,15 +100,15 @@ if __name__ == '__main__':
   #               ]
 
   level_pool = [
-    "training/100-basic/103-basic-obstacle/lvl-1.txt", 
-    "training/100-basic/103-basic-obstacle/lvl-2.txt", 
-    "training/100-basic/103-basic-obstacle/lvl-3.txt",
-    "training/100-basic/103-basic-obstacle/lvl-4.txt",
-    "training/100-basic/103-basic-obstacle/lvl-5.txt",
-    "training/100-basic/103-basic-obstacle/lvl-6.txt",
-    "training/100-basic/103-basic-obstacle/lvl-7.txt",
-    "training/100-basic/103-basic-obstacle/lvl-8.txt",
-    "training/100-basic/103-basic-obstacle/lvl-9.txt",
+    "training/100-basic/105-basic-integration/lvl-1.txt", 
+    "training/100-basic/105-basic-integration/lvl-2.txt", 
+    "training/100-basic/105-basic-integration/lvl-3.txt",
+    "training/100-basic/105-basic-integration/lvl-4.txt",
+    "training/100-basic/105-basic-integration/lvl-5.txt",
+    "training/100-basic/105-basic-integration/lvl-6.txt",
+    "training/100-basic/105-basic-integration/lvl-7.txt",
+    "training/100-basic/105-basic-integration/lvl-8.txt",
+    "training/100-basic/105-basic-integration/lvl-9.txt",
                 ]
 
 
