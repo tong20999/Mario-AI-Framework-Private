@@ -55,7 +55,10 @@ public class MarioRender extends JComponent implements FocusListener {
 //        else {
 //            drawStringDropShadow(og, "Evaluation", 14, 2, 7);
 //        }
-        drawStringDropShadow(og, world.levelName, 14, 2, 7);
+        if(world.levelName != null){
+            drawStringDropShadow(og, world.levelName, 14, 2, 7);
+        }
+
         //drawStringDropShadow(og, "Complete: " + String.format("%.2f", completePercentage), 0, 4, 7);
         drawStringDropShadow(og, "Enemy: " + world.level.totalEnemies, 0, 4, 7);
         drawStringDropShadow(og, "Kill: " + world.kill, 0, 6, 7);

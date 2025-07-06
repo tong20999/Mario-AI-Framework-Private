@@ -15,9 +15,9 @@ all_possible_input:list[list[bool]] = [
     [False, True, False, True, False], # move right and speed
     [False, True, False, True, True],  # move right and speed and jump
     # [False, False, False, False, True], # Jump only
-    # [True, False, False, False, False], # move left
+    [True, False, False, False, False], # move left
     [True, False, False, True, False],  # move left and speed
-    # [True, False, False, False, True], # move left and jump
+    [True, False, False, False, True], # move left and jump
     [True, False, False, True, True],  # move left and speed and jump
 ]
 

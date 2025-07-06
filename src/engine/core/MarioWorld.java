@@ -4,7 +4,7 @@ import java.awt.Graphics;
 import java.awt.GraphicsConfiguration;
 import java.util.ArrayList;
 
-import agents.myAgentMachineLearning.Objective;
+import reinforment.Objective;
 import engine.effects.*;
 import engine.graphics.MarioBackground;
 import engine.helper.*;
@@ -189,10 +189,10 @@ public class MarioWorld {
     }
 
     public void win() {
-        //if(this.subGoalMet){
+        if(this.subGoalMet){
             this.addEvent(EventType.WIN, 0);
             this.gameStatus = GameStatus.WIN;
-        //}
+        }
     }
 
     public void lose() {

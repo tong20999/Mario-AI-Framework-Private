@@ -199,7 +199,9 @@ class PPO():
         return None
 
     def train(self, make_envs_fn:Callable, make_env_fn:Callable, gamma, 
-              max_minutes, max_episodes, goal_mean_100_reward, level_pool:list):
+              max_minutes, max_episodes, goal_mean_100_reward, 
+              level_pool:list, rehearsal_level_tasks:list[list],
+              evaluation_levels:list[str]):
         training_start, last_debug_time = time.time(), float('-inf')
 
         self.make_envs_fn = make_envs_fn
@@ -251,10 +253,6 @@ class PPO():
         training_time = 0
         episode = 0
         self.eva100 = []
-        # ls = level_pool = [ 
-        #     ]
-        # for i in ls:
-        #     final_eval_score, score_std = self.evaluate(self.policy_model, env, i, n_episodes=1)
 
         stop_config = {
             'enabled': False,
@@ -262,11 +260,17 @@ class PPO():
             'trend_window': 20,
             'slope_threshold': 0.01
         }
+
+        #self.play(env)
        
         try:
             while True:
                 episode_timestep, episode_reward, episode_exploration, \
-                episode_seconds = self.episode_buffer.fill(envs, self.policy_model, self.value_model, episode, level_pool, visual=False)
+                episode_seconds = self.episode_buffer.fill(
+                    envs, self.policy_model, self.value_model, episode, 
+                    level_pool, 
+                    rehearsal_level_tasks,
+                    visual=False)
                 
                 n_ep_batch = len(episode_timestep)
                 self.episode_timestep.extend(episode_timestep)
@@ -277,7 +281,7 @@ class PPO():
                 self.episode_buffer.clear()
 
                 # stats
-                evaluation_score, _ = self.evaluate(self.policy_model, env, random.choice(level_pool))
+                evaluation_score, _ = self.evaluate(self.policy_model, env, random.choice(evaluation_levels))
 
                 self.eva100.append(np.mean(self.evaluation_scores[-100:]))
                 if len(self.eva100) % 5 == 0:
@@ -342,7 +346,7 @@ class PPO():
                     if reached_goal_mean_reward: print(u'--> reached_goal_mean_reward \u2713')
                     break
         
-        except KeyboardInterrupt:
+        except Exception or KeyboardInterrupt:
             print("!Ctrl+C detected! Saving progress before exiting...")
         finally:
             if 'env' in locals():
@@ -354,6 +358,7 @@ class PPO():
             self.save_checkpoint(len(self.eva100), self.policy_model, 'policy', True)
             self.save_checkpoint(len(self.eva100), self.value_model, 'value', True)
             self.plot(self.eva100, True)
+            self.save_ewc(level_pool, rehearsal_level_tasks)
 
 
     def evaluate(self, eval_model:CNNActor, eval_env, level:str, n_episodes=1, greedy=True):
@@ -373,7 +378,7 @@ class PPO():
                 if d: break
         return np.mean(rs), np.std(rs)
 
-    def finish_task(self, level_pool: list):
+    def finish_task(self, level_pool: list, rehearsal_level_tasks: list[list]):
         # Create a temporary buffer to collect data
         temp_buffer:EpisodeBuffer = self.episode_buffer_fn(
             self.nS,
@@ -388,7 +393,9 @@ class PPO():
         envs = self.make_envs_fn(self.make_env_fn, self.n_workers)
         temp_buffer.fill(envs, self.policy_model, self.value_model, 
                         episodeStart=0,
-                        level_pool=level_pool)
+                        level_pool=level_pool,
+                        rehearsal_level_tasks=rehearsal_level_tasks,
+                        mode='ewc')
         envs.close()
         
         # Get the collected states and actions
@@ -408,8 +415,8 @@ class PPO():
             torch.save(model.state_dict(), 
                             os.path.join('C:/thesis_data', 'model.{}.{}.tar'.format(suffix, evaluation_idx)))
             
-    def save_ewc(self, level_pool):
-        self.finish_task(level_pool=level_pool)
+    def save_ewc(self, level_pool, rehearsal_level_tasks):
+        self.finish_task(level_pool=level_pool, rehearsal_level_tasks=rehearsal_level_tasks)
 
         ewc_state = {
             'fisher': self.ewc.fisher_matrix,
@@ -418,3 +425,10 @@ class PPO():
         
         save_path = os.path.join('C:/thesis_data', 'model.ewc_state.tar')
         torch.save(ewc_state, save_path)
+
+    def play(self, env):
+        ls = level_pool = [ 
+            "training/100-basic/102-basic-block/lvl-eva-1.txt"
+        ]
+        for i in ls:
+            final_eval_score, score_std = self.evaluate(self.policy_model, env, i, n_episodes=1)

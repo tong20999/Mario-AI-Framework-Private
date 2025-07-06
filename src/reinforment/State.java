@@ -1,4 +1,4 @@
-package agents.myAgentMachineLearning;
+package reinforment;
 
 import engine.core.MarioForwardModel;
 
@@ -16,6 +16,14 @@ public class State {
             byteArray[i] = (byte)input[i];
         }
         return byteArray;
+    }
+
+    public static byte[] stepResult(byte[] nextState, float reward, boolean is_terminate) {
+        ByteBuffer buffer = ByteBuffer.allocate(4 + 1 + nextState.length);
+        buffer.put(float2ByteArray(reward));
+        buffer.put((byte)(is_terminate ? 1 : 0));
+        buffer.put(nextState);
+        return buffer.array();
     }
 
     public static byte [] float2ByteArray (float value)

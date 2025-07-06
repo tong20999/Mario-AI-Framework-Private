@@ -2,16 +2,12 @@ package agents.human;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.text.MessageFormat;
-import java.util.Arrays;
 
-import agents.myAgentMachineLearning.State;
+import reinforment.State;
 import engine.core.MarioAgent;
 import engine.core.MarioForwardModel;
 import engine.core.MarioTimer;
 import engine.helper.MarioActions;
-
-import static engine.core.MarioForwardModel.*;
 
 public class Agent extends KeyAdapter implements MarioAgent {
     private boolean[] actions = null;

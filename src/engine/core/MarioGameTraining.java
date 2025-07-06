@@ -15,12 +15,10 @@ import java.util.Set;
 
 import javax.swing.JFrame;
 
-import agents.myAgentMachineLearning.Objective;
-import agents.myAgentMachineLearning.State;
+import reinforment.*;
 import engine.helper.EventType;
 import engine.helper.GameStatus;
 import engine.helper.MarioActions;
-import engine.helper.SpriteType;
 import info.EndInfo;
 import info.Info;
 
@@ -68,9 +66,6 @@ public class MarioGameTraining {
     private JFrame window = null;
     private MarioRender render = null;
     private MarioWorld world = null;
-
-
-
     MarioTimer agentTimer;
     int timer;
 
@@ -80,8 +75,6 @@ public class MarioGameTraining {
     Graphics currentBuffer = null;
     boolean visual = true;
     int currentTimer;
-
-    private Set<String> clearedSpawnPointsThisEpisode;
     int lastMilestone;
     int lastCoinCount;
 
@@ -95,27 +88,7 @@ public class MarioGameTraining {
     public float episodeReward = 0;
     int episodeTimer = 0;
     int evaluationTimer = 0;
-
-    float epsilon;
-    int frameSkip = 5;
-
-    float bonusBlock = 50;
-    float bonusCoin = 50;
-    float bonusKill = 50;
-    float winReward = 50;
-    float mileStoneReward = 0.1f;
-    float jumpOverPitReward = 0f;
-    float killReward = 5;
-    float coinReward = 5;
-    float fireworkReward = 5;
-    float mushroomReward = 5;
-    float lifeMushroomReward = 5;
-    float loseReward = -20f;
-    float loseTimeoutReward = -30f;
-    float hurtReward = -10f;
-    float hitWallReward = -0.2f;
-    float fallPitReward = -10f;
-    float timePenaltyRewardCoefficient = 0.00005f;
+    int frameSkip = 4;
     int episode = -1;
     boolean isNormalSpeed = false;
     Objective objective = Objective.FLAG;
@@ -131,58 +104,6 @@ public class MarioGameTraining {
              this.window.dispose(); // This is the crucial call to close the window
          }
      }
-
-    public byte[] reset(Info info) throws Exception {
-        this.visual = info.isVisual();
-        if(this.visual){
-            setupWindow(info.getEpisode());
-        }
-        if(!info.isEvaluation()){
-            this.episode = info.getEpisode();
-        }
-        var level = info.getLevel();
-        var levelFileName = level.substring(level.lastIndexOf("/") + 1);
-
-        this.clearedSpawnPointsThisEpisode = new HashSet<>();
-        this.objective = Objective.FLAG;
-        this.gameEvents = new ArrayList<>();
-        this.evaluation = info.isEvaluation();
-        this.world = new MarioWorld(this.killEvents, this.objective);
-        this.world.levelName = levelFileName;
-        this.world.visuals = visual;
-        // timer by level width
-        this.timer = ((new MarioLevel(getLevel(level), false).exitTileX)/2) + 10;
-        this.lastMilestone = 0;
-        this.lastCoinCount = 0;
-        this.world.initializeLevel(getLevel(level), 1000 * this.timer);
-        if(objective == Objective.FLAG){
-            this.world.subGoalMet = true;
-        }
-        if (visual) {
-            this.world.initializeVisuals(this.render.getGraphicsConfiguration());
-        }
-        this.world.mario.isLarge = false;
-        this.world.mario.isFire = false;
-        this.world.update(new boolean[MarioActions.numberOfActions()]);
-
-        if (visual) {
-            renderTarget = this.render.createVolatileImage(MarioGameTraining.width, MarioGameTraining.height);
-            backBuffer = this.render.getGraphics();
-            currentBuffer = renderTarget.getGraphics();
-            this.render.addFocusListener(this.render);
-        }
-
-        this.agentTimer = new MarioTimer(MarioGameTraining.maxTime);
-
-        if(!this.evaluation){
-            this.episodeReward = 0;
-        } else {
-            this.evaluationReward = 0;
-        }
-        //this.epsilon = info.getEpsilon();
-        //this.world.epsilon = this.epsilon;
-        return State.toByte(new MarioForwardModel(this.world.clone()));
-    }
 
     private void setupWindow(int episode) {
         if(this.window != null){
@@ -226,6 +147,61 @@ public class MarioGameTraining {
         this.window.setVisible(this.visual);
     }
 
+    public byte[] reset(Info info) throws Exception {
+        this.visual = info.isVisual();
+        if(this.visual){
+            setupWindow(info.getEpisode());
+        }
+        if(!info.isEvaluation()){
+            this.episode = info.getEpisode();
+        }
+        var levelName = info.getLevel();
+        var levelFileName = levelName.substring(levelName.lastIndexOf("/") + 1);
+
+        this.objective = Helper.getObjective(levelName);
+        this.gameEvents = new ArrayList<>();
+        this.evaluation = info.isEvaluation();
+        this.world = new MarioWorld(this.killEvents, this.objective);
+        this.world.levelName = levelFileName;
+        this.world.visuals = visual;
+        // timer by level width
+        this.timer = ((new MarioLevel(Helper.getLevel(levelName), false).exitTileX)/2) + 10;
+        this.timer = 15;
+        this.lastMilestone = 0;
+        this.lastCoinCount = 0;
+        String level = Helper.getLevel(levelName);
+        if(levelName.contains("training/100-basic/102-basic-block/")){
+            //level = randomFlag(getLevel(levelName));
+            level = ProceduralContentGeneration.randomAddSingleBlock(level);
+        }
+        this.world.initializeLevel(level, 1000 * this.timer);
+        if(objective == Objective.FLAG){
+            this.world.subGoalMet = true;
+        }
+        if (visual) {
+            this.world.initializeVisuals(this.render.getGraphicsConfiguration());
+        }
+        this.world.mario.isLarge = false;
+        this.world.mario.isFire = false;
+        this.world.update(new boolean[MarioActions.numberOfActions()]);
+
+        if (visual) {
+            renderTarget = this.render.createVolatileImage(MarioGameTraining.width, MarioGameTraining.height);
+            backBuffer = this.render.getGraphics();
+            currentBuffer = renderTarget.getGraphics();
+            this.render.addFocusListener(this.render);
+        }
+
+        this.agentTimer = new MarioTimer(MarioGameTraining.maxTime);
+
+        if(!this.evaluation){
+            this.episodeReward = 0;
+        } else {
+            this.evaluationReward = 0;
+        }
+        return State.toByte(new MarioForwardModel(this.world.clone()));
+    }
+
     public byte[] step(boolean[] action) throws Exception {
         // for frame skip the agent will only send one action per 3 frames to make agent jump longer
         // because it needs to hold the jump button
@@ -234,69 +210,7 @@ public class MarioGameTraining {
         }
         var nextWorldState = this.world.clone();
         var nextState = new MarioForwardModel(nextWorldState);
-
-        float reward = 0.0f;
-        reward += timePenalty();
-        reward += mileStoneReward();
-
-        // Coin collection reward
-        int currentCoins = nextState.getNumCollectedCoins();
-        if (currentCoins > this.lastCoinCount) {
-            reward += coinReward; // +0.5 reward per coin
-            this.lastCoinCount = currentCoins;
-        }
-
-        // Event-based rewards (kills, power-ups) and penalties (hurt, walls)
-        for (MarioEvent e : this.world.lastFrameEvents) {
-            if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
-                    e.getEventType() == EventType.FIRE_KILL.getValue() ||
-                    e.getEventType() == EventType.SHELL_KILL.getValue()) {
-//                var sprintCode = e.getSprintCode();
-//                if(sprintCode != null && !this.clearedSpawnPointsThisEpisode.contains(sprintCode)){
-//                    clearedSpawnPointsThisEpisode.add(sprintCode);
-//                    reward += killReward; // +2 reward per kill
-//                }
-                reward += killReward;
-            }
-            if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == SpriteType.FIRE_FLOWER.getValue()) {
-                reward += fireworkReward; // +5 for a power-up
-            }
-            if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == SpriteType.MUSHROOM.getValue()) {
-                reward += mushroomReward; // +2 for a mushroom
-            }
-            if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == SpriteType.LIFE_MUSHROOM.getValue()) {
-                reward += lifeMushroomReward; // +5 for a life
-            }
-            if (e.getEventType() == EventType.HURT.getValue()) {
-                reward += hurtReward; // -1 for taking damage
-            }
-            if (e.getEventType() == EventType.HIT_WALL.getValue()) {
-                reward += hitWallReward;
-            }
-            if (e.getEventType() == EventType.FALL_PIT.getValue()) {
-                reward += fallPitReward;
-            }
-        }
-
-        checkSubGoalMet();
-
-        // --- 3. Define the outcome: Keep your score or lose it all ---
-        if (this.world.gameStatus == GameStatus.WIN) {
-            // The reward for winning is that you get to keep the score you earned.
-            // We can add a small bonus to break ties, but the bulk of the score is from the run itself.
-            reward += calculateNonlinearBonus(this.world.level.totalBumpBlock, this.world.bumpBlock, this.bonusBlock, "BLOCK");
-            reward += calculateNonlinearBonus(this.world.level.totalCoins, this.world.coins, this.bonusCoin, "COIN");
-            reward += calculateNonlinearBonus(this.world.level.totalEnemies, this.world.kill, this.bonusKill, "ENEMY");
-            reward += winReward;
-        } else if (this.world.gameStatus == GameStatus.TIME_OUT) {
-            // A massive penalty that ensures any failure is always worse than even the "laziest" win.
-            reward += loseTimeoutReward;
-        } else if (this.world.gameStatus == GameStatus.LOSE) {
-            // A massive penalty that ensures any failure is always worse than even the "laziest" win.
-            reward += loseReward;
-            reward += distanceToFlag(nextState);
-        }
-
+        float reward = RewardSystem.getReward(this.world, nextState, this.lastCoinCount, this.objective);
         if(this.evaluation){
             this.evaluationReward += reward;
             this.evaluationTimer = this.world.currentTimer;
@@ -305,11 +219,13 @@ public class MarioGameTraining {
             this.episodeTimer = this.world.currentTimer;
         }
 
-        this.world.reward += reward;
+        this.world.reward = reward;
 
         this.world.episode = this.evaluation ? -1 : this.episode;
-        printInfo();
-        return stepResult(State.toByte(nextState), reward, this.world.gameStatus != GameStatus.RUNNING);
+        Helper.printInfo(this.world, this.gameEvents,
+                this.evaluation, this.evaluationInfo, this.evaluationTimer, this.evaluationReward,
+                this.episodeInfo, this.episode, this.episodeTimer, this.episodeReward);
+        return State.stepResult(State.toByte(nextState), reward, this.world.gameStatus != GameStatus.RUNNING);
     }
 
     public void miniStep(boolean[] action) throws Exception {
@@ -333,268 +249,10 @@ public class MarioGameTraining {
         }
     }
 
-    private void checkSubGoalMet() {
-        if(this.objective == Objective.COIN){
-            if(this.world.level.totalCoins == this.world.coins){
-                this.world.subGoalMet = true;
-            }
-        }
-
-        if(this.objective == Objective.BLOCK){
-            if(this.world.level.totalBumpBlock == this.world.bumpBlock){
-                //this.world.win();
-                this.world.subGoalMet = true;
-            }
-        }
-
-        if(this.objective == Objective.ENEMY){
-//            if(this.world.level.totalEnemies == this.world.kill){
-//                this.world.win();
-//            }
-        }
-    }
-
-    private float distanceToFlag(MarioForwardModel model) {
-        var complete = model.getCompletionPercentage() * 10;
-        return complete;
-    }
-
-    private float timePenalty() {
-        float reward = this.world.currentTimer - this.currentTimer;
-        this.currentTimer = this.world.currentTimer;
-        if(reward >= 0){
-            return 0;
-        }
-        var timePenalty = reward * timePenaltyRewardCoefficient;
-        return timePenalty;
-    }
-
-    private float mileStoneReward() {
-        double completePercentage = this.world.mario.x / (this.world.level.exitTileX * 16.0);
-        int milestone = (int)(completePercentage * 100);
-        if (milestone > lastMilestone) {
-            lastMilestone = milestone;
-            return mileStoneReward;
-        }
-        return 0;
-    }
-
-    private void printInfo() {
-        if(this.world.gameStatus != GameStatus.RUNNING){
-            long fallKill = gameEvents.stream()
-                    .filter(e -> e.getEventType() == EventType.FALL_KILL.getValue())
-                    .count();
-
-            long shellKill = gameEvents.stream()
-                    .filter(e -> e.getEventType() == EventType.SHELL_KILL.getValue())
-                    .count();
-
-            long stompKill = gameEvents.stream()
-                    .filter(e -> e.getEventType() == EventType.STOMP_KILL.getValue())
-                    .count();
-
-            long fireKill = gameEvents.stream()
-                    .filter(e -> e.getEventType() == EventType.FIRE_KILL.getValue())
-                    .count();
-
-            // hurt may not dead
-            int hurt = (int) gameEvents.stream()
-                    .filter(e -> e.getEventType() == EventType.HURT.getValue())
-                    .count();
-
-            int fallPit = (int) gameEvents.stream()
-                    .filter(e -> e.getEventType() == EventType.FALL_PIT.getValue())
-                    .count();
-
-            int collect = (int) gameEvents.stream()
-                    .filter(e -> e.getEventType() == EventType.COLLECT.getValue())
-                    .count();
-
-            int lose = this.world.gameStatus == GameStatus.LOSE ? 1 : 0;
-
-            int timeout = this.world.gameStatus == GameStatus.TIME_OUT ? 1 : 0;
-
-            int win = gameEvents.stream()
-                    .anyMatch(e -> e.getEventType() == EventType.WIN.getValue()) ? 1 : 0;
-
-            if(this.evaluation){
-                evaluationInfo.win += win;
-                evaluationInfo.lose += lose;
-                evaluationInfo.hurt += hurt;
-                evaluationInfo.fallPit += fallPit;
-                evaluationInfo.fallKill += fallKill;
-                evaluationInfo.stompKill += stompKill;
-                evaluationInfo.shellKill += shellKill;
-                evaluationInfo.fireKill += fireKill;
-                evaluationInfo.collect += collect;
-                evaluationInfo.timeout += timeout;
-                var evaluationMsg = MessageFormat.format("Evaluation {0} time {1} reward {2}", evaluationInfo, this.evaluationTimer/1000, String.format("%.2f", this.evaluationReward));
-                try (BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\thesis_data\\evaluation_log.txt", true))) {
-                    writer.write(evaluationMsg);
-                    writer.newLine();
-                    if(this.episode % 500 == 0 && this.episode != 0){
-                        var rewardTable = getRewardsInformation();
-                        writer.write(rewardTable);
-                        writer.newLine();
-                    }
-                } catch (IOException e) {
-                    System.err.println("Error writing to file: " + e.getMessage());
-                }
-            }
-            else {
-                episodeInfo.win += win;
-                episodeInfo.lose += lose;
-                episodeInfo.hurt += hurt;
-                episodeInfo.fallPit += fallPit;
-                episodeInfo.fallKill += fallKill;
-                episodeInfo.stompKill += stompKill;
-                episodeInfo.shellKill += shellKill;
-                episodeInfo.fireKill += fireKill;
-                episodeInfo.collect += collect;
-                episodeInfo.timeout += timeout;
-                var episodeMsg = MessageFormat.format("Episode {0} {1} time {2} reward {3}", this.episode, episodeInfo, this.episodeTimer/1000, String.format("%.2f", this.episodeReward));
-                try (BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\thesis_data\\episode_log.txt", true))) {
-                    writer.write(episodeMsg);
-                    writer.newLine();
-                } catch (IOException e) {
-                    System.err.println("Error writing to file: " + e.getMessage());
-                }
-            }
-        }
-    }
-
-    private String getRewardsInformation() {
-        return MessageFormat.format("""
-                        REWARDS
-                        WIN {0}
-                        LOSE {1}
-                        TIME_OUT {2}
-                        MILESTONE {3}
-                        JumpOverPit {4}
-                        KILL {5}
-                        COLLECT_COIN {6}
-                        COLLECT_FIREWORK {7}
-                        COLLECT_MUSHROOM {8}
-                        COLLECT_LIFE_MUSHROOM {9}
-                        HURT {10}
-                        HIT_WALL {11}
-                        FALL_PIT {12}
-                        TIME_PENALTY_COEFFICIENT {13}
-                        BONUS COIN {14}
-                        BONUS BLOCK {15}
-                        BONUS KILL {16}
-                        """,
-                this.winReward,
-                this.loseReward,
-                this.loseTimeoutReward,
-                this.mileStoneReward,
-                this.jumpOverPitReward,
-                this.killReward,
-                this.coinReward,
-                this.fireworkReward,
-                this.mushroomReward,
-                this.lifeMushroomReward,
-                this.hurtReward,
-                this.hitWallReward,
-                this.fallPitReward,
-                this.timePenaltyRewardCoefficient,
-                this.bonusCoin,
-                this.bonusBlock,
-                this.bonusKill
-        );
-    }
-
-    private static byte[] stepResult(byte[] nextState, float reward, boolean is_terminate) {
-        ByteBuffer buffer = ByteBuffer.allocate(4 + 1 + nextState.length);
-        buffer.put(float2ByteArray(reward));
-        buffer.put((byte)(is_terminate ? 1 : 0));
-        buffer.put(nextState);
-        return buffer.array();
-    }
-
-    public static byte [] float2ByteArray (float value)
-    {
-        return ByteBuffer.allocate(4).putFloat(value).array();
-    }
-
-    private static String getFileFromLevel(String file){
-        String content = "";
-        try {
-            content = new String(Files.readAllBytes(Paths.get(file)));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return content;
-    }
-
-    public static String getFirstLevel(){
-        var level1 = "./levels/original/lvl-1-basic-move-right.txt";
-        return getFileFromLevel(level1);
-    }
-
-    public static String getLevel(String level){
-        var levelLocation = MessageFormat.format("./levels/{0}", level);
-        return getFileFromLevel(levelLocation);
-    }
-
-    public static String getEvaluationLevel(int level){
-        var levelLocation = MessageFormat.format("./levels/evaluation/lvl-{0}.txt", level);
-        return getFileFromLevel(levelLocation);
-    }
-
-
-    private String getOriginalLevel(int level) {
-        var levelLocation = MessageFormat.format("./levels/original/lvl-{0}.txt", level);
-        return getFileFromLevel(levelLocation);
-    }
-
-//    private Objective getObjective(String level) {
-//        if(level.contains("obj-flag")){
-//            return Objective.FLAG;
-//        }
-//
-//        if(level.contains("obj-coin")){
-//            return Objective.COIN;
-//        }
-//
-//        if(level.contains("obj-enemy")){
-//            return Objective.ENEMY;
-//        }
-//
-//        if(level.contains("obj-block")){
-//            return Objective.BLOCK;
-//        }
-//
-//        throw new IllegalArgumentException(level);
-//    }
-
     private int getDelay(int fps) {
         if (fps <= 0) {
             return 0;
         }
         return 1000 / fps;
-    }
-
-    public static float calculateNonlinearBonus(int total, int achieve, float maxBonus) {
-        return calculateNonlinearBonus(total, achieve, maxBonus, null);
-    }
-
-    public static float calculateNonlinearBonus(int total, int achieve, float maxBonus, String subGoal) {
-        if (total == 0) {
-            return 0.0f; // Avoid division by zero if a level has no blocks
-        }
-
-        // Crucial cast to float: In Java, dividing two integers (e.g., 3 / 5) results in 0.
-        // We cast to float to get the correct decimal result (e.g., 0.6f).
-        float completionRatio = (float) achieve / total;
-
-        // Apply a non-linear scaling using Math.pow() for squaring the ratio.
-        // Math.pow returns a double, so we cast it back to a float.
-        float scaledRatio = (float) Math.pow(completionRatio, 2);
-
-        // Calculate the final bonus
-        float bonusEarned = maxBonus * scaledRatio;
-
-        return bonusEarned;
     }
 }

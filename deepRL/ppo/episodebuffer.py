@@ -91,10 +91,25 @@ class EpisodeBuffer():
         return levels_to_assign
 
     def fill(self, envs:MultiprocessEnv, policy_model, value_model, episodeStart,
-             level_pool: list, visual: bool = True):
+             level_pool: list[str], 
+             rehearsal_level_tasks: list[list[str]],
+             mode:str = 'train',
+             visual: bool = True):
         
+        workers = self.n_workers - 3
+        rehearsal_workers = 3
+
+        if mode == 'ewc' or len(rehearsal_level_tasks) == 0:
+            rehearsal_workers = 0
+            workers = self.n_workers
+            
         levels_to_assign = []
-        for _ in range(self.n_workers):
+        for _ in range(rehearsal_workers):
+            task = random.choice(rehearsal_level_tasks)
+            rehearsal_level = random.choice(task)
+            levels_to_assign.append(rehearsal_level)
+        
+        for _ in range(workers):
             levels_to_assign.append(random.choice(level_pool))
         random.shuffle(levels_to_assign)
         states = envs.reset(ranks=None, episodeStart=episodeStart, visual=visual, levels=levels_to_assign)
@@ -148,7 +163,6 @@ class EpisodeBuffer():
 
             if terminals.sum() > 0:
                 idx_terminals = np.flatnonzero(terminals)
-
                 reset_levels = [random.choice(level_pool) for _ in idx_terminals]
                 
                 # envs.reset returns a dict for the new states

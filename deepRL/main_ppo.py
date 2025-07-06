@@ -34,8 +34,8 @@ if __name__ == '__main__':
   policy_model_fn = lambda nS, nA: CNNActor(nS, nA, hidden_dims=(256,256))
   policy_model_max_grad_norm = float('inf')
   policy_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
-  policy_optimizer_lr = 0.000001
-  policy_optimization_epochs = 80
+  policy_optimizer_lr = 0.0000025
+  policy_optimization_epochs = 10
   policy_sample_ratio = 0.8
   policy_clip_range = 0.1
   policy_stopping_kl = 0.02
@@ -43,22 +43,22 @@ if __name__ == '__main__':
   value_model_fn = lambda nS: CNNCritic(nS, hidden_dims=(256,256))
   value_model_max_grad_norm = float('inf')
   value_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
-  value_optimizer_lr = 0.000001
-  value_optimization_epochs = 80
+  value_optimizer_lr = 0.0000025
+  value_optimization_epochs = 10
   value_sample_ratio = 0.8
   value_clip_range = float('inf')
-  value_stopping_mse = 25
+  value_stopping_mse = 1
 
   ewc_fn = lambda policy_model, ewc_lambda: EWC(policy_model, ewc_lambda)
-  ewc_lambda = 3000.0
+  ewc_lambda = 2000.0
 
   episode_buffer_fn = lambda sd, g, t, nw, me, mes: EpisodeBuffer(sd, g, t, nw, me, mes)
   max_buffer_episodes = 16
   max_buffer_episode_steps = 1000
 
-  entropy_loss_weight = 0.01
+  entropy_loss_weight = 0.04
   tau = 0.97
-  n_workers = 8
+  n_workers = 12
 
   env_name, gamma, max_minutes, \
   max_episodes, goal_mean_100_reward = environment_settings.values()
@@ -87,30 +87,26 @@ if __name__ == '__main__':
               tau,
               n_workers)
   
-  # level_pool = [
-  #   "training/100-basic/100-basic-movement/lvl-1.txt", 
-  #   "training/100-basic/100-basic-movement/lvl-2.txt", 
-  #   "training/100-basic/100-basic-movement/lvl-3.txt",
-  #   # "training/100-basic/101-basic-jump/lvl-4.txt",
-  #   # "training/100-basic/101-basic-jump/lvl-5.txt",
-  #   # "training/100-basic/101-basic-jump/lvl-6.txt",
-  #   # "training/100-basic/101-basic-jump/lvl-7.txt",
-  #   # "training/100-basic/101-basic-jump/lvl-8.txt",
-  #   # "training/100-basic/101-basic-jump/lvl-9.txt",
-  #               ]
+  level_pool = ["training/100-basic/102-basic-block/lvl-3.txt"]
+  # for i in range(1):
+  #   level_pool.append("training/100-basic/102-basic-block/lvl-{}.txt".format(i + 1))
+  
+  rehearsal_level_tasks = [
+    # ["training/100-basic/100-basic-movement/lvl-1.txt"],
+    # ["training/100-basic/101-basic-jump/lvl-1.txt",
+    # "training/100-basic/101-basic-jump/lvl-2.txt",
+    # "training/100-basic/101-basic-jump/lvl-3.txt",
+    # "training/100-basic/101-basic-jump/lvl-4.txt",
+    # "training/100-basic/101-basic-jump/lvl-5.txt",
+    # "training/100-basic/101-basic-jump/lvl-6.txt",
+    # "training/100-basic/101-basic-jump/lvl-7.txt",
+    # "training/100-basic/101-basic-jump/lvl-8.txt",
+    # "training/100-basic/101-basic-jump/lvl-9.txt",]
+  ]
 
-  level_pool = [
-    "training/100-basic/105-basic-integration/lvl-1.txt", 
-    "training/100-basic/105-basic-integration/lvl-2.txt", 
-    "training/100-basic/105-basic-integration/lvl-3.txt",
-    "training/100-basic/105-basic-integration/lvl-4.txt",
-    "training/100-basic/105-basic-integration/lvl-5.txt",
-    "training/100-basic/105-basic-integration/lvl-6.txt",
-    "training/100-basic/105-basic-integration/lvl-7.txt",
-    "training/100-basic/105-basic-integration/lvl-8.txt",
-    "training/100-basic/105-basic-integration/lvl-9.txt",
-                ]
-
+  evaluation_levels = [
+    "training/100-basic/102-basic-block/lvl-3.txt"
+  ]
 
   agent.train(make_envs_fn,
               make_env_fn,
@@ -118,7 +114,9 @@ if __name__ == '__main__':
               max_minutes,
               max_episodes,
               goal_mean_100_reward,
-              level_pool)
+              level_pool,
+              rehearsal_level_tasks,
+              evaluation_levels)
 
   
-  agent.save_ewc(level_pool)
+  #agent.save_ewc(level_pool)

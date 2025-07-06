@@ -3,6 +3,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import engine.core.MarioGame;
+import engine.core.MarioGameTraining;
 import engine.core.MarioResult;
 
 public class PlayLevel {
@@ -34,8 +35,13 @@ public class PlayLevel {
     public static void main(String[] args) {
         MarioGame game = new MarioGame();
         // printResults(game.playGame(getLevel("../levels/original/lvl-1-basic-move-right.txt"), 200, 0));
-        var training = getLevel("./levels/training/104-basic-enemy/lvl-1.txt");
-        var original = getLevel("./levels/original/lvl-1.txt");
-        printResults(game.runGame(new agents.human.Agent(), training, 200, 0, true));
+        var training = getLevel("./levels/training/100-basic/102-basic-block/lvl-4.txt");
+        var original = getLevel("./levels/original/lvl-4.txt");
+        while (true){
+            var mod = MarioGameTraining.randomFlag(training);
+            mod = MarioGameTraining.randomAddSingleBlock(mod);
+            printResults(game.runGame(new agents.human.Agent(), mod, 100, 0, true));
+        }
+
     }
 }

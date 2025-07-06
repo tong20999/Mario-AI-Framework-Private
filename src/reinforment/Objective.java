@@ -1,4 +1,4 @@
-package agents.myAgentMachineLearning;
+package reinforment;
 
 public enum Objective {
     FLAG,
