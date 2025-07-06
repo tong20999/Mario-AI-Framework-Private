@@ -5,6 +5,7 @@ import java.nio.file.Paths;
 import engine.core.MarioGame;
 import engine.core.MarioGameTraining;
 import engine.core.MarioResult;
+import reinforment.ProceduralContentGeneration;
 
 public class PlayLevel {
     public static void printResults(MarioResult result) {
@@ -38,8 +39,8 @@ public class PlayLevel {
         var training = getLevel("./levels/training/100-basic/102-basic-block/lvl-4.txt");
         var original = getLevel("./levels/original/lvl-4.txt");
         while (true){
-            var mod = MarioGameTraining.randomFlag(training);
-            mod = MarioGameTraining.randomAddSingleBlock(mod);
+            var mod = ProceduralContentGeneration.randomFlag(training);
+            mod = ProceduralContentGeneration.randomAddSingleBlock(mod);
             printResults(game.runGame(new agents.human.Agent(), mod, 100, 0, true));
         }
 
