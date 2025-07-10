@@ -1,4 +1,5 @@
 import random
+import matplotlib
 from scipy import stats
 from typing import Callable
 import pandas as pd
@@ -9,6 +10,7 @@ import os
 import glob
 from itertools import cycle, count
 import matplotlib.pyplot as plt
+
 from IPython import display
 from torch.utils.data import TensorDataset
 
@@ -78,6 +80,7 @@ class PPO():
         self.entropy_loss_weight = entropy_loss_weight
         self.tau = tau
         self.n_workers = n_workers
+        self.ewc_loss = 0
 
     def optimize_model(self):
         states, actions, returns, gaes, logpas = self.episode_buffer.get_stacks()
@@ -108,6 +111,9 @@ class PPO():
 
             self.policy_optimizer.zero_grad()
             total_loss = policy_loss + entropy_loss + ewc_penalty
+            if ewc_penalty > self.ewc_loss:
+                self.ewc_loss = ewc_penalty
+                print(self.ewc_loss)
             total_loss.backward()
             torch.nn.utils.clip_grad_norm_(self.policy_model.parameters(), 
                                            self.policy_model_max_grad_norm)
@@ -180,7 +186,7 @@ class PPO():
                     raise KeyboardInterrupt
 
         # --- Saving logic (unchanged) ---
-        if len(eva100_reward) % 20 == 0 or save:
+        if save:
             plt.savefig('C:/thesis_data/result_plot_episode_{}.png'.format(len(eva100_reward)))
 
         plt.show(block=False)
@@ -261,7 +267,7 @@ class PPO():
             'slope_threshold': 0.01
         }
 
-        #self.play(env)
+        # self.play(env) 
        
         try:
             while True:
@@ -428,7 +434,8 @@ class PPO():
 
     def play(self, env):
         ls = level_pool = [ 
-            "training/100-basic/102-basic-block/lvl-eva-1.txt"
+            "training/100-basic/103-basic-block-enemy/lvl-eva-1.txt",
+            "training/100-basic/103-basic-block-enemy/lvl-eva-2.txt"
         ]
         for i in ls:
             final_eval_score, score_std = self.evaluate(self.policy_model, env, i, n_episodes=1)

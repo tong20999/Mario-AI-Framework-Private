@@ -1,8 +1,7 @@
 package reinforment;
 
-public enum Objective {
-    FLAG,
-    COIN,
-    BLOCK,
-    ENEMY
+public class Objective {
+    public boolean block = false;
+    public boolean enemy = false;
+    public boolean coin = false;
 }

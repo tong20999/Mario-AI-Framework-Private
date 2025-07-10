@@ -3,8 +3,10 @@ package engine.core;
 import java.awt.Graphics;
 import java.awt.GraphicsConfiguration;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
-import reinforment.Objective;
 import engine.effects.*;
 import engine.graphics.MarioBackground;
 import engine.helper.*;
@@ -22,14 +24,15 @@ public class MarioWorld {
     public boolean visuals;
     public int currentTick;
     //Status
-    public int coins, lives, bumpBlock, kill;
+    public int coins, lives, bumpBlock, kill, collectCoin;
 
     //AI
     public float reward = 0;
     public int episode = 0;
     public ArrayList<MarioEvent> lastFrameEvents;
-    public Objective objective;
-    public boolean subGoalMet = false;
+    public boolean isSubGoalBlockMet = true, isSubGoalCoinMet = true, isSubGoalEnemyMet = true;
+    public String levelFileName;
+
     public String levelName;
 
     private MarioEvent[] killEvents;
@@ -43,7 +46,9 @@ public class MarioWorld {
 
     private MarioBackground[] backgrounds = new MarioBackground[2];
 
-    public MarioWorld(MarioEvent[] killEvents, Objective objective) {
+    public Set<String> listKill = new HashSet<>();
+
+    public MarioWorld(MarioEvent[] killEvents) {
         this.pauseTimer = 0;
         this.gameStatus = GameStatus.RUNNING;
         this.sprites = new ArrayList<>();
@@ -54,7 +59,6 @@ public class MarioWorld {
         this.effects = new ArrayList<>();
         this.lastFrameEvents = new ArrayList<>();
         this.killEvents = killEvents;
-        this.objective = objective;
     }
 
     public void initializeVisuals(GraphicsConfiguration graphicsConfig) {
@@ -112,7 +116,7 @@ public class MarioWorld {
     }
 
     public MarioWorld clone() {
-        MarioWorld world = new MarioWorld(this.killEvents, this.objective);
+        MarioWorld world = new MarioWorld(this.killEvents);
         world.visuals = false;
         world.cameraX = this.cameraX;
         world.cameraY = this.cameraY;
@@ -136,6 +140,13 @@ public class MarioWorld {
         //stats
         world.coins = this.coins;
         world.lives = this.lives;
+        world.bumpBlock = this.bumpBlock;
+        world.kill = this.kill;
+        world.levelName = this.levelName;
+        world.levelFileName = this.levelFileName;
+        world.isSubGoalBlockMet = this.isSubGoalBlockMet;
+        world.isSubGoalCoinMet = this.isSubGoalCoinMet;
+        world.isSubGoalEnemyMet = this.isSubGoalEnemyMet;
         return world;
     }
 
@@ -189,7 +200,7 @@ public class MarioWorld {
     }
 
     public void win() {
-        if(this.subGoalMet){
+        if(this.isSubGoalBlockMet && this.isSubGoalEnemyMet && this.isSubGoalCoinMet){
             this.addEvent(EventType.WIN, 0);
             this.gameStatus = GameStatus.WIN;
         }
@@ -200,6 +211,7 @@ public class MarioWorld {
         this.gameStatus = GameStatus.LOSE;
         this.mario.alive = false;
     }
+
 
     public void timeout() {
         this.gameStatus = GameStatus.TIME_OUT;
@@ -360,7 +372,11 @@ public class MarioWorld {
                 }
                 this.removeSprite(sprite);
                 if (this.isEnemy(sprite) && sprite.y > MarioGame.height + 32) {
-                    this.addEvent(EventType.FALL_KILL, sprite.type.getValue());
+                    if(!this.listKill.contains(sprite.initialCode)){
+                        this.listKill.add(sprite.initialCode);
+                        this.kill++;
+                        this.addEvent(EventType.FALL_KILL, sprite.type.getValue());
+                    }
                 }
                 continue;
             }

@@ -153,7 +153,7 @@ public class MarioLevel {
                     case 'Q':
                     case '!':
                         //coin question block
-                        this.totalCoins += 1;
+                        //this.totalCoins += 1;
                         this.levelTiles[x][y] = 11;
                         this.totalBumpBlock += 1;
                         break;
@@ -177,7 +177,7 @@ public class MarioLevel {
                         break;
                     case 'C':
                         //coin block
-                        this.totalCoins += 1;
+                        //this.totalCoins += 1;
                         this.levelTiles[x][y] = 7;
                         this.totalBumpBlock += 1;
                         break;

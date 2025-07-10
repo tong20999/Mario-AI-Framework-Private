@@ -70,7 +70,7 @@ public class Agent extends KeyAdapter implements MarioAgent {
                 break;
             case KeyEvent.VK_M:
                 var complate = model.getMarioCompleteObservation(0,0);
-                var a = State.toByte(model);
+                int a =5;
                 break;
         }
     }

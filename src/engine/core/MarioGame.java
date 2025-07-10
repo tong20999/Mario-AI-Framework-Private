@@ -11,6 +11,7 @@ import java.util.Random;
 import javax.swing.JFrame;
 
 import agents.human.Agent;
+import engine.helper.EventType;
 import engine.helper.GameStatus;
 import engine.helper.MarioActions;
 
@@ -222,7 +223,7 @@ public class MarioGame {
     }
 
     private MarioResult gameLoop(String level, int timer, int marioState, boolean visual, int fps) {
-        this.world = new MarioWorld(this.killEvents, null);
+        this.world = new MarioWorld(this.killEvents);
         this.world.visuals = visual;
         this.world.initializeLevel(level, 1000 * timer);
         if (visual) {
@@ -266,15 +267,6 @@ public class MarioGame {
                 agentEvents.add(new MarioAgentEvent(actions, this.world.mario.x,
                         this.world.mario.y, (this.world.mario.isLarge ? 1 : 0) + (this.world.mario.isFire ? 1 : 0),
                         this.world.mario.onGround, this.world.currentTick));
-            }
-
-//            if(this.world.level.totalCoins == this.world.coins){
-//                this.world.subGoalMet = true;
-//            }
-
-            if(this.world.level.totalBumpBlock == this.world.bumpBlock){
-                //this.world.win();
-                this.world.subGoalMet = true;
             }
 
             //render world

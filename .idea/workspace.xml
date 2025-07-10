@@ -5,7 +5,42 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="add human debug">
+      <change afterPath="$PROJECT_DIR$/.idea/artifacts/Mario_AI_Framework_Private_jar.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/deepRL/convert_model.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/101-basic-block/lvl-1.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/101-basic-block/lvl-2.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/101-basic-block/lvl-3.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/102-basic-enemy/lvl-1.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/104-basic-block-enemy-pit/lvl-1.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/levels/training/100-basic/104-basic-pipe/lvl-1.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/META-INF/MANIFEST.MF" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/main_ppo.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/main_ppo.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/marioGame.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/marioGame.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/ppo/episodebuffer.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ppo/episodebuffer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/ppo/ppo.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ppo/ppo.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/100-basic/100-basic-movement/lvl-1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/levels/training/100-basic/103-basic-block-enemy/lvl-1.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/100-basic/101-basic-jump/lvl-1.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/100-basic/102-basic-block/lvl-1.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/100-basic/102-basic-block/lvl-2.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/100-basic/102-basic-block/lvl-3.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/levels/training/100-basic/102-basic-block/lvl-eva-1.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/GameServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/GameServer.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/PlayLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/PlayLevel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/agents/human/Agent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/human/Agent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioForwardModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioForwardModel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGame.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGame.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioLevel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioRender.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioRender.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioWorld.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioWorld.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/sprites/Enemy.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/sprites/Enemy.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/sprites/Mario.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/sprites/Mario.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/reinforment/Helper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/reinforment/Helper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/reinforment/Objective.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/reinforment/Objective.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/reinforment/ProceduralContentGeneration.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/reinforment/ProceduralContentGeneration.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/reinforment/RewardSystem.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/reinforment/RewardSystem.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/reinforment/State.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/reinforment/State.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -46,29 +81,31 @@
     &quot;Application.PlayLevel.executor&quot;: &quot;Debug&quot;,
     &quot;Application.Program.executor&quot;: &quot;Debug&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;ppo__cnn__stackframe&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/WARDESKTOP/source/repos/Mario-AI-Framework-Private/levels/training/100-basic/102-basic-block&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/WARDESKTOP/source/repos/Mario-AI-Framework-Private/levels/training/100-basic&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Artifacts&quot;,
     &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2862069&quot;
+    &quot;project.structure.side.proportion&quot;: &quot;0.2862069&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;Errors&quot;
   }
 }</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\WARDESKTOP\source\repos\Mario-AI-Framework-Private\levels\training\100-basic" />
+      <recent name="C:\Users\WARDESKTOP\source\repos\Mario-AI-Framework-Private\levels\training\100-basic\103-basic-block-enemy" />
+      <recent name="C:\Users\WARDESKTOP\source\repos\Mario-AI-Framework-Private\levels\training\100-basic\102-basic-enemy" />
+      <recent name="C:\Users\WARDESKTOP\source\repos\Mario-AI-Framework-Private\levels\training\100-basic\100-basic-movement" />
       <recent name="C:\Users\WARDESKTOP\source\repos\Mario-AI-Framework-Private\levels\training\100-basic\102-basic-block" />
-      <recent name="C:\Users\WARDESKTOP\source\repos\Mario-AI-Framework-Private\levels\training" />
-      <recent name="C:\Users\WARDESKTOP\source\repos\Mario-AI-Framework-Private\levels\training\200-course" />
-      <recent name="C:\Users\WARDESKTOP\source\repos\Mario-AI-Framework-Private\levels\training\200-course\203-obstacle" />
-      <recent name="C:\Git\Mario-AI-Framework-Private\levels\training\200-course\202-block" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\WARDESKTOP\source\repos\Mario-AI-Framework-Private\levels\training\100-basic" />
       <recent name="C:\Git\Mario-AI-Framework-Private\levels\training\100-basic" />
       <recent name="C:\Git\Mario-AI-Framework-Private\levels" />
       <recent name="C:\Git\Mario-AI-Framework-Private\levels\training" />
       <recent name="C:\Git\Mario-AI-Framework-Private\levels\training\100-basic-movement" />
-      <recent name="C:\Git\Mario-AI-Framework-Private\levels\training\101-basic-jump" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
       <recent name="" />
@@ -174,19 +211,11 @@
     <option name="LAST_COMMIT_MESSAGE" value="add human debug" />
   </component>
   <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/agents/human/Agent.java</url>
-          <line>72</line>
-          <option name="timeStamp" value="14" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
     <pin-to-top-manager>
       <pinned-members>
         <PinnedItemInfo parentTag="engine.core.MarioWorld" memberName="sprites" />
         <PinnedItemInfo parentTag="engine.core.MarioForwardModel" memberName="world" />
+        <PinnedItemInfo parentTag="engine.core.MarioEvent" memberName="eventType" />
         <PinnedItemInfo parentTag="engine.core.MarioWorld" memberName="level" />
       </pinned-members>
     </pin-to-top-manager>

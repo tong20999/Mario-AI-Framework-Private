@@ -1,0 +1,11 @@
+<component name="ArtifactManager">
+  <artifact name="Mario-AI-Framework-Private:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Mario_AI_Framework_Private_jar</output-path>
+    <root id="root">
+      <element id="archive" name="Mario-AI-Framework-Private.jar">
+        <element id="module-output" name="Mario-AI-Framework-Private" />
+      </element>
+      <element id="library" level="project" name="py4j0.10.9.7" />
+    </root>
+  </artifact>
+</component>

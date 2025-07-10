@@ -9,12 +9,12 @@ from socketEnv import SocketEnv
 
 all_possible_input:list[list[bool]] = [
     # [LEFT, RIGHT , DOWN, SPEED, JUMP]
-    [False, False, False, False, False], # Do nothing (reset jump)
+    [False, False, False, False, False], # Do nothing
     [False, True, False, False, False],  # move right
     [False, True, False, False, True], # move right and jump
     [False, True, False, True, False], # move right and speed
     [False, True, False, True, True],  # move right and speed and jump
-    # [False, False, False, False, True], # Jump only
+    [False, False, False, False, True], # Jump only
     [True, False, False, False, False], # move left
     [True, False, False, True, False],  # move left and speed
     [True, False, False, False, True], # move left and jump
@@ -35,8 +35,8 @@ class MarioGame(SocketEnv):
         self.observation_space = gym.spaces.Dict({
             # CNN part: 1 channel, 16x16 grid. Values are binary (0 or 1).
             'grid': gym.spaces.Box(low=0, high=1, shape=(1, 16, 16), dtype=np.uint8),
-            # Vector part: 14 features. Values are binary.
-            'vector': gym.spaces.Box(low=0, high=14, shape=(14,), dtype=np.uint8) # Adjust high based on actual max values
+            # Vector part: 15 features. Values are binary.
+            'vector': gym.spaces.Box(low=0, high=18, shape=(18,), dtype=np.uint8) # Adjust high based on actual max values
         })
         
         # The action space should be Discrete for FCCA's Categorical output

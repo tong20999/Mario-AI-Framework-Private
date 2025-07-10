@@ -2,21 +2,15 @@ package engine.core;
 
 import java.awt.image.VolatileImage;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.awt.*;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.swing.JFrame;
 
 import reinforment.*;
-import engine.helper.EventType;
 import engine.helper.GameStatus;
 import engine.helper.MarioActions;
 import info.EndInfo;
@@ -91,7 +85,10 @@ public class MarioGameTraining {
     int frameSkip = 4;
     int episode = -1;
     boolean isNormalSpeed = false;
-    Objective objective = Objective.FLAG;
+    Objective objective;
+    ArrayList<MarioEvent> miniStepEvents = new ArrayList<>();
+
+    private int fps = 40;
     /**
      * Create a mario game to be played
      */
@@ -155,29 +152,30 @@ public class MarioGameTraining {
         if(!info.isEvaluation()){
             this.episode = info.getEpisode();
         }
-        var levelName = info.getLevel();
-        var levelFileName = levelName.substring(levelName.lastIndexOf("/") + 1);
+        if(this.episode == 0){
+            RewardSystem.printRewardsInformation();
+        }
 
-        this.objective = Helper.getObjective(levelName);
+        var levelFileName = info.getLevel();
+        var levelName = levelFileName.substring(levelFileName.lastIndexOf("/") + 1);
+
+
+
         this.gameEvents = new ArrayList<>();
         this.evaluation = info.isEvaluation();
-        this.world = new MarioWorld(this.killEvents, this.objective);
-        this.world.levelName = levelFileName;
+        this.world = new MarioWorld(this.killEvents);
+        this.world.levelFileName = levelFileName;
+        this.world.levelName = levelName;
         this.world.visuals = visual;
         // timer by level width
-        this.timer = ((new MarioLevel(Helper.getLevel(levelName), false).exitTileX)/2) + 10;
-        this.timer = 15;
+        this.timer = ((new MarioLevel(Helper.getLevel(levelFileName), false).exitTileX)/2) + 10;
+        this.timer = isNormalSpeed ? 30 : 15;
         this.lastMilestone = 0;
         this.lastCoinCount = 0;
-        String level = Helper.getLevel(levelName);
-        if(levelName.contains("training/100-basic/102-basic-block/")){
-            //level = randomFlag(getLevel(levelName));
-            level = ProceduralContentGeneration.randomAddSingleBlock(level);
-        }
+        String level = Helper.getLevel(levelFileName);
+        level = modLevel(levelFileName,  level);
         this.world.initializeLevel(level, 1000 * this.timer);
-        if(objective == Objective.FLAG){
-            this.world.subGoalMet = true;
-        }
+        this.objective = Helper.setObjective(this.world, levelFileName);
         if (visual) {
             this.world.initializeVisuals(this.render.getGraphicsConfiguration());
         }
@@ -202,15 +200,75 @@ public class MarioGameTraining {
         return State.toByte(new MarioForwardModel(this.world.clone()));
     }
 
+    private String modLevel(String levelFileName, String level) {
+        if(levelFileName.contains("training/100-basic/104-basic-block-enemy-pit/")){
+            printPCGInfo();
+            level = ProceduralContentGeneration.replacePit(level, 10, 5, 2,4);
+            level = ProceduralContentGeneration.replaceSingleBlock(level, 1, 2);
+            return ProceduralContentGeneration.replaceSingleEnemy(level, 8, 2);
+        }
+
+
+        if(levelFileName.contains("training/100-basic/101-basic-block/")){
+
+            return ProceduralContentGeneration.replaceSingleBlock(level, 1, 2);
+        }
+
+        if(levelFileName.contains("training/100-basic/102-basic-enemy/")){
+            return ProceduralContentGeneration.replaceSingleEnemy(level, 10, 10);
+        }
+
+        if(levelFileName.contains("training/100-basic/103-basic-block-enemy/")){
+
+            level = ProceduralContentGeneration.replaceSingleBlock(level, 1, 2);
+            return ProceduralContentGeneration.replaceSingleEnemy(level, 8, 2);
+        }
+
+        if(levelFileName.contains("training/100-basic/103-basic-jump/")){
+            return ProceduralContentGeneration.replacePit(level, 10, 10, 2,4);
+        }
+
+        if(levelFileName.contains("training/100-basic/104-basic-pipe/")){
+            return ProceduralContentGeneration.replacePipe(level, 10, 10);
+        }
+
+        throw new IllegalArgumentException("modLevel " + levelFileName);
+    }
+
+    private void printPCGInfo() {
+        File file = new File("C:\\thesis_data\\pcg.txt");
+        if(file.exists()){
+            return;
+        }
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            writer.write("ProceduralContentGeneration.replaceSingleBlock(level, 1, 2)");
+            writer.write("ProceduralContentGeneration.replaceSingleEnemy(level, 8, 2)");
+            writer.write("ProceduralContentGeneration.replacePit(level, 10, 5, 2,4)");
+            writer.newLine();
+        } catch (IOException e) {
+            System.err.println("Error writing to file: " + e.getMessage());
+        }
+    }
+
     public byte[] step(boolean[] action) throws Exception {
         // for frame skip the agent will only send one action per 3 frames to make agent jump longer
         // because it needs to hold the jump button
-        for (int i = 0; i < this.frameSkip; i++) {
-            miniStep(action);
+        if(this.evaluation){
+            int a = 5;
         }
+
+        miniStepEvents.clear();
+
+        for (int i = 0; i < this.frameSkip; i++) {
+            var events = miniStep(action);
+            miniStepEvents.addAll(events);
+        }
+
+        checkSubGoalMet(world, objective);
         var nextWorldState = this.world.clone();
         var nextState = new MarioForwardModel(nextWorldState);
-        float reward = RewardSystem.getReward(this.world, nextState, this.lastCoinCount, this.objective);
+        float reward = RewardSystem.getReward(this.world, miniStepEvents, action);
+
         if(this.evaluation){
             this.evaluationReward += reward;
             this.evaluationTimer = this.world.currentTimer;
@@ -219,7 +277,7 @@ public class MarioGameTraining {
             this.episodeTimer = this.world.currentTimer;
         }
 
-        this.world.reward = reward;
+        this.world.reward += reward;
 
         this.world.episode = this.evaluation ? -1 : this.episode;
         Helper.printInfo(this.world, this.gameEvents,
@@ -228,7 +286,7 @@ public class MarioGameTraining {
         return State.stepResult(State.toByte(nextState), reward, this.world.gameStatus != GameStatus.RUNNING);
     }
 
-    public void miniStep(boolean[] action) throws Exception {
+    public ArrayList<MarioEvent> miniStep(boolean[] action) throws Exception {
         long currentTime = System.currentTimeMillis();
         this.world.update(action);
         this.gameEvents.addAll(this.world.lastFrameEvents);
@@ -238,14 +296,41 @@ public class MarioGameTraining {
 
         if(this.isNormalSpeed)
         {
-            if (this.getDelay(60) > 0) {
+            if (this.getDelay(fps) > 0) {
                 try {
-                    currentTime += this.getDelay(60);
+                    currentTime += this.getDelay(fps);
                     Thread.sleep(Math.max(0, currentTime - System.currentTimeMillis()));
                 } catch (InterruptedException e) {
 
                 }
             }
+        }
+        return this.world.lastFrameEvents;
+    }
+
+    private static void checkSubGoalMet(MarioWorld world, Objective objective) {
+        if(objective.coin){
+            if(world.level.totalCoins == world.collectCoin){
+                world.isSubGoalCoinMet = true;
+            }
+        }
+
+        if(objective.block){
+            if(world.level.totalBumpBlock == world.bumpBlock){
+                //world.win();
+                world.isSubGoalBlockMet = true;
+            }
+        }
+
+        if(objective.enemy){
+            if(world.level.totalEnemies == world.kill){
+                //world.win();
+                world.isSubGoalEnemyMet = true;
+            }
+        }
+
+        if(world.isSubGoalEnemyMet && world.isSubGoalBlockMet){
+            //world.win();
         }
     }
 

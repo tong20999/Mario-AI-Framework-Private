@@ -45,19 +45,20 @@ public class MarioRender extends JComponent implements FocusListener {
         world.render(og);
         double completePercentage = world.mario.x / (world.level.exitTileX * 16);
         //drawStringDropShadow(og, "Lives: " + world.lives, 0, 0, 7);
-        drawStringDropShadow(og, "TC: " + world.level.totalCoins, 0, 0, 7);
-        drawStringDropShadow(og, "Coins: " + world.coins, 11, 0, 7);
+        drawStringDropShadow(og, "Coins: " + world.level.totalCoins, 0, 0, 7);
+        //drawStringDropShadow(og, "Coins: " + world.coins, 11, 0, 7);
         drawStringDropShadow(og, "Time: " + (world.currentTimer == -1 ? "Inf" : (int) Math.ceil(world.currentTimer / 1000f)), 22, 0, 7);
-        drawStringDropShadow(og, "R: " + String.format("%.2f", world.reward), 0, 2, 7);
+        //drawStringDropShadow(og, "R: " + String.format("%.2f", world.reward), 0, 2, 7);
+        drawStringDropShadow(og, "Collect: " + world.collectCoin, 0, 2, 7);
 //        if(world.episode > 0){
 //            drawStringDropShadow(og, "Episode: " + world.episode, 14, 2, 7);
 //        }
 //        else {
 //            drawStringDropShadow(og, "Evaluation", 14, 2, 7);
 //        }
-        if(world.levelName != null){
-            drawStringDropShadow(og, world.levelName, 14, 2, 7);
-        }
+//        if(world.levelName != null){
+//            drawStringDropShadow(og, world.levelName, 14, 2, 7);
+//        }
 
         //drawStringDropShadow(og, "Complete: " + String.format("%.2f", completePercentage), 0, 4, 7);
         drawStringDropShadow(og, "Enemy: " + world.level.totalEnemies, 0, 4, 7);

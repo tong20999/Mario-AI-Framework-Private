@@ -645,4 +645,42 @@ public class MarioForwardModel {
     public int[][] getMarioSceneObservation(int detail) {
         return this.world.getSceneObservation(this.world.mario.x, this.world.mario.y, detail);
     }
+
+    public Boolean isSubGoalBlockMet() {
+        if(this.world.levelFileName.contains("block")){
+            return this.world.isSubGoalBlockMet;
+        }
+        return null;
+    }
+
+    public Boolean isSubGoalEnemyMet() {
+        if(this.world.levelFileName.contains("enemy")){
+            return this.world.isSubGoalEnemyMet;
+        }
+        return null;
+    }
+
+    public Boolean isSubGoalCoinMet() {
+        if(this.world.levelFileName.contains("coin")){
+            return this.world.isSubGoalCoinMet;
+        }
+        return null;
+    }
+
+    public int[] totalSubGoal() {
+        int[] totalSubGoal = new int[3];
+        if(this.world.levelFileName.contains("block")){
+            totalSubGoal[0] = 1;
+        }
+
+        if(this.world.levelFileName.contains("enemy")){
+            totalSubGoal[1] = 1;
+        }
+
+        if(this.world.levelFileName.contains("coin")){
+            totalSubGoal[2] = 1;
+        }
+
+        return totalSubGoal;
+    }
 }

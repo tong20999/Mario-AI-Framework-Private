@@ -15,16 +15,24 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 
 public class Helper {
-    public static Objective getObjective(String level) {
+    public static Objective setObjective(MarioWorld world, String level) {
+        Objective objective = new Objective();
         if (level.contains("block")){
-            return Objective.BLOCK;
+            world.isSubGoalBlockMet = false;
+            objective.block = true;
         }
 
         if (level.contains("enemy")){
-            return Objective.ENEMY;
+            world.isSubGoalEnemyMet = false;
+            objective.enemy = true;
         }
 
-        return Objective.FLAG;
+        if (level.contains("coin")){
+            world.isSubGoalCoinMet = false;
+            objective.coin = true;
+        }
+
+        return objective;
     }
 
     public static void printInfo(MarioWorld world, ArrayList<MarioEvent> gameEvents, boolean evaluation, EndInfo evaluationInfo, int evaluationTimer, float evaluationReward, EndInfo episodeInfo, int episode, int episodeTimer, float episodeReward) {

@@ -96,8 +96,8 @@ class EpisodeBuffer():
              mode:str = 'train',
              visual: bool = True):
         
-        workers = self.n_workers - 3
-        rehearsal_workers = 3
+        workers = self.n_workers - 4
+        rehearsal_workers = 4
 
         if mode == 'ewc' or len(rehearsal_level_tasks) == 0:
             rehearsal_workers = 0

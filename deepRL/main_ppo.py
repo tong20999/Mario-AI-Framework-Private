@@ -34,8 +34,8 @@ if __name__ == '__main__':
   policy_model_fn = lambda nS, nA: CNNActor(nS, nA, hidden_dims=(256,256))
   policy_model_max_grad_norm = float('inf')
   policy_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
-  policy_optimizer_lr = 0.0000025
-  policy_optimization_epochs = 10
+  policy_optimizer_lr = 0.00001
+  policy_optimization_epochs = 20
   policy_sample_ratio = 0.8
   policy_clip_range = 0.1
   policy_stopping_kl = 0.02
@@ -43,22 +43,22 @@ if __name__ == '__main__':
   value_model_fn = lambda nS: CNNCritic(nS, hidden_dims=(256,256))
   value_model_max_grad_norm = float('inf')
   value_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
-  value_optimizer_lr = 0.0000025
-  value_optimization_epochs = 10
+  value_optimizer_lr = 0.00001
+  value_optimization_epochs = 20
   value_sample_ratio = 0.8
   value_clip_range = float('inf')
-  value_stopping_mse = 1
+  value_stopping_mse = 25
 
   ewc_fn = lambda policy_model, ewc_lambda: EWC(policy_model, ewc_lambda)
-  ewc_lambda = 2000.0
+  ewc_lambda = 10000.0
 
   episode_buffer_fn = lambda sd, g, t, nw, me, mes: EpisodeBuffer(sd, g, t, nw, me, mes)
-  max_buffer_episodes = 16
-  max_buffer_episode_steps = 1000
+  max_buffer_episodes = 60
+  max_buffer_episode_steps = 10000
 
-  entropy_loss_weight = 0.04
+  entropy_loss_weight = 0.001
   tau = 0.97
-  n_workers = 12
+  n_workers = 24
 
   env_name, gamma, max_minutes, \
   max_episodes, goal_mean_100_reward = environment_settings.values()
@@ -87,14 +87,14 @@ if __name__ == '__main__':
               tau,
               n_workers)
   
-  level_pool = ["training/100-basic/102-basic-block/lvl-3.txt"]
+  level_pool = ["training/100-basic/104-basic-block-enemy-pit/lvl-1.txt"]
   # for i in range(1):
   #   level_pool.append("training/100-basic/102-basic-block/lvl-{}.txt".format(i + 1))
   
   rehearsal_level_tasks = [
-    # ["training/100-basic/100-basic-movement/lvl-1.txt"],
-    # ["training/100-basic/101-basic-jump/lvl-1.txt",
-    # "training/100-basic/101-basic-jump/lvl-2.txt",
+    # ["training/100-basic/101-basic-block/lvl-1.txt"],
+    # ["training/100-basic/102-basic-enemy/lvl-1.txt"],
+    ["training/100-basic/103-basic-block-enemy/lvl-1.txt",],
     # "training/100-basic/101-basic-jump/lvl-3.txt",
     # "training/100-basic/101-basic-jump/lvl-4.txt",
     # "training/100-basic/101-basic-jump/lvl-5.txt",
@@ -105,8 +105,40 @@ if __name__ == '__main__':
   ]
 
   evaluation_levels = [
-    "training/100-basic/102-basic-block/lvl-3.txt"
+    "training/100-basic/104-basic-block-enemy-pit/lvl-1.txt"
   ]
+
+  with open("C:/thesis_data/hyperparameters.txt", "a") as file:
+                    file.write("policy_optimizer_lr {}\n".format(policy_optimizer_lr))
+                    file.write("policy_optimization_epochs {}\n".format(policy_optimization_epochs))
+                    file.write("policy_sample_ratio {}\n".format(policy_sample_ratio))
+                    file.write("policy_clip_range {}\n".format(policy_clip_range))
+                    file.write("policy_stopping_kl {}\n".format(policy_stopping_kl))
+
+                    file.write("value_optimizer_lr {}\n".format(value_optimizer_lr))
+                    file.write("value_optimization_epochs {}\n".format(value_optimization_epochs))
+                    file.write("value_clip_range {}\n".format(value_clip_range))
+                    file.write("value_optimizer_lr {}\n".format(value_optimizer_lr))
+                    file.write("value_stopping_mse {}\n".format(value_stopping_mse))
+
+                    file.write("ewc_lambda {}\n".format(ewc_lambda))
+
+                    file.write("max_buffer_episodes {}\n".format(max_buffer_episodes))
+                    file.write("max_buffer_episode_steps {}\n".format(max_buffer_episode_steps))
+
+                    file.write("tau {}\n".format(tau))
+                    file.write("n_workers {}\n".format(n_workers))
+                    file.write("levels\n")
+                    for level in level_pool:
+                          file.write("{}\n".format(level))
+                    file.write("evaluation_levels\n")
+                    for evaluation_level in evaluation_levels:
+                          file.write("{}\n".format(evaluation_level))
+                    file.write("rehearsal_level_tasks\n")
+                    for rehearsal_level_task in rehearsal_level_tasks:
+                          file.write("task\n")
+                          for rehearsal_level in rehearsal_level_task:
+                               file.write("{}\n".format(rehearsal_level))
 
   agent.train(make_envs_fn,
               make_env_fn,
@@ -118,5 +150,8 @@ if __name__ == '__main__':
               rehearsal_level_tasks,
               evaluation_levels)
 
+
+
+                    
   
   #agent.save_ewc(level_pool)
