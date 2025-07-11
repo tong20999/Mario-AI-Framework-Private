@@ -1,5 +1,6 @@
 import random
 import matplotlib
+matplotlib.use('TkAgg')
 from scipy import stats
 from typing import Callable
 import pandas as pd
@@ -22,6 +23,8 @@ from ppo.ewc import EWC
 LEAVE_PRINT_EVERY_N_SECS = 300
 ERASE_LINE = '\x1b[2K'
 EPS = 1e-6
+
+fig, ax = plt.subplots()
 
 class PPO():
     def __init__(self, 
@@ -80,7 +83,6 @@ class PPO():
         self.entropy_loss_weight = entropy_loss_weight
         self.tau = tau
         self.n_workers = n_workers
-        self.ewc_loss = 0
 
     def optimize_model(self):
         states, actions, returns, gaes, logpas = self.episode_buffer.get_stacks()
@@ -111,9 +113,6 @@ class PPO():
 
             self.policy_optimizer.zero_grad()
             total_loss = policy_loss + entropy_loss + ewc_penalty
-            if ewc_penalty > self.ewc_loss:
-                self.ewc_loss = ewc_penalty
-                print(self.ewc_loss)
             total_loss.backward()
             torch.nn.utils.clip_grad_norm_(self.policy_model.parameters(), 
                                            self.policy_model_max_grad_norm)
@@ -151,51 +150,35 @@ class PPO():
                 if mse.item() > self.value_stopping_mse:
                     break
 
-    def plot(self, eva100_reward, save=False, early_stop_config=None):
-        fig = plt.gcf()
-        display.clear_output(wait=True)
-        display.display(fig)
-        plt.clf()
+    def plot(self, eva100_reward, save = False):
+        ax.clear()
         rewards_series = pd.Series(eva100_reward)
         moving_avg = rewards_series.rolling(window=50, min_periods=10).mean()
-        plt.title('Result')
-        plt.xlabel('Episode')
-        plt.ylabel('Reward')
-        plt.plot(eva100_reward, alpha=0.5, label='Episode Reward (Mean-100)')
-        plt.plot(moving_avg, color='red', linewidth=2, label='Smoothed Average (50ep window)')
-        last_ma_value = moving_avg.iloc[-1]
-        plt.text(len(eva100_reward)-1, last_ma_value, f'{last_ma_value:.2f}')
-        plt.legend()
+
+        ax.set_title('Result')
+        ax.set_xlabel('Episode')
+        ax.set_ylabel('Reward')
 
 
-        if early_stop_config and early_stop_config.get('enabled', False):
-            min_episodes = early_stop_config.get('min_episodes', 200)
-            trend_window = early_stop_config.get('trend_window', 50) 
-            slope_threshold = early_stop_config.get('slope_threshold', 0.01) 
+        ax.plot(eva100_reward, alpha=0.5, label='Episode Reward (Mean-100)')
 
-            if len(eva100_reward) > min_episodes and len(moving_avg) > trend_window:
-                recent_trend_data = moving_avg.iloc[-trend_window:]
-                x_axis = np.arange(len(recent_trend_data))
-                slope, intercept, r_value, p_value, std_err = stats.linregress(x_axis, recent_trend_data)
+        ax.plot(moving_avg, color='red', linewidth=2, label='Smoothed Average (50ep window)')
 
-                if slope < slope_threshold:
-                    print(f"\n\n*** EARLY STOPPING CRITERION MET ***")
-                    print(f"Performance trend slope ({slope:.4f}) is below the threshold ({slope_threshold:.4f}).")
-                    print("Raising KeyboardInterrupt to gracefully end training.")
-                    plt.savefig('C:/thesis_data/result_plot_EARLY_STOP.png')
-                    raise KeyboardInterrupt
+        if not moving_avg.empty:
+                last_ma_value = moving_avg.iloc[-1]
+                ax.text(len(eva100_reward)-1, last_ma_value, f'{last_ma_value:.2f}')
+
+        ax.legend()
+
+        if last_ma_value > 0.99:
+            raise KeyboardInterrupt
 
         # --- Saving logic (unchanged) ---
         if save:
             plt.savefig('C:/thesis_data/result_plot_episode_{}.png'.format(len(eva100_reward)))
 
-        plt.show(block=False)
         plt.pause(1)
-        try:
-            manager = fig.canvas.manager
-            manager.window.lower()
-        except Exception:
-            pass
+
 
     def find_model_file_path(self, start_with):
         current_dir = os.getcwd()
@@ -290,8 +273,7 @@ class PPO():
                 evaluation_score, _ = self.evaluate(self.policy_model, env, random.choice(evaluation_levels))
 
                 self.eva100.append(np.mean(self.evaluation_scores[-100:]))
-                if len(self.eva100) % 5 == 0:
-                    self.plot(self.eva100, early_stop_config=stop_config)
+                self.plot(self.eva100)
                 
                 self.evaluation_scores.extend([evaluation_score,] * n_ep_batch)
                 # for e in range(episode, episode + n_ep_batch):
@@ -370,7 +352,7 @@ class PPO():
     def evaluate(self, eval_model:CNNActor, eval_env, level:str, n_episodes=1, greedy=True):
         rs = []
         for _ in range(n_episodes):
-            info = {"episode" : 0, "evaluation" : True, "visual":True, "level" : level}
+            info = {"episode" : 0, "evaluation" : True, "visual":False, "level" : level}
             s, _  = eval_env.reset(options=info)
             d = False
             rs.append(0)
@@ -433,9 +415,5 @@ class PPO():
         torch.save(ewc_state, save_path)
 
     def play(self, env):
-        ls = level_pool = [ 
-            "training/100-basic/103-basic-block-enemy/lvl-eva-1.txt",
-            "training/100-basic/103-basic-block-enemy/lvl-eva-2.txt"
-        ]
-        for i in ls:
-            final_eval_score, score_std = self.evaluate(self.policy_model, env, i, n_episodes=1)
+        for i in range(100):
+            final_eval_score, score_std = self.evaluate(self.policy_model, env, "training/100-basic/105-basic-block-enemy-pit-pipe/lvl-1.txt", n_episodes=1)

@@ -34,7 +34,7 @@ if __name__ == '__main__':
   policy_model_fn = lambda nS, nA: CNNActor(nS, nA, hidden_dims=(256,256))
   policy_model_max_grad_norm = float('inf')
   policy_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
-  policy_optimizer_lr = 0.00001
+  policy_optimizer_lr = 0.000005
   policy_optimization_epochs = 20
   policy_sample_ratio = 0.8
   policy_clip_range = 0.1
@@ -43,7 +43,7 @@ if __name__ == '__main__':
   value_model_fn = lambda nS: CNNCritic(nS, hidden_dims=(256,256))
   value_model_max_grad_norm = float('inf')
   value_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
-  value_optimizer_lr = 0.00001
+  value_optimizer_lr = 0.000005
   value_optimization_epochs = 20
   value_sample_ratio = 0.8
   value_clip_range = float('inf')
@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
   entropy_loss_weight = 0.001
   tau = 0.97
-  n_workers = 24
+  n_workers = 16
 
   env_name, gamma, max_minutes, \
   max_episodes, goal_mean_100_reward = environment_settings.values()
@@ -87,14 +87,14 @@ if __name__ == '__main__':
               tau,
               n_workers)
   
-  level_pool = ["training/100-basic/104-basic-block-enemy-pit/lvl-1.txt"]
+  level_pool = ["block2-enemy2-pit1-pipe1"]
   # for i in range(1):
   #   level_pool.append("training/100-basic/102-basic-block/lvl-{}.txt".format(i + 1))
   
   rehearsal_level_tasks = [
     # ["training/100-basic/101-basic-block/lvl-1.txt"],
     # ["training/100-basic/102-basic-enemy/lvl-1.txt"],
-    ["training/100-basic/103-basic-block-enemy/lvl-1.txt",],
+    # ["training/100-basic/104-basic-block-enemy-pit/lvl-1.txt",],
     # "training/100-basic/101-basic-jump/lvl-3.txt",
     # "training/100-basic/101-basic-jump/lvl-4.txt",
     # "training/100-basic/101-basic-jump/lvl-5.txt",
@@ -105,7 +105,7 @@ if __name__ == '__main__':
   ]
 
   evaluation_levels = [
-    "training/100-basic/104-basic-block-enemy-pit/lvl-1.txt"
+    "block2-enemy2-pit1-pipe1"
   ]
 
   with open("C:/thesis_data/hyperparameters.txt", "a") as file:
