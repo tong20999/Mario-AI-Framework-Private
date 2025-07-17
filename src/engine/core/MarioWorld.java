@@ -2,10 +2,7 @@ package engine.core;
 
 import java.awt.Graphics;
 import java.awt.GraphicsConfiguration;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import engine.effects.*;
 import engine.graphics.MarioBackground;
@@ -45,7 +42,7 @@ public class MarioWorld {
 
     private MarioBackground[] backgrounds = new MarioBackground[2];
 
-    public Set<String> listKill = new HashSet<>();
+    private Set<MarioSprite> listKill = new HashSet<>();
 
     public MarioWorld(MarioEvent[] killEvents) {
         this.pauseTimer = 0;
@@ -144,6 +141,7 @@ public class MarioWorld {
         world.levelName = this.levelName;
         world.levelFileName = this.levelFileName;
         world.evaluation = this.evaluation;
+        world.listKill = this.listKill;
         return world;
     }
 
@@ -184,6 +182,12 @@ public class MarioWorld {
         sprite.world = this;
         sprite.added();
         sprite.update();
+    }
+
+    public void kill(MarioSprite sprite, EventType killEvent){
+        this.listKill.add(sprite);
+        this.kill++;
+        this.addEvent(killEvent, sprite.type.getValue(), sprite.initialCode);
     }
 
     public void removeSprite(MarioSprite sprite) {
@@ -381,11 +385,7 @@ public class MarioWorld {
                 }
                 this.removeSprite(sprite);
                 if (this.isEnemy(sprite) && sprite.y > MarioGame.height + 32) {
-                    if(!this.listKill.contains(sprite.initialCode)){
-                        this.listKill.add(sprite.initialCode);
-                        this.kill++;
-                        this.addEvent(EventType.FALL_KILL, sprite.type.getValue());
-                    }
+                    this.kill(sprite, EventType.FALL_KILL);
                 }
                 continue;
             }
@@ -417,7 +417,9 @@ public class MarioWorld {
                         if (this.level.getLastSpawnTick(x, y) != this.currentTick - 1) {
                             MarioSprite sprite = type.spawnSprite(this.visuals, x, y, dir);
                             sprite.initialCode = spriteCode;
-                            this.addSprite(sprite);
+                            if(!this.listKill.contains(sprite)){
+                                this.addSprite(sprite);
+                            }
                         }
                     }
                     this.level.setLastSpawnTick(x, y, this.currentTick);
