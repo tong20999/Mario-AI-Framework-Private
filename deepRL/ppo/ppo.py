@@ -11,6 +11,7 @@ import os
 import glob
 from itertools import cycle, count
 import matplotlib.pyplot as plt
+import traceback
 
 from IPython import display
 from torch.utils.data import TensorDataset
@@ -72,6 +73,8 @@ class PPO():
         self.value_sample_ratio = value_sample_ratio
         self.value_clip_range = value_clip_range
         self.value_stopping_mse = value_stopping_mse
+        
+        self.evaluatationCount = 0
 
         self.ewc_fn = ewc_fn
         self.ewc_lambda = ewc_lambda
@@ -159,19 +162,15 @@ class PPO():
         ax.set_xlabel('Episode')
         ax.set_ylabel('Reward')
 
-
         ax.plot(eva100_reward, alpha=0.5, label='Episode Reward (Mean-100)')
 
         ax.plot(moving_avg, color='red', linewidth=2, label='Smoothed Average (50ep window)')
 
-        if not moving_avg.empty:
-                last_ma_value = moving_avg.iloc[-1]
-                ax.text(len(eva100_reward)-1, last_ma_value, f'{last_ma_value:.2f}')
+        if not moving_avg.empty and pd.notna(moving_avg.iloc[-1]):
+            last_ma_value = moving_avg.iloc[-1]
+            plt.text(len(eva100_reward)-1, last_ma_value, f'{last_ma_value:.2f}')
 
         ax.legend()
-
-        if last_ma_value > 0.99:
-            raise KeyboardInterrupt
 
         # --- Saving logic (unchanged) ---
         if save:
@@ -242,15 +241,6 @@ class PPO():
         training_time = 0
         episode = 0
         self.eva100 = []
-
-        stop_config = {
-            'enabled': False,
-            'min_episodes': 250,
-            'trend_window': 20,
-            'slope_threshold': 0.01
-        }
-
-        # self.play(env) 
        
         try:
             while True:
@@ -274,6 +264,10 @@ class PPO():
 
                 self.eva100.append(np.mean(self.evaluation_scores[-100:]))
                 self.plot(self.eva100)
+                if len(self.eva100) % 1000 == 0:
+                    self.plot(self.eva100, True)
+                    self.save_checkpoint(len(self.eva100), self.policy_model, 'policy')
+                    self.save_checkpoint(len(self.eva100), self.value_model, 'value')
                 
                 self.evaluation_scores.extend([evaluation_score,] * n_ep_batch)
                 # for e in range(episode, episode + n_ep_batch):
@@ -311,9 +305,10 @@ class PPO():
                 reached_max_minutes = wallclock_elapsed >= max_minutes * 60            
                 reached_max_episodes = episode + self.max_buffer_episodes >= max_episodes
                 reached_goal_mean_reward = mean_100_eval_score >= goal_mean_100_reward
-                training_is_over = reached_max_minutes or \
-                                reached_max_episodes or \
-                                reached_goal_mean_reward
+                # training_is_over = reached_max_minutes or \
+                #                 reached_max_episodes or \
+                #                 reached_goal_mean_reward
+                training_is_over = False
                 elapsed_str = time.strftime("%H:%M:%S", time.gmtime(time.time() - training_start))
                 debug_message = 'el {}, ep {:04}, ts {:07}, '
                 debug_message += 'ar 10 {:05.1f}\u00B1{:05.1f}, '
@@ -334,8 +329,16 @@ class PPO():
                     if reached_goal_mean_reward: print(u'--> reached_goal_mean_reward \u2713')
                     break
         
-        except Exception or KeyboardInterrupt:
-            print("!Ctrl+C detected! Saving progress before exiting...")
+        except (Exception, KeyboardInterrupt) as e:
+            print("!An error occurred or Ctrl+C was detected! Saving progress before exiting...")
+            
+            # Print the exception's type and message
+            print(f"Error Type: {type(e).__name__}")
+            print(f"Error Message: {e}")
+            
+            # For a full traceback (the entire error log) 🐛
+            print("\n--- Full Traceback ---")
+            traceback.print_exc()
         finally:
             if 'env' in locals():
                 env.close()
@@ -343,16 +346,16 @@ class PPO():
             if 'envs' in locals():
                 envs.close()
                 del envs
-            self.save_checkpoint(len(self.eva100), self.policy_model, 'policy', True)
-            self.save_checkpoint(len(self.eva100), self.value_model, 'value', True)
+            self.save_checkpoint(len(self.eva100), self.policy_model, 'policy')
+            self.save_checkpoint(len(self.eva100), self.value_model, 'value')
             self.plot(self.eva100, True)
             self.save_ewc(level_pool, rehearsal_level_tasks)
 
-
-    def evaluate(self, eval_model:CNNActor, eval_env, level:str, n_episodes=1, greedy=True):
+    def evaluate(self, eval_model:CNNActor, eval_env, level:str, n_episodes=1, greedy=True, visual=True):
         rs = []
         for _ in range(n_episodes):
-            info = {"episode" : 0, "evaluation" : True, "visual":False, "level" : level}
+            info = {"episode" : self.evaluatationCount, "evaluation" : True, "visual":visual, "level" : level}
+            self.evaluatationCount += 1
             s, _  = eval_env.reset(options=info)
             d = False
             rs.append(0)
@@ -398,8 +401,7 @@ class PPO():
         # Register the task dataset with EWC
         self.ewc.register_task(dataset)
 
-    def save_checkpoint(self, evaluation_idx, model, suffix, manual = False):
-        if evaluation_idx > 30 or manual:
+    def save_checkpoint(self, evaluation_idx, model, suffix):
             torch.save(model.state_dict(), 
                             os.path.join('C:/thesis_data', 'model.{}.{}.tar'.format(suffix, evaluation_idx)))
             
@@ -414,6 +416,12 @@ class PPO():
         save_path = os.path.join('C:/thesis_data', 'model.ewc_state.tar')
         torch.save(ewc_state, save_path)
 
-    def play(self, env):
-        for i in range(100):
-            final_eval_score, score_std = self.evaluate(self.policy_model, env, "training/100-basic/105-basic-block-enemy-pit-pipe/lvl-1.txt", n_episodes=1)
+    def play(self, make_env_fn, policy_model_fn, level):
+            env = make_env_fn()
+            policy_model = policy_model_fn(env.observation_space, env.action_space.n)
+            policy_model_state = self.find_model_file_path('model.policy')
+            if policy_model_state is not None:
+                policy_model.load_state_dict(torch.load(policy_model_state, weights_only=True))
+                policy_model.eval()
+                
+            final_eval_score, score_std = self.evaluate(policy_model, env, level, n_episodes=100, visual=True)

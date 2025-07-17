@@ -15,25 +15,6 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 
 public class Helper {
-    public static Objective setObjective(MarioWorld world, String level) {
-        Objective objective = new Objective();
-        if (level.contains("block")){
-            world.isSubGoalBlockMet = false;
-            objective.block = true;
-        }
-
-        if (level.contains("enemy")){
-            world.isSubGoalEnemyMet = false;
-            objective.enemy = true;
-        }
-
-        if (level.contains("coin")){
-            world.isSubGoalCoinMet = false;
-            objective.coin = true;
-        }
-
-        return objective;
-    }
 
     public static void printInfo(MarioWorld world, ArrayList<MarioEvent> gameEvents, boolean evaluation, EndInfo evaluationInfo, int evaluationTimer, float evaluationReward, EndInfo episodeInfo, int episode, int episodeTimer, float episodeReward) {
         if(world.gameStatus != GameStatus.RUNNING){
@@ -114,7 +95,7 @@ public class Helper {
         }
     }
 
-    private static String getFileFromLevel(String file){
+    public static String getFileFromLevel(String file){
         String content = "";
         try {
             content = new String(Files.readAllBytes(Paths.get(file)));

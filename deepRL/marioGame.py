@@ -36,7 +36,7 @@ class MarioGame(SocketEnv):
             # CNN part: 1 channel, 16x16 grid. Values are binary (0 or 1).
             'grid': gym.spaces.Box(low=0, high=1, shape=(1, 16, 16), dtype=np.uint8),
             # Vector part: 15 features. Values are binary.
-            'vector': gym.spaces.Box(low=0, high=18, shape=(18,), dtype=np.uint8) # Adjust high based on actual max values
+            'vector': gym.spaces.Box(low=0, high=25, shape=(25,), dtype=np.uint8) # Adjust high based on actual max values
         })
         
         # The action space should be Discrete for FCCA's Categorical output

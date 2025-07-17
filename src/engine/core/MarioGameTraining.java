@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.awt.*;
+import java.util.Random;
 
 import javax.swing.JFrame;
 
@@ -144,40 +145,50 @@ public class MarioGameTraining {
         this.window.setVisible(this.visual);
     }
 
+    RewardSystem rewardSystem;
+
     public byte[] reset(Info info) throws Exception {
         this.visual = info.isVisual();
         if(this.visual){
             setupWindow(info.getEpisode());
         }
-        if(!info.isEvaluation()){
-            this.episode = info.getEpisode();
-        }
-        if(this.episode == 0){
-            RewardSystem.printRewardsInformation();
-        }
+        this.episode = info.getEpisode();
 
         var levelFileName = info.getLevel();
         var levelName = levelFileName.substring(levelFileName.lastIndexOf("/") + 1);
 
-
-
         this.gameEvents = new ArrayList<>();
         this.evaluation = info.isEvaluation();
         this.world = new MarioWorld(this.killEvents);
+
+        if(this.evaluation){
+            this.world.evaluation = true;
+        }
         this.world.levelFileName = levelFileName;
         this.world.levelName = levelName;
         this.world.visuals = visual;
         // timer by level width
-        this.timer = ((new MarioLevel(Helper.getLevel(levelFileName), false).exitTileX)/2) + 10;
-        this.timer = isNormalSpeed ? 30 : 15;
+        //this.timer = ((new MarioLevel(Helper.getLevel(levelFileName), false).exitTileX)/2) + 10;
+        this.timer = 30;
         this.lastMilestone = 0;
         this.lastCoinCount = 0;
-        String level = Helper.getLevel(levelFileName);
-        level = modLevel(levelFileName,  level);
+        ProceduralContentGenerationLevel pcg = null;
+        String level;
+        if(!levelFileName.contains(".txt")){
+            pcg = modLevel(levelFileName);
+            pcg.generate(true);
+            level = pcg.getContent();
+        } else {
+            level = Helper.getFileFromLevel(levelFileName);
+        }
         this.world.initializeLevel(level, 1000 * this.timer);
-        this.objective = Helper.setObjective(this.world, levelFileName);
         if (visual) {
             this.world.initializeVisuals(this.render.getGraphicsConfiguration());
+        }
+        rewardSystem = new RewardSystem(this.world.level, pcg);
+
+        if(this.episode == 0){
+            rewardSystem.printInformation();
         }
         this.world.mario.isLarge = false;
         this.world.mario.isFire = false;
@@ -200,74 +211,45 @@ public class MarioGameTraining {
         return State.toByte(new MarioForwardModel(this.world.clone()));
     }
 
-    private String modLevel(String levelFileName, String level) {
-        if(levelFileName.contains("training/100-basic/104-basic-block-enemy-pit/")){
-            printPCGInfo();
-            level = ProceduralContentGeneration.replacePit(level, 10, 5, 2,4);
-            level = ProceduralContentGeneration.replaceSingleBlock(level, 1, 2);
-            return ProceduralContentGeneration.replaceSingleEnemy(level, 8, 2);
+    private ProceduralContentGenerationLevel modLevel(String levelFileName) {
+
+        var details = levelFileName.split("-");
+        var blockCount = Integer.parseInt(details[0].substring(details[0].length() - 1));
+        var enemyCount = Integer.parseInt(details[1].substring(details[1].length() - 1));
+        var pitCount = Integer.parseInt(details[2].substring(details[2].length() - 1));
+        var pipeCount = Integer.parseInt(details[3].substring(details[3].length() - 1));
+        ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel.randomWidth(15,15);
+        if(pitCount > 0){
+            pcgLevel.addPit(4,2, 2, 5, pitCount);
         }
 
-
-        if(levelFileName.contains("training/100-basic/101-basic-block/")){
-
-            return ProceduralContentGeneration.replaceSingleBlock(level, 1, 2);
+        if(pipeCount > 0){
+            pcgLevel.addPipe(4, 2, pipeCount);
         }
 
-        if(levelFileName.contains("training/100-basic/102-basic-enemy/")){
-            return ProceduralContentGeneration.replaceSingleEnemy(level, 10, 10);
+        if(enemyCount > 0){
+            //pcgLevel.addEnemyRandomBetween(1,10, 4,2, EnumEnemy.GOOMBA);
+            pcgLevel.addEnemy(1,2, enemyCount, EnumEnemy.GOOMBA);
         }
 
-        if(levelFileName.contains("training/100-basic/103-basic-block-enemy/")){
-
-            level = ProceduralContentGeneration.replaceSingleBlock(level, 1, 2);
-            return ProceduralContentGeneration.replaceSingleEnemy(level, 8, 2);
+        if(blockCount > 0){
+            //pcgLevel.addBlockRandomBetween(1,10, 2,2);
+            pcgLevel.addBlock(1, 2, blockCount);
         }
 
-        if(levelFileName.contains("training/100-basic/103-basic-jump/")){
-            return ProceduralContentGeneration.replacePit(level, 10, 10, 2,4);
-        }
-
-        if(levelFileName.contains("training/100-basic/104-basic-pipe/")){
-            return ProceduralContentGeneration.replacePipe(level, 10, 10);
-        }
-
-        throw new IllegalArgumentException("modLevel " + levelFileName);
-    }
-
-    private void printPCGInfo() {
-        File file = new File("C:\\thesis_data\\pcg.txt");
-        if(file.exists()){
-            return;
-        }
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            writer.write("ProceduralContentGeneration.replaceSingleBlock(level, 1, 2)");
-            writer.write("ProceduralContentGeneration.replaceSingleEnemy(level, 8, 2)");
-            writer.write("ProceduralContentGeneration.replacePit(level, 10, 5, 2,4)");
-            writer.newLine();
-        } catch (IOException e) {
-            System.err.println("Error writing to file: " + e.getMessage());
-        }
+        return pcgLevel;
     }
 
     public byte[] step(boolean[] action) throws Exception {
-        // for frame skip the agent will only send one action per 3 frames to make agent jump longer
-        // because it needs to hold the jump button
-        if(this.evaluation){
-            int a = 5;
-        }
-
         miniStepEvents.clear();
 
         for (int i = 0; i < this.frameSkip; i++) {
             var events = miniStep(action);
             miniStepEvents.addAll(events);
         }
-
-        checkSubGoalMet(world, objective);
         var nextWorldState = this.world.clone();
         var nextState = new MarioForwardModel(nextWorldState);
-        float reward = RewardSystem.getReward(this.world, miniStepEvents, action);
+        float reward = rewardSystem.getReward(this.world, miniStepEvents, action, this.evaluation, this.episode);
 
         if(this.evaluation){
             this.evaluationReward += reward;
@@ -306,32 +288,6 @@ public class MarioGameTraining {
             }
         }
         return this.world.lastFrameEvents;
-    }
-
-    private static void checkSubGoalMet(MarioWorld world, Objective objective) {
-        if(objective.coin){
-            if(world.level.totalCoins == world.collectCoin){
-                world.isSubGoalCoinMet = true;
-            }
-        }
-
-        if(objective.block){
-            if(world.level.totalBumpBlock == world.bumpBlock){
-                //world.win();
-                world.isSubGoalBlockMet = true;
-            }
-        }
-
-        if(objective.enemy){
-            if(world.level.totalEnemies == world.kill){
-                //world.win();
-                world.isSubGoalEnemyMet = true;
-            }
-        }
-
-        if(world.isSubGoalEnemyMet && world.isSubGoalBlockMet){
-            //world.win();
-        }
     }
 
     private int getDelay(int fps) {

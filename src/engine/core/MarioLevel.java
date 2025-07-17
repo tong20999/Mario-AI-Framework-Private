@@ -15,7 +15,7 @@ public class MarioLevel {
     public int tileWidth = MarioGame.width / 16;
     public int height = MarioGame.height;
     public int tileHeight = MarioGame.height / 16;
-    public int totalCoins, totalBumpBlock, totalEnemies = 0;
+    public int totalCoins = 0, totalBumpBlock = 0, totalEnemies = 0, totalPowerUp = 0;
     public int marioTileX, marioTileY, exitTileX, exitTileY;
 
     private int[][] levelTiles;
@@ -149,6 +149,7 @@ public class MarioLevel {
                         //mushroom question block
                         this.levelTiles[x][y] = 8;
                         this.totalBumpBlock += 1;
+                        this.totalPowerUp += 1;
                         break;
                     case 'Q':
                     case '!':
@@ -173,7 +174,7 @@ public class MarioLevel {
                     case 'S':
                         //normal block
                         this.levelTiles[x][y] = 6;
-                        this.totalBumpBlock += 1;
+                        //this.totalBumpBlock += 1;
                         break;
                     case 'C':
                         //coin block
@@ -185,11 +186,13 @@ public class MarioLevel {
                         //mushroom block
                         this.levelTiles[x][y] = 50;
                         this.totalBumpBlock += 1;
+                        this.totalPowerUp += 1;
                         break;
                     case 'L':
                         //1up block
                         this.levelTiles[x][y] = 51;
                         this.totalBumpBlock += 1;
+                        this.totalPowerUp += 1;
                         break;
                     case 'o':
                         //coin
@@ -304,6 +307,10 @@ public class MarioLevel {
             }
         }
         level.spriteTemplates = this.spriteTemplates;
+        level.totalEnemies = this.totalEnemies;
+        level.totalCoins = this.totalCoins;
+        level.totalBumpBlock = this.totalBumpBlock;
+        level.totalPowerUp = this.totalPowerUp;
         return level;
     }
 

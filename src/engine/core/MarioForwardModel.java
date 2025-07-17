@@ -647,40 +647,56 @@ public class MarioForwardModel {
     }
 
     public Boolean isSubGoalBlockMet() {
-        if(this.world.levelFileName.contains("block")){
-            return this.world.isSubGoalBlockMet;
-        }
-        return null;
+        return this.world.isSubGoalBlockMet();
     }
 
     public Boolean isSubGoalEnemyMet() {
-        if(this.world.levelFileName.contains("enemy")){
-            return this.world.isSubGoalEnemyMet;
-        }
-        return null;
+        return this.world.isSubGoalEnemyMet();
     }
 
     public Boolean isSubGoalCoinMet() {
-        if(this.world.levelFileName.contains("coin")){
-            return this.world.isSubGoalCoinMet;
-        }
-        return null;
+        return this.world.isSubGoalCoinMet();
     }
 
-    public int[] totalSubGoal() {
-        int[] totalSubGoal = new int[3];
-        if(this.world.levelFileName.contains("block")){
-            totalSubGoal[0] = 1;
+    public int totalSubGoal() {
+        int count = 0;
+        if(isSubGoalBlockMet() != null){
+            count++;
         }
-
-        if(this.world.levelFileName.contains("enemy")){
-            totalSubGoal[1] = 1;
+        if(isSubGoalEnemyMet() != null){
+            count++;
         }
-
-        if(this.world.levelFileName.contains("coin")){
-            totalSubGoal[2] = 1;
+        if(isSubGoalCoinMet() != null){
+            count++;
         }
+        return count;
+    }
 
-        return totalSubGoal;
+    public int getTotalEnemy() {
+        return this.world.level.totalEnemies;
+    }
+
+    public int getTotalCoin() {
+        return this.world.level.totalCoins;
+    }
+
+    public int getTotalBlock() {
+        return this.world.level.totalBumpBlock;
+    }
+
+    public int getTotalPowerUp() {
+        return this.world.level.totalPowerUp;
+    }
+
+    public int getEnemyRemain() {
+        return getTotalEnemy() - this.world.kill;
+    }
+
+    public int getCoinRemain() {
+        return getTotalCoin() - this.world.collectCoin;
+    }
+
+    public int getBlockRemain() {
+        return getTotalBlock() - this.world.bumpBlock;
     }
 }

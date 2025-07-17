@@ -97,8 +97,8 @@ public class Enemy extends MarioSprite {
                             this.world.listKill.add(this.initialCode);
                             this.world.kill++;
                             this.world.addEvent(EventType.STOMP_KILL, this.type.getValue(), this.initialCode);
-                            this.world.removeSprite(this);
                         }
+                        this.world.removeSprite(this);
                     }
                 } else {
                     this.world.addEvent(EventType.HURT, this.type.getValue());
@@ -289,7 +289,6 @@ public class Enemy extends MarioSprite {
                     this.world.listKill.add(this.initialCode);
                     this.world.kill++;
                     this.world.addEvent(EventType.SHELL_KILL, this.type.getValue(), this.initialCode);
-                    this.world.removeSprite(this);
                 }
                 if (this.graphics != null) {
                     if (this.type == SpriteType.GREEN_KOOPA || this.type == SpriteType.GREEN_KOOPA_WINGED) {
@@ -329,7 +328,6 @@ public class Enemy extends MarioSprite {
                     this.world.listKill.add(this.initialCode);
                     this.world.kill++;
                     this.world.addEvent(EventType.FIRE_KILL, this.type.getValue(), this.initialCode);
-                    this.world.removeSprite(this);
                 }
                 if (this.graphics != null) {
                     if (this.type == SpriteType.GREEN_KOOPA || this.type == SpriteType.GREEN_KOOPA_WINGED) {

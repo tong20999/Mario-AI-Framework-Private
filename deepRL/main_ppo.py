@@ -1,3 +1,4 @@
+import os
 from dictgridstack import DictGridStack
 from marioGame import MarioGame
 from ppo.cnn import CNNActor, CNNCritic
@@ -34,8 +35,8 @@ if __name__ == '__main__':
   policy_model_fn = lambda nS, nA: CNNActor(nS, nA, hidden_dims=(256,256))
   policy_model_max_grad_norm = float('inf')
   policy_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
-  policy_optimizer_lr = 0.000005
-  policy_optimization_epochs = 20
+  policy_optimizer_lr = 0.00001
+  policy_optimization_epochs = 3
   policy_sample_ratio = 0.8
   policy_clip_range = 0.1
   policy_stopping_kl = 0.02
@@ -43,8 +44,8 @@ if __name__ == '__main__':
   value_model_fn = lambda nS: CNNCritic(nS, hidden_dims=(256,256))
   value_model_max_grad_norm = float('inf')
   value_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
-  value_optimizer_lr = 0.000005
-  value_optimization_epochs = 20
+  value_optimizer_lr = 0.00001
+  value_optimization_epochs = 3
   value_sample_ratio = 0.8
   value_clip_range = float('inf')
   value_stopping_mse = 25
@@ -53,12 +54,12 @@ if __name__ == '__main__':
   ewc_lambda = 10000.0
 
   episode_buffer_fn = lambda sd, g, t, nw, me, mes: EpisodeBuffer(sd, g, t, nw, me, mes)
-  max_buffer_episodes = 60
+  max_buffer_episodes = 48
   max_buffer_episode_steps = 10000
 
   entropy_loss_weight = 0.001
   tau = 0.97
-  n_workers = 16
+  n_workers = 8
 
   env_name, gamma, max_minutes, \
   max_episodes, goal_mean_100_reward = environment_settings.values()
@@ -87,26 +88,23 @@ if __name__ == '__main__':
               tau,
               n_workers)
   
-  level_pool = ["block2-enemy2-pit1-pipe1"]
-  # for i in range(1):
-  #   level_pool.append("training/100-basic/102-basic-block/lvl-{}.txt".format(i + 1))
+  lose_path = 'C:/thesis_data/zpcg/LOSE'
+  timeout_path = 'C:/thesis_data/zpcg/TIME_OUT'
+  lose_abs_paths = [os.path.join(lose_path, f) for f in os.listdir(lose_path)]
+  timeout_abs_paths = [os.path.join(timeout_path, f) for f in os.listdir(timeout_path)]
+  all_abs_paths = lose_abs_paths + timeout_abs_paths
+
+
+  level_pool = all_abs_paths
+  # level_pool = ["block1-enemy1-pit1-pipe1"]
   
   rehearsal_level_tasks = [
-    # ["training/100-basic/101-basic-block/lvl-1.txt"],
-    # ["training/100-basic/102-basic-enemy/lvl-1.txt"],
-    # ["training/100-basic/104-basic-block-enemy-pit/lvl-1.txt",],
-    # "training/100-basic/101-basic-jump/lvl-3.txt",
-    # "training/100-basic/101-basic-jump/lvl-4.txt",
-    # "training/100-basic/101-basic-jump/lvl-5.txt",
-    # "training/100-basic/101-basic-jump/lvl-6.txt",
-    # "training/100-basic/101-basic-jump/lvl-7.txt",
-    # "training/100-basic/101-basic-jump/lvl-8.txt",
-    # "training/100-basic/101-basic-jump/lvl-9.txt",]
+    ["block1-enemy1-pit1-pipe0"],
+    # ["block1-enemy0-pit1-pipe0"],
+    # ["block0-enemy1-pit1-pipe0"],
   ]
 
-  evaluation_levels = [
-    "block2-enemy2-pit1-pipe1"
-  ]
+  evaluation_levels = level_pool
 
   with open("C:/thesis_data/hyperparameters.txt", "a") as file:
                     file.write("policy_optimizer_lr {}\n".format(policy_optimizer_lr))
@@ -126,6 +124,7 @@ if __name__ == '__main__':
                     file.write("max_buffer_episodes {}\n".format(max_buffer_episodes))
                     file.write("max_buffer_episode_steps {}\n".format(max_buffer_episode_steps))
 
+                    file.write("entropy_loss_weight {}\n".format(entropy_loss_weight))
                     file.write("tau {}\n".format(tau))
                     file.write("n_workers {}\n".format(n_workers))
                     file.write("levels\n")
@@ -139,6 +138,8 @@ if __name__ == '__main__':
                           file.write("task\n")
                           for rehearsal_level in rehearsal_level_task:
                                file.write("{}\n".format(rehearsal_level))
+
+  # agent.play(make_env_fn, policy_model_fn, "block0-enemy1-pit0-pipe0")
 
   agent.train(make_envs_fn,
               make_env_fn,

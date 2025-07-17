@@ -30,7 +30,6 @@ public class MarioWorld {
     public float reward = 0;
     public int episode = 0;
     public ArrayList<MarioEvent> lastFrameEvents;
-    public boolean isSubGoalBlockMet = true, isSubGoalCoinMet = true, isSubGoalEnemyMet = true;
     public String levelFileName;
 
     public String levelName;
@@ -144,11 +143,11 @@ public class MarioWorld {
         world.kill = this.kill;
         world.levelName = this.levelName;
         world.levelFileName = this.levelFileName;
-        world.isSubGoalBlockMet = this.isSubGoalBlockMet;
-        world.isSubGoalCoinMet = this.isSubGoalCoinMet;
-        world.isSubGoalEnemyMet = this.isSubGoalEnemyMet;
+        world.evaluation = this.evaluation;
         return world;
     }
+
+    public boolean evaluation = false;
 
     public void addEvent(EventType eventType, int eventParam) {
         int marioState = 0;
@@ -157,6 +156,9 @@ public class MarioWorld {
         }
         if (this.mario.isFire) {
             marioState = 2;
+        }
+        if(this.evaluation && eventType == EventType.COLLECT){
+            int a = 5;
         }
         this.lastFrameEvents.add(new MarioEvent(eventType, eventParam, mario.x, mario.y, marioState, this.currentTick));
     }
@@ -200,9 +202,15 @@ public class MarioWorld {
     }
 
     public void win() {
-        if(this.isSubGoalBlockMet && this.isSubGoalEnemyMet && this.isSubGoalCoinMet){
+        boolean isSubGoalBlockMet = isSubGoalBlockMet() == null || isSubGoalBlockMet();
+        boolean isSubGoalCoinMet = isSubGoalCoinMet() == null || isSubGoalCoinMet();
+        boolean isSubGoalEnemyMet = isSubGoalEnemyMet() == null || isSubGoalEnemyMet();
+        if(isSubGoalBlockMet && isSubGoalCoinMet && isSubGoalEnemyMet){
             this.addEvent(EventType.WIN, 0);
             this.gameStatus = GameStatus.WIN;
+        } else {
+            this.addEvent(EventType.FLAG, 0);
+            this.lose();
         }
     }
 
@@ -326,6 +334,7 @@ public class MarioWorld {
     }
 
     public void update(boolean[] actions) {
+        this.lastFrameEvents.clear();
         if (this.gameStatus != GameStatus.RUNNING) {
             return;
         }
@@ -361,7 +370,7 @@ public class MarioWorld {
             this.cameraY = 0;
         }
 
-        this.lastFrameEvents.clear();
+
 
         this.fireballsOnScreen = 0;
         for (MarioSprite sprite : sprites) {
@@ -509,7 +518,7 @@ public class MarioWorld {
         if (features.contains(TileFeature.BREAKABLE)) {
             bumpInto(xTile, yTile - 1);
             if (canBreakBricks) {
-                this.bumpBlock++;
+                //this.bumpBlock++;
                 this.addEvent(EventType.BUMP, MarioForwardModel.OBS_BRICK);
                 level.setBlock(xTile, yTile, 0);
                 if (this.visuals) {
@@ -568,4 +577,22 @@ public class MarioWorld {
             this.effects.get(i).render(og, cameraX, cameraY);
         }
     }
+
+    public Boolean isSubGoalEnemyMet(){
+        return level.totalEnemies == 0 ? null : level.totalEnemies == kill;
+    }
+    public Boolean isSubGoalCoinMet(){
+        return level.totalCoins == 0 ? null : level.totalCoins == collectCoin;
+    }
+    public Boolean isSubGoalBlockMet(){
+        return level.totalBumpBlock == 0 ? null : level.totalBumpBlock == bumpBlock;
+    }
+
+
+
+
+
+
+
+
 }

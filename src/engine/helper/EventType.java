@@ -14,7 +14,8 @@ public enum EventType {
     LOSE(11),
     WIN(12),
     HIT_WALL(13),
-    FALL_PIT(14);
+    FALL_PIT(14),
+    FLAG(15);
 
     private int value;
 

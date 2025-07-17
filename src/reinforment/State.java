@@ -58,14 +58,26 @@ public class State {
 
 
 
-        byte totalSubGoal = (byte) Arrays.stream(model.totalSubGoal()).filter(t -> t > 0).count();
+        byte totalSubGoal = (byte) model.totalSubGoal();
         byte isSubGoalBlockMet = model.isSubGoalBlockMet() == null ? (byte) 255 : (byte) (model.isSubGoalBlockMet() ? 1 : 0);
         byte isSubGoalEnemyMet = model.isSubGoalEnemyMet() == null ? (byte) 255 : (byte) (model.isSubGoalEnemyMet() ? 1 : 0);
         byte isSubGoalCoinMet = model.isSubGoalCoinMet() == null ? (byte) 255 : (byte) (model.isSubGoalCoinMet() ? 1 : 0);
+
+        byte enemyRemain = (byte) model.getEnemyRemain();
+        byte coinRemain = (byte) model.getCoinRemain();
+        byte blockRemain = (byte) model.getBlockRemain();
+
+        byte totalEnemy = (byte) model.getTotalEnemy();
+        byte totalCoin = (byte) model.getTotalCoin();
+        byte totalBlock = (byte) model.getTotalBlock();
+        byte totalPowerUp = (byte) model.getTotalPowerUp();
+
         ByteBuffer buffer = ByteBuffer.allocate(
                 state.length
                 + 4
                 + 10
+                + 4
+                + 3
                 + 4
         );
 
@@ -81,15 +93,19 @@ public class State {
         buffer.put(velocityX);
         buffer.put(velocityY);
 
-//        buffer.put(totalSubGoal);
-//        buffer.put(isSubGoalBlockMet);
-//        buffer.put(isSubGoalEnemyMet);
-//        buffer.put(isSubGoalCoinMet);
+        buffer.put(totalSubGoal);
+        buffer.put(isSubGoalBlockMet);
+        buffer.put(isSubGoalEnemyMet);
+        buffer.put(isSubGoalCoinMet);
 
-        buffer.put(((byte)0));
-        buffer.put(((byte)255));
-        buffer.put(((byte)255));
-        buffer.put(((byte)255));
+        buffer.put(enemyRemain);
+        buffer.put(coinRemain);
+        buffer.put(blockRemain);
+
+        buffer.put(totalEnemy);
+        buffer.put(totalCoin);
+        buffer.put(totalBlock);
+        buffer.put(totalPowerUp);
         return buffer.array();
     }
 }
