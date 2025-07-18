@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import engine.helper.EventType;
 import engine.helper.GameStatus;
 import engine.helper.SpriteType;
+import engine.sprites.Mario;
 
 public class MarioForwardModel {
     private static final int OBS_SCENE_SHIFT = 16;
@@ -698,5 +699,44 @@ public class MarioForwardModel {
 
     public int getBlockRemain() {
         return getTotalBlock() - this.world.bumpBlock;
+    }
+
+    public int[] findNearestEnemyVector() {
+        return doFindNearestEnemyVector();
+    }
+
+    private int[] doFindNearestEnemyVector(){
+        int[] vector = new int[2];
+        if(getTotalEnemy() == 0){
+            return vector;
+        }
+        int minDistanceSquared = Integer.MAX_VALUE;
+        Mario mario = this.world.mario;
+        MarioSprite nearestEnemy = null;
+
+        for (MarioSprite sprite : this.world.getAliveEnemies()) {
+            // Calculate squared distance (more efficient than true distance for comparison).
+            int dx = (int)sprite.x - mario.getMapX();
+            int dy = (int)sprite.y - mario.getMapY();
+            int distanceSquared = dx * dx + dy * dy;
+
+            // If this enemy is closer than the previous closest, update our records.
+            if (distanceSquared < minDistanceSquared) {
+                minDistanceSquared = distanceSquared;
+                nearestEnemy = sprite;
+            }
+        }
+
+        if(nearestEnemy != null){
+            vector[0] = (int)nearestEnemy.x;
+            vector[1] = (int)nearestEnemy.y;
+            return vector;
+        }
+
+        return vector;
+    }
+
+    public int[] getMarioTile() {
+        return new int[] {this.world.mario.getMapX(),this.world.mario.getMapY()};
     }
 }

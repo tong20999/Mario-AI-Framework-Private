@@ -56,7 +56,7 @@ public class State {
         byte[] velocityX = float2ByteArray(model.getMarioFloatVelocity()[0]);
         byte[] velocityY = float2ByteArray(model.getMarioFloatVelocity()[1]);
 
-
+        
 
         byte totalSubGoal = (byte) model.totalSubGoal();
         byte isSubGoalBlockMet = model.isSubGoalBlockMet() == null ? (byte) 255 : (byte) (model.isSubGoalBlockMet() ? 1 : 0);
@@ -72,6 +72,14 @@ public class State {
         byte totalBlock = (byte) model.getTotalBlock();
         byte totalPowerUp = (byte) model.getTotalPowerUp();
 
+        int[] enemyVector = model.findNearestEnemyVector();
+        byte[] dxEnemy = float2ByteArray(enemyVector[0]);
+        byte[] dyEnemy = float2ByteArray(enemyVector[1]);
+
+//        float[] blockVector = model.findNearestBlockVector();
+//        byte[] dxBlock = float2ByteArray(blockVector[0]);
+//        byte[] dyBlock = float2ByteArray(blockVector[1]);
+
         ByteBuffer buffer = ByteBuffer.allocate(
                 state.length
                 + 4
@@ -79,6 +87,7 @@ public class State {
                 + 4
                 + 3
                 + 4
+                + 16
         );
 
         buffer.put(state);
@@ -106,6 +115,11 @@ public class State {
         buffer.put(totalCoin);
         buffer.put(totalBlock);
         buffer.put(totalPowerUp);
+
+        buffer.put(dxEnemy);
+        buffer.put(dyEnemy);
+        //buffer.put(dxBlock);
+        //buffer.put(dyBlock);
         return buffer.array();
     }
 }

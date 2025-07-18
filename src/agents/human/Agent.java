@@ -2,6 +2,7 @@ package agents.human;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.text.MessageFormat;
 
 import reinforment.State;
 import engine.core.MarioAgent;
@@ -70,7 +71,9 @@ public class Agent extends KeyAdapter implements MarioAgent {
                 break;
             case KeyEvent.VK_M:
                 var complate = model.getMarioCompleteObservation(0,0);
-                int a =5;
+                var a = model.findNearestEnemyVector();
+                var marioPos =  model.getMarioTile();
+                System.out.println(MessageFormat.format("Mario [{0},{1}], Enemy [{2},{3}]", marioPos[0], marioPos[1], a[0], a[1]));
                 break;
         }
     }

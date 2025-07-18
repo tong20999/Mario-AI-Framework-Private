@@ -8,6 +8,7 @@ import engine.graphics.MarioTilemap;
 import engine.helper.Assets;
 import engine.helper.SpriteType;
 import engine.helper.TileFeature;
+import engine.sprites.Enemy;
 
 public class MarioLevel {
 
@@ -23,6 +24,8 @@ public class MarioLevel {
     private int[][] lastSpawnTime;
     private MarioTilemap graphics;
     private MarioImage flag;
+
+    private ArrayList<Enemy> enemies = new ArrayList<>();
 
     public MarioLevel(String level, boolean visuals) {
         if (level.trim().length() == 0) {
@@ -77,6 +80,7 @@ public class MarioLevel {
                     case 'g':
                         this.spriteTemplates[x][y] = SpriteType.GOOMBA;
                         totalEnemies++;
+                        enemies.add(new Enemy(true,x,y,0,SpriteType.GOOMBA));
                         break;
                     case 'G':
                         this.spriteTemplates[x][y] = SpriteType.GOOMBA_WINGED;
@@ -293,7 +297,6 @@ public class MarioLevel {
         level.height = this.height;
         level.tileWidth = this.tileWidth;
         level.tileHeight = this.tileHeight;
-        level.totalCoins = this.totalCoins;
         level.marioTileX = this.marioTileX;
         level.marioTileY = this.marioTileY;
         level.exitTileX = this.exitTileX;
@@ -311,6 +314,7 @@ public class MarioLevel {
         level.totalCoins = this.totalCoins;
         level.totalBumpBlock = this.totalBumpBlock;
         level.totalPowerUp = this.totalPowerUp;
+        level.enemies = this.enemies;
         return level;
     }
 
@@ -406,5 +410,9 @@ public class MarioLevel {
         if (cameraX + MarioGame.width >= this.exitTileX * 16) {
             this.flag.render(og, this.exitTileX * 16 - 8 - cameraX, Math.max(1, this.exitTileY - 11) * 16 + 16 - cameraY);
         }
+    }
+
+    public ArrayList<Enemy> getEnemies() {
+        return enemies;
     }
 }

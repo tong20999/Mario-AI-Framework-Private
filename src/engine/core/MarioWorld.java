@@ -2,6 +2,7 @@ package engine.core;
 
 import java.awt.Graphics;
 import java.awt.GraphicsConfiguration;
+import java.text.MessageFormat;
 import java.util.*;
 
 import engine.effects.*;
@@ -43,6 +44,7 @@ public class MarioWorld {
     private MarioBackground[] backgrounds = new MarioBackground[2];
 
     private Set<MarioSprite> listKill = new HashSet<>();
+    private ArrayList<MarioSprite> aliveEnemy = new ArrayList<>();
 
     public MarioWorld(MarioEvent[] killEvents) {
         this.pauseTimer = 0;
@@ -99,6 +101,7 @@ public class MarioWorld {
         this.mario.alive = true;
         this.mario.world = this;
         this.sprites.add(this.mario);
+        aliveEnemy.addAll(this.level.getEnemies());
     }
 
     public ArrayList<MarioSprite> getEnemies() {
@@ -142,6 +145,7 @@ public class MarioWorld {
         world.levelFileName = this.levelFileName;
         world.evaluation = this.evaluation;
         world.listKill = this.listKill;
+        world.aliveEnemy = this.aliveEnemy;
         return world;
     }
 
@@ -188,6 +192,7 @@ public class MarioWorld {
         this.listKill.add(sprite);
         this.kill++;
         this.addEvent(killEvent, sprite.type.getValue(), sprite.initialCode);
+        aliveEnemy.removeIf(a -> Objects.equals(sprite.initialCode, MessageFormat.format("{0}_{1}_{2}", a.x, a.y, a.type.getValue())));
     }
 
     public void removeSprite(MarioSprite sprite) {
@@ -591,10 +596,7 @@ public class MarioWorld {
     }
 
 
-
-
-
-
-
-
+    public ArrayList<MarioSprite> getAliveEnemies() {
+        return aliveEnemy;
+    }
 }
