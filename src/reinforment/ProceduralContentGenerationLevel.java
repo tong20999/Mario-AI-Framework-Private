@@ -17,27 +17,49 @@ public class ProceduralContentGenerationLevel {
 
     //private EnumBlockType[] blocks = {EnumBlockType.COIN_QUESTION_BLOCK, EnumBlockType.NORMAL_BLOCK, EnumBlockType.MUSHROOM_QUESTION_BLOCK};
 
-    private final StringBuilder _logBuilder = new StringBuilder();
-
     private int width;
 
     public int getWidth() {
         return width;
     }
 
-    public int calculateTimerfromMapWidth(){
-        return (int)(width * 0.5f);
-    }
-
     public String content = null;
+
+    public static ProceduralContentGenerationLevel parseLevel(String pcgName){
+        Map<String, String> params = Helper.parseParameter(pcgName);
+        // 2. Get values from the map, providing a default of "0" if missing.
+        int blockCount = Integer.parseInt(params.getOrDefault("blocks", "0"));
+        int enemyCount = Integer.parseInt(params.getOrDefault("enemies", "0"));
+        int pitCount = Integer.parseInt(params.getOrDefault("pits", "0"));
+        int pipeCount = Integer.parseInt(params.getOrDefault("pipes", "0"));
+        int widthMin = Integer.parseInt(params.getOrDefault("width_min", "15"));
+        int widthMax = Integer.parseInt(params.getOrDefault("width_max", "15"));
+
+        ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel.randomWidth(widthMin,widthMax);
+        if(pitCount > 0){
+            pcgLevel.addPit(4,2, 2, 5, pitCount);
+        }
+
+        if(pipeCount > 0){
+            pcgLevel.addPipe(4, 2, pipeCount);
+        }
+
+        if(enemyCount > 0){
+            //pcgLevel.addEnemyRandomBetween(1,10, 4,2, EnumEnemy.GOOMBA);
+            pcgLevel.addEnemy(1,2, enemyCount, EnumEnemy.GOOMBA);
+        }
+
+        if(blockCount > 0){
+            //pcgLevel.addBlockRandomBetween(1,10, 2,2);
+            pcgLevel.addBlock(1, 2, blockCount);
+        }
+
+        return pcgLevel;
+    }
 
     public static ProceduralContentGenerationLevel randomWidth(int min, int max) {
         int width = rand.nextInt(min, max + 1);
-
         ProceduralContentGenerationLevel pcg = new ProceduralContentGenerationLevel(width);
-
-        pcg._logBuilder.append(MessageFormat.format("PCG random width between {0} {1} ", min, max));
-
         return pcg;
     }
 
@@ -61,15 +83,6 @@ public class ProceduralContentGenerationLevel {
 
             if (i < levels.size() - 1) {
                 contentBuilder.append("\r\n");
-            }
-        }
-
-        File file = new File("C:\\thesis_data\\pcg.txt");
-        if(!file.exists()){
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-                writer.write(_logBuilder.toString());
-            } catch (IOException e) {
-                System.err.println("Error writing to file: " + e.getMessage());
             }
         }
         content = contentBuilder.toString();
@@ -236,9 +249,6 @@ public class ProceduralContentGenerationLevel {
                 }
             }
         }
-
-        _logBuilder.append(MessageFormat.format("add {0} pit(s) offsetFromStart {1}, offsetFromFlag {2}, minWidth {3}, maxWidth {4}\r\n",
-                total, offsetFromStart, offsetFromFlag, minWidth, maxWidth));
     }
 
     public void addEnemyRandomBetween(int min, int max, int offsetFromStart, int offsetFromFlag, EnumEnemy enemy){
@@ -267,9 +277,6 @@ public class ProceduralContentGenerationLevel {
                 }
             }
         }
-
-        _logBuilder.append(MessageFormat.format("add {0} enemy(s) offsetFromStart {1}, offsetFromFlag {2} enemy {3}\r\n",
-                total, offsetFromStart, offsetFromFlag, enemy.name()));
     }
 
     public void addBlockRandomBetween(int min, int max, int offsetFromStart, int offsetFromFlag){
@@ -287,9 +294,6 @@ public class ProceduralContentGenerationLevel {
             }
             k++;
         }
-
-        _logBuilder.append(MessageFormat.format("add {0} block(s) offsetFromStart {1}, offsetFromFlag {2}\r\n",
-                total, offsetFromStart, offsetFromFlag));
     }
 
     private void doAddBlock(EnumBlockType blockType, int offsetFromStart, int offsetFromFlag){
@@ -352,8 +356,5 @@ public class ProceduralContentGenerationLevel {
                 }
             }
         }
-
-        _logBuilder.append(MessageFormat.format("add {0} pipe(s) offsetFromStart {1}, offsetFromFlag {2} height from 2 to 5\r\n",
-                total, offsetFromStart, offsetFromFlag));
     }
 }

@@ -36,7 +36,7 @@ class MarioGame(SocketEnv):
             # CNN part: 1 channel, 16x16 grid. Values are binary (0 or 1).
             'grid': gym.spaces.Box(low=0, high=1, shape=(1, 16, 16), dtype=np.uint8),
             # Vector part: 15 features. Values are binary.
-            'vector': gym.spaces.Box(low=0, high=25, shape=(25,), dtype=np.uint8) # Adjust high based on actual max values
+            'vector': gym.spaces.Box(low=0, high=41, shape=(41,), dtype=np.uint8) # Adjust high based on actual max values
         })
         
         # The action space should be Discrete for FCCA's Categorical output
@@ -98,11 +98,12 @@ class MarioGame(SocketEnv):
         rewardByte = payload[0:4]
         reward:float = struct.unpack('>f', rewardByte)[0]
         terminated = True if payload[4] else False
+        truncated  = True if payload[5] else False
         obs_shape = np.prod(self.observation_space['grid'].shape) + np.prod(self.observation_space['vector'].shape)
-        obs_bytes = payload[5: 5 + obs_shape]
+        obs_bytes = payload[6: 6 + obs_shape]
         # NEW: Parse the observation into a dictionary
         observation = self._parse_observation(obs_bytes)
-        return observation, reward, terminated, False, {}
+        return observation, reward, terminated, truncated, {}
         
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None) -> list[int]:
         episode = options.get("episode") if options else 0

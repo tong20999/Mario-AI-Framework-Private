@@ -27,7 +27,7 @@ public class RewardSystem {
 //    static float mushroomReward = 0.5f;
 //    static float lifeMushroomReward = 0.5f;
     static float losePenalty = -1.0f;
-    static float timeoutPenalty = -1.0f;
+    static float timeoutPenalty = -0.0f;
 //    static float hurtReward = -0.0f;
 //    static float hitWallReward = -0.0f;
 //    static float fallPitReward = -0f;
@@ -43,12 +43,14 @@ public class RewardSystem {
     float powerUpReward;
 
     ProceduralContentGenerationLevel pcg;
+    private String workingDir;
 
-    public RewardSystem(MarioLevel level, ProceduralContentGenerationLevel pcg) {
+    public RewardSystem(MarioLevel level, ProceduralContentGenerationLevel pcg, String workingDir) {
         this.pcg = pcg;
-        this.totalBumpBlock = level.totalBumpBlock;
+        this.workingDir = workingDir;
+        this.totalBumpBlock = level.getBumpableBlocks().size();
         this.totalCoins = level.totalCoins;
-        this.totalEnemies = level.totalEnemies;
+        this.totalEnemies = level.getEnemies().size();
         this.totalPowerUp = level.totalPowerUp;
 
         killReward = 0.2f;
@@ -152,8 +154,11 @@ public class RewardSystem {
     }
 
     private void logPcg(int evaluationEpisode, String name) {
+        if(this.workingDir == null){
+            return;
+        }
         // First, let's construct the full file path.
-        String filePath = MessageFormat.format("C:\\thesis_data\\zpcg\\{0}\\pgc_{1}_{2}.txt", name, name, evaluationEpisode);
+        String filePath = MessageFormat.format(this.workingDir + "\\zpcg\\{0}\\pgc_{1}_{2}.txt", name, name, evaluationEpisode);
 
         // Now, let's get the parent directory path from the file path.
         File file = new File(filePath);
@@ -179,8 +184,8 @@ public class RewardSystem {
         }
     }
 
-    public void printInformation() {
-        String rewardInformation = MessageFormat.format("""
+    public String getRewardInfo(){
+        return MessageFormat.format("""
                         REWARDS
                         WIN {0}
                         LOSE {1}
@@ -198,8 +203,12 @@ public class RewardSystem {
                 bumpReward,
                 powerUpReward
         );
+    }
 
-        String levelInformation = MessageFormat.format("""
+
+
+    public String getLevelInfo() {
+        return MessageFormat.format("""
                         LEVEL
                         ENEMY {0}
                         COIN {1}
@@ -212,64 +221,16 @@ public class RewardSystem {
                 totalPowerUp
         );
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\thesis_data\\reward.txt", false))) {
-            writer.write(rewardInformation);
-            writer.newLine();
-            writer.write(levelInformation);
-        } catch (IOException e) {
-            System.err.println("Error writing to file: " + e.getMessage());
-        }
-    }
-
-//    public void printRewardsInformation(MarioWorld world) {
-//        String rewardInformation = MessageFormat.format("""
-//                        REWARDS
-//                        WIN MULTIPLIER {0}
-//                        LOSE {1}
-//                        TIME_OUT {2}
-//                        MILESTONE {3}
-//                        JumpOverPit {4}
-//                        KILL {5}
-//                        COLLECT_COIN {6}
-//                        COLLECT_FIREWORK {7}
-//                        COLLECT_MUSHROOM {8}
-//                        COLLECT_LIFE_MUSHROOM {9}
-//                        HURT {10}
-//                        HIT_WALL {11}
-//                        FALL_PIT {12}
-//                        TIME_PENALTY_COEFFICIENT {13}
-//                        BONUS COIN {14}
-//                        BONUS BLOCK {15}
-//                        BONUS KILL {16}
-//                        BUMP REWARD {17}
-//                        JUMP SPAM {18}
-//                        CLIP REWARD {19}
-//                        WIN REWARD {20}
-//                        """,
-//                winRewardMultiplier,
-//                loseReward,
-//                loseTimeoutReward,
-//                mileStoneReward,
-//                jumpOverPitReward,
-//                killReward,
-//                coinReward,
-//                fireworkReward,
-//                mushroomReward,
-//                lifeMushroomReward,
-//                hurtReward,
-//                hitWallReward,
-//                fallPitReward,
-//                timePenaltyRewardCoefficient,
-//                bumpReward,
-//                jumpSpamPenalty,
-//                winReward
-//        );
+//        logger.writeLog(rewardInformation);
+//        logger.appendLog("\r\n");
+//        logger.appendLog(levelInformation);
 //
 //        try (BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\thesis_data\\reward.txt", false))) {
 //            writer.write(rewardInformation);
 //            writer.newLine();
+//            writer.write(levelInformation);
 //        } catch (IOException e) {
 //            System.err.println("Error writing to file: " + e.getMessage());
 //        }
-//    }
+    }
 }

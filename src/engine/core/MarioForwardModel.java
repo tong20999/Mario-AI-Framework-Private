@@ -6,6 +6,7 @@ import engine.helper.EventType;
 import engine.helper.GameStatus;
 import engine.helper.SpriteType;
 import engine.sprites.Mario;
+import reinforment.Block;
 
 public class MarioForwardModel {
     private static final int OBS_SCENE_SHIFT = 16;
@@ -674,15 +675,15 @@ public class MarioForwardModel {
     }
 
     public int getTotalEnemy() {
-        return this.world.level.totalEnemies;
+        return this.world.level.getEnemies().size();
     }
 
     public int getTotalCoin() {
         return this.world.level.totalCoins;
     }
 
-    public int getTotalBlock() {
-        return this.world.level.totalBumpBlock;
+    public int getTotalBumpableBlocks() {
+        return this.world.level.getBumpableBlocks().size();
     }
 
     public int getTotalPowerUp() {
@@ -690,7 +691,7 @@ public class MarioForwardModel {
     }
 
     public int getEnemyRemain() {
-        return getTotalEnemy() - this.world.kill;
+        return this.world.getAliveEnemies().size();
     }
 
     public int getCoinRemain() {
@@ -698,44 +699,19 @@ public class MarioForwardModel {
     }
 
     public int getBlockRemain() {
-        return getTotalBlock() - this.world.bumpBlock;
+        return this.world.getUnbumpBlocks().size();
     }
 
     public int[] findNearestEnemyVector() {
-        return doFindNearestEnemyVector();
+        return this.world.findNearestEnemyVector();
     }
 
-    private int[] doFindNearestEnemyVector(){
-        int[] vector = new int[2];
-        if(getTotalEnemy() == 0){
-            return vector;
-        }
-        int minDistanceSquared = Integer.MAX_VALUE;
-        Mario mario = this.world.mario;
-        MarioSprite nearestEnemy = null;
-
-        for (MarioSprite sprite : this.world.getAliveEnemies()) {
-            // Calculate squared distance (more efficient than true distance for comparison).
-            int dx = (int)sprite.x - mario.getMapX();
-            int dy = (int)sprite.y - mario.getMapY();
-            int distanceSquared = dx * dx + dy * dy;
-
-            // If this enemy is closer than the previous closest, update our records.
-            if (distanceSquared < minDistanceSquared) {
-                minDistanceSquared = distanceSquared;
-                nearestEnemy = sprite;
-            }
-        }
-
-        if(nearestEnemy != null){
-            vector[0] = (int)nearestEnemy.x;
-            vector[1] = (int)nearestEnemy.y;
-            return vector;
-        }
-
-        return vector;
+    public int[] findNearestBlockVector() {
+        return doFindNearestBlockVector();
     }
-
+    private int[] doFindNearestBlockVector() {
+        return this.world.findNearestBlockVector();
+    }
     public int[] getMarioTile() {
         return new int[] {this.world.mario.getMapX(),this.world.mario.getMapY()};
     }

@@ -2,6 +2,8 @@ package engine.core;
 
 import java.awt.Graphics;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import engine.graphics.MarioImage;
 import engine.graphics.MarioTilemap;
@@ -9,6 +11,7 @@ import engine.helper.Assets;
 import engine.helper.SpriteType;
 import engine.helper.TileFeature;
 import engine.sprites.Enemy;
+import reinforment.Block;
 
 public class MarioLevel {
 
@@ -16,7 +19,7 @@ public class MarioLevel {
     public int tileWidth = MarioGame.width / 16;
     public int height = MarioGame.height;
     public int tileHeight = MarioGame.height / 16;
-    public int totalCoins = 0, totalBumpBlock = 0, totalEnemies = 0, totalPowerUp = 0;
+    public int totalCoins = 0, totalPowerUp = 0;
     public int marioTileX, marioTileY, exitTileX, exitTileY;
 
     private int[][] levelTiles;
@@ -24,8 +27,8 @@ public class MarioLevel {
     private int[][] lastSpawnTime;
     private MarioTilemap graphics;
     private MarioImage flag;
-
     private ArrayList<Enemy> enemies = new ArrayList<>();
+    private ArrayList<Block> blocks = new ArrayList<>();
 
     public MarioLevel(String level, boolean visuals) {
         if (level.trim().length() == 0) {
@@ -70,37 +73,36 @@ public class MarioLevel {
                         break;
                     case 'y':
                         this.spriteTemplates[x][y] = SpriteType.SPIKY;
-                        totalEnemies++;
+                        enemies.add(new Enemy(true,x,y,0,SpriteType.SPIKY));
                         break;
                     case 'Y':
                         this.spriteTemplates[x][y] = SpriteType.SPIKY_WINGED;
-                        totalEnemies++;
+                        enemies.add(new Enemy(true,x,y,0,SpriteType.SPIKY_WINGED));
                         break;
                     case 'E':
                     case 'g':
                         this.spriteTemplates[x][y] = SpriteType.GOOMBA;
-                        totalEnemies++;
                         enemies.add(new Enemy(true,x,y,0,SpriteType.GOOMBA));
                         break;
                     case 'G':
                         this.spriteTemplates[x][y] = SpriteType.GOOMBA_WINGED;
-                        totalEnemies++;
+                        enemies.add(new Enemy(true,x,y,0,SpriteType.GOOMBA_WINGED));
                         break;
                     case 'k':
                         this.spriteTemplates[x][y] = SpriteType.GREEN_KOOPA;
-                        totalEnemies++;
+                        enemies.add(new Enemy(true,x,y,0,SpriteType.GREEN_KOOPA));
                         break;
                     case 'K':
                         this.spriteTemplates[x][y] = SpriteType.GREEN_KOOPA_WINGED;
-                        totalEnemies++;
+                        enemies.add(new Enemy(true,x,y,0,SpriteType.GREEN_KOOPA_WINGED));
                         break;
                     case 'r':
                         this.spriteTemplates[x][y] = SpriteType.RED_KOOPA;
-                        totalEnemies++;
+                        enemies.add(new Enemy(true,x,y,0,SpriteType.RED_KOOPA));
                         break;
                     case 'R':
                         this.spriteTemplates[x][y] = SpriteType.RED_KOOPA_WINGED;
-                        totalEnemies++;
+                        enemies.add(new Enemy(true,x,y,0,SpriteType.RED_KOOPA_WINGED));
                         break;
                     case 'X':
                         //floor
@@ -152,7 +154,7 @@ public class MarioLevel {
                     case '@':
                         //mushroom question block
                         this.levelTiles[x][y] = 8;
-                        this.totalBumpBlock += 1;
+                        blocks.add(new Block(x,y, TileFeature.getTileType(8)));
                         this.totalPowerUp += 1;
                         break;
                     case 'Q':
@@ -160,7 +162,7 @@ public class MarioLevel {
                         //coin question block
                         //this.totalCoins += 1;
                         this.levelTiles[x][y] = 11;
-                        this.totalBumpBlock += 1;
+                        blocks.add(new Block(x,y, TileFeature.getTileType(11)));
                         break;
                     case '1':
                         //invisible 1 up block
@@ -178,24 +180,24 @@ public class MarioLevel {
                     case 'S':
                         //normal block
                         this.levelTiles[x][y] = 6;
-                        //this.totalBumpBlock += 1;
+                        blocks.add(new Block(x,y, TileFeature.getTileType(6)));
                         break;
                     case 'C':
                         //coin block
                         //this.totalCoins += 1;
                         this.levelTiles[x][y] = 7;
-                        this.totalBumpBlock += 1;
+                        blocks.add(new Block(x,y, TileFeature.getTileType(7)));
                         break;
                     case 'U':
                         //mushroom block
                         this.levelTiles[x][y] = 50;
-                        this.totalBumpBlock += 1;
+                        blocks.add(new Block(x,y, TileFeature.getTileType(50)));
                         this.totalPowerUp += 1;
                         break;
                     case 'L':
                         //1up block
                         this.levelTiles[x][y] = 51;
-                        this.totalBumpBlock += 1;
+                        blocks.add(new Block(x,y, TileFeature.getTileType(51)));
                         this.totalPowerUp += 1;
                         break;
                     case 'o':
@@ -310,9 +312,8 @@ public class MarioLevel {
             }
         }
         level.spriteTemplates = this.spriteTemplates;
-        level.totalEnemies = this.totalEnemies;
         level.totalCoins = this.totalCoins;
-        level.totalBumpBlock = this.totalBumpBlock;
+        level.blocks = this.blocks;
         level.totalPowerUp = this.totalPowerUp;
         level.enemies = this.enemies;
         return level;
@@ -414,5 +415,9 @@ public class MarioLevel {
 
     public ArrayList<Enemy> getEnemies() {
         return enemies;
+    }
+
+    public List<Block> getBumpableBlocks() {
+        return this.blocks.stream().filter(b -> b.getTileFeatures().contains(TileFeature.BUMPABLE)).collect(Collectors.toList());
     }
 }

@@ -8,6 +8,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -15,17 +16,19 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class GameServer {
-    private final ExecutorService clientPool = Executors.newFixedThreadPool(14);
-    private int totalWindows = 0;
+    private final ExecutorService clientPool = Executors.newFixedThreadPool(Config.getThreadPoolSize());
     public void start() throws Exception {
         // Start server thread
+        System.out.println(MessageFormat.format("start server on port {0} with {1} thread(s)",
+                Config.getPort(), Config.getThreadPoolSize()
+        ));
         Thread serverThread = new Thread(this::startSocketServer);
         serverThread.start();
         serverThread.join();
     }
 
     private void startSocketServer() {
-        try (ServerSocket serverSocket = new ServerSocket(4455)) {
+        try (ServerSocket serverSocket = new ServerSocket(Config.getPort())) {
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 clientPool.submit(() -> handleClient(clientSocket));
@@ -36,17 +39,7 @@ public class GameServer {
     }
 
     private void handleClient(Socket socket) {
-        int columns = 4;
-        int col = totalWindows % columns;
-        int row = totalWindows / columns;
-        totalWindows++;
-        MarioGameTraining clientGame = null;
-        if(totalWindows == 9){
-            clientGame = new MarioGameTraining();
-        }
-        else {
-            clientGame = new MarioGameTraining();
-        }
+        MarioGameTraining clientGame = new MarioGameTraining();
         try (
                 InputStream input = socket.getInputStream();
                 OutputStream output = socket.getOutputStream()

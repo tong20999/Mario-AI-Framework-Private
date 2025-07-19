@@ -90,14 +90,16 @@ class EpisodeBuffer():
 
         return levels_to_assign
 
-    def fill(self, envs:MultiprocessEnv, policy_model, value_model, episodeStart,
+    def fill(self, envs:MultiprocessEnv, policy_model, value_model, episodeStart:int,
              level_pool: list[str], 
              rehearsal_level_tasks: list[list[str]],
              mode:str = 'train',
              visual: bool = True):
         
-        workers = self.n_workers - 2
-        rehearsal_workers = 2
+        rehearsal_value =  self.n_workers // 3
+        
+        workers = self.n_workers - rehearsal_value
+        rehearsal_workers = rehearsal_value
 
         if mode == 'ewc' or len(rehearsal_level_tasks) == 0:
             rehearsal_workers = 0
@@ -112,7 +114,7 @@ class EpisodeBuffer():
         for _ in range(workers):
             levels_to_assign.append(random.choice(level_pool))
         random.shuffle(levels_to_assign)
-        states = envs.reset(ranks=None, episodeStart=episodeStart, visual=visual, levels=levels_to_assign)
+        states = envs.reset(episodeStart, ranks=None, visual=visual, levels=levels_to_assign)
 
         worker_rewards = np.zeros(shape=(self.n_workers, self.max_episode_steps), dtype=np.float32)
         worker_exploratory = np.zeros(shape=(self.n_workers, self.max_episode_steps), dtype=np.bool_)
@@ -129,7 +131,7 @@ class EpisodeBuffer():
                 # The model's forward pass now correctly handles the numpy dict
                 values = value_model(states)
 
-            next_states, rewards, terminals, truncated, infos = envs.step(actions)
+            next_states, rewards, terminals, truncateds, _ = envs.step(actions)
             
             # Store the current step's data
             self.grid_states_mem[self.current_ep_idxs, worker_steps] = states['grid']
@@ -142,37 +144,30 @@ class EpisodeBuffer():
             for w_idx in range(self.n_workers):
                 if worker_steps[w_idx] + 1 == self.max_episode_steps:
                     terminals[w_idx] = 1
-                    # Gymnasium standard is to use the info dict for this
-                    infos[w_idx]['TimeLimit.truncated'] = True
-
-            if terminals.sum() > 0:
-                idx_terminals = np.flatnonzero(terminals)
-                next_values = np.zeros(shape=(self.n_workers))
-                
-                # Check for truncated episodes to bootstrap value
-                is_truncated = np.array([info.get('TimeLimit.truncated', False) for info in infos])
-                if is_truncated.sum() > 0:
-                    idx_truncated = np.flatnonzero(is_truncated)
-                    with torch.no_grad():
-                        ## FIX 1: Create a dictionary slice for the truncated states before passing to model
-                        truncated_states = {key: val[idx_truncated] for key, val in next_states.items()}
-                        next_values[idx_truncated] = value_model(truncated_states).cpu().numpy()
-
+                    truncateds[w_idx] = 1
+            
             states = next_states
             worker_steps += 1
 
-            if terminals.sum() > 0:
-                idx_terminals = np.flatnonzero(terminals)
-                reset_levels = [random.choice(level_pool) for _ in idx_terminals]
-                
-                # envs.reset returns a dict for the new states
-                new_states = envs.reset(ranks=idx_terminals, episodeStart=episodeStart, levels=reset_levels)
-                
-                ## FIX 2: Correctly update the states dictionary for the reset workers
-                for key in states:
-                    states[key][idx_terminals] = new_states[key]
+            dones = terminals | truncateds
 
-                for w_idx in idx_terminals:
+            if dones.sum() > 0:
+                with torch.no_grad():
+                    next_values = np.zeros(self.n_workers)
+                    idx_truncated = np.flatnonzero(truncateds)
+                    if len(idx_truncated) > 0:
+                        truncated_states = {key: val[idx_truncated] for key, val in next_states.items()}
+                        next_values[idx_truncated] = value_model(truncated_states).cpu().numpy()
+
+                idx_dones = np.flatnonzero(dones)
+                reset_levels = [random.choice(level_pool) for _ in idx_dones]
+                episodeStart += dones.sum()
+                new_states = envs.reset(episodeStart, ranks=idx_dones, levels=reset_levels)
+                
+                for key in states:
+                    states[key][idx_dones] = new_states[key]
+
+                for w_idx in idx_dones:
                     e_idx = self.current_ep_idxs[w_idx]
                     T = worker_steps[w_idx]
                     

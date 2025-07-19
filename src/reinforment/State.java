@@ -4,9 +4,6 @@ import engine.core.MarioForwardModel;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.stream.IntStream;
-
-import static engine.core.MarioForwardModel.*;
 
 public class State {
 
@@ -18,10 +15,11 @@ public class State {
         return byteArray;
     }
 
-    public static byte[] stepResult(byte[] nextState, float reward, boolean is_terminate) {
-        ByteBuffer buffer = ByteBuffer.allocate(4 + 1 + nextState.length);
+    public static byte[] stepResult(byte[] nextState, float reward, boolean is_terminate, boolean is_truncated) {
+        ByteBuffer buffer = ByteBuffer.allocate(4 + 1 + 1 + nextState.length);
         buffer.put(float2ByteArray(reward));
         buffer.put((byte)(is_terminate ? 1 : 0));
+        buffer.put((byte)(is_truncated ? 1 : 0));
         buffer.put(nextState);
         return buffer.array();
     }
@@ -56,8 +54,6 @@ public class State {
         byte[] velocityX = float2ByteArray(model.getMarioFloatVelocity()[0]);
         byte[] velocityY = float2ByteArray(model.getMarioFloatVelocity()[1]);
 
-        
-
         byte totalSubGoal = (byte) model.totalSubGoal();
         byte isSubGoalBlockMet = model.isSubGoalBlockMet() == null ? (byte) 255 : (byte) (model.isSubGoalBlockMet() ? 1 : 0);
         byte isSubGoalEnemyMet = model.isSubGoalEnemyMet() == null ? (byte) 255 : (byte) (model.isSubGoalEnemyMet() ? 1 : 0);
@@ -69,16 +65,16 @@ public class State {
 
         byte totalEnemy = (byte) model.getTotalEnemy();
         byte totalCoin = (byte) model.getTotalCoin();
-        byte totalBlock = (byte) model.getTotalBlock();
+        byte totalBlock = (byte) model.getTotalBumpableBlocks();
         byte totalPowerUp = (byte) model.getTotalPowerUp();
 
         int[] enemyVector = model.findNearestEnemyVector();
-        byte[] dxEnemy = float2ByteArray(enemyVector[0]);
-        byte[] dyEnemy = float2ByteArray(enemyVector[1]);
+        byte[] dxEnemy = int2ByteArray(enemyVector[0]);
+        byte[] dyEnemy = int2ByteArray(enemyVector[1]);
 
-//        float[] blockVector = model.findNearestBlockVector();
-//        byte[] dxBlock = float2ByteArray(blockVector[0]);
-//        byte[] dyBlock = float2ByteArray(blockVector[1]);
+        int[] blockVector = model.findNearestBlockVector();
+        byte[] dxBlock = int2ByteArray(blockVector[0]);
+        byte[] dyBlock = int2ByteArray(blockVector[1]);
 
         ByteBuffer buffer = ByteBuffer.allocate(
                 state.length
@@ -118,8 +114,8 @@ public class State {
 
         buffer.put(dxEnemy);
         buffer.put(dyEnemy);
-        //buffer.put(dxBlock);
-        //buffer.put(dyBlock);
+        buffer.put(dxBlock);
+        buffer.put(dyBlock);
         return buffer.array();
     }
 }

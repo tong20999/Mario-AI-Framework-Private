@@ -7,6 +7,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 import javax.swing.JFrame;
@@ -146,6 +148,10 @@ public class MarioGameTraining {
     }
 
     RewardSystem rewardSystem;
+    Logger episodeLogger;
+    Logger evaluationLogger;
+
+    private static int evaluationCount;
 
     public byte[] reset(Info info) throws Exception {
         this.visual = info.isVisual();
@@ -156,6 +162,12 @@ public class MarioGameTraining {
 
         var levelFileName = info.getLevel();
         var levelName = levelFileName.substring(levelFileName.lastIndexOf("/") + 1);
+        var params = Helper.parseParameter(levelFileName);
+
+        if(params.containsKey("fps")){
+            this.isNormalSpeed = true;
+            this.fps = Integer.parseInt(params.getOrDefault("fps", "30"));
+        }
 
         this.gameEvents = new ArrayList<>();
         this.evaluation = info.isEvaluation();
@@ -175,7 +187,7 @@ public class MarioGameTraining {
         ProceduralContentGenerationLevel pcg = null;
         String level;
         if(!levelFileName.contains(".txt")){
-            pcg = modLevel(levelFileName);
+            pcg = ProceduralContentGenerationLevel.parseLevel(levelFileName);
             pcg.generate(true);
             level = pcg.getContent();
         } else {
@@ -185,11 +197,20 @@ public class MarioGameTraining {
         if (visual) {
             this.world.initializeVisuals(this.render.getGraphicsConfiguration());
         }
-        rewardSystem = new RewardSystem(this.world.level, pcg);
 
-        if(this.episode == 0){
-            rewardSystem.printInformation();
+        String workingDir = null;
+        if(!isNormalSpeed){
+            workingDir = Helper.getWorkingDir(levelFileName);
+            this.episodeLogger = new Logger(workingDir + "\\episode.txt");
+            this.evaluationLogger = new Logger(workingDir + "\\evaluation.txt");
         }
+
+        if(this.evaluation){
+            evaluationCount++;
+        }
+
+        this.rewardSystem = setupReward(this.world.level, pcg, workingDir);
+
         this.world.mario.isLarge = false;
         this.world.mario.isFire = false;
         this.world.update(new boolean[MarioActions.numberOfActions()]);
@@ -209,35 +230,6 @@ public class MarioGameTraining {
             this.evaluationReward = 0;
         }
         return State.toByte(new MarioForwardModel(this.world.clone()));
-    }
-
-    private ProceduralContentGenerationLevel modLevel(String levelFileName) {
-
-        var details = levelFileName.split("-");
-        var blockCount = Integer.parseInt(details[0].substring(details[0].length() - 1));
-        var enemyCount = Integer.parseInt(details[1].substring(details[1].length() - 1));
-        var pitCount = Integer.parseInt(details[2].substring(details[2].length() - 1));
-        var pipeCount = Integer.parseInt(details[3].substring(details[3].length() - 1));
-        ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel.randomWidth(15,15);
-        if(pitCount > 0){
-            pcgLevel.addPit(4,2, 2, 5, pitCount);
-        }
-
-        if(pipeCount > 0){
-            pcgLevel.addPipe(4, 2, pipeCount);
-        }
-
-        if(enemyCount > 0){
-            //pcgLevel.addEnemyRandomBetween(1,10, 4,2, EnumEnemy.GOOMBA);
-            pcgLevel.addEnemy(1,2, enemyCount, EnumEnemy.GOOMBA);
-        }
-
-        if(blockCount > 0){
-            //pcgLevel.addBlockRandomBetween(1,10, 2,2);
-            pcgLevel.addBlock(1, 2, blockCount);
-        }
-
-        return pcgLevel;
     }
 
     public byte[] step(boolean[] action) throws Exception {
@@ -261,11 +253,32 @@ public class MarioGameTraining {
 
         this.world.reward += reward;
 
-        this.world.episode = this.evaluation ? -1 : this.episode;
-        Helper.printInfo(this.world, this.gameEvents,
-                this.evaluation, this.evaluationInfo, this.evaluationTimer, this.evaluationReward,
-                this.episodeInfo, this.episode, this.episodeTimer, this.episodeReward);
-        return State.stepResult(State.toByte(nextState), reward, this.world.gameStatus != GameStatus.RUNNING);
+        if(!this.isNormalSpeed){
+            if(this.world.gameStatus != GameStatus.RUNNING && this.evaluation){
+                Helper.writeEvaluationLog(
+                        this.evaluationLogger,
+                        this.world,
+                        gameEvents,
+                        evaluationInfo,
+                        evaluationCount,
+                        evaluationTimer,
+                        evaluationReward
+                );
+            } else if(this.world.gameStatus != GameStatus.RUNNING) {
+                Helper.writeEpisodeLog(this.episodeLogger,
+                        this.world,
+                        gameEvents,
+                        episodeInfo,
+                        episode,
+                        episodeTimer,
+                        episodeReward
+                );
+            }
+        }
+
+        return State.stepResult(State.toByte(nextState), reward,
+                this.world.gameStatus == GameStatus.LOSE || this.world.gameStatus == GameStatus.WIN,
+                this.world.gameStatus == GameStatus.TIME_OUT);
     }
 
     public ArrayList<MarioEvent> miniStep(boolean[] action) throws Exception {
@@ -295,5 +308,14 @@ public class MarioGameTraining {
             return 0;
         }
         return 1000 / fps;
+    }
+
+    private RewardSystem setupReward(MarioLevel level, ProceduralContentGenerationLevel pcg, String workingDir) {
+        RewardSystem rewardSystem = new RewardSystem(level, pcg, workingDir);
+        if(!this.isNormalSpeed){
+            Helper.writeToFile(workingDir + "\\reward.txt", rewardSystem.getRewardInfo());
+            Helper.writeToFile(workingDir + "\\level.txt", rewardSystem.getLevelInfo());
+        }
+        return rewardSystem;
     }
 }

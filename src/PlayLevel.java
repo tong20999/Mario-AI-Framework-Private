@@ -6,6 +6,7 @@ import engine.core.MarioGame;
 import engine.core.MarioResult;
 import reinforment.EnumBlockType;
 import reinforment.EnumEnemy;
+import reinforment.Helper;
 import reinforment.ProceduralContentGenerationLevel;
 
 public class PlayLevel {
@@ -39,17 +40,18 @@ public class PlayLevel {
         // printResults(game.playGame(getLevel("../levels/original/lvl-1-basic-move-right.txt"), 200, 0));
         var level = getLevel("./levels/training/100-basic/104-basic-block-enemy-pit/lvl-1.txt");
         var original = getLevel("./levels/original/lvl-1a.txt");
+        String levelFileName = "blocks=1,enemies=0,pits=0,pipes=0,width_min=40,width_max=40";
         while (true){
-            //ProceduralContentGenerationLevel pcgLevel = new ProceduralContentGenerationLevel(level);
-            ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel.randomWidth(50,50);
+            ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel
+                    .parseLevel(levelFileName);
             //pcgLevel.addPit(4,2, 2, 5, 1);
             //pcgLevel.addPipe(1,2,1);
-            pcgLevel.addBlock(1,2,1);
-            pcgLevel.addEnemy(1,2, 2, EnumEnemy.GOOMBA);
+            //pcgLevel.addBlock(1,2,1);
+            //pcgLevel.addEnemy(1,2, 2, EnumEnemy.GOOMBA);
             //pcgLevel.addBlock(2, 2, 1);
             pcgLevel.generate(true);
             String mod = pcgLevel.getContent();
-            printResults(game.runGame(new agents.human.Agent(), original, 99, 0, true));
+            printResults(game.runGame(new agents.human.Agent(), mod, 99, 0, true));
         }
 
     }

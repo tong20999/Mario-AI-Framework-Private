@@ -60,7 +60,7 @@ class MultiprocessEnv(object):
     # The rest of the class now only interacts through the pipes
     # and does not need a 'work' method.
 
-    def reset(self, ranks=None, episodeStart=None, visual = False, levels: list = None, **kwargs):
+    def reset(self, episodeStart:int, ranks=None, visual = False, levels: list = None, **kwargs):
         if ranks is None:
             ranks = range(self.n_workers)
 

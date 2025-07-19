@@ -8,6 +8,7 @@ import engine.helper.MarioActions;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.text.MessageFormat;
 
 
 public class MarioRender extends JComponent implements FocusListener {
@@ -61,10 +62,15 @@ public class MarioRender extends JComponent implements FocusListener {
 //        }
 
         //drawStringDropShadow(og, "Complete: " + String.format("%.2f", completePercentage), 0, 4, 7);
-        drawStringDropShadow(og, "Enemy: " + world.level.totalEnemies, 0, 4, 7);
-        drawStringDropShadow(og, "Kill: " + world.kill, 0, 6, 7);
-        drawStringDropShadow(og, "Block: " + world.level.totalBumpBlock, 15, 4, 7);
-        drawStringDropShadow(og, "Bump: " + world.bumpBlock, 15, 6, 7);
+        var enemyCompass = world.nearestCompass(world.findNearestEnemyVector());
+        var totalEnemy = MessageFormat.format("{0} {1}", world.level.getEnemies().size(), enemyCompass);
+        drawStringDropShadow(og, "Enemy: " + totalEnemy, 0, 4, 7);
+        drawStringDropShadow(og, "Kill: " + (world.level.getEnemies().size() - world.getAliveEnemies().size()), 0, 6, 7);
+
+        var blockCompass = world.nearestCompass(world.findNearestBlockVector());
+        var totalBlock = MessageFormat.format("{0} {1}", world.level.getBumpableBlocks().size(), blockCompass);
+        drawStringDropShadow(og, "Block: " + totalBlock, 0, 8, 7);
+        drawStringDropShadow(og, "Bump: " + (world.level.getBumpableBlocks().size() - world.getUnbumpBlocks().size()), 0, 10, 7);
         if (MarioGame.verbose) {
             String pressedButtons = "";
             for (int i = 0; i < world.mario.actions.length; i++) {

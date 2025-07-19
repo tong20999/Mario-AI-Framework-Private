@@ -36,7 +36,7 @@ if __name__ == '__main__':
   policy_model_max_grad_norm = float('inf')
   policy_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
   policy_optimizer_lr = 0.00001
-  policy_optimization_epochs = 3
+  policy_optimization_epochs = 5
   policy_sample_ratio = 0.8
   policy_clip_range = 0.1
   policy_stopping_kl = 0.02
@@ -45,7 +45,7 @@ if __name__ == '__main__':
   value_model_max_grad_norm = float('inf')
   value_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
   value_optimizer_lr = 0.00001
-  value_optimization_epochs = 3
+  value_optimization_epochs = 5
   value_sample_ratio = 0.8
   value_clip_range = float('inf')
   value_stopping_mse = 25
@@ -54,12 +54,12 @@ if __name__ == '__main__':
   ewc_lambda = 10000.0
 
   episode_buffer_fn = lambda sd, g, t, nw, me, mes: EpisodeBuffer(sd, g, t, nw, me, mes)
-  max_buffer_episodes = 48
-  max_buffer_episode_steps = 10000
+  max_buffer_episodes = 96
+  max_buffer_episode_steps = 3000
 
   entropy_loss_weight = 0.001
   tau = 0.97
-  n_workers = 8
+  n_workers = 10
 
   env_name, gamma, max_minutes, \
   max_episodes, goal_mean_100_reward = environment_settings.values()
@@ -88,25 +88,41 @@ if __name__ == '__main__':
               tau,
               n_workers)
   
-  lose_path = 'C:/thesis_data/zpcg/LOSE'
-  timeout_path = 'C:/thesis_data/zpcg/TIME_OUT'
-  lose_abs_paths = [os.path.join(lose_path, f) for f in os.listdir(lose_path)]
-  timeout_abs_paths = [os.path.join(timeout_path, f) for f in os.listdir(timeout_path)]
-  all_abs_paths = lose_abs_paths + timeout_abs_paths
+  # lose_path = 'C:/thesis_data/zpcg/LOSE'
+  # timeout_path = 'C:/thesis_data/zpcg/TIME_OUT'
+  # lose_abs_paths = [os.path.join(lose_path, f) for f in os.listdir(lose_path)]
+  # timeout_abs_paths = [os.path.join(timeout_path, f) for f in os.listdir(timeout_path)]
+  # all_abs_paths = lose_abs_paths + timeout_abs_paths
 
+  pcg = "blocks=1,enemies=1,pits=1,pipes=1,width_min=30,width_max=50"
 
-  level_pool = all_abs_paths
-  # level_pool = ["block1-enemy1-pit1-pipe1"]
+  root_dir = 'C:/thesis_data/{}'.format(pcg)
+  if not os.path.exists(root_dir):
+      os.makedirs(root_dir)
+      
+  subfolders = [name for name in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, name))]
+  numbers = [int(name) for name in subfolders if name.isdigit()]
+  latest = -1
+  if numbers:
+    latest = max(numbers)
+    working_dir = os.path.join(root_dir, str(latest + 1))
+  else:
+    working_dir = os.path.join(root_dir, '1')
+
+  os.makedirs(working_dir)
+
+  # level_pool = all_abs_paths
+  level_pool = [pcg]
   
   rehearsal_level_tasks = [
-    ["block1-enemy1-pit1-pipe0"],
-    # ["block1-enemy0-pit1-pipe0"],
+    #["blocks=1,enemies=0,pits=1,pipes=0,width_min=40,width_max=40"],
+    #["blocks=0,enemies=1,pits=1,pipes=0,width_min=50,width_max=50"],
     # ["block0-enemy1-pit1-pipe0"],
   ]
 
   evaluation_levels = level_pool
 
-  with open("C:/thesis_data/hyperparameters.txt", "a") as file:
+  with open(os.path.join(working_dir, "hyperparameters.txt"), "a") as file:
                     file.write("policy_optimizer_lr {}\n".format(policy_optimizer_lr))
                     file.write("policy_optimization_epochs {}\n".format(policy_optimization_epochs))
                     file.write("policy_sample_ratio {}\n".format(policy_sample_ratio))
@@ -139,7 +155,7 @@ if __name__ == '__main__':
                           for rehearsal_level in rehearsal_level_task:
                                file.write("{}\n".format(rehearsal_level))
 
-  # agent.play(make_env_fn, policy_model_fn, "block0-enemy1-pit0-pipe0")
+  agent.play(make_env_fn, policy_model_fn, "blocks=1,enemies=1,pits=1,pipes=1,width_min=40,width_max=40,fps=30")
 
   agent.train(make_envs_fn,
               make_env_fn,
@@ -149,7 +165,8 @@ if __name__ == '__main__':
               goal_mean_100_reward,
               level_pool,
               rehearsal_level_tasks,
-              evaluation_levels)
+              evaluation_levels,
+              working_dir)
 
 
 

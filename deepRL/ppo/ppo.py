@@ -174,7 +174,7 @@ class PPO():
 
         # --- Saving logic (unchanged) ---
         if save:
-            plt.savefig('C:/thesis_data/result_plot_episode_{}.png'.format(len(eva100_reward)))
+            plt.savefig(os.path.join(self.working_dir,'result_plot_episode_{}.png'.format(len(eva100_reward))))
 
         plt.pause(1)
 
@@ -189,9 +189,11 @@ class PPO():
     def train(self, make_envs_fn:Callable, make_env_fn:Callable, gamma, 
               max_minutes, max_episodes, goal_mean_100_reward, 
               level_pool:list, rehearsal_level_tasks:list[list],
-              evaluation_levels:list[str]):
+              evaluation_levels:list[str], working_dir):
         training_start, last_debug_time = time.time(), float('-inf')
 
+
+        self.working_dir = working_dir
         self.make_envs_fn = make_envs_fn
         self.make_env_fn = make_env_fn
         self.gamma = gamma
@@ -269,12 +271,12 @@ class PPO():
                     self.save_checkpoint(len(self.eva100), self.policy_model, 'policy')
                     self.save_checkpoint(len(self.eva100), self.value_model, 'value')
                 
-                self.evaluation_scores.extend([evaluation_score,] * n_ep_batch)
+                self.evaluation_scores.append(evaluation_score)
                 # for e in range(episode, episode + n_ep_batch):
                     
                 training_time += episode_seconds.sum()
                 wallclock_time = time.time() - training_start
-                with open("C:/thesis_data/result.txt", "a") as file:
+                with open(os.path.join(working_dir, "result.txt"), "a") as file:
                     file.write("pool [{}]\n".format(', '.join(level_pool)))
                     file.write("n_ep_batch {}\n".format(n_ep_batch))
                     file.write("episode_timestep {}\n".format(episode_timestep))
@@ -364,9 +366,9 @@ class PPO():
                     a = eval_model.select_greedy_action(s)
                 else: 
                     a = eval_model.select_action(s)
-                s, r, d, _, _ = eval_env.step(a)
+                s, r, d, t, _ = eval_env.step(a)
                 rs[-1] += r
-                if d: break
+                if d or t: break
         return np.mean(rs), np.std(rs)
 
     def finish_task(self, level_pool: list, rehearsal_level_tasks: list[list]):
@@ -386,7 +388,8 @@ class PPO():
                         episodeStart=0,
                         level_pool=level_pool,
                         rehearsal_level_tasks=rehearsal_level_tasks,
-                        mode='ewc')
+                        mode='ewc',
+                        visual=False)
         envs.close()
         
         # Get the collected states and actions
@@ -403,7 +406,7 @@ class PPO():
 
     def save_checkpoint(self, evaluation_idx, model, suffix):
             torch.save(model.state_dict(), 
-                            os.path.join('C:/thesis_data', 'model.{}.{}.tar'.format(suffix, evaluation_idx)))
+                            os.path.join(self.working_dir, 'model.{}.{}.tar'.format(suffix, evaluation_idx)))
             
     def save_ewc(self, level_pool, rehearsal_level_tasks):
         self.finish_task(level_pool=level_pool, rehearsal_level_tasks=rehearsal_level_tasks)
@@ -413,7 +416,7 @@ class PPO():
             'params': self.ewc.optimal_params
         }
         
-        save_path = os.path.join('C:/thesis_data', 'model.ewc_state.tar')
+        save_path = os.path.join(self.working_dir, 'model.ewc_state.tar')
         torch.save(ewc_state, save_path)
 
     def play(self, make_env_fn, policy_model_fn, level):

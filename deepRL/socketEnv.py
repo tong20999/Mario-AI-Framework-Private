@@ -6,6 +6,7 @@ import os
 logging.basicConfig(level=logging.INFO)
 
 class SocketEnv(gym.Env):
+    #def __init__(self, host='192.168.1.47', port=4455):
     def __init__(self, host='localhost', port=4455):
         self.host = host
         self.port = port
