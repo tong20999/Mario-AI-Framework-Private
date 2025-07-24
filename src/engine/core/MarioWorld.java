@@ -679,12 +679,30 @@ public class MarioWorld {
 
     public int[] findNearestEnemyVector(){
         int[] vector = new int[2];
-        if(this.getAliveEnemies().size() == 0){
+        if(this.getAliveEnemies().isEmpty()){
             return vector;
         }
         int minDistanceSquared = Integer.MAX_VALUE;
         Mario mario = this.mario;
         MarioSprite nearestEnemy = null;
+
+        for (MarioSprite sprite : this.getEnemies()) {
+            int dx = sprite.getMapX() - mario.getMapX();
+            int dy = sprite.getMapY() - mario.getMapY();
+            int distanceSquared = dx * dx + dy * dy;
+
+            // If this enemy is closer than the previous closest, update our records.
+            if (distanceSquared < minDistanceSquared) {
+                minDistanceSquared = distanceSquared;
+                nearestEnemy = sprite;
+            }
+        }
+
+        if(nearestEnemy != null){
+            vector[0] = nearestEnemy.getMapX() - mario.getMapX();
+            vector[1] = nearestEnemy.getMapY() - mario.getMapY();
+            return vector;
+        }
 
         for (MarioSprite sprite : this.getAliveEnemies()) {
             // Calculate squared distance (more efficient than true distance for comparison).

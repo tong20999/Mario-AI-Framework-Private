@@ -205,9 +205,6 @@ class PPO():
         torch.manual_seed(seed) ; np.random.seed(seed) ; random.seed(seed)
     
         self.nS, nA = env.observation_space, env.action_space.n
-        self.episode_timestep, self.episode_reward = [], []
-        self.episode_seconds, self.episode_exploration = [], []
-        self.evaluation_scores = []
 
         self.policy_model = self.policy_model_fn(self.nS, nA)
         self.policy_optimizer = self.policy_optimizer_fn(self.policy_model, self.policy_optimizer_lr)
@@ -238,11 +235,9 @@ class PPO():
                                                      self.max_buffer_episodes,
                                                      self.max_buffer_episode_steps)
 
-        result = np.empty((max_episodes, 5))
-        result[:] = np.nan
         training_time = 0
         episode = 0
-        self.eva100 = []
+        evaluation_count = 0
        
         try:
             while True:
@@ -254,91 +249,35 @@ class PPO():
                     visual=False)
                 
                 n_ep_batch = len(episode_timestep)
-                self.episode_timestep.extend(episode_timestep)
-                self.episode_reward.extend(episode_reward)
-                self.episode_exploration.extend(episode_exploration)
-                self.episode_seconds.extend(episode_seconds)
                 self.optimize_model()
                 self.episode_buffer.clear()
 
                 # stats
                 evaluation_score, _ = self.evaluate(self.policy_model, env, random.choice(evaluation_levels))
-
-                self.eva100.append(np.mean(self.evaluation_scores[-100:]))
-                self.plot(self.eva100)
-                if len(self.eva100) % 1000 == 0:
-                    self.plot(self.eva100, True)
-                    self.save_checkpoint(len(self.eva100), self.policy_model, 'policy')
-                    self.save_checkpoint(len(self.eva100), self.value_model, 'value')
-                
-                self.evaluation_scores.append(evaluation_score)
-                # for e in range(episode, episode + n_ep_batch):
+                evaluation_count +=1
+                if evaluation_count % 1000 == 0:
+                    self.save_checkpoint(evaluation_count, self.policy_model, 'policy')
+                    self.save_checkpoint(evaluation_count, self.value_model, 'value')
                     
                 training_time += episode_seconds.sum()
                 wallclock_time = time.time() - training_start
-                with open(os.path.join(working_dir, "result.txt"), "a") as file:
-                    file.write("pool [{}]\n".format(', '.join(level_pool)))
-                    file.write("n_ep_batch {}\n".format(n_ep_batch))
-                    file.write("episode_timestep {}\n".format(episode_timestep))
-                    file.write("episode_reward {}\n".format(np.round(episode_reward, 2)))
-                    file.write("episode_exploration {}\n".format(np.round(episode_exploration, 2)))
-                    file.write("episode_seconds {}\n".format(np.round(episode_seconds, 2)))
-                    file.write("training_time {}\n".format(training_time))
-                    file.write("wallclock_time {}\n".format(wallclock_time))
 
-                mean_10_reward = np.mean(self.episode_reward[-10:])
-                std_10_reward = np.std(self.episode_reward[-10:])
-                mean_100_reward = np.mean(self.episode_reward[-100:])
-                std_100_reward = np.std(self.episode_reward[-100:])
-                mean_100_eval_score = np.mean(self.evaluation_scores[-100:])
-                std_100_eval_score = np.std(self.evaluation_scores[-100:])
-                mean_100_exp_rat = np.mean(self.episode_exploration[-100:])
-                std_100_exp_rat = np.std(self.episode_exploration[-100:])
-                
-                total_step = int(np.sum(self.episode_timestep))
-                wallclock_elapsed = time.time() - training_start
-                result[episode:episode+n_ep_batch] = total_step, mean_100_reward, \
-                    mean_100_eval_score, training_time, wallclock_elapsed
-
+                self.write_info(working_dir, "episode_timestep.txt", "{}\n".format(episode_timestep))
+                self.write_info(working_dir, "episode_reward.txt", "{}\n".format(np.round(episode_reward, 2)))
+                self.write_info(working_dir, "episode_exploration.txt", "{}\n".format(np.round(episode_exploration, 2)))
+                self.write_info(working_dir, "episode_seconds.txt", "{}\n".format(np.round(episode_seconds, 2)))
+                self.write_info(working_dir, "evaluation_score.txt", "{}\n".format(evaluation_score))
+                self.write_info(working_dir, "training_time.txt", "{}\n".format(training_time))
+                self.write_info(working_dir, "wallclock_time.txt", "{}\n".format(wallclock_time))
                 episode += n_ep_batch
-
-                # debug stuff
-                reached_debug_time = time.time() - last_debug_time >= LEAVE_PRINT_EVERY_N_SECS
-                reached_max_minutes = wallclock_elapsed >= max_minutes * 60            
-                reached_max_episodes = episode + self.max_buffer_episodes >= max_episodes
-                reached_goal_mean_reward = mean_100_eval_score >= goal_mean_100_reward
-                # training_is_over = reached_max_minutes or \
-                #                 reached_max_episodes or \
-                #                 reached_goal_mean_reward
-                training_is_over = False
-                elapsed_str = time.strftime("%H:%M:%S", time.gmtime(time.time() - training_start))
-                debug_message = 'el {}, ep {:04}, ts {:07}, '
-                debug_message += 'ar 10 {:05.1f}\u00B1{:05.1f}, '
-                debug_message += '100 {:05.1f}\u00B1{:05.1f}, '
-                debug_message += 'ex 100 {:02.1f}\u00B1{:02.1f}, '
-                debug_message += 'ev {:05.1f}\u00B1{:05.1f}'
-                debug_message = debug_message.format(
-                    elapsed_str, episode-1, total_step, mean_10_reward, std_10_reward, 
-                    mean_100_reward, std_100_reward, mean_100_exp_rat, std_100_exp_rat,
-                    mean_100_eval_score, std_100_eval_score)
-                print(debug_message, end='\r', flush=True)
-                if reached_debug_time or training_is_over:
-                    print(ERASE_LINE + debug_message, flush=True)
-                    last_debug_time = time.time()
-                if training_is_over:
-                    if reached_max_minutes: print(u'--> reached_max_minutes \u2715')
-                    if reached_max_episodes: print(u'--> reached_max_episodes \u2715')
-                    if reached_goal_mean_reward: print(u'--> reached_goal_mean_reward \u2713')
-                    break
+                # training_is_over = evaluation_count == 2000
+                # if training_is_over:
+                #     break
         
         except (Exception, KeyboardInterrupt) as e:
             print("!An error occurred or Ctrl+C was detected! Saving progress before exiting...")
-            
-            # Print the exception's type and message
             print(f"Error Type: {type(e).__name__}")
             print(f"Error Message: {e}")
-            
-            # For a full traceback (the entire error log) 🐛
             print("\n--- Full Traceback ---")
             traceback.print_exc()
         finally:
@@ -348,9 +287,9 @@ class PPO():
             if 'envs' in locals():
                 envs.close()
                 del envs
-            self.save_checkpoint(len(self.eva100), self.policy_model, 'policy')
-            self.save_checkpoint(len(self.eva100), self.value_model, 'value')
-            self.plot(self.eva100, True)
+            self.save_checkpoint(evaluation_count, self.policy_model, 'policy')
+            self.save_checkpoint(evaluation_count, self.value_model, 'value')
+            # self.plot(self.eva100, True)
             self.save_ewc(level_pool, rehearsal_level_tasks)
 
     def evaluate(self, eval_model:CNNActor, eval_env, level:str, n_episodes=1, greedy=True, visual=True):
@@ -372,7 +311,6 @@ class PPO():
         return np.mean(rs), np.std(rs)
 
     def finish_task(self, level_pool: list, rehearsal_level_tasks: list[list]):
-        # Create a temporary buffer to collect data
         temp_buffer:EpisodeBuffer = self.episode_buffer_fn(
             self.nS,
             self.gamma,
@@ -382,7 +320,6 @@ class PPO():
             self.max_buffer_episode_steps
         )
         
-        # Use existing environments to fill the buffer
         envs = self.make_envs_fn(self.make_env_fn, self.n_workers)
         temp_buffer.fill(envs, self.policy_model, self.value_model, 
                         episodeStart=0,
@@ -392,16 +329,13 @@ class PPO():
                         visual=False)
         envs.close()
         
-        # Get the collected states and actions
         states, actions, _, _, _ = temp_buffer.get_stacks()
         
-        # The EWC class needs a PyTorch TensorDataset
         dataset = CustomDictDataset(
             states_dict=states, 
             actions_tensor=actions
         )
         
-        # Register the task dataset with EWC
         self.ewc.register_task(dataset)
 
     def save_checkpoint(self, evaluation_idx, model, suffix):
@@ -428,3 +362,7 @@ class PPO():
                 policy_model.eval()
                 
             final_eval_score, score_std = self.evaluate(policy_model, env, level, n_episodes=100, visual=True)
+
+    def write_info(self, working_dir, filename, value):
+        with open(os.path.join(working_dir, filename), "a") as file:
+                    file.write(value)

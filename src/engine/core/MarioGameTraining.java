@@ -181,7 +181,7 @@ public class MarioGameTraining {
         this.world.visuals = visual;
         // timer by level width
         //this.timer = ((new MarioLevel(Helper.getLevel(levelFileName), false).exitTileX)/2) + 10;
-        this.timer = 30;
+        this.timer = 40;
         this.lastMilestone = 0;
         this.lastCoinCount = 0;
         ProceduralContentGenerationLevel pcg = null;
