@@ -1,3 +1,4 @@
+import json
 import os
 from dictgridstack import DictGridStack
 from marioGame import MarioGame
@@ -37,34 +38,38 @@ if __name__ == '__main__':
       'goal_mean_100_reward': 25000
   }
 
+  pcg = sys.argv[1] if len(sys.argv) > 1 else "blocks=2,enemies=2,pits=1,pipes=1,width_min=40,width_max=50"
+  json_params = sys.argv[2] if len(sys.argv) > 2 else "{policyOptimizerLr: 0.00001, policyOptimizationEpochs: 3, policyClipRange: 0.1, valueOptimizerLr: 0.00001, valueOptimizationEpochs: 3, ewcLambda: 10000.0, maxBufferEpisodes: 96, maxBufferEpisodeSteps: 3000, entropyLossWeight: 0.001, nWorkers: 10}"
+  hyperParams = json.loads(json_params)
+
   policy_model_fn = lambda nS, nA: CNNActor(nS, nA, hidden_dims=(256,256))
   policy_model_max_grad_norm = float('inf')
   policy_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
-  policy_optimizer_lr = 0.00001
-  policy_optimization_epochs = 3
+  policy_optimizer_lr = hyperParams.get('policyOptimizerLr', 0.00001)
+  policy_optimization_epochs = hyperParams.get('policyOptimizationEpochs', 3)
   policy_sample_ratio = 0.8
-  policy_clip_range = 0.1
+  policy_clip_range = hyperParams.get('policyClipRange', 0.1)
   policy_stopping_kl = 0.02
 
   value_model_fn = lambda nS: CNNCritic(nS, hidden_dims=(256,256))
   value_model_max_grad_norm = float('inf')
   value_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
-  value_optimizer_lr = 0.00001
-  value_optimization_epochs = 3
+  value_optimizer_lr = hyperParams.get('valueOptimizerLr', 0.00001)
+  value_optimization_epochs = hyperParams.get('valueOptimizationEpochs', 3)
   value_sample_ratio = 0.8
   value_clip_range = float('inf')
   value_stopping_mse = 25
 
   ewc_fn = lambda policy_model, ewc_lambda: EWC(policy_model, ewc_lambda)
-  ewc_lambda = 10000.0
+  ewc_lambda = hyperParams.get('ewcLambda', 10000.0)
 
   episode_buffer_fn = lambda sd, g, t, nw, me, mes: EpisodeBuffer(sd, g, t, nw, me, mes)
-  max_buffer_episodes = 96
-  max_buffer_episode_steps = 3000
+  max_buffer_episodes = hyperParams.get('maxBufferEpisodes', 96)
+  max_buffer_episode_steps = hyperParams.get('maxBufferEpisodeSteps', 3000)
 
-  entropy_loss_weight = 0.001
+  entropy_loss_weight = hyperParams.get('entropyLossWeight', 0.001)
   tau = 0.97
-  n_workers = 10
+  n_workers = hyperParams.get('nWorkers', 10)
 
   env_name, gamma, max_minutes, \
   max_episodes, goal_mean_100_reward = environment_settings.values()
@@ -98,7 +103,7 @@ if __name__ == '__main__':
   # lose_abs_paths = [os.path.join(lose_path, f) for f in os.listdir(lose_path)]
   # timeout_abs_paths = [os.path.join(timeout_path, f) for f in os.listdir(timeout_path)]
   # all_abs_paths = lose_abs_paths + timeout_abs_paths
-  pcg = sys.argv[1] if len(sys.argv) > 1 else "blocks=2,enemies=2,pits=1,pipes=1,width_min=40,width_max=50"
+ 
 
   root_dir = 'C:/thesis_data/{}'.format(pcg)
   if not os.path.exists(root_dir):
