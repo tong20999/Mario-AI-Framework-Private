@@ -20,6 +20,10 @@ from ppo.cnn import CNNActor
 from ppo.custom_dataset import CustomDictDataset
 from ppo.episodebuffer import EpisodeBuffer
 from ppo.ewc import EWC
+import socket
+import threading
+import time
+import queue
 
 LEAVE_PRINT_EVERY_N_SECS = 300
 ERASE_LINE = '\x1b[2K'
@@ -86,6 +90,46 @@ class PPO():
         self.entropy_loss_weight = entropy_loss_weight
         self.tau = tau
         self.n_workers = n_workers
+        self.received_data_queue = queue.Queue()
+
+    def handle_client(self, conn:socket.socket, addr):
+        try:
+            while True:
+                data = conn.recv(64)
+                if not data:
+                    print(f"Client {addr} disconnected.")
+                    break
+                decoded_data = data.decode('utf-8')
+                print(f"Received from {addr}: {decoded_data}")
+                self.received_data_queue.put((addr, decoded_data)) # Put data (with client address) into the queue
+
+        except Exception as e:
+            print(f"Error handling client {addr}: {e}")
+        finally:
+            conn.close() # Ensure the client socket is closed
+            print(f"Connection handler for {addr} closed.")
+
+    def socket_server(self,host, port):
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # Allow re-use of address
+        try:
+            server_socket.bind((host, port))
+            server_socket.listen(5) # Max 5 queued connections
+            print(f"Socket server listening on {host}:{port}")
+
+            while True:
+                conn, addr = server_socket.accept() # This blocks until a new client connects
+                print(f"Accepted connection from {addr}")
+                # Start a new thread to handle this client
+                client_handler_thread = threading.Thread(target=self.handle_client, args=(conn, addr))
+                client_handler_thread.daemon = True # Allows main program to exit even if client threads are running
+                client_handler_thread.start()
+
+        except Exception as e:
+            print(f"Socket server (accept loop) error: {e}")
+        finally:
+            server_socket.close()
+            print("Main socket server listener closed.")
 
     def optimize_model(self):
         states, actions, returns, gaes, logpas = self.episode_buffer.get_stacks()
@@ -238,6 +282,14 @@ class PPO():
         training_time = 0
         episode = 0
         evaluation_count = 0
+
+        SERVER_HOST = '0.0.0.0'
+        SERVER_PORT = 6100
+
+        # Start the main socket server listener in a new thread
+        server_listener_thread = threading.Thread(target=self.socket_server, args=(SERVER_HOST, SERVER_PORT))
+        server_listener_thread.daemon = True
+        server_listener_thread.start()
        
         try:
             while True:
@@ -270,6 +322,12 @@ class PPO():
                 self.write_info(working_dir, "training_time.txt", "{}\n".format(training_time))
                 self.write_info(working_dir, "wallclock_time.txt", "{}\n".format(wallclock_time))
                 episode += n_ep_batch
+                if not self.received_data_queue.empty():
+                    try:
+                        addr, value = self.received_data_queue.get_nowait()
+                        break
+                    except queue.Empty:
+                        pass
                 # training_is_over = evaluation_count == 2000
                 # if training_is_over:
                 #     break
