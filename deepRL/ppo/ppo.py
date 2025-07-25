@@ -353,19 +353,22 @@ class PPO():
     def evaluate(self, eval_model:CNNActor, eval_env, level:str, n_episodes=1, greedy=True, visual=True):
         rs = []
         for _ in range(n_episodes):
-            info = {"episode" : self.evaluatationCount, "evaluation" : True, "visual":visual, "level" : level}
-            self.evaluatationCount += 1
-            s, _  = eval_env.reset(options=info)
-            d = False
-            rs.append(0)
-            for _ in count():
-                if greedy:
-                    a = eval_model.select_greedy_action(s)
-                else: 
-                    a = eval_model.select_action(s)
-                s, r, d, t, _ = eval_env.step(a)
-                rs[-1] += r
-                if d or t: break
+            try:
+                info = {"episode" : self.evaluatationCount, "evaluation" : True, "visual":visual, "level" : level}
+                self.evaluatationCount += 1
+                s, _  = eval_env.reset(options=info)
+                d = False
+                rs.append(0)
+                for _ in count():
+                    if greedy:
+                        a = eval_model.select_greedy_action(s)
+                    else: 
+                        a = eval_model.select_action(s)
+                    s, r, d, t, _ = eval_env.step(a)
+                    rs[-1] += r
+                    if d or t: break
+            except KeyboardInterrupt:
+                pass
         return np.mean(rs), np.std(rs)
 
     def finish_task(self, level_pool: list, rehearsal_level_tasks: list[list]):

@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 # Define the file path
-log_file = "C:/thesis_data/blocks=2,enemies=2,pits=1,pipes=1,width_min=40,width_max=50/2/evaluation_score.txt"
+log_file = "C:/thesis_data/blocks=2,enemies=1,pits=1,pipes=1,width_min=40,width_max=50/2/evaluation_score.txt"
 
 rewards_history = []
 rewards_history_mean = []

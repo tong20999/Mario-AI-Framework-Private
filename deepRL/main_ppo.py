@@ -1,5 +1,4 @@
-import json
-import os
+import os, sys, base64, json
 from dictgridstack import DictGridStack
 from marioGame import MarioGame
 from ppo.cnn import CNNActor, CNNCritic
@@ -12,9 +11,6 @@ import torch.optim as optim
 import torch.multiprocessing as mp
 from ppo.ppo import PPO
 import rlstatistics as statistics
-import sys
-
-
 
 def make_env_fn():
   # Wrap the base environment with our new frame stacker
@@ -39,8 +35,8 @@ if __name__ == '__main__':
   }
 
   pcg = sys.argv[1] if len(sys.argv) > 1 else "blocks=2,enemies=2,pits=1,pipes=1,width_min=40,width_max=50"
-  json_params = sys.argv[2] if len(sys.argv) > 2 else "{policyOptimizerLr: 0.00001, policyOptimizationEpochs: 3, policyClipRange: 0.1, valueOptimizerLr: 0.00001, valueOptimizationEpochs: 3, ewcLambda: 10000.0, maxBufferEpisodes: 96, maxBufferEpisodeSteps: 3000, entropyLossWeight: 0.001, nWorkers: 10}"
-  hyperParams = json.loads(json_params)
+  json_params = sys.argv[2] if len(sys.argv) > 2 else '''{"policyOptimizerLr":0.00001,"policyOptimizationEpochs":3,"policyClipRange":0.1,"valueOptimizerLr":0.00001,"valueOptimizationEpochs":3,"ewcLambda":10000,"maxBufferEpisodes":96,"maxBufferEpisodeSteps":3000,"entropyLossWeight":0.001,"nWorkers":10}'''
+  hyperParams = json.loads(base64.b64decode(json_params).decode("utf-8"))
 
   policy_model_fn = lambda nS, nA: CNNActor(nS, nA, hidden_dims=(256,256))
   policy_model_max_grad_norm = float('inf')
@@ -131,7 +127,7 @@ if __name__ == '__main__':
 
   evaluation_levels = level_pool
 
-  # agent.play(make_env_fn, policy_model_fn, "blocks=1,enemies=1,pits=1,pipes=1,width_min=40,width_max=40,fps=30")
+  # agent.play(make_env_fn, policy_model_fn, "blocks=15,enemies=13,pits=3,pipes=3,width_min=100,width_max=100,fps=45")
   statistics.write_hyperparameters(
        working_dir,
               policy_optimizer_lr,
