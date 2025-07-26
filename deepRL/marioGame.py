@@ -23,38 +23,25 @@ all_possible_input:list[list[bool]] = [
 
 class MarioGame(SocketEnv):
     def __init__(self, fps: int = 10):
-        # Call parent initializer
         super(MarioGame, self).__init__()
         self.fps = fps
-        
-        # Initialize the spaces. These will be handled by our custom pickling methods.
         self._init_spaces()
 
     def _init_spaces(self):
-        # NEW: Define the space as a Dictionary
         self.observation_space = gym.spaces.Dict({
-            # CNN part: 1 channel, 16x16 grid. Values are binary (0 or 1).
             'grid': gym.spaces.Box(low=0, high=1, shape=(1, 16, 16), dtype=np.uint8),
-            # Vector part: 15 features. Values are binary.
-            'vector': gym.spaces.Box(low=0, high=41, shape=(41,), dtype=np.uint8) # Adjust high based on actual max values
+            'vector': gym.spaces.Box(low=0, high=41, shape=(41,), dtype=np.uint8)
         })
         
-        # The action space should be Discrete for FCCA's Categorical output
         self.action_space = gym.spaces.Discrete(len(all_possible_input))
 
     def _parse_observation(self, payload: bytes) -> dict:
-        """Helper to parse a flat byte payload into a dictionary observation."""
         grid_size = 16 * 16
         grid_part = np.array(list(payload[:grid_size]), dtype=np.uint8).reshape(1, 16, 16)
         vector_part = np.array(list(payload[grid_size:]), dtype=np.uint8)
         return {'grid': grid_part, 'vector': vector_part}
 
     def __getstate__(self):
-        """
-        Prepare the entire object for pickling.
-        This method is now solely responsible for the state.
-        """
-        # Start with a copy of the object's full dictionary.
         state = self.__dict__.copy()
 
         # Remove ALL known unpickleable attributes from both parent and child.
@@ -66,13 +53,7 @@ class MarioGame(SocketEnv):
         return state
 
     def __setstate__(self, state):
-        """
-        Restore the object in the new process.
-        """
-        # Restore the pickleable attributes.
         self.__dict__.update(state)
-        
-        # Now, explicitly re-initialize ALL unpickleable attributes we removed.
         self.client_socket = None
         self._init_spaces()
 
@@ -83,11 +64,9 @@ class MarioGame(SocketEnv):
     def _receive_reset(self):
         data = self._receive_fixed(1024)
         op_code = data[:2].decode('utf-8')
-        # The total shape is now the sum of the sizes of the spaces
         obs_shape = np.prod(self.observation_space['grid'].shape) + np.prod(self.observation_space['vector'].shape)
         payload = data[2:2 + obs_shape]
         assert op_code == '01'
-        # NEW: Parse the observation into a dictionary
         return self._parse_observation(payload)
     
     def _receive_step(self) -> tuple[Any, SupportsFloat, bool, bool, dict[str, Any]]:
@@ -101,7 +80,6 @@ class MarioGame(SocketEnv):
         truncated  = True if payload[5] else False
         obs_shape = np.prod(self.observation_space['grid'].shape) + np.prod(self.observation_space['vector'].shape)
         obs_bytes = payload[6: 6 + obs_shape]
-        # NEW: Parse the observation into a dictionary
         observation = self._parse_observation(obs_bytes)
         return observation, reward, terminated, truncated, {}
         
@@ -111,9 +89,7 @@ class MarioGame(SocketEnv):
         visual = options.get("visual") if options else False
         level = options.get("level") if options else ""
 
-         # Encode the level string to bytes
         level_bytes = level.encode('utf-8')
-        # Get the length of the encoded string
         level_length = len(level_bytes)
 
         payload = struct.pack(f'>i??I{level_length}s', episode, evaluation, visual, level_length, level_bytes)
