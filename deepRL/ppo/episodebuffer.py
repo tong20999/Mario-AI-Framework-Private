@@ -65,31 +65,6 @@ class EpisodeBuffer():
         self.current_ep_idxs = np.arange(self.n_workers, dtype=np.uint16)
         gc.collect()
 
-    # def split_ratio(self, denominator: int):
-    #     first = round(denominator * 2 / 3)   # approx 66.67%
-    #     second = denominator - first         # remainder (~33.33%)
-    #     return first, second
-
-    def assign_levels(self, current_level, level_pool, n_new_level_workers, n_rehearsal_workers):
-        # Create the list of levels to assign.
-        levels_to_assign = []
-
-        # 1. Add the new level for the primary workers.
-        levels_to_assign.extend([current_level] * n_new_level_workers)
-
-        # 2. Add random old levels for the rehearsal workers.
-        for _ in range(n_rehearsal_workers):
-            if not level_pool:
-                rehearsal_level = current_level
-            else:
-                rehearsal_level = random.choice(level_pool)
-            levels_to_assign.append(rehearsal_level)
-
-        # Shuffle so worker order is randomized.
-        random.shuffle(levels_to_assign)
-
-        return levels_to_assign
-
     def fill(self, envs:MultiprocessEnv, policy_model, value_model, episodeStart:int,
              level_pool: list[str], 
              rehearsal_level_tasks: list[list[str]],
@@ -122,18 +97,15 @@ class EpisodeBuffer():
         worker_seconds = np.array([time.time(),] * self.n_workers, dtype=np.float64)
 
         buffer_full = False
-        # Correctly get the number of episodes already completed in the buffer
         length = len(np.where(self.episode_steps > 0)[0])
         
-        while not buffer_full and length < self.max_episodes: # Simplified condition
+        while not buffer_full and length < self.max_episodes:
             with torch.no_grad():
                 actions, logpas, are_exploratory = policy_model.np_pass(states)
-                # The model's forward pass now correctly handles the numpy dict
                 values = value_model(states)
 
             next_states, rewards, terminals, truncateds, _ = envs.step(actions)
             
-            # Store the current step's data
             self.grid_states_mem[self.current_ep_idxs, worker_steps] = states['grid']
             self.vector_states_mem[self.current_ep_idxs, worker_steps] = states['vector']
             self.actions_mem[self.current_ep_idxs, worker_steps] = actions
@@ -181,7 +153,6 @@ class EpisodeBuffer():
                     ep_returns = np.array([np.sum(ep_discounts[:T+1-t] * ep_rewards[t:]) for t in range(T)])
                     self.returns_mem[e_idx, :T] = ep_returns
 
-                    ## FIX 3: Retrieve both parts of the state for the completed episode
                     ep_states = {
                         'grid': self.grid_states_mem[e_idx, :T],
                         'vector': self.vector_states_mem[e_idx, :T]
@@ -199,22 +170,18 @@ class EpisodeBuffer():
                     gaes = np.array([np.sum(self.tau_discounts[:T-t] * deltas[t:]) for t in range(T)])
                     self.gaes_mem[e_idx, :T] = gaes
                     
-                    # Reset worker-local data
                     worker_exploratory[w_idx, :] = False
                     worker_rewards[w_idx, :] = 0
                     worker_steps[w_idx] = 0
                     worker_seconds[w_idx] = time.time()
 
-                    # Check if buffer is full and get a new episode index
-                    length += 1 # A new episode is complete
+                    length += 1
                     new_ep_id = length - 1 + self.n_workers
                     if new_ep_id >= self.max_episodes:
                         buffer_full = True
                         break 
                     self.current_ep_idxs[w_idx] = new_ep_id
 
-        # --- Final data processing at the end of the method ---
-        # (This part was correct in the previous step but is included for completeness)
         ep_idxs = self.episode_steps > 0
         ep_t = self.episode_steps[ep_idxs]
 
