@@ -34,9 +34,12 @@ if __name__ == '__main__':
       'goal_mean_100_reward': 25000
   }
 
-  pcg = sys.argv[1] if len(sys.argv) > 1 else "blocks=2,enemies=2,pits=1,pipes=1,width_min=40,width_max=50"
-  json_params = sys.argv[2] if len(sys.argv) > 2 else '''{"policyOptimizerLr":0.00001,"policyOptimizationEpochs":3,"policyClipRange":0.1,"valueOptimizerLr":0.00001,"valueOptimizationEpochs":3,"ewcLambda":10000,"maxBufferEpisodes":96,"maxBufferEpisodeSteps":3000,"entropyLossWeight":0.001,"nWorkers":10}'''
-  hyperParams = json.loads(base64.b64decode(json_params).decode("utf-8"))
+  default_pcg = "blocks=2,enemies=2,pits=1,pipes=1,width_min=40,width_max=50"
+  pcg = sys.argv[1] if len(sys.argv) > 1 else default_pcg
+
+  default_hyper_params = '''{"policyOptimizerLr":0.00001,"policyOptimizationEpochs":3,"policyClipRange":0.1,"valueOptimizerLr":0.00001,"valueOptimizationEpochs":3,"ewcLambda":10000,"maxBufferEpisodes":96,"maxBufferEpisodeSteps":3000,"entropyLossWeight":0.001,"nWorkers":10}'''
+  hyperParams = json.loads(base64.b64decode(sys.argv[2]).decode("utf-8")) if len(sys.argv) > 2 else json.loads(default_hyper_params)
+
 
   policy_model_fn = lambda nS, nA: CNNActor(nS, nA, hidden_dims=(256,256))
   policy_model_max_grad_norm = float('inf')
