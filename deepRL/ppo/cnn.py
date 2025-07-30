@@ -5,21 +5,40 @@ import numpy as np
 from gymnasium.spaces import Dict
 
 class CNNBase(nn.Module):
-    def __init__(self, observation_space: Dict, hidden_dims=(256, 256)):
+    def __init__(self, observation_space: Dict, embedding_dim: int = 16, hidden_dims=(256, 256)):
         super(CNNBase, self).__init__()
+        num_object_types = 128
         
-        grid_shape = observation_space['grid'].shape
-        self.cnn = nn.Sequential(
-            nn.Conv2d(grid_shape[0], 32, kernel_size=3, stride=1, padding=1),
+        self.scene_embedding = nn.Embedding(num_object_types, embedding_dim)
+        self.enemy_embedding = nn.Embedding(num_object_types, embedding_dim)
+        
+        self.scene_cnn = nn.Sequential(
+            nn.Conv2d(embedding_dim, 32, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Flatten(),
+        )
+        
+        self.enemy_cnn = nn.Sequential(
+            nn.Conv2d(embedding_dim, 32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Flatten(),
         )
 
-        with torch.no_grad():
-            dummy_grid = torch.zeros(1, *grid_shape)
-            cnn_output_dim = self.cnn(dummy_grid).shape[1]
+        cnn_feature_size = 64 * 4 * 4 
+        
+        scene_channels = observation_space['gridScene'].shape[0]
+        scene_cnn_total_dim = scene_channels * cnn_feature_size
+
+        enemy_channels = observation_space['gridEnemies'].shape[0]
+        enemy_cnn_total_dim = enemy_channels * cnn_feature_size
 
         vector_shape = observation_space['vector'].shape
         self.mlp = nn.Sequential(
@@ -27,8 +46,9 @@ class CNNBase(nn.Module):
             nn.ReLU()
         )
         
+        combined_cnn_dim = scene_cnn_total_dim + enemy_cnn_total_dim
         self.combined_mlp = nn.Sequential(
-            nn.Linear(cnn_output_dim + 64, hidden_dims[0]),
+            nn.Linear(combined_cnn_dim + 64, hidden_dims[0]),
             nn.ReLU(),
             nn.Linear(hidden_dims[0], hidden_dims[1]),
             nn.ReLU(),
@@ -37,18 +57,32 @@ class CNNBase(nn.Module):
         self.feature_dim = hidden_dims[1]
 
     def forward(self, states: dict):
-        # This now correctly assumes 'states' contains tensors
-        cnn_out = self.cnn(states['grid'])
+        scene_grid = states['gridScene'].long()
+        b, c, h, w = scene_grid.shape
+        scene_grid_reshaped = scene_grid.view(b * c, h, w)
+        embedded_scene = self.scene_embedding(scene_grid_reshaped)
+        permuted_scene = embedded_scene.permute(0, 3, 1, 2)
+        scene_out_flat = self.scene_cnn(permuted_scene)
+        scene_out = scene_out_flat.view(b, -1)
+        
+        enemy_grid = states['gridEnemies'].long()
+        b_e, c_e, h_e, w_e = enemy_grid.shape
+        enemy_grid_reshaped = enemy_grid.view(b_e * c_e, h_e, w_e)
+        embedded_enemy = self.enemy_embedding(enemy_grid_reshaped)
+        permuted_enemy = embedded_enemy.permute(0, 3, 1, 2)
+        enemy_out_flat = self.enemy_cnn(permuted_enemy)
+        enemy_out = enemy_out_flat.view(b_e, -1)
+        
         mlp_out = self.mlp(states['vector'])
         
-        combined_features = torch.cat([cnn_out, mlp_out], dim=1)
+        combined_features = torch.cat([scene_out, enemy_out, mlp_out], dim=1)
         final_features = self.combined_mlp(combined_features)
         
         return final_features
 
 class CNNActor(CNNBase):
-    def __init__(self, observation_space, output_dim, hidden_dims=(256, 256)):
-        super(CNNActor, self).__init__(observation_space, hidden_dims)
+    def __init__(self, observation_space, output_dim, embedding_dim=16, hidden_dims=(256, 256)):
+        super(CNNActor, self).__init__(observation_space, embedding_dim, hidden_dims)
         self.actor_head = nn.Linear(self.feature_dim, output_dim)
         
         device = "cpu"
@@ -57,41 +91,38 @@ class CNNActor(CNNBase):
         self.device = torch.device(device)
         self.to(self.device)
 
-    def _format_single_obs(self, obs: dict):
-        """
-        Helper to convert a single dictionary observation (from env.reset() or env.step())
-        into a batched dictionary of tensors for the network.
-        """
-        # Add a batch dimension to each numpy array and convert to a tensor
+    def _format_obs(self, obs: dict):
         return {
-            key: torch.tensor(value, dtype=torch.float32, device=self.device).unsqueeze(0)
-            for key, value in obs.items()
+            'gridScene': torch.tensor(obs['gridScene'], dtype=torch.long, device=self.device),
+            'gridEnemies': torch.tensor(obs['gridEnemies'], dtype=torch.long, device=self.device),
+            'vector': torch.tensor(obs['vector'], dtype=torch.float32, device=self.device)
+        }
+
+    def _format_single_obs(self, obs: dict):
+        return {
+            'gridScene': torch.tensor(obs['gridScene'], dtype=torch.long, device=self.device).unsqueeze(0),
+            'gridEnemies': torch.tensor(obs['gridEnemies'], dtype=torch.long, device=self.device).unsqueeze(0),
+            'vector': torch.tensor(obs['vector'], dtype=torch.float32, device=self.device).unsqueeze(0)
         }
 
     def forward(self, states, is_batched=False):
-        """
-        The main forward pass. Can handle both single (from evaluation) 
-        and batched (from buffer) observations.
-        """
         if not is_batched:
-             states = self._format_single_obs(states)
-        elif not isinstance(states['grid'], torch.Tensor):
-            # Batched, but still numpy. Convert to tensor.
-            states = {k: torch.tensor(v, dtype=torch.float32, device=self.device) for k, v in states.items()}
+            states = self._format_single_obs(states)
+        elif not isinstance(states['gridScene'], torch.Tensor):
+            states = self._format_obs(states)
 
         features = super().forward(states)
         logits = self.actor_head(features)
         return logits
 
-    # --- Methods for the EpisodeBuffer (handle batches) ---
     def np_pass(self, states):
         logits = self.forward(states, is_batched=True)
-        np_logits = logits.detach().cpu().numpy()
         dist = torch.distributions.Categorical(logits=logits)
         actions = dist.sample()
         np_actions = actions.detach().cpu().numpy()
         logpas = dist.log_prob(actions)
         np_logpas = logpas.detach().cpu().numpy()
+        np_logits = logits.detach().cpu().numpy()
         is_exploratory = np_actions != np.argmax(np_logits, axis=1)
         return np_actions, np_logpas, is_exploratory
     
@@ -104,8 +135,6 @@ class CNNActor(CNNBase):
         logpas = dist.log_prob(actions.squeeze())
         entropies = dist.entropy()
         return logpas, entropies
-
-    # --- Methods for Evaluation (handle single observations) ---
     
     def select_action(self, obs: dict):
         logits = self.forward(obs, is_batched=False)
@@ -115,14 +144,13 @@ class CNNActor(CNNBase):
 
     def select_greedy_action(self, obs: dict):
         logits = self.forward(obs, is_batched=False)
-        # np.argmax works on the tensor's first (and only) batch entry
         action = np.argmax(logits.detach().cpu().numpy()[0])
         return action
 
 
 class CNNCritic(CNNBase):
-    def __init__(self, observation_space, hidden_dims=(256, 256)):
-        super(CNNCritic, self).__init__(observation_space, hidden_dims)
+    def __init__(self, observation_space, embedding_dim=16, hidden_dims=(256, 256)):
+        super(CNNCritic, self).__init__(observation_space, embedding_dim, hidden_dims)
         self.critic_head = nn.Linear(self.feature_dim, 1)
 
         device = "cpu"
@@ -132,12 +160,12 @@ class CNNCritic(CNNBase):
         self.to(self.device)
 
     def forward(self, states):
-        """
-        FIX: This is the entry point. It checks if the input is NumPy and converts it.
-        """
-        if not isinstance(states['grid'], torch.Tensor):
-            # Convert dictionary of NumPy arrays to dictionary of Tensors
-            states = {k: torch.tensor(v, dtype=torch.float32, device=self.device) for k, v in states.items()}
+        if not isinstance(states['gridScene'], torch.Tensor):
+            states = {
+                'gridScene': torch.tensor(states['gridScene'], dtype=torch.long, device=self.device),
+                'gridEnemies': torch.tensor(states['gridEnemies'], dtype=torch.long, device=self.device),
+                'vector': torch.tensor(states['vector'], dtype=torch.float32, device=self.device)
+            }
 
         features = super().forward(states)
         values = self.critic_head(features)

@@ -85,7 +85,7 @@ public class MarioGameTraining {
     public float episodeReward = 0;
     int episodeTimer = 0;
     int evaluationTimer = 0;
-    int frameSkip = 4;
+    int frameSkip = 5;
     int episode = -1;
     boolean isNormalSpeed = false;
     Objective objective;
@@ -181,14 +181,14 @@ public class MarioGameTraining {
         this.world.visuals = visual;
         // timer by level width
         //this.timer = ((new MarioLevel(Helper.getLevel(levelFileName), false).exitTileX)/2) + 10;
-        this.timer = 40;
+        this.timer = 20;
         this.lastMilestone = 0;
         this.lastCoinCount = 0;
         ProceduralContentGenerationLevel pcg = null;
         String level;
         if(!levelFileName.contains(".txt")){
             pcg = ProceduralContentGenerationLevel.parseLevel(levelFileName);
-            pcg.generate(true);
+            pcg.generate(false);
             level = pcg.getContent();
         } else {
             level = Helper.getFileFromLevel(levelFileName);

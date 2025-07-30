@@ -1,9 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import os
 
 # Define the file path
-log_file = "C:/thesis_data/blocks=2,enemies=1,pits=1,pipes=1,width_min=40,width_max=50/2/evaluation_score.txt"
+train_dir = "C:/thesis_data/blocks=1,enemies=1,pits=1,pipes=0,width_min=20,width_max=20/4/"
+log_file = os.path.join(train_dir, "value_losses.txt")
+save_dir = os.path.join(train_dir, "reconstructed_chart.png")
 
 rewards_history = []
 rewards_history_mean = []
@@ -43,5 +46,5 @@ if not moving_avg.empty and pd.notna(moving_avg.iloc[-1]):
 
 ax.legend()
 plt.tight_layout()
-plt.savefig('C:/thesis_data/blocks=2,enemies=2,pits=1,pipes=1,width_min=40,width_max=50/1/reconstructed_chart.png')
+plt.savefig(save_dir)
 plt.show()

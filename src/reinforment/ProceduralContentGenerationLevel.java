@@ -37,21 +37,21 @@ public class ProceduralContentGenerationLevel {
 
         ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel.randomWidth(widthMin,widthMax);
         if(pitCount > 0){
-            pcgLevel.addPit(4,2, 2, 5, pitCount);
+            pcgLevel.addPit(6,2, 2, 5, pitCount);
         }
 
         if(pipeCount > 0){
-            pcgLevel.addPipe(4, 2, pipeCount);
+            pcgLevel.addPipe(6, 2, pipeCount);
         }
 
         if(enemyCount > 0){
             //pcgLevel.addEnemyRandomBetween(1,10, 4,2, EnumEnemy.GOOMBA);
-            pcgLevel.addEnemy(1,2, enemyCount, EnumEnemy.GOOMBA);
+            pcgLevel.addEnemy(6,2, enemyCount, EnumEnemy.GOOMBA);
         }
 
         if(blockCount > 0){
             //pcgLevel.addBlockRandomBetween(1,10, 2,2);
-            pcgLevel.addBlock(1, 2, blockCount);
+            pcgLevel.addBlock(6, 2, blockCount);
         }
 
         return pcgLevel;

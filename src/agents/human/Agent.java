@@ -70,13 +70,10 @@ public class Agent extends KeyAdapter implements MarioAgent {
                 this.actions[MarioActions.SPEED.getValue()] = isPressed;
                 break;
             case KeyEvent.VK_M:
-                var complate = model.getMarioCompleteObservation(0,0);
-                var a = model.findNearestEnemyVector();
-                var marioPos =  model.getMarioTile();
-                var b = model.findNearestBlockVector();
-                var c = State.toByte(model);
-                System.out.println(MessageFormat.format("Mario [{0},{1}], Enemy [{2},{3}] Block [{4},{5}]",
-                        marioPos[0], marioPos[1], a[0], a[1], b[0], b[1]));
+                var obs = model.getMarioSceneObservation(0);
+                var ene = model.getScreenSceneObservation(0);
+                var a = model.getMarioScreenTilePos();
+                int b = 5;
                 break;
         }
     }

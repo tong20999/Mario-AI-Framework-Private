@@ -1,7 +1,6 @@
 import struct
-from typing import Any, SupportsFloat
+from typing import Any, SupportsFloat, Optional
 import gymnasium as gym
-from typing import Optional
 import numpy as np
 
 # Assuming socketEnv.py is in the same directory.
@@ -29,27 +28,28 @@ class MarioGame(SocketEnv):
 
     def _init_spaces(self):
         self.observation_space = gym.spaces.Dict({
-            'grid': gym.spaces.Box(low=0, high=1, shape=(1, 16, 16), dtype=np.uint8),
-            'vector': gym.spaces.Box(low=0, high=41, shape=(41,), dtype=np.uint8)
+            'gridScene': gym.spaces.Box(low=0, high=255, shape=(1, 16, 16), dtype=np.uint8),
+            'gridEnemies': gym.spaces.Box(low=0, high=255, shape=(1, 16, 16), dtype=np.uint8),
+            'vector': gym.spaces.Box(low=0, high=255, shape=(14,), dtype=np.uint8)
         })
-        
         self.action_space = gym.spaces.Discrete(len(all_possible_input))
 
     def _parse_observation(self, payload: bytes) -> dict:
         grid_size = 16 * 16
-        grid_part = np.array(list(payload[:grid_size]), dtype=np.uint8).reshape(1, 16, 16)
-        vector_part = np.array(list(payload[grid_size:]), dtype=np.uint8)
-        return {'grid': grid_part, 'vector': vector_part}
+        grid_scene_end = grid_size
+        grid_enemies_end = grid_size * 2
+
+        grid_scene_part = np.array(list(payload[:grid_scene_end]), dtype=np.uint8).reshape(1, 16, 16)
+        grid_enemies_part = np.array(list(payload[grid_scene_end:grid_enemies_end]), dtype=np.uint8).reshape(1, 16, 16)
+        vector_part = np.array(list(payload[grid_enemies_end:]), dtype=np.uint8)
+        
+        return {'gridScene': grid_scene_part, 'gridEnemies': grid_enemies_part, 'vector': vector_part}
 
     def __getstate__(self):
         state = self.__dict__.copy()
-
-        # Remove ALL known unpickleable attributes from both parent and child.
-        # Using .pop() with a default is safer than 'del'
         state.pop('client_socket', None)
         state.pop('observation_space', None)
         state.pop('action_space', None)
-        
         return state
 
     def __setstate__(self, state):
@@ -61,29 +61,40 @@ class MarioGame(SocketEnv):
         select_action = all_possible_input[action]
         return bytes(select_action)
 
+    def _get_obs_shape(self) -> int:
+        grid_scene_size = np.prod(self.observation_space['gridScene'].shape)
+        grid_enemies_size = np.prod(self.observation_space['gridEnemies'].shape)
+        vector_size = np.prod(self.observation_space['vector'].shape)
+        return grid_scene_size + grid_enemies_size + vector_size
+
     def _receive_reset(self):
         data = self._receive_fixed(1024)
         op_code = data[:2].decode('utf-8')
-        obs_shape = np.prod(self.observation_space['grid'].shape) + np.prod(self.observation_space['vector'].shape)
-        payload = data[2:2 + obs_shape]
         assert op_code == '01'
+        
+        obs_shape = self._get_obs_shape()
+        payload = data[2:2 + obs_shape]
+        
         return self._parse_observation(payload)
     
     def _receive_step(self) -> tuple[Any, SupportsFloat, bool, bool, dict[str, Any]]:
         data = self._receive_fixed(1024)
         op_code = data[:2].decode('utf-8')
-        payload = data[2:]
         assert op_code == '02'
-        rewardByte = payload[0:4]
-        reward:float = struct.unpack('>f', rewardByte)[0]
-        terminated = True if payload[4] else False
-        truncated  = True if payload[5] else False
-        obs_shape = np.prod(self.observation_space['grid'].shape) + np.prod(self.observation_space['vector'].shape)
+
+        payload = data[2:]
+        reward_byte = payload[0:4]
+        reward:float = struct.unpack('>f', reward_byte)[0]
+        terminated = bool(payload[4])
+        truncated  = bool(payload[5])
+        
+        obs_shape = self._get_obs_shape()
         obs_bytes = payload[6: 6 + obs_shape]
+        
         observation = self._parse_observation(obs_bytes)
         return observation, reward, terminated, truncated, {}
         
-    def reset(self, seed: Optional[int] = None, options: Optional[dict] = None) -> list[int]:
+    def reset(self, seed: Optional[int] = None, options: Optional[dict] = None) -> tuple[dict, dict]:
         episode = options.get("episode") if options else 0
         evaluation = options.get("evaluation") if options else False
         visual = options.get("visual") if options else False
@@ -97,7 +108,7 @@ class MarioGame(SocketEnv):
         observation = self._receive_reset()
         return observation, {}
     
-    def step(self, action:int | np.int64) -> tuple[list[int], SupportsFloat, bool, bool, dict[str, Any]]:
+    def step(self, action:int | np.int64) -> tuple[dict, SupportsFloat, bool, bool, dict[str, Any]]:
         value = action if isinstance(action, int) else np.int64(action).item()
         payload = self._map_action(value)
         self._send_operation('02', payload)

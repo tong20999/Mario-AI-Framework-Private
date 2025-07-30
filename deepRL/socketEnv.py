@@ -1,13 +1,16 @@
 import gymnasium as gym
 import socket
 import logging
-import os
+import os, sys
 
-logging.basicConfig(level=logging.INFO)
+from logger import setup_logging
+
+logger = logging.getLogger('Agent:SocketEnv')
 
 class SocketEnv(gym.Env):
     #def __init__(self, host='192.168.1.47', port=4455):
     def __init__(self, host='localhost', port=4455):
+        setup_logging(logging.INFO)
         self.host = host
         self.port = port
         self.client_socket = None  # Socket will be created lazily.
@@ -18,12 +21,12 @@ class SocketEnv(gym.Env):
 
         try:
             pid = os.getpid()
-            logging.info(f"Process {pid}: Connecting to {self.host}:{self.port}")
+            logger.info(f"Process {pid}: Connecting to {self.host}:{self.port}")
             self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.client_socket.connect((self.host, self.port))
         except ConnectionRefusedError:
             pid = os.getpid()
-            logging.error(f"Process {pid}: Connection refused. Is the server at {self.host}:{self.port} running?")
+            logger.error(f"Process {pid}: Connection refused. Is the server at {self.host}:{self.port} running?")
             raise
 
     def _send_operation(self, op_code: str, payload: bytes = b''):
@@ -48,7 +51,7 @@ class SocketEnv(gym.Env):
     def close(self):
         if self.client_socket:
             pid = os.getpid()
-            logging.info(f"Process {pid}: Closing socket.")
+            logger.info(f"Process {pid}: Closing socket.")
             self.client_socket.close()
             self.client_socket = None
 

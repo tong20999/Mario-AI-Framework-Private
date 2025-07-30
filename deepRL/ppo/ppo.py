@@ -1,5 +1,8 @@
+import logging
 import random
 import matplotlib
+import rlstatistics as statistics
+from logger import setup_logging
 matplotlib.use('TkAgg')
 from scipy import stats
 from typing import Callable
@@ -12,7 +15,7 @@ import glob
 from itertools import cycle, count
 import matplotlib.pyplot as plt
 import traceback
-
+import shutil
 from IPython import display
 from torch.utils.data import TensorDataset
 
@@ -24,6 +27,8 @@ import socket
 import threading
 import time
 import queue
+
+logger = logging.getLogger('Agent:PPO')
 
 LEAVE_PRINT_EVERY_N_SECS = 300
 ERASE_LINE = '\x1b[2K'
@@ -59,6 +64,7 @@ class PPO():
                  n_workers):
         assert n_workers > 1
         assert max_buffer_episodes >= n_workers
+        setup_logging(logging.INFO)
 
         self.policy_model_fn = policy_model_fn
         self.policy_model_max_grad_norm = policy_model_max_grad_norm
@@ -97,17 +103,17 @@ class PPO():
             while True:
                 data = conn.recv(64)
                 if not data:
-                    print(f"Client {addr} disconnected.")
+                    logger.info(f"Client {addr} disconnected.")
                     break
                 decoded_data = data.decode('utf-8')
-                print(f"Received from {addr}: {decoded_data}")
+                logger.info(f"Received from {addr}: {decoded_data}")
                 self.received_data_queue.put((addr, decoded_data)) # Put data (with client address) into the queue
 
         except Exception as e:
-            print(f"Error handling client {addr}: {e}")
+            logger.error(f"Error handling client {addr}: {e}")
         finally:
             conn.close() # Ensure the client socket is closed
-            print(f"Connection handler for {addr} closed.")
+            logger.info(f"Connection handler for {addr} closed.")
 
     def socket_server(self,host, port):
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -115,21 +121,21 @@ class PPO():
         try:
             server_socket.bind((host, port))
             server_socket.listen(5) # Max 5 queued connections
-            print(f"Socket server listening on {host}:{port}")
+            logger.info(f"Socket server listening on {host}:{port}")
 
             while True:
                 conn, addr = server_socket.accept() # This blocks until a new client connects
-                print(f"Accepted connection from {addr}")
+                logger.info(f"Accepted connection from {addr}")
                 # Start a new thread to handle this client
                 client_handler_thread = threading.Thread(target=self.handle_client, args=(conn, addr))
                 client_handler_thread.daemon = True # Allows main program to exit even if client threads are running
                 client_handler_thread.start()
 
         except Exception as e:
-            print(f"Socket server (accept loop) error: {e}")
+            logger.error(f"Socket server (accept loop) error: {e}")
         finally:
             server_socket.close()
-            print("Main socket server listener closed.")
+            logger.info("Main socket server listener closed.")
 
     def optimize_model(self):
         states, actions, returns, gaes, logpas = self.episode_buffer.get_stacks()
@@ -137,6 +143,10 @@ class PPO():
             values = self.value_model(states).detach()
         gaes = (gaes - gaes.mean()) / (gaes.std() + EPS)
         n_samples = len(actions)
+        
+        policy_losses = []
+        value_losses = []
+        entropy_losses = []
         
         for _ in range(self.policy_optimization_epochs):
             batch_size = int(self.policy_sample_ratio * n_samples)
@@ -151,18 +161,20 @@ class PPO():
             ratios = (logpas_pred - logpas_batch).exp()
             pi_obj = gaes_batch * ratios
             pi_obj_clipped = gaes_batch * ratios.clamp(1.0 - self.policy_clip_range,
-                                                       1.0 + self.policy_clip_range)
+                                                    1.0 + self.policy_clip_range)    
             policy_loss = -torch.min(pi_obj, pi_obj_clipped).mean()
             entropy_loss = -entropies_pred.mean() * self.entropy_loss_weight
+            
+            policy_losses.append(policy_loss.item())
+            entropy_losses.append(entropy_loss.item())
 
-            # Calculate the EWC penalty if the ewc object exists
             ewc_penalty = self.ewc.penalty()
 
             self.policy_optimizer.zero_grad()
-            total_loss = policy_loss + entropy_loss + ewc_penalty
-            total_loss.backward()
+            total_policy_loss = policy_loss + entropy_loss + ewc_penalty
+            total_policy_loss.backward()
             torch.nn.utils.clip_grad_norm_(self.policy_model.parameters(), 
-                                           self.policy_model_max_grad_norm)
+                                        self.policy_model_max_grad_norm)
             self.policy_optimizer.step()
             
             with torch.no_grad():
@@ -170,7 +182,6 @@ class PPO():
                 kl = (logpas - logpas_pred_all).mean()
                 if kl.item() > self.policy_stopping_kl:
                     break
-
         for _ in range(self.value_optimization_epochs):
             batch_size = int(self.value_sample_ratio * n_samples)
             batch_idxs = np.random.choice(n_samples, batch_size, replace=False)
@@ -179,50 +190,27 @@ class PPO():
             values_batch = values[batch_idxs]
 
             values_pred = self.value_model(states_batch)
-            values_pred_clipped = values_batch + (values_pred - values_batch).clamp(-self.value_clip_range, 
-                                                                                    self.value_clip_range)
+            values_pred_clipped = values_batch + (values_pred - values_batch).clamp(
+                -self.value_clip_range, self.value_clip_range
+            )
             v_loss = (returns_batch - values_pred).pow(2)
             v_loss_clipped = (returns_batch - values_pred_clipped).pow(2)
             value_loss = torch.max(v_loss, v_loss_clipped).mul(0.5).mean()
-
+            value_losses.append(value_loss.item())   
             self.value_optimizer.zero_grad()
             value_loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.value_model.parameters(), 
-                                           self.value_model_max_grad_norm)
+            torch.nn.utils.clip_grad_norm_(self.value_model.parameters(),
+                                        self.value_model_max_grad_norm)
             self.value_optimizer.step()
 
             with torch.no_grad():
                 values_pred_all = self.value_model(states)
                 mse = (values - values_pred_all).pow(2).mul(0.5).mean()
-                if mse.item() > self.value_stopping_mse:
+                if hasattr(self, 'value_stopping_mse') and mse.item() > self.value_stopping_mse:
                     break
 
-    def plot(self, eva100_reward, save = False):
-        ax.clear()
-        rewards_series = pd.Series(eva100_reward)
-        moving_avg = rewards_series.rolling(window=50, min_periods=10).mean()
-
-        ax.set_title('Result')
-        ax.set_xlabel('Episode')
-        ax.set_ylabel('Reward')
-
-        ax.plot(eva100_reward, alpha=0.5, label='Episode Reward (Mean-100)')
-
-        ax.plot(moving_avg, color='red', linewidth=2, label='Smoothed Average (50ep window)')
-
-        if not moving_avg.empty and pd.notna(moving_avg.iloc[-1]):
-            last_ma_value = moving_avg.iloc[-1]
-            plt.text(len(eva100_reward)-1, last_ma_value, f'{last_ma_value:.2f}')
-
-        ax.legend()
-
-        # --- Saving logic (unchanged) ---
-        if save:
-            plt.savefig(os.path.join(self.working_dir,'result_plot_episode_{}.png'.format(len(eva100_reward))))
-
-        plt.pause(1)
-
-
+        return np.mean(policy_losses), np.mean(value_losses), np.mean(entropy_losses)
+    
     def find_model_file_path(self, start_with):
         current_dir = os.getcwd()
         for f in os.listdir(current_dir):
@@ -233,17 +221,23 @@ class PPO():
     def train(self, make_envs_fn:Callable, make_env_fn:Callable, gamma, 
               max_minutes, max_episodes, goal_mean_100_reward, 
               level_pool:list, rehearsal_level_tasks:list[list],
-              evaluation_levels:list[str], working_dir):
+              evaluation_levels:list[str]):
         training_start, last_debug_time = time.time(), float('-inf')
 
-
-        self.working_dir = working_dir
         self.make_envs_fn = make_envs_fn
         self.make_env_fn = make_env_fn
         self.gamma = gamma
-        
+
+        SERVER_HOST = '0.0.0.0'
+        SERVER_PORT = 6100
+
+        server_listener_thread = threading.Thread(target=self.socket_server, args=(SERVER_HOST, SERVER_PORT))
+        server_listener_thread.daemon = True
+        server_listener_thread.start()
+
         env = self.make_env_fn()
         envs = self.make_envs_fn(make_env_fn, self.n_workers)
+
         SEEDS = (12, 34, 56, 78, 90)
         seed = random.choice(SEEDS)
         torch.manual_seed(seed) ; np.random.seed(seed) ; random.seed(seed)
@@ -270,7 +264,7 @@ class PPO():
 
         ewc_state_path = self.find_model_file_path('model.ewc_state')
         if ewc_state_path is not None:
-            ewc_state = torch.load(ewc_state_path, map_location=self.policy_model.device)
+            ewc_state = torch.load(ewc_state_path, map_location=self.policy_model.device, weights_only=True)
             self.ewc.fisher_matrix = ewc_state.get('fisher', self.ewc.create_empty_clone())
             self.ewc.optimal_params = ewc_state.get('params', {}) # Params can start as empty dict
 
@@ -282,45 +276,50 @@ class PPO():
         training_time = 0
         episode = 0
         evaluation_count = 0
-
-        SERVER_HOST = '0.0.0.0'
-        SERVER_PORT = 6100
-
-        # Start the main socket server listener in a new thread
-        server_listener_thread = threading.Thread(target=self.socket_server, args=(SERVER_HOST, SERVER_PORT))
-        server_listener_thread.daemon = True
-        server_listener_thread.start()
-       
+        self.create_dir(level_pool)
+        self.write_statistic(level_pool, rehearsal_level_tasks, evaluation_levels)
         try:
             while True:
-                episode_timestep, episode_reward, episode_exploration, \
-                episode_seconds = self.episode_buffer.fill(
-                    envs, self.policy_model, self.value_model, episode, 
-                    level_pool, 
-                    rehearsal_level_tasks,
-                    visual=False)
+                try:
+                    episode_timestep, episode_reward, episode_exploration, \
+                    episode_seconds = self.episode_buffer.fill(
+                        envs, self.policy_model, self.value_model, episode, 
+                        level_pool, 
+                        rehearsal_level_tasks,
+                        visual=False)
+                except Exception as e:
+                     if evaluation_count == 0:
+                        shutil.rmtree(self.working_dir)
                 
                 n_ep_batch = len(episode_timestep)
-                self.optimize_model()
+                policy_losses, value_losses, entropy_losses = self.optimize_model()
                 self.episode_buffer.clear()
 
                 # stats
                 evaluation_score, _ = self.evaluate(self.policy_model, env, random.choice(evaluation_levels))
                 evaluation_count +=1
-                if evaluation_count % 1000 == 0:
-                    self.save_checkpoint(evaluation_count, self.policy_model, 'policy')
-                    self.save_checkpoint(evaluation_count, self.value_model, 'value')
+                logger.info('evaluation {} score {} value losses {}'.format(evaluation_count, np.round(evaluation_score, 2), np.round(value_losses, 2)))
+                
                     
                 training_time += episode_seconds.sum()
                 wallclock_time = time.time() - training_start
 
-                self.write_info(working_dir, "episode_timestep.txt", "{}\n".format(episode_timestep))
-                self.write_info(working_dir, "episode_reward.txt", "{}\n".format(np.round(episode_reward, 2)))
-                self.write_info(working_dir, "episode_exploration.txt", "{}\n".format(np.round(episode_exploration, 2)))
-                self.write_info(working_dir, "episode_seconds.txt", "{}\n".format(np.round(episode_seconds, 2)))
-                self.write_info(working_dir, "evaluation_score.txt", "{}\n".format(evaluation_score))
-                self.write_info(working_dir, "training_time.txt", "{}\n".format(training_time))
-                self.write_info(working_dir, "wallclock_time.txt", "{}\n".format(wallclock_time))
+                self.write_info(self.working_dir, "episode_timestep.txt", "{}\n".format(episode_timestep))
+                self.write_info(self.working_dir, "episode_reward.txt", "{}\n".format(np.round(episode_reward, 2)))
+                self.write_info(self.working_dir, "episode_exploration.txt", "{}\n".format(np.round(episode_exploration, 2)))
+                self.write_info(self.working_dir, "episode_seconds.txt", "{}\n".format(np.round(episode_seconds, 2)))
+                self.write_info(self.working_dir, "evaluation_score.txt", "{}\n".format(evaluation_score))
+                self.write_info(self.working_dir, "training_time.txt", "{}\n".format(training_time))
+                self.write_info(self.working_dir, "wallclock_time.txt", "{}\n".format(wallclock_time))
+                self.write_info(self.working_dir, "policy_losses.txt", "{}\n".format(policy_losses))
+                self.write_info(self.working_dir, "value_losses.txt", "{}\n".format(value_losses))
+                self.write_info(self.working_dir, "entropy_losses.txt", "{}\n".format(entropy_losses))
+
+               
+                if evaluation_count % 1000 == 0:
+                    self.save_checkpoint(evaluation_count, self.policy_model, 'policy')
+                    self.save_checkpoint(evaluation_count, self.value_model, 'value')
+                
                 episode += n_ep_batch
                 if not self.received_data_queue.empty():
                     try:
@@ -328,16 +327,11 @@ class PPO():
                         break
                     except queue.Empty:
                         pass
-                # training_is_over = evaluation_count == 2000
-                # if training_is_over:
-                #     break
         
         except (Exception, KeyboardInterrupt) as e:
-            print("!An error occurred or Ctrl+C was detected! Saving progress before exiting...")
-            print(f"Error Type: {type(e).__name__}")
-            print(f"Error Message: {e}")
-            print("\n--- Full Traceback ---")
-            traceback.print_exc()
+            logger.error("!An error occurred or Ctrl+C was detected! Saving progress before exiting...")
+            logger.error(f"Error Message: {e}")
+            logger.error(f"{traceback.format_exc()}")
         finally:
             if 'env' in locals():
                 env.close()
@@ -345,10 +339,56 @@ class PPO():
             if 'envs' in locals():
                 envs.close()
                 del envs
-            self.save_checkpoint(evaluation_count, self.policy_model, 'policy')
-            self.save_checkpoint(evaluation_count, self.value_model, 'value')
-            # self.plot(self.eva100, True)
-            self.save_ewc(level_pool, rehearsal_level_tasks)
+            if evaluation_count > 0:
+                logger.info('saving policy model {}'.format(evaluation_count))
+                self.save_checkpoint(evaluation_count, self.policy_model, 'policy')
+                logger.info('saving value model {}'.format(evaluation_count))
+                self.save_checkpoint(evaluation_count, self.value_model, 'value')
+                logger.info('saving ewc model {}'.format(evaluation_count))
+                self.save_ewc(level_pool, rehearsal_level_tasks)
+
+    def create_dir(self, level_pool):
+        root_dir = 'C:/thesis_data/{}'.format(level_pool[0])
+        if not os.path.exists(root_dir):
+            logger.info('create training directory')
+            os.makedirs(root_dir)
+            
+        subfolders = [name for name in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, name))]
+        numbers = [int(name) for name in subfolders if name.isdigit()]
+        latest = -1
+        if numbers:
+            latest = max(numbers)
+            working_dir = os.path.join(root_dir, str(latest + 1))
+        else:
+            working_dir = os.path.join(root_dir, '1')
+
+        if not os.path.exists(working_dir):
+            logger.info('create training number directory')
+            os.makedirs(working_dir)
+        self.working_dir = working_dir
+
+    def write_statistic(self, level_pool, rehearsal_level_tasks, evaluation_levels):
+        statistics.write_hyperparameters(
+                        self.working_dir,
+                                self.policy_optimizer_lr,
+                                self.policy_optimization_epochs,
+                                self.policy_sample_ratio,
+                                self.policy_clip_range,
+                                self.policy_stopping_kl,
+                                self.value_optimizer_lr,
+                                self.value_optimization_epochs,
+                                self.value_clip_range,
+                                self.value_stopping_mse,
+                                self.ewc_lambda,
+                                self.max_buffer_episodes,
+                                self.max_buffer_episode_steps,
+                                self.entropy_loss_weight,
+                                self.tau,
+                                self.n_workers,
+                                level_pool,
+                                evaluation_levels,
+                                rehearsal_level_tasks
+                    )
 
     def evaluate(self, eval_model:CNNActor, eval_env, level:str, n_episodes=1, greedy=True, visual=True):
         rs = []

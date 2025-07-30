@@ -38,10 +38,14 @@ class EpisodeBuffer():
         self.clear()
 
     def clear(self):
-        grid_shape = self.state_space['grid'].shape
+        scene_shape = self.state_space['gridScene'].shape
+        enemy_shape = self.state_space['gridEnemies'].shape
         vec_shape = self.state_space['vector'].shape
-        self.grid_states_mem = np.empty(
-            shape=(self.max_episodes, self.max_episode_steps, *grid_shape), dtype=np.uint8)
+
+        self.grid_scene_states_mem = np.empty(
+            shape=(self.max_episodes, self.max_episode_steps, *scene_shape), dtype=np.uint8)
+        self.grid_enemies_states_mem = np.empty(
+            shape=(self.max_episodes, self.max_episode_steps, *enemy_shape), dtype=np.uint8)
         self.vector_states_mem = np.empty(
             shape=(self.max_episodes, self.max_episode_steps, *vec_shape), dtype=np.uint8)
 
@@ -106,7 +110,8 @@ class EpisodeBuffer():
 
             next_states, rewards, terminals, truncateds, _ = envs.step(actions)
             
-            self.grid_states_mem[self.current_ep_idxs, worker_steps] = states['grid']
+            self.grid_scene_states_mem[self.current_ep_idxs, worker_steps] = states['gridScene']
+            self.grid_enemies_states_mem[self.current_ep_idxs, worker_steps] = states['gridEnemies']
             self.vector_states_mem[self.current_ep_idxs, worker_steps] = states['vector']
             self.actions_mem[self.current_ep_idxs, worker_steps] = actions
             self.logpas_mem[self.current_ep_idxs, worker_steps] = logpas
@@ -134,7 +139,7 @@ class EpisodeBuffer():
                 idx_dones = np.flatnonzero(dones)
                 reset_levels = [random.choice(level_pool) for _ in idx_dones]
                 episodeStart += dones.sum()
-                new_states = envs.reset(episodeStart, ranks=idx_dones, levels=reset_levels)
+                new_states = envs.reset(episodeStart, ranks=idx_dones, levels=reset_levels, visual=visual)
                 
                 for key in states:
                     states[key][idx_dones] = new_states[key]
@@ -154,7 +159,8 @@ class EpisodeBuffer():
                     self.returns_mem[e_idx, :T] = ep_returns
 
                     ep_states = {
-                        'grid': self.grid_states_mem[e_idx, :T],
+                        'gridScene': self.grid_scene_states_mem[e_idx, :T],
+                        'gridEnemies': self.grid_enemies_states_mem[e_idx, :T],
                         'vector': self.vector_states_mem[e_idx, :T]
                     }
                     
@@ -185,8 +191,11 @@ class EpisodeBuffer():
         ep_idxs = self.episode_steps > 0
         ep_t = self.episode_steps[ep_idxs]
 
-        grid_mem = [row[:ep_t[i]] for i, row in enumerate(self.grid_states_mem[ep_idxs])]
-        self.grid_states_mem = np.concatenate(grid_mem)
+        scene_mem = [row[:ep_t[i]] for i, row in enumerate(self.grid_scene_states_mem[ep_idxs])]
+        self.grid_scene_states_mem = np.concatenate(scene_mem)
+
+        enemy_mem = [row[:ep_t[i]] for i, row in enumerate(self.grid_enemies_states_mem[ep_idxs])]
+        self.grid_enemies_states_mem = np.concatenate(enemy_mem)
 
         vector_mem = [row[:ep_t[i]] for i, row in enumerate(self.vector_states_mem[ep_idxs])]
         self.vector_states_mem = np.concatenate(vector_mem)
@@ -203,7 +212,8 @@ class EpisodeBuffer():
 
     def get_stacks(self):
         states_dict = {
-            'grid': torch.tensor(self.grid_states_mem, device=self.device, dtype=torch.float32),
+            'gridScene': torch.tensor(self.grid_scene_states_mem, device=self.device, dtype=torch.long),
+            'gridEnemies': torch.tensor(self.grid_enemies_states_mem, device=self.device, dtype=torch.long),
             'vector': torch.tensor(self.vector_states_mem, device=self.device, dtype=torch.float32)
         }
         return (states_dict, self.actions_mem, 

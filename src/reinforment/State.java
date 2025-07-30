@@ -35,14 +35,20 @@ public class State {
     }
 
     public static byte[] toByte(MarioForwardModel model) throws Exception {
-        var detail = model.getMarioCompleteObservation(0,0);
+        var sceneObservation = model.getScreenSceneObservation(0);
+        var enemiesObservation = model.getScreenEnemiesObservation(0);
 
-        int[] flatState = Arrays.stream(detail)
+        int[] flatSceneObservation = Arrays.stream(sceneObservation)
             .flatMapToInt(Arrays::stream)
             .toArray();
 
+        int[] flatEnemiesObservation = Arrays.stream(enemiesObservation)
+                .flatMapToInt(Arrays::stream)
+                .toArray();
 
-        byte[] state = intArrayToBytes(flatState);
+        byte[] sceneObservationPayload = intArrayToBytes(flatSceneObservation);
+        byte[] enemiesObservationPayload = intArrayToBytes(flatEnemiesObservation);
+
 
         byte marioMode = (byte) model.getMarioMode();
         byte isMarioOnGround = (byte)(model.isMarioOnGround() ? 1 : 0);
@@ -54,40 +60,15 @@ public class State {
         byte[] velocityX = float2ByteArray(model.getMarioFloatVelocity()[0]);
         byte[] velocityY = float2ByteArray(model.getMarioFloatVelocity()[1]);
 
-        byte totalSubGoal = (byte) model.totalSubGoal();
-        byte isSubGoalBlockMet = model.isSubGoalBlockMet() == null ? (byte) 255 : (byte) (model.isSubGoalBlockMet() ? 1 : 0);
-        byte isSubGoalEnemyMet = model.isSubGoalEnemyMet() == null ? (byte) 255 : (byte) (model.isSubGoalEnemyMet() ? 1 : 0);
-        byte isSubGoalCoinMet = model.isSubGoalCoinMet() == null ? (byte) 255 : (byte) (model.isSubGoalCoinMet() ? 1 : 0);
-
-        byte enemyRemain = (byte) model.getEnemyRemain();
-        byte coinRemain = (byte) model.getCoinRemain();
-        byte blockRemain = (byte) model.getBlockRemain();
-
-        byte totalEnemy = (byte) model.getTotalEnemy();
-        byte totalCoin = (byte) model.getTotalCoin();
-        byte totalBlock = (byte) model.getTotalBumpableBlocks();
-        byte totalPowerUp = (byte) model.getTotalPowerUp();
-
-        int[] enemyVector = model.findNearestEnemyVector();
-        byte[] dxEnemy = int2ByteArray(enemyVector[0]);
-        byte[] dyEnemy = int2ByteArray(enemyVector[1]);
-
-        int[] blockVector = model.findNearestBlockVector();
-        byte[] dxBlock = int2ByteArray(blockVector[0]);
-        byte[] dyBlock = int2ByteArray(blockVector[1]);
-
         ByteBuffer buffer = ByteBuffer.allocate(
-                state.length
+                sceneObservationPayload.length +
+                        enemiesObservationPayload.length
                 + 4
                 + 10
-                + 4
-                + 3
-                + 4
-                + 16
         );
 
-        buffer.put(state);
-
+        buffer.put(sceneObservationPayload);
+        buffer.put(enemiesObservationPayload);
         buffer.put(marioMode);
         buffer.put(isMarioOnGround);
         buffer.put(isMarioCanJumpHigher);
@@ -98,24 +79,6 @@ public class State {
         buffer.put(velocityX);
         buffer.put(velocityY);
 
-        buffer.put(totalSubGoal);
-        buffer.put(isSubGoalBlockMet);
-        buffer.put(isSubGoalEnemyMet);
-        buffer.put(isSubGoalCoinMet);
-
-        buffer.put(enemyRemain);
-        buffer.put(coinRemain);
-        buffer.put(blockRemain);
-
-        buffer.put(totalEnemy);
-        buffer.put(totalCoin);
-        buffer.put(totalBlock);
-        buffer.put(totalPowerUp);
-
-        buffer.put(dxEnemy);
-        buffer.put(dyEnemy);
-        buffer.put(dxBlock);
-        buffer.put(dyBlock);
         return buffer.array();
     }
 }

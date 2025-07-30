@@ -30,7 +30,6 @@ def write_hyperparameters(
                     file.write("value_optimizer_lr {}\n".format(value_optimizer_lr))
                     file.write("value_optimization_epochs {}\n".format(value_optimization_epochs))
                     file.write("value_clip_range {}\n".format(value_clip_range))
-                    file.write("value_optimizer_lr {}\n".format(value_optimizer_lr))
                     file.write("value_stopping_mse {}\n".format(value_stopping_mse))
 
                     file.write("ewc_lambda {}\n".format(ewc_lambda))
