@@ -12,9 +12,9 @@
     <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deepRL/main_ppo.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/main_ppo.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/marioGame.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/marioGame.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/ppo/ppo.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ppo/ppo.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/reinforment/State.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/reinforment/State.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/PlayLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/PlayLevel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/reinforment/ProceduralContentGenerationLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/reinforment/ProceduralContentGenerationLevel.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

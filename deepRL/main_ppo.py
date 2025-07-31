@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
   evaluation_levels = level_pool
 
- # agent.play(make_env_fn, policy_model_fn, "blocks=15,enemies=13,pits=3,pipes=3,width_min=100,width_max=100,fps=45")
+ # agent.play(make_env_fn, policy_model_fn, "./levels/original/lvl-1.txt")
   agent.train(make_envs_fn,
               make_env_fn,
               gamma,

@@ -191,6 +191,7 @@ public class MarioGameTraining {
             pcg.generate(false);
             level = pcg.getContent();
         } else {
+            this.isNormalSpeed = true;
             level = Helper.getFileFromLevel(levelFileName);
         }
         this.world.initializeLevel(level, 1000 * this.timer);

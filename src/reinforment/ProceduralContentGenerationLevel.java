@@ -27,7 +27,6 @@ public class ProceduralContentGenerationLevel {
 
     public static ProceduralContentGenerationLevel parseLevel(String pcgName){
         Map<String, String> params = Helper.parseParameter(pcgName);
-        // 2. Get values from the map, providing a default of "0" if missing.
         int blockCount = Integer.parseInt(params.getOrDefault("blocks", "0"));
         int enemyCount = Integer.parseInt(params.getOrDefault("enemies", "0"));
         int pitCount = Integer.parseInt(params.getOrDefault("pits", "0"));
@@ -45,12 +44,10 @@ public class ProceduralContentGenerationLevel {
         }
 
         if(enemyCount > 0){
-            //pcgLevel.addEnemyRandomBetween(1,10, 4,2, EnumEnemy.GOOMBA);
             pcgLevel.addEnemy(6,2, enemyCount, EnumEnemy.GOOMBA);
         }
 
         if(blockCount > 0){
-            //pcgLevel.addBlockRandomBetween(1,10, 2,2);
             pcgLevel.addBlock(6, 2, blockCount);
         }
 
@@ -127,17 +124,6 @@ public class ProceduralContentGenerationLevel {
                 for (int j = 0; j < width; j++) {
                     line.add('-');
                 }
-            }
-            levels.put(i, line);
-        }
-    }
-
-    public ProceduralContentGenerationLevel(String content){
-        String[] contents = content.split("\r\n");
-        for (int i = 0; i < contents.length; i++) {
-            ArrayList<Character> line = new ArrayList<>();
-            for (int j = 0; j < contents[i].length(); j++) {
-                line.add(contents[i].charAt(j));
             }
             levels.put(i, line);
         }
@@ -240,20 +226,33 @@ public class ProceduralContentGenerationLevel {
         for (int k = 0; k < total; k++) {
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = rand.nextInt(offsetFromStart, maxIndex);
-            int width = rand.nextInt(minWidth, maxWidth + 1);
-            for (int i = 0; i < levels.size(); i++) {
-                // Get the current level's list once and reuse it
-                ArrayList<Character> currentLevel = levels.get(i);
-                for (int j = 0; j < width; j++) {
-                    currentLevel.add(addIndex + j, '-');
+            while (true){
+                if(isValidToAdd(addIndex)){
+                    break;
                 }
+                addIndex = rand.nextInt(offsetFromStart, maxIndex);
+            }
+            int width = rand.nextInt(minWidth, maxWidth + 1);
+            System.out.println(MessageFormat.format("pit {0} width {1} index {2}", k + 1, width, addIndex));
+            for (int height = 0; height < levels.size(); height++) {
+                // Get the current level's list once and reuse it
+                ArrayList<Character> currentLevel = levels.get(height);
+
+                if(height == GROUND_1_LEVEL || height == GROUND_2_LEVEL){
+                    currentLevel.add(addIndex - 1, 'X');
+                    addObject(currentLevel, width, '-', addIndex);
+                    // Padding 2 block after
+                    currentLevel.add(addIndex + width, 'X');
+                } else {
+                    currentLevel.add(addIndex - 1, '-');
+                    addObject(currentLevel, width, '-', addIndex + 2);
+                    // Padding 2 block after
+                    currentLevel.add(addIndex + 1 + width, '-');
+                }
+                // Padding 2 block before
+
             }
         }
-    }
-
-    public void addEnemyRandomBetween(int min, int max, int offsetFromStart, int offsetFromFlag, EnumEnemy enemy){
-        int total = rand.nextInt(min, max + 1);
-        addEnemy(offsetFromStart, offsetFromFlag, total, enemy);
     }
 
     public void addEnemy(int offsetFromStart, int offsetFromFlag, int total, EnumEnemy enemy){
@@ -279,11 +278,6 @@ public class ProceduralContentGenerationLevel {
         }
     }
 
-    public void addBlockRandomBetween(int min, int max, int offsetFromStart, int offsetFromFlag){
-        int total = rand.nextInt(min, max + 1);
-        addBlock(offsetFromStart, offsetFromFlag, total);
-    }
-
     public void addBlock(int offsetFromStart, int offsetFromFlag, int total){
         int k = 0;
         while (k < total) {
@@ -299,7 +293,12 @@ public class ProceduralContentGenerationLevel {
     private void doAddBlock(EnumBlockType blockType, int offsetFromStart, int offsetFromFlag){
         int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
         int addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
-
+        while (true){
+            if(isValidToAdd(addIndex)){
+                break;
+            }
+            addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
+        }
         for (int i = 0; i < levels.size(); i++) {
             // Get the current level's list once and reuse it
             ArrayList<Character> currentLevel = levels.get(i);
@@ -324,37 +323,69 @@ public class ProceduralContentGenerationLevel {
 
     public void addPipe(int offsetFromStart, int offsetFromFlag, int total){
         for (int k = 0; k < total; k++) {
-            int height = rand.nextInt(2, 5);
+            int pipeHeight = rand.nextInt(2, 5);
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = rand.nextInt(offsetFromStart, maxIndex);
+
             while (true){
-                if(levels.get(GROUND_1_LEVEL).get(addIndex) != '-'){
+                if(isValidToAdd(addIndex)){
                     break;
                 }
                 addIndex = rand.nextInt(offsetFromStart, maxIndex);
             }
-            for (int i = 0; i < levels.size(); i++) {
+            for (int height = 0; height < levels.size(); height++) {
+
+
                 // DeteroffsetFromStarte if this level should be a pipe
-                boolean isPipe = (i >= LAN_LEVEL - (height - 1) && i <= LAN_LEVEL);
+                boolean isPipe = (height >= LAN_LEVEL - (pipeHeight - 1) && height <= LAN_LEVEL);
 
                 // Get the current level's list once and reuse it
-                ArrayList<Character> currentLevel = levels.get(i);
+                ArrayList<Character> currentLevelHeight = levels.get(height);
 
                 // Add the characters based on the conditions
-                if (i == GROUND_1_LEVEL || i == GROUND_2_LEVEL) {
+                if (height == GROUND_1_LEVEL || height == GROUND_2_LEVEL) {
                     // Add 'X' at index and index + 1
-                    currentLevel.add(addIndex, 'X');
-                    currentLevel.add(addIndex + 1, 'X');
+                    currentLevelHeight.add(addIndex -1, 'X');
+                    currentLevelHeight.add(addIndex, 'X');
+                    currentLevelHeight.add(addIndex + 1, 'X');
+                    currentLevelHeight.add(addIndex + 2, 'X');
                 } else if (isPipe) {
                     // Add 't' at index and index + 1
-                    currentLevel.add(addIndex, 't');
-                    currentLevel.add(addIndex + 1, 't');
+                    currentLevelHeight.add(addIndex -1, '-');
+                    currentLevelHeight.add(addIndex, 't');
+                    currentLevelHeight.add(addIndex + 1, 't');
+                    currentLevelHeight.add(addIndex + 2, '-');
                 } else {
                     // Add '-' at index and index + 1
-                    currentLevel.add(addIndex, '-');
-                    currentLevel.add(addIndex + 1, '-');
+                    addObject(currentLevelHeight, 4, '-', addIndex);
                 }
             }
+        }
+    }
+
+    private boolean isValidToAdd(int addIndex) {
+        // check pit level 1
+        int checkLength = 4;
+        for (int i = -2; i < checkLength-2; i++) {
+            if(levels.get(GROUND_1_LEVEL).get(addIndex + i) == '-'){
+                return false;
+            }
+        }
+
+        for (int i = -2; i < checkLength-2; i++) {
+            if(levels.get(LAN_LEVEL).get(addIndex + i) == 't'){
+                return false;
+            }
+        }
+
+
+
+        return true;
+    }
+
+    private void addObject(ArrayList<Character> level, int total, char object, int startIndex){
+        for (int i = 0; i < total; i++) {
+            level.add(startIndex + i, object);
         }
     }
 }
