@@ -99,15 +99,18 @@ class PPO():
         self.received_data_queue = queue.Queue()
 
     def optimize_model(self):
+        policy_losses = []
+        value_losses = []
+        entropy_losses = []
+        values_ = []
+        entropies = []
         states, actions, returns, gaes, logpas = self.episode_buffer.get_stacks()
         with torch.no_grad():
             values = self.value_model(states).detach()
         gaes = (gaes - gaes.mean()) / (gaes.std() + EPS)
         n_samples = len(actions)
         
-        policy_losses = []
-        value_losses = []
-        entropy_losses = []
+
         
         for _ in range(self.policy_optimization_epochs):
             batch_size = int(self.policy_sample_ratio * n_samples)
@@ -118,6 +121,7 @@ class PPO():
             logpas_batch = logpas[batch_idxs]
 
             logpas_pred, entropies_pred = self.policy_model.get_predictions(states_batch, actions_batch)
+            entropies.append(entropies_pred.mean().item())
 
             ratios = (logpas_pred - logpas_batch).exp()
             pi_obj = gaes_batch * ratios
@@ -151,6 +155,7 @@ class PPO():
             values_batch = values[batch_idxs]
 
             values_pred = self.value_model(states_batch)
+            values_.append(values_pred.mean().item())
             values_pred_clipped = values_batch + (values_pred - values_batch).clamp(
                 -self.value_clip_range, self.value_clip_range
             )
@@ -170,7 +175,7 @@ class PPO():
                 if hasattr(self, 'value_stopping_mse') and mse.item() > self.value_stopping_mse:
                     break
 
-        return np.mean(policy_losses), np.mean(value_losses), np.mean(entropy_losses)
+        return np.mean(policy_losses), np.mean(value_losses), np.mean(entropy_losses), np.mean(entropies), np.mean(values_)
 
     def train(self, make_envs_fn:Callable, make_env_fn:Callable, gamma, 
               max_minutes, max_episodes, goal_mean_100_reward, 
@@ -246,7 +251,7 @@ class PPO():
                         shutil.rmtree(self.working_dir)
                 
                 n_ep_batch = len(episode_timestep)
-                policy_losses, value_losses, entropy_losses = self.optimize_model()
+                policy_losses, value_losses, entropy_losses, entropies, values = self.optimize_model()
                 self.episode_buffer.clear()
 
                 # stats
@@ -268,6 +273,8 @@ class PPO():
                 self.write_info(self.working_dir, "policy_losses.txt", "{}\n".format(policy_losses))
                 self.write_info(self.working_dir, "value_losses.txt", "{}\n".format(value_losses))
                 self.write_info(self.working_dir, "entropy_losses.txt", "{}\n".format(entropy_losses))
+                self.write_info(self.working_dir, "entropy.txt", "{}\n".format(entropies))
+                self.write_info(self.working_dir, "values.txt", "{}\n".format(values))
 
                
                 if evaluation_count % 1000 == 0:
