@@ -13,18 +13,7 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deepRL/main_ppo.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/main_ppo.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deepRL/marioGame.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/marioGame.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/plot.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/plot.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/ppo/cnn.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ppo/cnn.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/ppo/episodebuffer.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ppo/episodebuffer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/ppo/multiprocessenv.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ppo/multiprocessenv.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deepRL/ppo/ppo.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ppo/ppo.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/rlstatistics.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/rlstatistics.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/socketEnv.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/socketEnv.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/PlayLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/PlayLevel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/agents/human/Agent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/agents/human/Agent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioForwardModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioForwardModel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/reinforment/ProceduralContentGenerationLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/reinforment/ProceduralContentGenerationLevel.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/reinforment/State.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/reinforment/State.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -98,7 +87,7 @@
       <recent name="engine.core" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.PlayLevel">
+  <component name="RunManager" selected="Application.Program">
     <configuration name="GenerateLevel" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="GenerateLevel" />
       <module name="Mario-AI-Framework-Private" />
@@ -127,8 +116,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.PlayLevel" />
         <item itemvalue="Application.Program" />
+        <item itemvalue="Application.PlayLevel" />
         <item itemvalue="Application.GenerateLevel" />
       </list>
     </recent_temporary>

@@ -98,45 +98,6 @@ class PPO():
         self.n_workers = n_workers
         self.received_data_queue = queue.Queue()
 
-    def handle_client(self, conn:socket.socket, addr):
-        try:
-            while True:
-                data = conn.recv(64)
-                if not data:
-                    logger.info(f"Client {addr} disconnected.")
-                    break
-                decoded_data = data.decode('utf-8')
-                logger.info(f"Received from {addr}: {decoded_data}")
-                self.received_data_queue.put((addr, decoded_data)) # Put data (with client address) into the queue
-
-        except Exception as e:
-            logger.error(f"Error handling client {addr}: {e}")
-        finally:
-            conn.close() # Ensure the client socket is closed
-            logger.info(f"Connection handler for {addr} closed.")
-
-    def socket_server(self,host, port):
-        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # Allow re-use of address
-        try:
-            server_socket.bind((host, port))
-            server_socket.listen(5) # Max 5 queued connections
-            logger.info(f"Socket server listening on {host}:{port}")
-
-            while True:
-                conn, addr = server_socket.accept() # This blocks until a new client connects
-                logger.info(f"Accepted connection from {addr}")
-                # Start a new thread to handle this client
-                client_handler_thread = threading.Thread(target=self.handle_client, args=(conn, addr))
-                client_handler_thread.daemon = True # Allows main program to exit even if client threads are running
-                client_handler_thread.start()
-
-        except Exception as e:
-            logger.error(f"Socket server (accept loop) error: {e}")
-        finally:
-            server_socket.close()
-            logger.info("Main socket server listener closed.")
-
     def optimize_model(self):
         states, actions, returns, gaes, logpas = self.episode_buffer.get_stacks()
         with torch.no_grad():
@@ -210,13 +171,6 @@ class PPO():
                     break
 
         return np.mean(policy_losses), np.mean(value_losses), np.mean(entropy_losses)
-    
-    def find_model_file_path(self, start_with):
-        current_dir = os.getcwd()
-        for f in os.listdir(current_dir):
-            if f.startswith(start_with) and f.endswith(".tar"):
-                return os.path.join(current_dir, f)
-        return None
 
     def train(self, make_envs_fn:Callable, make_env_fn:Callable, gamma, 
               max_minutes, max_episodes, goal_mean_100_reward, 
@@ -347,6 +301,52 @@ class PPO():
                 logger.info('saving ewc model {}'.format(evaluation_count))
                 self.save_ewc(level_pool, rehearsal_level_tasks)
 
+    def handle_client(self, conn:socket.socket, addr):
+        try:
+            while True:
+                data = conn.recv(64)
+                if not data:
+                    logger.info(f"Client {addr} disconnected.")
+                    break
+                decoded_data = data.decode('utf-8')
+                logger.info(f"Received from {addr}: {decoded_data}")
+                self.received_data_queue.put((addr, decoded_data)) # Put data (with client address) into the queue
+
+        except Exception as e:
+            logger.error(f"Error handling client {addr}: {e}")
+        finally:
+            conn.close() # Ensure the client socket is closed
+            logger.info(f"Connection handler for {addr} closed.")
+
+    def socket_server(self,host, port):
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # Allow re-use of address
+        try:
+            server_socket.bind((host, port))
+            server_socket.listen(5) # Max 5 queued connections
+            logger.info(f"Socket server listening on {host}:{port}")
+
+            while True:
+                conn, addr = server_socket.accept() # This blocks until a new client connects
+                logger.info(f"Accepted connection from {addr}")
+                # Start a new thread to handle this client
+                client_handler_thread = threading.Thread(target=self.handle_client, args=(conn, addr))
+                client_handler_thread.daemon = True # Allows main program to exit even if client threads are running
+                client_handler_thread.start()
+
+        except Exception as e:
+            logger.error(f"Socket server (accept loop) error: {e}")
+        finally:
+            server_socket.close()
+            logger.info("Main socket server listener closed.")
+    
+    def find_model_file_path(self, start_with):
+        current_dir = os.getcwd()
+        for f in os.listdir(current_dir):
+            if f.startswith(start_with) and f.endswith(".tar"):
+                return os.path.join(current_dir, f)
+        return None
+    
     def create_dir(self, level_pool):
         root_dir = 'C:/thesis_data/{}'.format(level_pool[0])
         if not os.path.exists(root_dir):

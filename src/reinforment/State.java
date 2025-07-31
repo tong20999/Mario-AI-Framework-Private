@@ -60,11 +60,15 @@ public class State {
         byte[] velocityX = float2ByteArray(model.getMarioFloatVelocity()[0]);
         byte[] velocityY = float2ByteArray(model.getMarioFloatVelocity()[1]);
 
+        byte marioTileX = (byte)model.getMarioScreenTilePos()[0];
+        byte marioTileY = (byte)model.getMarioScreenTilePos()[1];
+
         ByteBuffer buffer = ByteBuffer.allocate(
                 sceneObservationPayload.length +
                         enemiesObservationPayload.length
                 + 4
                 + 10
+                + 2
         );
 
         buffer.put(sceneObservationPayload);
@@ -79,6 +83,8 @@ public class State {
         buffer.put(velocityX);
         buffer.put(velocityY);
 
+        buffer.put(marioTileX);
+        buffer.put(marioTileY);
         return buffer.array();
     }
 }

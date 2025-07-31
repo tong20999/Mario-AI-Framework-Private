@@ -30,7 +30,7 @@ class MarioGame(SocketEnv):
         self.observation_space = gym.spaces.Dict({
             'gridScene': gym.spaces.Box(low=0, high=255, shape=(1, 16, 16), dtype=np.uint8),
             'gridEnemies': gym.spaces.Box(low=0, high=255, shape=(1, 16, 16), dtype=np.uint8),
-            'vector': gym.spaces.Box(low=0, high=255, shape=(14,), dtype=np.uint8)
+            'vector': gym.spaces.Box(low=0, high=255, shape=(16,), dtype=np.uint8)
         })
         self.action_space = gym.spaces.Discrete(len(all_possible_input))
 
