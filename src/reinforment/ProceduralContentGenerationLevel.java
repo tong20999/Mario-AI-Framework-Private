@@ -1,9 +1,5 @@
 package reinforment;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -25,7 +21,7 @@ public class ProceduralContentGenerationLevel {
 
     public String content = null;
 
-    public static ProceduralContentGenerationLevel parseLevel(String pcgName){
+    public static ProceduralContentGenerationLevel parseLevel(String pcgName) {
         Map<String, String> params = Helper.parseParameter(pcgName);
         int blockCount = Integer.parseInt(params.getOrDefault("blocks", "0"));
         int enemyCount = Integer.parseInt(params.getOrDefault("enemies", "0"));
@@ -34,24 +30,36 @@ public class ProceduralContentGenerationLevel {
         int widthMin = Integer.parseInt(params.getOrDefault("width_min", "15"));
         int widthMax = Integer.parseInt(params.getOrDefault("width_max", "15"));
 
-        ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel.randomWidth(widthMin,widthMax);
-        if(pitCount > 0){
-            pcgLevel.addPit(6,2, 2, 5, pitCount);
-        }
+        return doParseLevel(widthMin, widthMax, blockCount, enemyCount, pitCount, pipeCount);
+    }
 
-        if(pipeCount > 0){
-            pcgLevel.addPipe(6, 2, pipeCount);
-        }
+    private static ProceduralContentGenerationLevel doParseLevel(int widthMin, int widthMax, int blockCount, int enemyCount, int pitCount, int pipeCount){
 
-        if(enemyCount > 0){
-            pcgLevel.addEnemy(6,2, enemyCount, EnumEnemy.GOOMBA);
-        }
+        try{
+            ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel.randomWidth(widthMin,widthMax);
+            if(pitCount > 0){
+                pcgLevel.addPit(6,2, 2, 5, pitCount);
+            }
 
-        if(blockCount > 0){
-            pcgLevel.addBlock(6, 2, blockCount);
-        }
+            if(pipeCount > 0){
+                pcgLevel.addPipe(6, 2, pipeCount);
+            }
 
-        return pcgLevel;
+            if(enemyCount > 0){
+                pcgLevel.addEnemy(6,2, enemyCount, EnumEnemy.GOOMBA);
+            }
+
+            if(blockCount > 0){
+                pcgLevel.addBlock(6, 2, blockCount);
+            }
+
+            return pcgLevel;
+        }
+        catch (IllegalArgumentException ex){
+            System.out.println(ex.getMessage());
+            System.out.println(MessageFormat.format( "Retry with new width min {0} max {1}", widthMin * 2, widthMax * 2));
+            return doParseLevel(widthMin * 2, widthMax * 2, blockCount, enemyCount, pitCount, pipeCount);
+        }
     }
 
     public static ProceduralContentGenerationLevel randomWidth(int min, int max) {
@@ -175,10 +183,11 @@ public class ProceduralContentGenerationLevel {
         return true;
     }
 
-    private int getRandomOffsetFromStartIndex(int offsetFromStart, int maxIndex){
+    private int getRandomOffsetFromStartIndex(int offsetFromStart, int maxIndex) throws IllegalArgumentException {
         int addIndex = rand.nextInt(offsetFromStart, maxIndex);
         int attempt = 0;
-        while (attempt < 20){
+        int maxAttempt = 50;
+        while (attempt < maxAttempt){
             attempt++;
             if(levels.get(GROUND_1_LEVEL).get(addIndex) == '-'){
                 addIndex = rand.nextInt(offsetFromStart, maxIndex);
@@ -216,8 +225,8 @@ public class ProceduralContentGenerationLevel {
             }
             break;
         }
-        if(attempt >= 20){
-            System.out.println("attempt more than 20");
+        if(attempt >= maxAttempt){
+            throw new IllegalArgumentException("Level too short attempt more than " + maxAttempt);
         }
         return addIndex;
     }
@@ -233,7 +242,6 @@ public class ProceduralContentGenerationLevel {
                 addIndex = rand.nextInt(offsetFromStart, maxIndex);
             }
             int width = rand.nextInt(minWidth, maxWidth + 1);
-            System.out.println(MessageFormat.format("pit {0} width {1} index {2}", k + 1, width, addIndex));
             for (int height = 0; height < levels.size(); height++) {
                 // Get the current level's list once and reuse it
                 ArrayList<Character> currentLevel = levels.get(height);
@@ -255,7 +263,7 @@ public class ProceduralContentGenerationLevel {
         }
     }
 
-    public void addEnemy(int offsetFromStart, int offsetFromFlag, int total, EnumEnemy enemy){
+    public void addEnemy(int offsetFromStart, int offsetFromFlag, int total, EnumEnemy enemy) throws IllegalArgumentException {
         for (int k = 0; k < total; k++) {
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
@@ -278,7 +286,7 @@ public class ProceduralContentGenerationLevel {
         }
     }
 
-    public void addBlock(int offsetFromStart, int offsetFromFlag, int total){
+    public void addBlock(int offsetFromStart, int offsetFromFlag, int total) throws IllegalArgumentException {
         int k = 0;
         while (k < total) {
             EnumBlockType blockType = (k + 1) % 3 == 0 ? EnumBlockType.MUSHROOM_QUESTION_BLOCK : EnumBlockType.COIN_QUESTION_BLOCK;
@@ -290,7 +298,7 @@ public class ProceduralContentGenerationLevel {
         }
     }
 
-    private void doAddBlock(EnumBlockType blockType, int offsetFromStart, int offsetFromFlag){
+    private void doAddBlock(EnumBlockType blockType, int offsetFromStart, int offsetFromFlag) throws IllegalArgumentException {
         int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
         int addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
         while (true){
