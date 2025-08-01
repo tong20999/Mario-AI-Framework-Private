@@ -11,7 +11,10 @@
   <component name="ChangeListManager">
     <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/main_ppo.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/main_ppo.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepRL/ppo/ppo.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ppo/ppo.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/PlayLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/PlayLevel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/reinforment/ProceduralContentGenerationLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/reinforment/ProceduralContentGenerationLevel.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -85,7 +88,7 @@
       <recent name="engine.core" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.PlayLevel">
+  <component name="RunManager" selected="Application.Program">
     <configuration name="GenerateLevel" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="GenerateLevel" />
       <module name="Mario-AI-Framework-Private" />
@@ -114,8 +117,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.PlayLevel" />
         <item itemvalue="Application.Program" />
+        <item itemvalue="Application.PlayLevel" />
         <item itemvalue="Application.GenerateLevel" />
       </list>
     </recent_temporary>
@@ -177,7 +180,15 @@
       <option name="project" value="LOCAL" />
       <updated>1753496385442</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="add ramp">
+      <option name="closed" value="true" />
+      <created>1754018666804</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1754018666804</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -197,7 +208,8 @@
     <MESSAGE value="add human debug" />
     <MESSAGE value="refactor kill" />
     <MESSAGE value="clean up" />
-    <option name="LAST_COMMIT_MESSAGE" value="clean up" />
+    <MESSAGE value="add ramp" />
+    <option name="LAST_COMMIT_MESSAGE" value="add ramp" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

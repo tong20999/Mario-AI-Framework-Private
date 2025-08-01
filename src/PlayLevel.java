@@ -41,7 +41,7 @@ public class PlayLevel {
         var level = getLevel("./levels/training/100-basic/104-basic-block-enemy-pit/lvl-1.txt");
         var original = getLevel("./levels/original/lvl-1a.txt");
         //testPcg();
-        String levelFileName = "blocks=0,enemies=0,pits=0,pipes=0,ramps=1,width_min=20,width_max=20";
+        String levelFileName = "blocks=5,enemies=6,pits=3,pipes=3,ramps=3,width_min=30,width_max=30";
         while (true){
             ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel
                     .parseLevel(levelFileName);
@@ -59,7 +59,7 @@ public class PlayLevel {
 
     private static void testPcg() throws Exception {
         for (int i = 0; i < 100000; i++) {
-            String levelFileName = "blocks=5,enemies=5,pits=5,pipes=5,width_min=20,width_max=20";
+            String levelFileName = "blocks=5,enemies=3,pits=1,pipes=1,width_min=20,width_max=20";
             ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel
                     .parseLevel(levelFileName);
             pcgLevel.generate(false);

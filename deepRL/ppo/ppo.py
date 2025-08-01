@@ -111,8 +111,17 @@ class PPO():
         n_samples = len(actions)
         
 
-        
-        for _ in range(self.policy_optimization_epochs):
+        for round in range(self.policy_optimization_epochs):
+            logger.info(f'start optimize policy model {round + 1}/{self.policy_optimization_epochs}')
+            start_time = time.time()
+
+            if not self.received_data_queue.empty():
+                try:
+                    addr, value = self.received_data_queue.get_nowait()
+                    raise Exception('signal stop receive')
+                except queue.Empty:
+                    pass
+            
             batch_size = int(self.policy_sample_ratio * n_samples)
             batch_idxs = np.random.choice(n_samples, batch_size, replace=False)
             states_batch = {key: val[batch_idxs] for key, val in states.items()}
@@ -141,13 +150,27 @@ class PPO():
             torch.nn.utils.clip_grad_norm_(self.policy_model.parameters(), 
                                         self.policy_model_max_grad_norm)
             self.policy_optimizer.step()
-            
+
+            end_time = time.time()
+            duration = end_time - start_time
+            logger.info(f'optimize policy model {round + 1}/{self.policy_optimization_epochs} finished {duration:.2f} seconds')
+                
             with torch.no_grad():
                 logpas_pred_all, _ = self.policy_model.get_predictions(states, actions)
                 kl = (logpas - logpas_pred_all).mean()
                 if kl.item() > self.policy_stopping_kl:
                     break
-        for _ in range(self.value_optimization_epochs):
+        for round in range(self.value_optimization_epochs):
+            logger.info(f'start optimize value model {round + 1}/{self.value_optimization_epochs}')
+            start_time = time.time()
+
+            if not self.received_data_queue.empty():
+                try:
+                    addr, value = self.received_data_queue.get_nowait()
+                    raise Exception('signal stop receive')
+                except queue.Empty:
+                    pass
+
             batch_size = int(self.value_sample_ratio * n_samples)
             batch_idxs = np.random.choice(n_samples, batch_size, replace=False)
             states_batch = {key: val[batch_idxs] for key, val in states.items()}
@@ -175,6 +198,10 @@ class PPO():
                 if hasattr(self, 'value_stopping_mse') and mse.item() > self.value_stopping_mse:
                     break
 
+            end_time = time.time()
+            duration = end_time - start_time
+            logger.info(f'optimize value model {round + 1}/{self.value_optimization_epochs} finish {duration:.2f} seconds')
+        
         return np.mean(policy_losses), np.mean(value_losses), np.mean(entropy_losses), np.mean(entropies), np.mean(values_)
 
     def train(self, make_envs_fn:Callable, make_env_fn:Callable, gamma, 
@@ -240,12 +267,17 @@ class PPO():
         try:
             while True:
                 try:
+                    logger.info('start filling buffer')
+                    start_time = time.time()
                     episode_timestep, episode_reward, episode_exploration, \
                     episode_seconds = self.episode_buffer.fill(
                         envs, self.policy_model, self.value_model, episode, 
                         level_pool, 
                         rehearsal_level_tasks,
                         visual=False)
+                    end_time = time.time()
+                    duration = end_time - start_time
+                    logger.info(f'filling buffer finished {duration:.2f} seconds')
                 except Exception as e:
                      if evaluation_count == 0:
                         shutil.rmtree(self.working_dir)

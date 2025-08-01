@@ -38,6 +38,11 @@ public class ProceduralContentGenerationLevel {
 
         try{
             ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel.randomWidth(widthMin,widthMax);
+
+            if(rampCount > 0){
+                pcgLevel.addRamp(6,2,rampCount);
+            }
+
             if(pitCount > 0){
                 pcgLevel.addPit(6,2, 2, 5, pitCount);
             }
@@ -46,12 +51,8 @@ public class ProceduralContentGenerationLevel {
                 pcgLevel.addPipe(6, 2, pipeCount);
             }
 
-            if(rampCount > 0){
-                pcgLevel.addRamp(6,2,rampCount);
-            }
-
             if(enemyCount > 0){
-                pcgLevel.addEnemy(6,2, enemyCount, EnumEnemy.GOOMBA);
+                pcgLevel.addEnemy(6,2, enemyCount);
             }
 
             if(blockCount > 0){
@@ -209,12 +210,12 @@ public class ProceduralContentGenerationLevel {
                 continue;
             }
 
-            if(levels.get(LAN_LEVEL).get(addIndex - 1) == 't') {
+            if(levels.get(LAN_LEVEL).get(addIndex - 1) == 'M') {
                 addIndex = rand.nextInt(offsetFromStart, maxIndex);
                 continue;
             }
 
-            if(levels.get(LAN_LEVEL).get(addIndex - 1) == 'M') {
+            if(levels.get(LAN_LEVEL).get(addIndex - 1) == 't') {
                 addIndex = rand.nextInt(offsetFromStart, maxIndex);
                 continue;
             }
@@ -225,6 +226,21 @@ public class ProceduralContentGenerationLevel {
             }
 
             if(levels.get(LAN_LEVEL).get(addIndex + 1) == 't') {
+                addIndex = rand.nextInt(offsetFromStart, maxIndex);
+                continue;
+            }
+
+            if(levels.get(LAN_LEVEL).get(addIndex - 1) == '#') {
+                addIndex = rand.nextInt(offsetFromStart, maxIndex);
+                continue;
+            }
+
+            if(levels.get(LAN_LEVEL).get(addIndex) == '#') {
+                addIndex = rand.nextInt(offsetFromStart, maxIndex);
+                continue;
+            }
+
+            if(levels.get(LAN_LEVEL).get(addIndex + 1) == '#') {
                 addIndex = rand.nextInt(offsetFromStart, maxIndex);
                 continue;
             }
@@ -268,7 +284,7 @@ public class ProceduralContentGenerationLevel {
         }
     }
 
-    public void addEnemy(int offsetFromStart, int offsetFromFlag, int total, EnumEnemy enemy) throws IllegalArgumentException {
+    public void addEnemy(int offsetFromStart, int offsetFromFlag, int total) throws IllegalArgumentException {
         for (int k = 0; k < total; k++) {
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
@@ -282,6 +298,7 @@ public class ProceduralContentGenerationLevel {
                     currentLevel.add(addIndex, 'X');
                 } else if (i == LAN_LEVEL) {
                     // Add 't' at index and index + 1
+                    var enemy = k % 2 == 0 && k != 0 ? EnumEnemy.GREEN_KOOPA : EnumEnemy.GOOMBA;
                     currentLevel.add(addIndex, enemy.getValue());
                 } else {
                     // Add '-' at index and index + 1
@@ -436,6 +453,12 @@ public class ProceduralContentGenerationLevel {
 
         for (int i = -2; i < checkLength-2; i++) {
             if(levels.get(LAN_LEVEL).get(addIndex + i) == 't'){
+                return false;
+            }
+        }
+
+        for (int i = -2; i < checkLength - 2; i++) {
+            if(levels.get(LAN_LEVEL).get(addIndex + i) == '#'){
                 return false;
             }
         }

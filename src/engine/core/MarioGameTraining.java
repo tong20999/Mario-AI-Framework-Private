@@ -193,6 +193,7 @@ public class MarioGameTraining {
         } else {
             this.isNormalSpeed = true;
             level = Helper.getFileFromLevel(levelFileName);
+            this.timer = 100;
         }
         this.world.initializeLevel(level, 1000 * this.timer);
         if (visual) {
