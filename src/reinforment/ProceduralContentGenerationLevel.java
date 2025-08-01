@@ -27,13 +27,14 @@ public class ProceduralContentGenerationLevel {
         int enemyCount = Integer.parseInt(params.getOrDefault("enemies", "0"));
         int pitCount = Integer.parseInt(params.getOrDefault("pits", "0"));
         int pipeCount = Integer.parseInt(params.getOrDefault("pipes", "0"));
+        int rampCount = Integer.parseInt(params.getOrDefault("ramps", "0"));
         int widthMin = Integer.parseInt(params.getOrDefault("width_min", "15"));
         int widthMax = Integer.parseInt(params.getOrDefault("width_max", "15"));
 
-        return doParseLevel(widthMin, widthMax, blockCount, enemyCount, pitCount, pipeCount);
+        return doParseLevel(widthMin, widthMax, blockCount, enemyCount, pitCount, pipeCount, rampCount);
     }
 
-    private static ProceduralContentGenerationLevel doParseLevel(int widthMin, int widthMax, int blockCount, int enemyCount, int pitCount, int pipeCount){
+    private static ProceduralContentGenerationLevel doParseLevel(int widthMin, int widthMax, int blockCount, int enemyCount, int pitCount, int pipeCount, int rampCount){
 
         try{
             ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel.randomWidth(widthMin,widthMax);
@@ -43,6 +44,10 @@ public class ProceduralContentGenerationLevel {
 
             if(pipeCount > 0){
                 pcgLevel.addPipe(6, 2, pipeCount);
+            }
+
+            if(rampCount > 0){
+                pcgLevel.addRamp(6,2,rampCount);
             }
 
             if(enemyCount > 0){
@@ -58,7 +63,7 @@ public class ProceduralContentGenerationLevel {
         catch (IllegalArgumentException ex){
             System.out.println(ex.getMessage());
             System.out.println(MessageFormat.format( "Retry with new width min {0} max {1}", widthMin * 2, widthMax * 2));
-            return doParseLevel(widthMin * 2, widthMax * 2, blockCount, enemyCount, pitCount, pipeCount);
+            return doParseLevel(widthMin * 2, widthMax * 2, blockCount, enemyCount, pitCount, pipeCount, rampCount);
         }
     }
 
@@ -324,6 +329,55 @@ public class ProceduralContentGenerationLevel {
             } else {
                 for (int j = -1; j < 2; j++) {
                     currentLevel.add(addIndex + j, '-');
+                }
+            }
+        }
+    }
+
+    private void addRamp(int offsetFromStart, int offsetFromFlag, int total) {
+        for (int k = 0; k < total; k++) {
+            int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
+            int addIndex = rand.nextInt(offsetFromStart, maxIndex);
+            while (true){
+                if(isValidToAdd(addIndex)){
+                    break;
+                }
+                addIndex = rand.nextInt(offsetFromStart, maxIndex);
+            }
+
+            for (int height = 0; height < levels.size(); height++) {
+                // Get the current level's list once and reuse it
+                ArrayList<Character> currentLevel = levels.get(height);
+                if(height == GROUND_1_LEVEL || height == GROUND_2_LEVEL) {
+                    currentLevel.add(addIndex - 3,'X');
+                    currentLevel.add(addIndex - 2,'X');
+                    currentLevel.add(addIndex - 1,'X');
+                    currentLevel.add(addIndex, 'X');
+                } else if (height == LAN_LEVEL - 3) {
+                    currentLevel.add(addIndex - 3,'-');
+                    currentLevel.add(addIndex - 2,'-');
+                    currentLevel.add(addIndex - 1,'-');
+                    currentLevel.add(addIndex,'#');
+                } else if (height == LAN_LEVEL - 2) {
+                    currentLevel.add(addIndex - 3,'-');
+                    currentLevel.add(addIndex - 2,'-');
+                    currentLevel.add(addIndex - 1,'#');
+                    currentLevel.add(addIndex,'#');
+                } else if (height == LAN_LEVEL - 1) {
+                    currentLevel.add(addIndex - 3,'-');
+                    currentLevel.add(addIndex - 2,'#');
+                    currentLevel.add(addIndex - 1,'#');
+                    currentLevel.add(addIndex,'#');
+                } else if (height == LAN_LEVEL) {
+                    currentLevel.add(addIndex - 3,'#');
+                    currentLevel.add(addIndex - 2,'#');
+                    currentLevel.add(addIndex - 1,'#');
+                    currentLevel.add(addIndex,'#');
+                } else{
+                    currentLevel.add(addIndex - 3,'-');
+                    currentLevel.add(addIndex - 2,'-');
+                    currentLevel.add(addIndex - 1,'-');
+                    currentLevel.add(addIndex,'-');
                 }
             }
         }

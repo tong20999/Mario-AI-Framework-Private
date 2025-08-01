@@ -40,8 +40,8 @@ public class PlayLevel {
         // printResults(game.playGame(getLevel("../levels/original/lvl-1-basic-move-right.txt"), 200, 0));
         var level = getLevel("./levels/training/100-basic/104-basic-block-enemy-pit/lvl-1.txt");
         var original = getLevel("./levels/original/lvl-1a.txt");
-        testPcg();
-        String levelFileName = "blocks=5,enemies=5,pits=5,pipes=5,width_min=25,width_max=25";
+        //testPcg();
+        String levelFileName = "blocks=0,enemies=0,pits=0,pipes=0,ramps=1,width_min=20,width_max=20";
         while (true){
             ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel
                     .parseLevel(levelFileName);
