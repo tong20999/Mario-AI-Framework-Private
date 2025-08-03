@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import time
 import gc
+from scipy.signal import lfilter
 
 from ppo.multiprocessenv import MultiprocessEnv
 
@@ -25,10 +26,6 @@ class EpisodeBuffer():
         self.max_episode_steps = max_episode_steps
 
         self._truncated_fn = np.vectorize(lambda x: 'TimeLimit.truncated' in x and x['TimeLimit.truncated'])
-        self.discounts = np.logspace(
-            0, max_episode_steps+1, num=max_episode_steps+1, base=gamma, endpoint=False, dtype=np.float64)
-        self.tau_discounts = np.logspace(
-            0, max_episode_steps+1, num=max_episode_steps+1, base=gamma*tau, endpoint=False, dtype=np.float64)
 
         device = 'cpu'
         if torch.cuda.is_available():
@@ -50,20 +47,10 @@ class EpisodeBuffer():
             shape=(self.max_episodes, self.max_episode_steps, *vec_shape), dtype=np.uint8)
 
         self.actions_mem = np.empty(shape=(self.max_episodes, self.max_episode_steps), dtype=np.uint8)
-        self.actions_mem[:] = 0
-
         self.values_mem = np.empty(shape=(self.max_episodes, self.max_episode_steps), dtype=np.float32)
-        self.values_mem[:] = np.nan
-
         self.returns_mem = np.empty(shape=(self.max_episodes,self.max_episode_steps), dtype=np.float32)
-        self.returns_mem[:] = np.nan
-
         self.gaes_mem = np.empty(shape=(self.max_episodes, self.max_episode_steps), dtype=np.float32)
-        self.gaes_mem[:] = np.nan
-
         self.logpas_mem = np.empty(shape=(self.max_episodes, self.max_episode_steps), dtype=np.float32)
-        self.logpas_mem[:] = np.nan
-
         self.episode_steps = np.zeros(shape=(self.max_episodes), dtype=np.uint16)
         self.episode_reward = np.zeros(shape=(self.max_episodes), dtype=np.float32)
         self.episode_exploration = np.zeros(shape=(self.max_episodes), dtype=np.float32)
@@ -156,17 +143,20 @@ class EpisodeBuffer():
                     self.episode_reward[e_idx] = worker_rewards[w_idx, :T].sum()
                     self.episode_exploration[e_idx] = worker_exploratory[w_idx, :T].mean()
                     self.episode_seconds[e_idx] = time.time() - worker_seconds[w_idx]
+                    
+                    ep_rewards = worker_rewards[w_idx, :T]
+                    ep_values = self.values_mem[e_idx, :T]
+                    v_t_plus_1 = np.append(ep_values[1:], next_values[w_idx])
+                    
+                    deltas = ep_rewards + self.gamma * v_t_plus_1 - ep_values
+                    
+                    discount_factor = self.gamma * self.tau
+                    gaes = lfilter([1], [1, -discount_factor], deltas[::-1], axis=0)[::-1]
+                    returns = gaes + ep_values
 
-                    ep_rewards = np.concatenate((worker_rewards[w_idx, :T], [next_values[w_idx]]))
-                    ep_discounts = self.discounts[:T+1]
-                    ep_returns = np.array([np.sum(ep_discounts[:T+1-t] * ep_rewards[t:]) for t in range(T)])
-                    self.returns_mem[e_idx, :T] = ep_returns
-                    
-                    np_ep_values = np.concatenate((self.values_mem[e_idx, :T], [next_values[w_idx]]))
-                    deltas = ep_rewards[:-1] + self.gamma * np_ep_values[1:] - np_ep_values[:-1]
-                    gaes = np.array([np.sum(self.tau_discounts[:T-t] * deltas[t:]) for t in range(T)])
-                    self.gaes_mem[e_idx, :T] = gaes
-                    
+                    self.gaes_mem[e_idx, :T] = gaes.copy()
+                    self.returns_mem[e_idx, :T] = returns.copy()
+
                     worker_exploratory[w_idx, :] = False
                     worker_rewards[w_idx, :] = 0
                     worker_steps[w_idx] = 0

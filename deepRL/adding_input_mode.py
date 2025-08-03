@@ -3,11 +3,11 @@ import gymnasium as gym
 import numpy as np
 from ppo.cnn import CNNActor, CNNCritic
 
-old_input = 14
-new_input = 16
+old_input = 16
+new_input = 19
 output_dim = 10
-old_actor_path = 'C:/thesis_data/model.policy.15852.tar'
-old_critic_path = 'C:/thesis_data/model.value.15852.tar'
+old_actor_path = 'C:/thesis_data/model.policy.52.tar'
+old_critic_path = 'C:/thesis_data/model.value.52.tar'
 new_actor_path = 'C:/thesis_data/model.policy.tar'
 new_critic_path = 'C:/thesis_data/model.value.tar'
 
@@ -26,7 +26,7 @@ def transfer_weights(model, old_state_dict_path):
             old_param = old_state_dict[key]
             if old_param.shape != new_param.shape:
                 if 'mlp.0.weight' in key:
-                    new_param.data[:, :14] = old_param.data
+                    new_param.data[:, :old_input] = old_param.data
                 elif 'embedding.weight' in key:
                     new_param.data[:, :10] = old_param.data
                 elif 'cnn.0.weight' in key:

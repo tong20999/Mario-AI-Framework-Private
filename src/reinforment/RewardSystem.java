@@ -48,7 +48,7 @@ public class RewardSystem {
         this.pcg = pcg;
         this.workingDir = workingDir;
         this.totalBumpBlock = level.getBumpableBlocks().size();
-        this.totalCoins = level.totalCoins;
+        this.totalCoins = level.getCoins().size();
         this.totalEnemies = level.getEnemies().size();
 
         killReward = 0.2f;

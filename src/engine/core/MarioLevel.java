@@ -12,6 +12,7 @@ import engine.helper.SpriteType;
 import engine.helper.TileFeature;
 import engine.sprites.Enemy;
 import reinforment.Block;
+import reinforment.Coin;
 
 public class MarioLevel {
 
@@ -19,7 +20,6 @@ public class MarioLevel {
     public int tileWidth = MarioGame.width / 16;
     public int height = MarioGame.height;
     public int tileHeight = MarioGame.height / 16;
-    public int totalCoins = 0;
     public int marioTileX, marioTileY, exitTileX, exitTileY;
 
     private int[][] levelTiles;
@@ -29,6 +29,7 @@ public class MarioLevel {
     private MarioImage flag;
     private ArrayList<Enemy> enemies = new ArrayList<>();
     private ArrayList<Block> blocks = new ArrayList<>();
+    private ArrayList<Coin> coins = new ArrayList<>();
 
     public MarioLevel(String level, boolean visuals) {
         if (level.trim().length() == 0) {
@@ -159,7 +160,6 @@ public class MarioLevel {
                     case 'Q':
                     case '!':
                         //coin question block
-                        //this.totalCoins += 1;
                         this.levelTiles[x][y] = 11;
                         blocks.add(new Block(x,y, TileFeature.getTileType(11)));
                         break;
@@ -169,7 +169,6 @@ public class MarioLevel {
                         break;
                     case '2':
                         //invisible coin block
-                        //this.totalCoins += 1;
                         this.levelTiles[x][y] = 49;
                         break;
                     case 'D':
@@ -183,7 +182,6 @@ public class MarioLevel {
                         break;
                     case 'C':
                         //coin block
-                        //this.totalCoins += 1;
                         this.levelTiles[x][y] = 7;
                         //blocks.add(new Block(x,y, TileFeature.getTileType(7)));
                         break;
@@ -199,8 +197,8 @@ public class MarioLevel {
                         break;
                     case 'o':
                         //coin
-                        this.totalCoins += 1;
                         this.levelTiles[x][y] = 15;
+                        coins.add(new Coin(x,y));
                         break;
                     case 't':
                         //empty Pipe
@@ -309,7 +307,7 @@ public class MarioLevel {
             }
         }
         level.spriteTemplates = this.spriteTemplates;
-        level.totalCoins = this.totalCoins;
+        level.coins = this.coins;
         level.blocks = this.blocks;
         level.enemies = this.enemies;
         return level;
@@ -411,6 +409,10 @@ public class MarioLevel {
 
     public ArrayList<Enemy> getEnemies() {
         return enemies;
+    }
+
+    public ArrayList<Coin> getCoins(){
+        return coins;
     }
 
     public List<Block> getBumpableBlocks() {

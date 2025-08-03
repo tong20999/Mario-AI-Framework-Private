@@ -63,12 +63,17 @@ public class State {
         byte marioTileX = (byte)model.getMarioScreenTilePos()[0];
         byte marioTileY = (byte)model.getMarioScreenTilePos()[1];
 
+        byte isSubGoalBlockMet = (byte)(model.isSubGoalBlockMet() ? 1 : 0);
+        byte isSubGoalEnemyMet = (byte)(model.isSubGoalEnemyMet() ? 1 : 0);
+        byte isSubGoalCoinMet = (byte)(model.isSubGoalCoinMet() ? 1 : 0);
+
         ByteBuffer buffer = ByteBuffer.allocate(
                 sceneObservationPayload.length +
                         enemiesObservationPayload.length
                 + 4
                 + 10
                 + 2
+                + 3
         );
 
         buffer.put(sceneObservationPayload);
@@ -85,6 +90,10 @@ public class State {
 
         buffer.put(marioTileX);
         buffer.put(marioTileY);
+
+        buffer.put(isSubGoalBlockMet);
+        buffer.put(isSubGoalEnemyMet);
+        buffer.put(isSubGoalCoinMet);
         return buffer.array();
     }
 }

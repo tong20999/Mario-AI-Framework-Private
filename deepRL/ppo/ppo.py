@@ -230,7 +230,7 @@ class PPO():
               level_pool:list, rehearsal_level_tasks:list[list],
               evaluation_levels:list[str]):
         training_start, last_debug_time = time.time(), float('-inf')
-        self.batch_size = 128
+        self.batch_size = 256
         self.make_envs_fn = make_envs_fn
         self.make_env_fn = make_env_fn
         self.gamma = gamma
@@ -307,7 +307,6 @@ class PPO():
                 n_ep_batch = len(episode_timestep)
                 policy_losses, value_losses, entropy_losses, entropies, values, kls, mses = self.optimize_model()
                 self.episode_buffer.clear()
-                torch.cuda.empty_cache()
 
                 # stats
                 evaluation_score, _ = self.evaluate(self.policy_model, env, random.choice(evaluation_levels))

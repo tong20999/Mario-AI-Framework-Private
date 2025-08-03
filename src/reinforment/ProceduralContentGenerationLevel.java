@@ -29,6 +29,7 @@ public class ProceduralContentGenerationLevel {
     public static ProceduralContentGenerationLevel parseLevel(String pcgName) {
         Map<String, String> params = Helper.parseParameter(pcgName);
         int blockCount = Integer.parseInt(params.getOrDefault("blocks", "0"));
+        int coinCount = Integer.parseInt(params.getOrDefault("coins", "0"));
         int enemyCount = Integer.parseInt(params.getOrDefault("enemies", "0"));
         int pitCount = Integer.parseInt(params.getOrDefault("pits", "0"));
         int pipeCount = Integer.parseInt(params.getOrDefault("pipes", "0"));
@@ -36,10 +37,10 @@ public class ProceduralContentGenerationLevel {
         int widthMin = Integer.parseInt(params.getOrDefault("width_min", "15"));
         int widthMax = Integer.parseInt(params.getOrDefault("width_max", "15"));
 
-        return doParseLevel(widthMin, widthMax, blockCount, enemyCount, pitCount, pipeCount, rampCount);
+        return doParseLevel(widthMin, widthMax, blockCount, coinCount, enemyCount, pitCount, pipeCount, rampCount);
     }
 
-    private static ProceduralContentGenerationLevel doParseLevel(int widthMin, int widthMax, int blockCount, int enemyCount, int pitCount, int pipeCount, int rampCount){
+    private static ProceduralContentGenerationLevel doParseLevel(int widthMin, int widthMax, int blockCount, int coinCount, int enemyCount, int pitCount, int pipeCount, int rampCount){
 
         try{
             ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel.randomWidth(widthMin,widthMax);
@@ -64,12 +65,16 @@ public class ProceduralContentGenerationLevel {
                 pcgLevel.addBlock(6, 2, blockCount);
             }
 
+            if(coinCount > 0){
+                pcgLevel.addCoin(6,2,coinCount);
+            }
+
             return pcgLevel;
         }
         catch (IllegalArgumentException ex){
             System.out.println(ex.getMessage());
             System.out.println(MessageFormat.format( "Retry with new width min {0} max {1}", widthMin * 2, widthMax * 2));
-            return doParseLevel(widthMin * 2, widthMax * 2, blockCount, enemyCount, pitCount, pipeCount, rampCount);
+            return doParseLevel(widthMin * 2, widthMax * 2, blockCount, coinCount, enemyCount, pitCount, pipeCount, rampCount);
         }
     }
 
@@ -374,6 +379,24 @@ public class ProceduralContentGenerationLevel {
             } else {
                 for (int j = -1; j < 2; j++) {
                     currentLevel.add(addIndex + j, '-');
+                }
+            }
+        }
+    }
+
+    private void addCoin(int offsetFromStart, int offsetFromFlag, int total) {
+        for (int k = 0; k < total; k++) {
+            int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
+            int addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
+            int height = rand.nextInt(LAN_LEVEL - 4, LAN_LEVEL - 3 + 1);
+            for (int i = 0; i < levels.size(); i++) {
+                ArrayList<Character> currentLevel = levels.get(i);
+                if (i == GROUND_1_LEVEL || i == GROUND_2_LEVEL) {
+                    currentLevel.add(addIndex, 'X');
+                } else if (i == height) {
+                    currentLevel.add(addIndex, 'o');
+                } else {
+                    currentLevel.add(addIndex, '-');
                 }
             }
         }

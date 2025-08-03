@@ -10,6 +10,7 @@ import engine.graphics.MarioBackground;
 import engine.helper.*;
 import engine.sprites.*;
 import reinforment.Block;
+import reinforment.Coin;
 
 public class MarioWorld {
     public GameStatus gameStatus;
@@ -43,6 +44,7 @@ public class MarioWorld {
     private Set<MarioSprite> listKill = new HashSet<>();
     private ArrayList<MarioSprite> aliveEnemy = new ArrayList<>();
     private ArrayList<Block> unbumpBlocks = new ArrayList<>();
+    private ArrayList<Coin> unCollectCoin = new ArrayList<>();
 
     public MarioWorld(MarioEvent[] killEvents) {
         this.pauseTimer = 0;
@@ -101,6 +103,7 @@ public class MarioWorld {
         this.sprites.add(this.mario);
         aliveEnemy.addAll(this.level.getEnemies());
         unbumpBlocks.addAll(this.level.getBumpableBlocks());
+        unCollectCoin.addAll(this.level.getCoins());
     }
 
     public ArrayList<MarioSprite> getEnemies() {
@@ -142,6 +145,7 @@ public class MarioWorld {
         world.listKill = this.listKill;
         world.aliveEnemy = this.aliveEnemy;
         world.unbumpBlocks = this.unbumpBlocks;
+        world.unCollectCoin = this.unCollectCoin;
         return world;
     }
 
@@ -206,10 +210,7 @@ public class MarioWorld {
     }
 
     public void win() {
-        boolean isSubGoalBlockMet = isSubGoalBlockMet() == null || isSubGoalBlockMet();
-        boolean isSubGoalCoinMet = isSubGoalCoinMet() == null || isSubGoalCoinMet();
-        boolean isSubGoalEnemyMet = isSubGoalEnemyMet() == null || isSubGoalEnemyMet();
-        if(isSubGoalBlockMet && isSubGoalCoinMet && isSubGoalEnemyMet){
+        if(isSubGoalBlockMet() && isSubGoalCoinMet() && isSubGoalEnemyMet()){
             this.addEvent(EventType.WIN, 0);
             this.gameStatus = GameStatus.WIN;
         } else {
@@ -542,6 +543,7 @@ public class MarioWorld {
         if (TileFeature.getTileType(block).contains(TileFeature.PICKABLE)) {
             this.addEvent(EventType.COLLECT, block);
             this.mario.collectCoin();
+            unCollectCoin.removeIf(c -> c.getX() == xTile && c.getY() == yTile);
             level.setBlock(xTile, yTile, 0);
             if (this.visuals) {
                 this.addEffect(new CoinEffect(xTile * 16 + 8, yTile * 16 + 8));
@@ -581,14 +583,14 @@ public class MarioWorld {
     }
 
     public Boolean isSubGoalEnemyMet(){
-        return aliveEnemy.size() == 0;
+        return aliveEnemy.isEmpty();
     }
 
     public Boolean isSubGoalCoinMet(){
-        return level.totalCoins == 0 ? null : level.totalCoins == collectCoin;
+        return unCollectCoin.isEmpty();
     }
     public Boolean isSubGoalBlockMet(){
-        return unbumpBlocks.size() == 0;
+        return unbumpBlocks.isEmpty();
     }
 
 

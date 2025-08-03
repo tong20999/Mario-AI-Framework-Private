@@ -46,7 +46,7 @@ public class MarioRender extends JComponent implements FocusListener {
         world.render(og);
         double completePercentage = world.mario.x / (world.level.exitTileX * 16);
         //drawStringDropShadow(og, "Lives: " + world.lives, 0, 0, 7);
-        drawStringDropShadow(og, "Coins: " + world.level.totalCoins, 0, 0, 7);
+        drawStringDropShadow(og, "Coins: " + world.level.getCoins().size(), 0, 0, 7);
         //drawStringDropShadow(og, "Coins: " + world.coins, 11, 0, 7);
         drawStringDropShadow(og, "Time: " + (world.currentTimer == -1 ? "Inf" : (int) Math.ceil(world.currentTimer / 1000f)), 22, 0, 7);
         //drawStringDropShadow(og, "R: " + String.format("%.2f", world.reward), 0, 2, 7);

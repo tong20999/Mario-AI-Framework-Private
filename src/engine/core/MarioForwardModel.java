@@ -647,4 +647,16 @@ public class MarioForwardModel {
     public int[][] getMarioSceneObservation(int detail) {
         return this.world.getSceneObservation(this.world.mario.x, this.world.mario.y, detail);
     }
+
+    public boolean isSubGoalBlockMet() {
+        return world.isSubGoalBlockMet() == null || world.isSubGoalBlockMet();
+    }
+
+    public boolean isSubGoalEnemyMet() {
+        return world.isSubGoalEnemyMet() == null || world.isSubGoalEnemyMet();
+    }
+
+    public boolean isSubGoalCoinMet() {
+        return world.isSubGoalCoinMet() == null || world.isSubGoalCoinMet();
+    }
 }
