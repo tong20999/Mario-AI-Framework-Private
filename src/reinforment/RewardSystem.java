@@ -27,7 +27,7 @@ public class RewardSystem {
 //    static float mushroomReward = 0.5f;
 //    static float lifeMushroomReward = 0.5f;
     static float losePenalty = -1.0f;
-    static float timeoutPenalty = -0.0f;
+    static float timeoutPenalty = -1.0f;
 //    static float hurtReward = -0.0f;
 //    static float hitWallReward = -0.0f;
 //    static float fallPitReward = -0f;
@@ -36,7 +36,6 @@ public class RewardSystem {
     private final int totalBumpBlock;
     private final int totalCoins;
     private final int totalEnemies;
-    private final int totalPowerUp;
     float killReward;
     float bumpReward;
     float coinReward;
@@ -51,7 +50,6 @@ public class RewardSystem {
         this.totalBumpBlock = level.getBumpableBlocks().size();
         this.totalCoins = level.totalCoins;
         this.totalEnemies = level.getEnemies().size();
-        this.totalPowerUp = level.totalPowerUp;
 
         killReward = 0.2f;
         bumpReward = 0.1f;
@@ -68,29 +66,18 @@ public class RewardSystem {
             if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
                     e.getEventType() == EventType.FIRE_KILL.getValue() ||
                     e.getEventType() == EventType.SHELL_KILL.getValue() ||
+                    e.getEventType() == EventType.BUMP_KILL.getValue() ||
                     e.getEventType() == EventType.FALL_KILL.getValue()) {
                 reward += killReward;
-                if(isEvaluation){
-                    System.out.println(MessageFormat.format("kill reward reward {0}", reward));
-                }
             }
             if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == SpriteType.FIRE_FLOWER.getValue()) {
                 reward += powerUpReward;
-                if(isEvaluation){
-                    System.out.println(MessageFormat.format("firework reward reward {0}", reward));
-                }
             }
             if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == SpriteType.MUSHROOM.getValue()) {
                 reward += powerUpReward;
-                if(isEvaluation){
-                    System.out.println(MessageFormat.format("mushroom reward {0}", reward));
-                }
             }
             if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == SpriteType.LIFE_MUSHROOM.getValue()) {
                 reward += powerUpReward;
-                if(isEvaluation){
-                    System.out.println(MessageFormat.format("life mushroom reward {0}", reward));
-                }
             }
 
 //            if (e.getEventType() == EventType.HURT.getValue()) {
@@ -107,16 +94,10 @@ public class RewardSystem {
 
             if (e.getEventType() == EventType.BUMP.getValue()){
                 reward += bumpReward;
-                if(isEvaluation){
-                    System.out.println(MessageFormat.format("bump reward {0}", reward));
-                }
             }
 
             if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == 15){
                 reward += coinReward;
-                if(isEvaluation){
-                    System.out.println(MessageFormat.format("coin reward {0}", reward));
-                }
             }
         }
 
@@ -217,8 +198,7 @@ public class RewardSystem {
                         """,
                 totalEnemies,
                 totalCoins,
-                totalBumpBlock,
-                totalPowerUp
+                totalBumpBlock
         );
 
 //        logger.writeLog(rewardInformation);

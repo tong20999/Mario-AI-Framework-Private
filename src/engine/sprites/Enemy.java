@@ -351,6 +351,7 @@ public class Enemy extends MarioSprite {
                     this.world.addEffect(new DeathEffect(this.x, this.y, this.graphics.flipX, 45, -5));
                 }
             }
+            this.world.kill(this, EventType.BUMP_KILL);
             this.world.removeSprite(this);
         }
     }

@@ -52,6 +52,9 @@ class EpisodeBuffer():
         self.actions_mem = np.empty(shape=(self.max_episodes, self.max_episode_steps), dtype=np.uint8)
         self.actions_mem[:] = 0
 
+        self.values_mem = np.empty(shape=(self.max_episodes, self.max_episode_steps), dtype=np.float32)
+        self.values_mem[:] = np.nan
+
         self.returns_mem = np.empty(shape=(self.max_episodes,self.max_episode_steps), dtype=np.float32)
         self.returns_mem[:] = np.nan
 
@@ -106,10 +109,11 @@ class EpisodeBuffer():
         while not buffer_full and length < self.max_episodes:
             with torch.no_grad():
                 actions, logpas, are_exploratory = policy_model.np_pass(states)
-                values = value_model(states)
+                values:torch.Tensor = value_model(states)
 
             next_states, rewards, terminals, truncateds, _ = envs.step(actions)
             
+            self.values_mem[self.current_ep_idxs, worker_steps] = values.cpu().numpy()
             self.grid_scene_states_mem[self.current_ep_idxs, worker_steps] = states['gridScene']
             self.grid_enemies_states_mem[self.current_ep_idxs, worker_steps] = states['gridEnemies']
             self.vector_states_mem[self.current_ep_idxs, worker_steps] = states['vector']
@@ -157,21 +161,8 @@ class EpisodeBuffer():
                     ep_discounts = self.discounts[:T+1]
                     ep_returns = np.array([np.sum(ep_discounts[:T+1-t] * ep_rewards[t:]) for t in range(T)])
                     self.returns_mem[e_idx, :T] = ep_returns
-
-                    ep_states = {
-                        'gridScene': self.grid_scene_states_mem[e_idx, :T],
-                        'gridEnemies': self.grid_enemies_states_mem[e_idx, :T],
-                        'vector': self.vector_states_mem[e_idx, :T]
-                    }
                     
-                    with torch.no_grad():
-                        ep_values_tensors = value_model(ep_states)
-                        ep_values = torch.cat((ep_values_tensors,
-                                               torch.tensor([next_values[w_idx]],
-                                                            device=value_model.device,
-                                                            dtype=torch.float32)))
-                    
-                    np_ep_values = ep_values.view(-1).cpu().numpy()
+                    np_ep_values = np.concatenate((self.values_mem[e_idx, :T], [next_values[w_idx]]))
                     deltas = ep_rewards[:-1] + self.gamma * np_ep_values[1:] - np_ep_values[:-1]
                     gaes = np.array([np.sum(self.tau_discounts[:T-t] * deltas[t:]) for t in range(T)])
                     self.gaes_mem[e_idx, :T] = gaes

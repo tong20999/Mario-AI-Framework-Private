@@ -19,7 +19,7 @@ public class MarioLevel {
     public int tileWidth = MarioGame.width / 16;
     public int height = MarioGame.height;
     public int tileHeight = MarioGame.height / 16;
-    public int totalCoins = 0, totalPowerUp = 0;
+    public int totalCoins = 0;
     public int marioTileX, marioTileY, exitTileX, exitTileY;
 
     private int[][] levelTiles;
@@ -155,7 +155,6 @@ public class MarioLevel {
                         //mushroom question block
                         this.levelTiles[x][y] = 8;
                         blocks.add(new Block(x,y, TileFeature.getTileType(8)));
-                        this.totalPowerUp += 1;
                         break;
                     case 'Q':
                     case '!':
@@ -186,19 +185,17 @@ public class MarioLevel {
                         //coin block
                         //this.totalCoins += 1;
                         this.levelTiles[x][y] = 7;
-                        blocks.add(new Block(x,y, TileFeature.getTileType(7)));
+                        //blocks.add(new Block(x,y, TileFeature.getTileType(7)));
                         break;
                     case 'U':
                         //mushroom block
                         this.levelTiles[x][y] = 50;
-                        blocks.add(new Block(x,y, TileFeature.getTileType(50)));
-                        this.totalPowerUp += 1;
+                        //blocks.add(new Block(x,y, TileFeature.getTileType(50)));
                         break;
                     case 'L':
                         //1up block
                         this.levelTiles[x][y] = 51;
                         blocks.add(new Block(x,y, TileFeature.getTileType(51)));
-                        this.totalPowerUp += 1;
                         break;
                     case 'o':
                         //coin
@@ -314,7 +311,6 @@ public class MarioLevel {
         level.spriteTemplates = this.spriteTemplates;
         level.totalCoins = this.totalCoins;
         level.blocks = this.blocks;
-        level.totalPowerUp = this.totalPowerUp;
         level.enemies = this.enemies;
         return level;
     }

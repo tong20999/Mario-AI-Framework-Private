@@ -37,11 +37,14 @@ public class PlayLevel {
 
     public static void main(String[] args) throws Exception {
         MarioGame game = new MarioGame();
+
+        System.setProperty("sun.java2d.uiScale", "1.0");
         // printResults(game.playGame(getLevel("../levels/original/lvl-1-basic-move-right.txt"), 200, 0));
-        var level = getLevel("./levels/training/100-basic/104-basic-block-enemy-pit/lvl-1.txt");
-        var original = getLevel("./levels/original/lvl-1a.txt");
-        //testPcg();
-        String levelFileName = "blocks=5,enemies=6,pits=3,pipes=3,ramps=3,width_min=30,width_max=30";
+        var level = getLevel("./levels/training/100-basic/104-basic-block-enemy-pit/lvl-1a.txt");
+        var original = getLevel("./levels/evaluation/lvl-1.txt");
+        String levelFileName = "blocks=3,enemies=1,pits=1,pipes=1,ramps=1,width_min=25,width_max=25";
+        testPcg(levelFileName);
+
         while (true){
             ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel
                     .parseLevel(levelFileName);
@@ -52,16 +55,15 @@ public class PlayLevel {
             //pcgLevel.addBlock(2, 2, 1);
             pcgLevel.generate(false);
             String mod = pcgLevel.getContent();
-            printResults(game.runGame(new agents.human.Agent(), mod, 99, 0, true));
+            printResults(game.runGame(new agents.human.Agent(), mod, 9999, 0, true));
         }
 
     }
 
-    private static void testPcg() throws Exception {
+    private static void testPcg(String level) throws Exception {
         for (int i = 0; i < 100000; i++) {
-            String levelFileName = "blocks=5,enemies=3,pits=1,pipes=1,width_min=20,width_max=20";
             ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel
-                    .parseLevel(levelFileName);
+                    .parseLevel(level);
             pcgLevel.generate(false);
             String mod = pcgLevel.getContent();
         }

@@ -11,7 +11,12 @@ public class ProceduralContentGenerationLevel {
     private static final int FLAG_LEVEL = 12;
     private final Map<Integer, ArrayList<Character>> levels = new HashMap<>();
 
-    //private EnumBlockType[] blocks = {EnumBlockType.COIN_QUESTION_BLOCK, EnumBlockType.NORMAL_BLOCK, EnumBlockType.MUSHROOM_QUESTION_BLOCK};
+    private EnumBlockType[] blocks = {
+            EnumBlockType.COIN_QUESTION_BLOCK,
+            //EnumBlockType.COIN_BLOCK,
+            EnumBlockType.MUSHROOM_QUESTION_BLOCK,
+            //EnumBlockType.MUSHROOM_BLOCK
+    };
 
     private int width;
 
@@ -40,7 +45,7 @@ public class ProceduralContentGenerationLevel {
             ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel.randomWidth(widthMin,widthMax);
 
             if(rampCount > 0){
-                pcgLevel.addRamp(6,2,rampCount);
+                pcgLevel.addRamp(8,2,rampCount);
             }
 
             if(pitCount > 0){
@@ -288,7 +293,11 @@ public class ProceduralContentGenerationLevel {
         for (int k = 0; k < total; k++) {
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
-
+            boolean randomHeight = rand.nextInt(2) == 0;
+            int height = LAN_LEVEL;
+            if(randomHeight){
+                height = rand.nextInt(LAN_LEVEL - 8, LAN_LEVEL + 1);
+            }
             for (int i = 0; i < levels.size(); i++) {
                 // Get the current level's list once and reuse it
                 ArrayList<Character> currentLevel = levels.get(i);
@@ -296,7 +305,7 @@ public class ProceduralContentGenerationLevel {
                 if (i == GROUND_1_LEVEL || i == GROUND_2_LEVEL) {
                     // Add 'X' at index and index + 1
                     currentLevel.add(addIndex, 'X');
-                } else if (i == LAN_LEVEL) {
+                } else if (i == height) {
                     // Add 't' at index and index + 1
                     var enemy = k % 2 == 0 && k != 0 ? EnumEnemy.GREEN_KOOPA : EnumEnemy.GOOMBA;
                     currentLevel.add(addIndex, enemy.getValue());
@@ -311,7 +320,8 @@ public class ProceduralContentGenerationLevel {
     public void addBlock(int offsetFromStart, int offsetFromFlag, int total) throws IllegalArgumentException {
         int k = 0;
         while (k < total) {
-            EnumBlockType blockType = (k + 1) % 3 == 0 ? EnumBlockType.MUSHROOM_QUESTION_BLOCK : EnumBlockType.COIN_QUESTION_BLOCK;
+            int randomBlock = rand.nextInt(0, blocks.length);
+            EnumBlockType blockType = blocks[randomBlock];
             doAddBlock(blockType, offsetFromStart, offsetFromFlag);
             if((k + 1) % 4 == 0){
                 doAddBlock(EnumBlockType.NORMAL_BLOCK, offsetFromStart, offsetFromFlag);
@@ -329,6 +339,8 @@ public class ProceduralContentGenerationLevel {
             }
             addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
         }
+
+        boolean heightBlock = rand.nextInt(2) == 0;
         for (int i = 0; i < levels.size(); i++) {
             // Get the current level's list once and reuse it
             ArrayList<Character> currentLevel = levels.get(i);
@@ -338,11 +350,27 @@ public class ProceduralContentGenerationLevel {
                 for (int j = -1; j < 2; j++) {
                     currentLevel.add(addIndex + j, 'X');
                 }
-            } else if (i == LAN_LEVEL - 3) {
-                // Add 't' at index and index + 1
-                currentLevel.add(addIndex - 1, '-');
+            } else if (i == LAN_LEVEL - 7 && heightBlock) {
+                int randomNormalBlock = rand.nextInt(2);
+                currentLevel.add(addIndex - 1, randomNormalBlock == 0 ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
                 currentLevel.add(addIndex, blockType.getValue());
-                currentLevel.add(addIndex + 1, '-');
+                randomNormalBlock = rand.nextInt(2);
+                currentLevel.add(addIndex + 1, randomNormalBlock == 0 ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
+            } else if (i == LAN_LEVEL - 3) {
+                if(!heightBlock){
+                    int randomNormalBlock = rand.nextInt(2);
+                    currentLevel.add(addIndex - 1, randomNormalBlock == 0 ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
+                    currentLevel.add(addIndex, blockType.getValue());
+                    randomNormalBlock = rand.nextInt(2);
+                    currentLevel.add(addIndex + 1, randomNormalBlock == 0 ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
+                }
+                else {
+                    int randomNormalBlock = rand.nextInt(2);
+                    currentLevel.add(addIndex - 1, randomNormalBlock == 0 ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
+                    currentLevel.add(addIndex, EnumBlockType.NORMAL_BLOCK.getValue());
+                    randomNormalBlock = rand.nextInt(2);
+                    currentLevel.add(addIndex + 1, randomNormalBlock == 0 ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
+                }
             } else {
                 for (int j = -1; j < 2; j++) {
                     currentLevel.add(addIndex + j, '-');
@@ -361,40 +389,108 @@ public class ProceduralContentGenerationLevel {
                 }
                 addIndex = rand.nextInt(offsetFromStart, maxIndex);
             }
-
+            boolean randomPattern = rand.nextInt(2) == 0;
+            boolean randomPit = rand.nextInt(2) == 0;
             for (int height = 0; height < levels.size(); height++) {
                 // Get the current level's list once and reuse it
                 ArrayList<Character> currentLevel = levels.get(height);
                 if(height == GROUND_1_LEVEL || height == GROUND_2_LEVEL) {
+                    if(randomPattern){
+                        currentLevel.add(addIndex - 4,'X');
+                    }
                     currentLevel.add(addIndex - 3,'X');
                     currentLevel.add(addIndex - 2,'X');
                     currentLevel.add(addIndex - 1,'X');
                     currentLevel.add(addIndex, 'X');
+                    if(randomPattern){
+                        currentLevel.add(addIndex + 1,randomPit ? '-' : 'X');
+                        currentLevel.add(addIndex + 2,randomPit ? '-' : 'X');
+                        currentLevel.add(addIndex + 3,'X');
+                        currentLevel.add(addIndex + 4,'X');
+                        currentLevel.add(addIndex + 5,'X');
+                        currentLevel.add(addIndex + 6,'X');
+                    }
                 } else if (height == LAN_LEVEL - 3) {
-                    currentLevel.add(addIndex - 3,'-');
-                    currentLevel.add(addIndex - 2,'-');
-                    currentLevel.add(addIndex - 1,'-');
-                    currentLevel.add(addIndex,'#');
-                } else if (height == LAN_LEVEL - 2) {
+                    if(randomPattern){
+                        currentLevel.add(addIndex - 4,'-');
+                    }
                     currentLevel.add(addIndex - 3,'-');
                     currentLevel.add(addIndex - 2,'-');
                     currentLevel.add(addIndex - 1,'#');
                     currentLevel.add(addIndex,'#');
-                } else if (height == LAN_LEVEL - 1) {
+                    if(randomPattern){
+                        currentLevel.add(addIndex + 1,'-');
+                        currentLevel.add(addIndex + 2,'-');
+                        currentLevel.add(addIndex + 3,'#');
+                        currentLevel.add(addIndex + 4,'-');
+                        currentLevel.add(addIndex + 5,'-');
+                        currentLevel.add(addIndex + 6,'-');
+                    }
+
+                } else if (height == LAN_LEVEL - 2) {
+                    if(randomPattern){
+                        currentLevel.add(addIndex - 4,'-');
+                    }
                     currentLevel.add(addIndex - 3,'-');
                     currentLevel.add(addIndex - 2,'#');
                     currentLevel.add(addIndex - 1,'#');
                     currentLevel.add(addIndex,'#');
-                } else if (height == LAN_LEVEL) {
+                    if(randomPattern){
+                        currentLevel.add(addIndex + 1,'-');
+                        currentLevel.add(addIndex + 2,'-');
+                        currentLevel.add(addIndex + 3,'#');
+                        currentLevel.add(addIndex + 4,'#');
+                        currentLevel.add(addIndex + 5,'-');
+                        currentLevel.add(addIndex + 6,'-');
+                    }
+                } else if (height == LAN_LEVEL - 1) {
+                    if(randomPattern){
+                        currentLevel.add(addIndex - 4,'-');
+                    }
                     currentLevel.add(addIndex - 3,'#');
                     currentLevel.add(addIndex - 2,'#');
                     currentLevel.add(addIndex - 1,'#');
                     currentLevel.add(addIndex,'#');
+                    if(randomPattern){
+                        currentLevel.add(addIndex + 1,'-');
+                        currentLevel.add(addIndex + 2,'-');
+                        currentLevel.add(addIndex + 3,'#');
+                        currentLevel.add(addIndex + 4,'#');
+                        currentLevel.add(addIndex + 5,'#');
+                        currentLevel.add(addIndex + 6,'-');
+                    }
+                } else if (height == LAN_LEVEL) {
+                    if(randomPattern){
+                        currentLevel.add(addIndex - 4,'#');
+                    }
+                    currentLevel.add(addIndex - 3,'#');
+                    currentLevel.add(addIndex - 2,'#');
+                    currentLevel.add(addIndex - 1,'#');
+                    currentLevel.add(addIndex,'#');
+                    if(randomPattern){
+                        currentLevel.add(addIndex + 1,'-');
+                        currentLevel.add(addIndex + 2,'-');
+                        currentLevel.add(addIndex + 3,'#');
+                        currentLevel.add(addIndex + 4,'#');
+                        currentLevel.add(addIndex + 5,'#');
+                        currentLevel.add(addIndex + 6,'#');
+                    }
                 } else{
+                    if(randomPattern){
+                        currentLevel.add(addIndex - 4,'-');
+                    }
                     currentLevel.add(addIndex - 3,'-');
                     currentLevel.add(addIndex - 2,'-');
                     currentLevel.add(addIndex - 1,'-');
                     currentLevel.add(addIndex,'-');
+                    if(randomPattern){
+                        currentLevel.add(addIndex + 1,'-');
+                        currentLevel.add(addIndex + 2,'-');
+                        currentLevel.add(addIndex + 3,'-');
+                        currentLevel.add(addIndex + 4,'-');
+                        currentLevel.add(addIndex + 5,'-');
+                        currentLevel.add(addIndex + 6,'-');
+                    }
                 }
             }
         }
@@ -462,9 +558,6 @@ public class ProceduralContentGenerationLevel {
                 return false;
             }
         }
-
-
-
         return true;
     }
 

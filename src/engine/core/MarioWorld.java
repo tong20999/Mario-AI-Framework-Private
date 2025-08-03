@@ -28,9 +28,6 @@ public class MarioWorld {
     //AI
     public float reward = 0;
     public ArrayList<MarioEvent> lastFrameEvents;
-    public String levelFileName;
-
-    public String levelName;
 
     private MarioEvent[] killEvents;
     private ArrayList<MarioSprite> sprites;
@@ -141,8 +138,6 @@ public class MarioWorld {
         //stats
         world.coins = this.coins;
         world.lives = this.lives;
-        world.levelName = this.levelName;
-        world.levelFileName = this.levelFileName;
         world.evaluation = this.evaluation;
         world.listKill = this.listKill;
         world.aliveEnemy = this.aliveEnemy;

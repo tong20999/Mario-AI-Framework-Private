@@ -2,7 +2,9 @@ package reinforment;
 
 public enum EnumBlockType {
     COIN_QUESTION_BLOCK('!'),
+    COIN_BLOCK('C'),
     MUSHROOM_QUESTION_BLOCK('@'),
+    MUSHROOM_BLOCK('U'),
     NORMAL_BLOCK('S');
 
     private final char value;

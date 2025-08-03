@@ -38,15 +38,15 @@ if __name__ == '__main__':
       'goal_mean_100_reward': 25000
   }
 
-  default_pcg = "blocks=3,enemies=2,pits=2,pipes=2,width_min=30,width_max=30"
+  default_pcg = "blocks=10,enemies=3,pits=2,pipes=2,width_min=30,width_max=30" 
   pcg = sys.argv[1] if len(sys.argv) > 1 else default_pcg
 
-  default_hyper_params = '''{"policyOptimizerLr":0.00005,"policyOptimizationEpochs":5,"policyClipRange":0.1,"valueOptimizerLr":0.00005,"valueOptimizationEpochs":5,"ewcLambda":10000,"maxBufferEpisodes":256,"maxBufferEpisodeSteps":3000,"entropyLossWeight":0.001,"nWorkers":8}'''
+  default_hyper_params = '''{"policyOptimizerLr":0.00005,"policyOptimizationEpochs":2,"policyClipRange":0.1,"valueOptimizerLr":0.00005,"valueOptimizationEpochs":2,"ewcLambda":10000,"maxBufferEpisodes":16,"maxBufferEpisodeSteps":3000,"entropyLossWeight":0.001,"nWorkers":8}'''
   hyperParams = json.loads(base64.b64decode(sys.argv[2]).decode("utf-8")) if len(sys.argv) > 2 else json.loads(default_hyper_params)
 
 
   policy_model_fn = lambda nS, nA: CNNActor(nS, nA, hidden_dims=(256,256))
-  policy_model_max_grad_norm = float('inf')
+  policy_model_max_grad_norm = 0.5
   policy_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
   policy_optimizer_lr = hyperParams.get('policyOptimizerLr', 0.0005)
   policy_optimization_epochs = hyperParams.get('policyOptimizationEpochs', 5)
@@ -55,13 +55,13 @@ if __name__ == '__main__':
   policy_stopping_kl = 0.02
 
   value_model_fn = lambda nS: CNNCritic(nS, hidden_dims=(256,256))
-  value_model_max_grad_norm = float('inf')
+  value_model_max_grad_norm = 0.5
   value_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
   value_optimizer_lr = hyperParams.get('valueOptimizerLr', 0.0005)
   value_optimization_epochs = hyperParams.get('valueOptimizationEpochs', 5)
   value_sample_ratio = 0.8
   value_clip_range = float('inf')
-  value_stopping_mse = 25
+  value_stopping_mse = 0.01
 
   ewc_fn = lambda policy_model, ewc_lambda: EWC(policy_model, ewc_lambda)
   ewc_lambda = hyperParams.get('ewcLambda', 10000.0)
@@ -110,9 +110,10 @@ if __name__ == '__main__':
     # ["block0-enemy1-pit1-pipe0"],
   ]
 
-  evaluation_levels = level_pool
+  #evaluation_levels = ["file=./levels/evaluation/lvl-1.txt"]
+  evaluation_levels = [pcg]
 
-  # agent.play(make_env_fn, policy_model_fn, "./levels/original/lvl-1.txt")
+  # agent.play(make_env_fn, policy_model_fn, "file=./levels/evaluation/lvl-1.txt,fps=45")
   agent.train(make_envs_fn,
               make_env_fn,
               gamma,
