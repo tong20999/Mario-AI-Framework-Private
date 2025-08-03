@@ -5,8 +5,6 @@ from multigridstack import MultiGridStack
 from ppo.cnn import CNNActor, CNNCritic
 from ppo.episodebuffer import EpisodeBuffer
 from ppo.ewc import EWC
-from ppo.fcca import FCCA
-from ppo.fcv import FCV
 from ppo.multiprocessenv import MultiprocessEnv
 import torch.optim as optim
 import torch.multiprocessing as mp
