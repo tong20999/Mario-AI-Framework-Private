@@ -36,10 +36,10 @@ if __name__ == '__main__':
       'goal_mean_100_reward': 25000
   }
 
-  default_pcg = "blocks=10,enemies=3,pits=2,pipes=2,width_min=30,width_max=30" 
+  default_pcg = "blocks=1,enemies=0,pits=0,pipes=0,width_min=15,width_max=15" 
   pcg = sys.argv[1] if len(sys.argv) > 1 else default_pcg
 
-  default_hyper_params = '''{"policyOptimizerLr":0.00005,"policyOptimizationEpochs":2,"policyClipRange":0.1,"valueOptimizerLr":0.00005,"valueOptimizationEpochs":2,"ewcLambda":10000,"maxBufferEpisodes":16,"maxBufferEpisodeSteps":3000,"entropyLossWeight":0.001,"nWorkers":8}'''
+  default_hyper_params = '''{"policyOptimizerLr":0.00001,"policyOptimizationEpochs":3,"policyClipRange":0.1,"valueOptimizerLr":0.0005,"valueOptimizationEpochs":3,"ewcLambda":0,"maxBufferEpisodes":32,"maxBufferEpisodeSteps":1500,"entropyLossWeight":0.005,"nWorkers":12}'''
   hyperParams = json.loads(base64.b64decode(sys.argv[2]).decode("utf-8")) if len(sys.argv) > 2 else json.loads(default_hyper_params)
 
 
@@ -70,7 +70,7 @@ if __name__ == '__main__':
 
   entropy_loss_weight = hyperParams.get('entropyLossWeight', 0.01)
   tau = 0.97
-  n_workers = hyperParams.get('nWorkers', 8)
+  n_workers = hyperParams.get('nWorkers', 2)
 
   env_name, gamma, max_minutes, \
   max_episodes, goal_mean_100_reward = environment_settings.values()
@@ -111,7 +111,7 @@ if __name__ == '__main__':
   #evaluation_levels = ["file=./levels/evaluation/lvl-1.txt"]
   evaluation_levels = [pcg]
 
-  # agent.play(make_env_fn, policy_model_fn, "file=./levels/evaluation/lvl-1.txt,fps=45")
+  agent.play(make_env_fn, policy_model_fn, "blocks=1,enemies=0,pits=0,pipes=0,width_min=15,width_max=15,fps=45")
   agent.train(make_envs_fn,
               make_env_fn,
               gamma,

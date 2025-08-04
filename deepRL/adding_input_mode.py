@@ -3,11 +3,11 @@ import gymnasium as gym
 import numpy as np
 from ppo.cnn import CNNActor, CNNCritic
 
-old_input = 16
-new_input = 19
+old_input = 20
+new_input = 35
 output_dim = 10
-old_actor_path = 'C:/thesis_data/model.policy.52.tar'
-old_critic_path = 'C:/thesis_data/model.value.52.tar'
+old_actor_path = 'C:/thesis_data/model.policy.3536.tar'
+old_critic_path = 'C:/thesis_data/model.value.3536.tar'
 new_actor_path = 'C:/thesis_data/model.policy.tar'
 new_critic_path = 'C:/thesis_data/model.value.tar'
 

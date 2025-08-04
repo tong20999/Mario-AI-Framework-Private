@@ -11,22 +11,24 @@ import engine.helper.*;
 import engine.sprites.*;
 import reinforment.Block;
 import reinforment.Coin;
+import reinforment.Point;
 
 public class MarioWorld {
     public GameStatus gameStatus;
     public int pauseTimer = 0;
     public int fireballsOnScreen = 0;
     public int currentTimer = -1;
+    public int initTimer = 0;
     public float cameraX;
     public float cameraY;
     public Mario mario;
     public MarioLevel level;
     public boolean visuals;
     public int currentTick;
-    //Status
+    // Status
     public int coins, lives, collectCoin;
 
-    //AI
+    // AI
     public float reward = 0;
     public ArrayList<MarioEvent> lastFrameEvents;
 
@@ -45,6 +47,7 @@ public class MarioWorld {
     private ArrayList<MarioSprite> aliveEnemy = new ArrayList<>();
     private ArrayList<Block> unbumpBlocks = new ArrayList<>();
     private ArrayList<Coin> unCollectCoin = new ArrayList<>();
+    private Set<Point> visitedTiles = new HashSet<>();;
 
     public MarioWorld(MarioEvent[] killEvents) {
         this.pauseTimer = 0;
@@ -60,41 +63,42 @@ public class MarioWorld {
     }
 
     public void initializeVisuals(GraphicsConfiguration graphicsConfig) {
-        int[][] tempBackground = new int[][]{
-                new int[]{42},
-                new int[]{42},
-                new int[]{42},
-                new int[]{42},
-                new int[]{42},
-                new int[]{42},
-                new int[]{42},
-                new int[]{42},
-                new int[]{42},
-                new int[]{42},
-                new int[]{42},
-                new int[]{42},
-                new int[]{42},
-                new int[]{42},
-                new int[]{42},
-                new int[]{42}
+        int[][] tempBackground = new int[][] {
+                new int[] { 42 },
+                new int[] { 42 },
+                new int[] { 42 },
+                new int[] { 42 },
+                new int[] { 42 },
+                new int[] { 42 },
+                new int[] { 42 },
+                new int[] { 42 },
+                new int[] { 42 },
+                new int[] { 42 },
+                new int[] { 42 },
+                new int[] { 42 },
+                new int[] { 42 },
+                new int[] { 42 },
+                new int[] { 42 },
+                new int[] { 42 }
         };
         backgrounds[0] = new MarioBackground(graphicsConfig, MarioGame.width, tempBackground);
-        tempBackground = new int[][]{
-                new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                new int[]{31, 32, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                new int[]{34, 35, 36, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                new int[]{0, 0, 0, 0, 0, 0, 0, 0, 31, 32, 33, 0, 0, 0, 0, 0},
-                new int[]{0, 0, 0, 0, 0, 0, 0, 0, 34, 35, 36, 0, 0, 0, 0, 0},
-                new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+        tempBackground = new int[][] {
+                new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                new int[] { 31, 32, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                new int[] { 34, 35, 36, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 31, 32, 33, 0, 0, 0, 0, 0 },
+                new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 34, 35, 36, 0, 0, 0, 0, 0 },
+                new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
         };
         backgrounds[1] = new MarioBackground(graphicsConfig, MarioGame.width, tempBackground);
     }
 
     public void initializeLevel(String level, int timer) {
         this.currentTimer = timer;
+        this.initTimer = timer;
         this.level = new MarioLevel(level, this.visuals);
 
         this.mario = new Mario(this.visuals, this.level.marioTileX * 16, this.level.marioTileY * 16);
@@ -125,6 +129,7 @@ public class MarioWorld {
         world.gameStatus = this.gameStatus;
         world.pauseTimer = this.pauseTimer;
         world.currentTimer = this.currentTimer;
+        world.initTimer = this.initTimer;
         world.currentTick = this.currentTick;
         world.level = this.level.clone();
         for (MarioSprite sprite : this.sprites) {
@@ -138,7 +143,7 @@ public class MarioWorld {
         if (world.mario == null) {
             world.mario = (Mario) this.mario.clone();
         }
-        //stats
+        // stats
         world.coins = this.coins;
         world.lives = this.lives;
         world.evaluation = this.evaluation;
@@ -146,6 +151,7 @@ public class MarioWorld {
         world.aliveEnemy = this.aliveEnemy;
         world.unbumpBlocks = this.unbumpBlocks;
         world.unCollectCoin = this.unCollectCoin;
+        world.visitedTiles = this.visitedTiles;
         return world;
     }
 
@@ -159,7 +165,7 @@ public class MarioWorld {
         if (this.mario.isFire) {
             marioState = 2;
         }
-        if(this.evaluation && eventType == EventType.COLLECT){
+        if (this.evaluation && eventType == EventType.COLLECT) {
             int a = 5;
         }
         this.lastFrameEvents.add(new MarioEvent(eventType, eventParam, mario.x, mario.y, marioState, this.currentTick));
@@ -173,7 +179,8 @@ public class MarioWorld {
         if (this.mario.isFire) {
             marioState = 2;
         }
-        this.lastFrameEvents.add(new MarioEvent(eventType, eventParam, mario.x, mario.y, marioState, this.currentTick, initialCode));
+        this.lastFrameEvents.add(
+                new MarioEvent(eventType, eventParam, mario.x, mario.y, marioState, this.currentTick, initialCode));
     }
 
     public void addEffect(MarioEffect effect) {
@@ -188,10 +195,11 @@ public class MarioWorld {
         sprite.update();
     }
 
-    public void kill(MarioSprite sprite, EventType killEvent){
+    public void kill(MarioSprite sprite, EventType killEvent) {
         this.listKill.add(sprite);
         this.addEvent(killEvent, sprite.type.getValue(), sprite.initialCode);
-        aliveEnemy.removeIf(a -> Objects.equals(sprite.initialCode, MessageFormat.format("{0}_{1}_{2}", a.x, a.y, a.type.getValue())));
+        aliveEnemy.removeIf(a -> Objects.equals(sprite.initialCode,
+                MessageFormat.format("{0}_{1}_{2}", a.x, a.y, a.type.getValue())));
     }
 
     public void removeSprite(MarioSprite sprite) {
@@ -210,13 +218,8 @@ public class MarioWorld {
     }
 
     public void win() {
-        if(isSubGoalBlockMet() && isSubGoalCoinMet() && isSubGoalEnemyMet()){
-            this.addEvent(EventType.WIN, 0);
-            this.gameStatus = GameStatus.WIN;
-        } else {
-            this.addEvent(EventType.FLAG, 0);
-            this.lose();
-        }
+        this.addEvent(EventType.WIN, 0);
+        this.gameStatus = GameStatus.WIN;
     }
 
     public void lose() {
@@ -224,7 +227,6 @@ public class MarioWorld {
         this.gameStatus = GameStatus.LOSE;
         this.mario.alive = false;
     }
-
 
     public void timeout() {
         this.gameStatus = GameStatus.TIME_OUT;
@@ -236,8 +238,10 @@ public class MarioWorld {
         int centerXInMap = (int) centerX / 16;
         int centerYInMap = (int) centerY / 16;
 
-        for (int y = centerYInMap - MarioGame.tileHeight / 2, obsY = 0; y < centerYInMap + MarioGame.tileHeight / 2; y++, obsY++) {
-            for (int x = centerXInMap - MarioGame.tileWidth / 2, obsX = 0; x < centerXInMap + MarioGame.tileWidth / 2; x++, obsX++) {
+        for (int y = centerYInMap - MarioGame.tileHeight / 2,
+                obsY = 0; y < centerYInMap + MarioGame.tileHeight / 2; y++, obsY++) {
+            for (int x = centerXInMap - MarioGame.tileWidth / 2,
+                    obsX = 0; x < centerXInMap + MarioGame.tileWidth / 2; x++, obsX++) {
                 int currentX = x;
                 if (currentX < 0) {
                     currentX = 0;
@@ -252,7 +256,8 @@ public class MarioWorld {
                 if (currentY > level.tileHeight - 1) {
                     currentY = level.tileHeight - 1;
                 }
-                ret[obsX][obsY] = MarioForwardModel.getBlockValueGeneralization(this.level.getBlock(currentX, currentY), detail);
+                ret[obsX][obsY] = MarioForwardModel.getBlockValueGeneralization(this.level.getBlock(currentX, currentY),
+                        detail);
             }
         }
         return ret;
@@ -289,8 +294,10 @@ public class MarioWorld {
         int centerXInMap = (int) centerX / 16;
         int centerYInMap = (int) centerY / 16;
 
-        for (int y = centerYInMap - MarioGame.tileHeight / 2, obsY = 0; y < centerYInMap + MarioGame.tileHeight / 2; y++, obsY++) {
-            for (int x = centerXInMap - MarioGame.tileWidth / 2, obsX = 0; x < centerXInMap + MarioGame.tileWidth / 2; x++, obsX++) {
+        for (int y = centerYInMap - MarioGame.tileHeight / 2,
+                obsY = 0; y < centerYInMap + MarioGame.tileHeight / 2; y++, obsY++) {
+            for (int x = centerXInMap - MarioGame.tileWidth / 2,
+                    obsX = 0; x < centerXInMap + MarioGame.tileWidth / 2; x++, obsX++) {
                 int currentX = x;
                 if (currentX < 0) {
                     currentX = 0;
@@ -305,7 +312,7 @@ public class MarioWorld {
                 if (currentY > level.tileHeight - 1) {
                     currentY = level.tileHeight - 1;
                 }
-                if(y > this.level.height + 32){
+                if (y > this.level.height + 32) {
                     int a = 5;
                 }
                 ret[obsX][obsY] = MarioForwardModel.getBlockValueGeneralization(this.level.getBlock(x, y), sceneDetail);
@@ -340,6 +347,7 @@ public class MarioWorld {
 
     public void update(boolean[] actions) {
         this.lastFrameEvents.clear();
+        int prevVisitedTile = this.visitedTiles.size();
         if (this.gameStatus != GameStatus.RUNNING) {
             return;
         }
@@ -375,11 +383,10 @@ public class MarioWorld {
             this.cameraY = 0;
         }
 
-
-
         this.fireballsOnScreen = 0;
         for (MarioSprite sprite : sprites) {
-            if (sprite.x < cameraX - 64 || sprite.x > cameraX + MarioGame.width + 64 || sprite.y > this.level.height + 32) {
+            if (sprite.x < cameraX - 64 || sprite.x > cameraX + MarioGame.width + 64
+                    || sprite.y > this.level.height + 32) {
                 if (sprite.type == SpriteType.MARIO) {
                     this.addEvent(EventType.FALL_PIT, sprite.type.getValue());
                     this.lose();
@@ -418,7 +425,7 @@ public class MarioWorld {
                         if (this.level.getLastSpawnTick(x, y) != this.currentTick - 1) {
                             MarioSprite sprite = type.spawnSprite(this.visuals, x, y, dir);
                             sprite.initialCode = spriteCode;
-                            if(this.listKill.stream().noneMatch(l -> Objects.equals(l.initialCode, spriteCode))){
+                            if (this.listKill.stream().noneMatch(l -> Objects.equals(l.initialCode, spriteCode))) {
                                 this.addSprite(sprite);
                             }
                         }
@@ -481,7 +488,15 @@ public class MarioWorld {
         addedSprites.clear();
         removedSprites.clear();
 
-        //punishing forward model
+        var marioTileX = this.mario.getMapX();
+        var marioTileY = this.mario.getMapY();
+        this.visitedTiles.add(new Point(marioTileX, marioTileY));
+
+        if (this.visitedTiles.size() > prevVisitedTile) {
+            this.addEvent(EventType.EXPLORER, EventType.EXPLORER.getValue());
+        }
+
+        // punishing forward model
         if (this.killEvents != null) {
             for (MarioEvent k : this.killEvents) {
                 if (this.lastFrameEvents.contains(k)) {
@@ -521,7 +536,7 @@ public class MarioWorld {
         if (features.contains(TileFeature.BREAKABLE)) {
             bumpInto(xTile, yTile - 1);
             if (canBreakBricks) {
-                //this.bumpBlock++;
+                // this.bumpBlock++;
                 this.addEvent(EventType.BUMP, MarioForwardModel.OBS_BRICK);
                 level.setBlock(xTile, yTile, 0);
                 if (this.visuals) {
@@ -582,17 +597,17 @@ public class MarioWorld {
         }
     }
 
-    public Boolean isSubGoalEnemyMet(){
+    public Boolean isSubGoalEnemyMet() {
         return aliveEnemy.isEmpty();
     }
 
-    public Boolean isSubGoalCoinMet(){
+    public Boolean isSubGoalCoinMet() {
         return unCollectCoin.isEmpty();
     }
-    public Boolean isSubGoalBlockMet(){
+
+    public Boolean isSubGoalBlockMet() {
         return unbumpBlocks.isEmpty();
     }
-
 
     public ArrayList<MarioSprite> getAliveEnemies() {
         return aliveEnemy;
@@ -601,7 +616,6 @@ public class MarioWorld {
     public ArrayList<Block> getUnbumpBlocks() {
         return unbumpBlocks;
     }
-
 
     public String nearestCompass(int[] position) {
         int dx = position[0];
@@ -645,7 +659,7 @@ public class MarioWorld {
 
     public int[] findNearestBlockVector() {
         int[] vector = new int[2];
-        if(this.getUnbumpBlocks().size() == 0){
+        if (this.getUnbumpBlocks().size() == 0) {
             return vector;
         }
         int minDistanceSquared = Integer.MAX_VALUE;
@@ -653,7 +667,8 @@ public class MarioWorld {
         Block nearestBlock = null;
 
         for (Block block : this.getUnbumpBlocks()) {
-            // Calculate squared distance (more efficient than true distance for comparison).
+            // Calculate squared distance (more efficient than true distance for
+            // comparison).
             int dx = block.getX() - mario.getMapX();
             int dy = block.getY() - mario.getMapY();
             int distanceSquared = dx * dx + dy * dy;
@@ -665,7 +680,7 @@ public class MarioWorld {
             }
         }
 
-        if(nearestBlock != null){
+        if (nearestBlock != null) {
             vector[0] = nearestBlock.getX() - mario.getMapX();
             vector[1] = nearestBlock.getY() - mario.getMapY();
             return vector;
@@ -674,9 +689,9 @@ public class MarioWorld {
         return vector;
     }
 
-    public int[] findNearestEnemyVector(){
+    public int[] findNearestEnemyVector() {
         int[] vector = new int[2];
-        if(this.getAliveEnemies().isEmpty()){
+        if (this.getAliveEnemies().isEmpty()) {
             return vector;
         }
         int minDistanceSquared = Integer.MAX_VALUE;
@@ -695,16 +710,17 @@ public class MarioWorld {
             }
         }
 
-        if(nearestEnemy != null){
+        if (nearestEnemy != null) {
             vector[0] = nearestEnemy.getMapX() - mario.getMapX();
             vector[1] = nearestEnemy.getMapY() - mario.getMapY();
             return vector;
         }
 
         for (MarioSprite sprite : this.getAliveEnemies()) {
-            // Calculate squared distance (more efficient than true distance for comparison).
-            int dx = (int)sprite.x - mario.getMapX();
-            int dy = (int)sprite.y - mario.getMapY();
+            // Calculate squared distance (more efficient than true distance for
+            // comparison).
+            int dx = (int) sprite.x - mario.getMapX();
+            int dy = (int) sprite.y - mario.getMapY();
             int distanceSquared = dx * dx + dy * dy;
 
             // If this enemy is closer than the previous closest, update our records.
@@ -714,9 +730,9 @@ public class MarioWorld {
             }
         }
 
-        if(nearestEnemy != null){
-            vector[0] = (int)nearestEnemy.x - mario.getMapX();
-            vector[1] = (int)nearestEnemy.y - mario.getMapY();
+        if (nearestEnemy != null) {
+            vector[0] = (int) nearestEnemy.x - mario.getMapX();
+            vector[1] = (int) nearestEnemy.y - mario.getMapY();
             return vector;
         }
 

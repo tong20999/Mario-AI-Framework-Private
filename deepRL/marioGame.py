@@ -24,13 +24,15 @@ class MarioGame(SocketEnv):
     def __init__(self, fps: int = 10):
         super(MarioGame, self).__init__()
         self.fps = fps
+        self.vector_transfer_byte_len = 33
+        self.vector_size = 15
         self._init_spaces()
 
     def _init_spaces(self):
         self.observation_space = gym.spaces.Dict({
             'gridScene': gym.spaces.Box(low=0, high=255, shape=(1, 16, 16), dtype=np.uint8),
             'gridEnemies': gym.spaces.Box(low=0, high=255, shape=(1, 16, 16), dtype=np.uint8),
-            'vector': gym.spaces.Box(low=0, high=255, shape=(19,), dtype=np.uint8)
+            'vector': gym.spaces.Box(low=0, high=255, shape=(self.vector_size,), dtype=np.uint8)
         })
         self.action_space = gym.spaces.Discrete(len(all_possible_input))
 
@@ -41,7 +43,12 @@ class MarioGame(SocketEnv):
 
         grid_scene_part = np.array(list(payload[:grid_scene_end]), dtype=np.uint8).reshape(1, 16, 16)
         grid_enemies_part = np.array(list(payload[grid_scene_end:grid_enemies_end]), dtype=np.uint8).reshape(1, 16, 16)
-        vector_part = np.array(list(payload[grid_enemies_end:]), dtype=np.uint8)
+        # vector_part = np.array(list(payload[grid_enemies_end:]), dtype=np.uint8)
+        vector_bytes = payload[grid_enemies_end:]
+        format_string  = '>bbbbbbbbbffffff'
+        a = len(vector_bytes)
+        unpacked_values = struct.unpack(format_string, vector_bytes)
+        vector_part = np.array(unpacked_values, dtype=np.float32)
         
         return {'gridScene': grid_scene_part, 'gridEnemies': grid_enemies_part, 'vector': vector_part}
 
@@ -64,8 +71,7 @@ class MarioGame(SocketEnv):
     def _get_obs_shape(self) -> int:
         grid_scene_size = np.prod(self.observation_space['gridScene'].shape)
         grid_enemies_size = np.prod(self.observation_space['gridEnemies'].shape)
-        vector_size = np.prod(self.observation_space['vector'].shape)
-        return grid_scene_size + grid_enemies_size + vector_size
+        return grid_scene_size + grid_enemies_size + self.vector_transfer_byte_len
 
     def _receive_reset(self):
         data = self._receive_fixed(1024)

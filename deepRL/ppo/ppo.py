@@ -22,7 +22,7 @@ from torch.utils.data import TensorDataset
 from ppo.cnn import CNNActor
 from ppo.custom_dataset import CustomDictDataset
 from ppo.episodebuffer import EpisodeBuffer
-from ppo.ewc import EWC
+# from ppo.ewc import EWC
 import socket
 import threading
 import time
@@ -149,7 +149,8 @@ class PPO():
                 policy_losses.append(policy_loss.item())
                 entropy_losses.append(entropy_loss.item())
 
-                ewc_penalty = self.ewc.penalty()
+                # ewc_penalty = self.ewc.penalty()
+                ewc_penalty = 0
 
                 self.policy_optimizer.zero_grad()
                 total_policy_loss = policy_loss + entropy_loss + ewc_penalty
@@ -257,7 +258,7 @@ class PPO():
         self.value_model = self.value_model_fn(self.nS)
         self.value_optimizer = self.value_optimizer_fn(self.value_model, self.value_optimizer_lr)
 
-        self.ewc:EWC = self.ewc_fn(self.policy_model, self.ewc_lambda)
+        # self.ewc:EWC = self.ewc_fn(self.policy_model, self.ewc_lambda)
 
         policy_model_state = self.find_model_file_path('model.policy')
         if policy_model_state is not None:
@@ -272,8 +273,8 @@ class PPO():
         ewc_state_path = self.find_model_file_path('model.ewc_state')
         if ewc_state_path is not None:
             ewc_state = torch.load(ewc_state_path, map_location=self.policy_model.device, weights_only=True)
-            self.ewc.fisher_matrix = ewc_state.get('fisher', self.ewc.create_empty_clone())
-            self.ewc.optimal_params = ewc_state.get('params', {}) # Params can start as empty dict
+            #self.ewc.fisher_matrix = ewc_state.get('fisher', self.ewc.create_empty_clone())
+            #self.ewc.optimal_params = ewc_state.get('params', {}) # Params can start as empty dict
 
         self.episode_buffer:EpisodeBuffer = self.episode_buffer_fn(self.nS, self.gamma, self.tau,
                                                      self.n_workers, 
@@ -366,8 +367,8 @@ class PPO():
                 self.save_checkpoint(evaluation_count, self.policy_model, 'policy')
                 logger.info('saving value model {}'.format(evaluation_count))
                 self.save_checkpoint(evaluation_count, self.value_model, 'value')
-                logger.info('saving ewc model {}'.format(evaluation_count))
-                self.save_ewc(level_pool, rehearsal_level_tasks)
+                #logger.info('saving ewc model {}'.format(evaluation_count))
+                #self.save_ewc(level_pool, rehearsal_level_tasks)
 
     def handle_client(self, conn:socket.socket, addr):
         try:
@@ -505,22 +506,22 @@ class PPO():
             actions_tensor=actions
         )
         
-        self.ewc.register_task(dataset)
+        #self.ewc.register_task(dataset)
 
     def save_checkpoint(self, evaluation_idx, model, suffix):
             torch.save(model.state_dict(), 
                             os.path.join(self.working_dir, 'model.{}.{}.tar'.format(suffix, evaluation_idx)))
             
-    def save_ewc(self, level_pool, rehearsal_level_tasks):
-        self.finish_task(level_pool=level_pool, rehearsal_level_tasks=rehearsal_level_tasks)
+    # def save_ewc(self, level_pool, rehearsal_level_tasks):
+    #     self.finish_task(level_pool=level_pool, rehearsal_level_tasks=rehearsal_level_tasks)
 
-        ewc_state = {
-            'fisher': self.ewc.fisher_matrix,
-            'params': self.ewc.optimal_params
-        }
+    #     ewc_state = {
+    #         'fisher': self.ewc.fisher_matrix,
+    #         'params': self.ewc.optimal_params
+    #     }
         
-        save_path = os.path.join(self.working_dir, 'model.ewc_state.tar')
-        torch.save(ewc_state, save_path)
+    #     save_path = os.path.join(self.working_dir, 'model.ewc_state.tar')
+    #     torch.save(ewc_state, save_path)
 
     def play(self, make_env_fn, policy_model_fn, level):
             env = make_env_fn()

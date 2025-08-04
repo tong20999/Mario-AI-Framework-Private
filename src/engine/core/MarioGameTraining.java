@@ -59,14 +59,14 @@ public class MarioGameTraining {
      */
     private MarioEvent[] killEvents;
 
-    //visualization
+    // visualization
     private JFrame window = null;
     private MarioRender render = null;
     private MarioWorld world = null;
     MarioTimer agentTimer;
     int timer;
 
-    //initialize graphics
+    // initialize graphics
     VolatileImage renderTarget = null;
     Graphics backBuffer = null;
     Graphics currentBuffer = null;
@@ -91,6 +91,7 @@ public class MarioGameTraining {
     ArrayList<MarioEvent> miniStepEvents = new ArrayList<>();
 
     private int fps = 0;
+
     /**
      * Create a mario game to be played
      */
@@ -98,14 +99,14 @@ public class MarioGameTraining {
 
     }
 
-     public void close() {
-         if (this.window != null) {
-             this.window.dispose(); // This is the crucial call to close the window
-         }
-     }
+    public void close() {
+        if (this.window != null) {
+            this.window.dispose(); // This is the crucial call to close the window
+        }
+    }
 
     private void setupWindow(int episode) {
-        if(this.window != null){
+        if (this.window != null) {
             return;
         }
         this.window = new JFrame("Mario AI Framework");
@@ -154,15 +155,15 @@ public class MarioGameTraining {
 
     public byte[] reset(Info info) throws Exception {
         this.visual = info.isVisual();
-        if(this.visual){
+        if (this.visual) {
             setupWindow(info.getEpisode());
         }
         this.episode = info.getEpisode();
 
-        //var levelFileName = info.getLevel();
+        // var levelFileName = info.getLevel();
         var levelParameters = info.getLevel();
         var params = Helper.parseParameter(levelParameters);
-        if(params.containsKey("fps")){
+        if (params.containsKey("fps")) {
             this.fps = Integer.parseInt(params.getOrDefault("fps", "30"));
         }
 
@@ -170,19 +171,20 @@ public class MarioGameTraining {
         this.evaluation = info.isEvaluation();
         this.world = new MarioWorld(this.killEvents);
 
-        if(this.evaluation){
+        if (this.evaluation) {
             this.world.evaluation = true;
         }
         this.world.visuals = visual;
         // timer by level width
-        //this.timer = ((new MarioLevel(Helper.getLevel(levelFileName), false).exitTileX)/2) + 10;
+        // this.timer = ((new MarioLevel(Helper.getLevel(levelFileName),
+        // false).exitTileX)/2) + 10;
         this.timer = 15 + Integer.parseInt(params.getOrDefault("width_min", "15"));
         this.lastMilestone = 0;
         this.lastCoinCount = 0;
         ProceduralContentGenerationLevel pcg = null;
         String level;
         String file = params.get("file");
-        if(file == null){
+        if (file == null) {
             pcg = ProceduralContentGenerationLevel.parseLevel(levelParameters);
             pcg.generate(false);
             level = pcg.getContent();
@@ -195,9 +197,9 @@ public class MarioGameTraining {
             this.world.initializeVisuals(this.render.getGraphicsConfiguration());
         }
 
-        //String workingDir = Helper.getWorkingDir(levelFileName);
+        // String workingDir = Helper.getWorkingDir(levelFileName);
 
-        if(this.evaluation){
+        if (this.evaluation) {
             evaluationCount++;
         }
 
@@ -216,7 +218,7 @@ public class MarioGameTraining {
 
         this.agentTimer = new MarioTimer(MarioGameTraining.maxTime);
 
-        if(!this.evaluation){
+        if (!this.evaluation) {
             this.episodeReward = 0;
         } else {
             this.evaluationReward = 0;
@@ -235,7 +237,7 @@ public class MarioGameTraining {
         var nextState = new MarioForwardModel(nextWorldState);
         float reward = rewardSystem.getReward(this.world, miniStepEvents, action, this.evaluation, this.episode);
 
-        if(this.evaluation){
+        if (this.evaluation) {
             this.evaluationReward += reward;
             this.evaluationTimer = this.world.currentTimer;
         } else {
@@ -245,32 +247,32 @@ public class MarioGameTraining {
 
         this.world.reward += reward;
 
-//        if(!this.isNormalSpeed){
-//            if(this.world.gameStatus != GameStatus.RUNNING && this.evaluation){
-//                Helper.writeEvaluationLog(
-//                        this.evaluationLogger,
-//                        this.world,
-//                        gameEvents,
-//                        evaluationInfo,
-//                        evaluationCount,
-//                        evaluationTimer,
-//                        evaluationReward
-//                );
-//            } else if(this.world.gameStatus != GameStatus.RUNNING) {
-//                Helper.writeEpisodeLog(this.episodeLogger,
-//                        this.world,
-//                        gameEvents,
-//                        episodeInfo,
-//                        episode,
-//                        episodeTimer,
-//                        episodeReward
-//                );
-//            }
-//        }
+        // if(!this.isNormalSpeed){
+        // if(this.world.gameStatus != GameStatus.RUNNING && this.evaluation){
+        // Helper.writeEvaluationLog(
+        // this.evaluationLogger,
+        // this.world,
+        // gameEvents,
+        // evaluationInfo,
+        // evaluationCount,
+        // evaluationTimer,
+        // evaluationReward
+        // );
+        // } else if(this.world.gameStatus != GameStatus.RUNNING) {
+        // Helper.writeEpisodeLog(this.episodeLogger,
+        // this.world,
+        // gameEvents,
+        // episodeInfo,
+        // episode,
+        // episodeTimer,
+        // episodeReward
+        // );
+        // }
+        // }
 
         return State.stepResult(State.toByte(nextState), reward,
-                this.world.gameStatus == GameStatus.LOSE || this.world.gameStatus == GameStatus.WIN,
-                this.world.gameStatus == GameStatus.TIME_OUT);
+                this.world.gameStatus != GameStatus.RUNNING,
+                false);
     }
 
     public ArrayList<MarioEvent> miniStep(boolean[] action) throws Exception {
@@ -281,8 +283,7 @@ public class MarioGameTraining {
             this.render.renderWorld(this.world, renderTarget, backBuffer, currentBuffer);
         }
 
-        if(this.fps > 0)
-        {
+        if (this.fps > 0) {
             if (this.getDelay(this.fps) > 0) {
                 try {
                     currentTime += this.getDelay(this.fps);

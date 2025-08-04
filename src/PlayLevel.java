@@ -42,8 +42,8 @@ public class PlayLevel {
         // printResults(game.playGame(getLevel("../levels/original/lvl-1-basic-move-right.txt"), 200, 0));
         var level = getLevel("./levels/training/100-basic/104-basic-block-enemy-pit/lvl-1a.txt");
         var original = getLevel("./levels/evaluation/lvl-1.txt");
-        String levelFileName = "blocks=3,enemies=1,pits=1,pipes=1,ramps=1,width_min=25,width_max=25";
-        testPcg(levelFileName);
+        String levelFileName = "blocks=3,enemies=0,pits=0,pipes=0,ramps=0,width_min=50,width_max=50";
+        //testPcg(levelFileName);
 
         while (true){
             ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel
@@ -55,7 +55,7 @@ public class PlayLevel {
             //pcgLevel.addBlock(2, 2, 1);
             pcgLevel.generate(false);
             String mod = pcgLevel.getContent();
-            printResults(game.runGame(new agents.human.Agent(), mod, 9999, 0, true));
+            printResults(game.runGame(new agents.human.Agent(), mod, 10, 0, true));
         }
 
     }

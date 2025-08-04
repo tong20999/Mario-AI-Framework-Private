@@ -17,21 +17,21 @@ import java.util.ArrayList;
 public class RewardSystem {
 
     static float winReward = 1;
-//    static float winRewardMultiplier = 5;
-//    static float mileStoneReward = 0.0f;
-//    static float jumpOverPitReward = 0f;
-//    static float killReward = 0.7f;
-//    static float bumpReward = 0.5f;
-//    static float coinReward = 0.5f;
-//    static float fireworkReward = 0.5f;
-//    static float mushroomReward = 0.5f;
-//    static float lifeMushroomReward = 0.5f;
-    static float losePenalty = -1.0f;
-    static float timeoutPenalty = -1.0f;
-//    static float hurtReward = -0.0f;
-//    static float hitWallReward = -0.0f;
-//    static float fallPitReward = -0f;
-//    static float timePenaltyRewardCoefficient = 0;
+    // static float winRewardMultiplier = 5;
+    // static float mileStoneReward = 0.0f;
+    // static float jumpOverPitReward = 0f;
+    // static float killReward = 0.7f;
+    // static float bumpReward = 0.5f;
+    // static float coinReward = 0.5f;
+    // static float fireworkReward = 0.5f;
+    // static float mushroomReward = 0.5f;
+    // static float lifeMushroomReward = 0.5f;
+    static float losePenalty = 0.0f;
+    static float timeoutPenalty = 0.0f;
+    // static float hurtReward = -0.0f;
+    // static float hitWallReward = -0.0f;
+    // static float fallPitReward = -0f;
+    // static float timePenaltyRewardCoefficient = 0;
     static float jumpSpamPenalty = -0.00f;
     private final int totalBumpBlock;
     private final int totalCoins;
@@ -40,6 +40,7 @@ public class RewardSystem {
     float bumpReward;
     float coinReward;
     float powerUpReward;
+    float explorerReward = 0.005f;
 
     ProceduralContentGenerationLevel pcg;
     private String workingDir;
@@ -52,13 +53,14 @@ public class RewardSystem {
         this.totalEnemies = level.getEnemies().size();
 
         killReward = 0.2f;
-        bumpReward = 0.1f;
-        coinReward = 0.1f;
+        bumpReward = 0.2f;
+        coinReward = 0.2f;
         powerUpReward = 0.2f;
     }
 
-    public float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents, boolean[] actions, boolean isEvaluation,
-                           int evaluationEpisode) {
+    public float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents, boolean[] actions,
+            boolean isEvaluation,
+            int evaluationEpisode) {
         float reward = 0.0f;
 
         // Event-based rewards (kills, power-ups) and penalties (hurt, walls)
@@ -70,76 +72,91 @@ public class RewardSystem {
                     e.getEventType() == EventType.FALL_KILL.getValue()) {
                 reward += killReward;
             }
-            if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == SpriteType.FIRE_FLOWER.getValue()) {
+            if (e.getEventType() == EventType.COLLECT.getValue()
+                    && e.getEventParam() == SpriteType.FIRE_FLOWER.getValue()) {
                 reward += powerUpReward;
             }
-            if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == SpriteType.MUSHROOM.getValue()) {
+            if (e.getEventType() == EventType.COLLECT.getValue()
+                    && e.getEventParam() == SpriteType.MUSHROOM.getValue()) {
                 reward += powerUpReward;
             }
-            if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == SpriteType.LIFE_MUSHROOM.getValue()) {
+            if (e.getEventType() == EventType.COLLECT.getValue()
+                    && e.getEventParam() == SpriteType.LIFE_MUSHROOM.getValue()) {
                 reward += powerUpReward;
             }
 
-//            if (e.getEventType() == EventType.HURT.getValue()) {
-//                if(world.mario.isFire || world.mario.isLarge){
-//                    reward += hurtReward;
-//                }
-//            }
-//            if (e.getEventType() == EventType.HIT_WALL.getValue()) {
-//                reward += hitWallReward;
-//            }
-//            if (e.getEventType() == EventType.FALL_PIT.getValue()) {
-//                reward += fallPitReward;
-//            }
+            // if (e.getEventType() == EventType.HURT.getValue()) {
+            // if(world.mario.isFire || world.mario.isLarge){
+            // reward += hurtReward;
+            // }
+            // }
+            // if (e.getEventType() == EventType.HIT_WALL.getValue()) {
+            // reward += hitWallReward;
+            // }
+            // if (e.getEventType() == EventType.FALL_PIT.getValue()) {
+            // reward += fallPitReward;
+            // }
 
-            if (e.getEventType() == EventType.BUMP.getValue()){
+            if (e.getEventType() == EventType.BUMP.getValue()) {
                 reward += bumpReward;
             }
 
-            if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == 15){
+            if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == 15) {
                 reward += coinReward;
+            }
+
+            if (e.getEventType() == EventType.EXPLORER.getValue()) {
+                reward += explorerReward;
             }
         }
 
         // --- 3. Define the outcome: Keep your score or lose it all ---
         if (world.gameStatus == GameStatus.WIN) {
             // The reward for winning is that you get to keep the score you earned.
-            // We can add a small bonus to break ties, but the bulk of the score is from the run itself.
+            // We can add a small bonus to break ties, but the bulk of the score is from the
+            // run itself.
             // float total = (world.kill) + (world.bumpBlock) + (world.collectCoin);
             // reward += total * winRewardMultiplier;
-            reward += winReward;
-            if(isEvaluation && this.pcg != null){
-                logPcg(evaluationEpisode, world.gameStatus.name());
-                //System.out.println(MessageFormat.format("win reward {0}", reward));
+            if (world.isSubGoalBlockMet() && world.isSubGoalCoinMet() && world.isSubGoalEnemyMet()) {
+                reward += winReward;
+            } else {
+                reward += 0;
             }
-            //reward += distanceToFlag(world.mario);
+            if (isEvaluation && this.pcg != null) {
+                logPcg(evaluationEpisode, world.gameStatus.name());
+                // System.out.println(MessageFormat.format("win reward {0}", reward));
+            }
+            // reward += distanceToFlag(world.mario);
         } else if (world.gameStatus == GameStatus.TIME_OUT) {
-            // A massive penalty that ensures any failure is always worse than even the "laziest" win.
+            // A massive penalty that ensures any failure is always worse than even the
+            // "laziest" win.
             reward += timeoutPenalty;
-            if(isEvaluation && this.pcg != null){
+            if (isEvaluation && this.pcg != null) {
                 logPcg(evaluationEpisode, world.gameStatus.name());
-                //System.out.println(MessageFormat.format("win reward {0}", reward));
+                // System.out.println(MessageFormat.format("win reward {0}", reward));
             }
-            //reward += distanceToFlag(world.mario);
+            // reward += distanceToFlag(world.mario);
         } else if (world.gameStatus == GameStatus.LOSE) {
-            // A massive penalty that ensures any failure is always worse than even the "laziest" win.
+            // A massive penalty that ensures any failure is always worse than even the
+            // "laziest" win.
             reward += losePenalty;
-            if(isEvaluation && this.pcg != null){
+            if (isEvaluation && this.pcg != null) {
                 logPcg(evaluationEpisode, world.gameStatus.name());
-                //System.out.println(MessageFormat.format("win reward {0}", reward));
+                // System.out.println(MessageFormat.format("win reward {0}", reward));
             }
-            //reward += distanceToFlag(world.mario);
+            // reward += distanceToFlag(world.mario);
         }
 
         return reward;
     }
 
     private void logPcg(int evaluationEpisode, String name) {
-        if(this.workingDir == null){
+        if (this.workingDir == null) {
             return;
         }
         // First, let's construct the full file path.
-        String filePath = MessageFormat.format(this.workingDir + "\\zpcg\\{0}\\pgc_{1}_{2}.txt", name, name, evaluationEpisode);
+        String filePath = MessageFormat.format(this.workingDir + "\\zpcg\\{0}\\pgc_{1}_{2}.txt", name, name,
+                evaluationEpisode);
 
         // Now, let's get the parent directory path from the file path.
         File file = new File(filePath);
@@ -147,7 +164,8 @@ public class RewardSystem {
 
         // Check if the parent directory exists. If not, create it.
         if (parentDir != null && !parentDir.exists()) {
-            boolean dirCreated = parentDir.mkdirs(); // mkdirs() creates all necessary but nonexistent parent directories.
+            boolean dirCreated = parentDir.mkdirs(); // mkdirs() creates all necessary but nonexistent parent
+                                                     // directories.
             if (dirCreated) {
                 System.out.println("Created directory: " + parentDir.getAbsolutePath());
             } else {
@@ -165,52 +183,49 @@ public class RewardSystem {
         }
     }
 
-    public String getRewardInfo(){
+    public String getRewardInfo() {
         return MessageFormat.format("""
-                        REWARDS
-                        WIN {0}
-                        LOSE {1}
-                        TIME_OUT {2}
-                        KILL {3}
-                        COLLECT_COIN {4}
-                        HIT_BLOCK {5}
-                        COLLECT_MUSHROOM {6}
-                        """,
+                REWARDS
+                WIN {0}
+                LOSE {1}
+                TIME_OUT {2}
+                KILL {3}
+                COLLECT_COIN {4}
+                HIT_BLOCK {5}
+                COLLECT_MUSHROOM {6}
+                """,
                 winReward,
                 losePenalty,
                 timeoutPenalty,
                 killReward,
                 coinReward,
                 bumpReward,
-                powerUpReward
-        );
+                powerUpReward);
     }
-
-
 
     public String getLevelInfo() {
         return MessageFormat.format("""
-                        LEVEL
-                        ENEMY {0}
-                        COIN {1}
-                        BLOCK {2}
-                        POWER {3}
-                        """,
+                LEVEL
+                ENEMY {0}
+                COIN {1}
+                BLOCK {2}
+                POWER {3}
+                """,
                 totalEnemies,
                 totalCoins,
-                totalBumpBlock
-        );
+                totalBumpBlock);
 
-//        logger.writeLog(rewardInformation);
-//        logger.appendLog("\r\n");
-//        logger.appendLog(levelInformation);
-//
-//        try (BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\thesis_data\\reward.txt", false))) {
-//            writer.write(rewardInformation);
-//            writer.newLine();
-//            writer.write(levelInformation);
-//        } catch (IOException e) {
-//            System.err.println("Error writing to file: " + e.getMessage());
-//        }
+        // logger.writeLog(rewardInformation);
+        // logger.appendLog("\r\n");
+        // logger.appendLog(levelInformation);
+        //
+        // try (BufferedWriter writer = new BufferedWriter(new
+        // FileWriter("C:\\thesis_data\\reward.txt", false))) {
+        // writer.write(rewardInformation);
+        // writer.newLine();
+        // writer.write(levelInformation);
+        // } catch (IOException e) {
+        // System.err.println("Error writing to file: " + e.getMessage());
+        // }
     }
 }

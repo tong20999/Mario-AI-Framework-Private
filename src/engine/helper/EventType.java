@@ -16,7 +16,8 @@ public enum EventType {
     HIT_WALL(13),
     FALL_PIT(14),
     FLAG(15),
-    BUMP_KILL(16);
+    BUMP_KILL(16),
+    EXPLORER(17);
 
     private int value;
 

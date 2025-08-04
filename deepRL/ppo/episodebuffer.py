@@ -5,6 +5,7 @@ import time
 import gc
 from scipy.signal import lfilter
 
+from ppo.cnn import CNNActor, CNNCritic
 from ppo.multiprocessenv import MultiprocessEnv
 
 class EpisodeBuffer():
@@ -59,7 +60,7 @@ class EpisodeBuffer():
         self.current_ep_idxs = np.arange(self.n_workers, dtype=np.uint16)
         gc.collect()
 
-    def fill(self, envs:MultiprocessEnv, policy_model, value_model, episodeStart:int,
+    def fill(self, envs:MultiprocessEnv, policy_model:CNNActor, value_model:CNNCritic, episodeStart:int,
              level_pool: list[str], 
              rehearsal_level_tasks: list[list[str]],
              mode:str = 'train',

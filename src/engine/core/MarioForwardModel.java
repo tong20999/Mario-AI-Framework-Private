@@ -659,4 +659,8 @@ public class MarioForwardModel {
     public boolean isSubGoalCoinMet() {
         return world.isSubGoalCoinMet() == null || world.isSubGoalCoinMet();
     }
+
+    public int getInitialTimer() {
+        return this.world.initTimer;
+    }
 }
