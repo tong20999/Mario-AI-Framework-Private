@@ -29,18 +29,20 @@ public class ProceduralContentGenerationLevel {
     public static ProceduralContentGenerationLevel parseLevel(String pcgName) {
         Map<String, String> params = Helper.parseParameter(pcgName);
         int blockCount = Integer.parseInt(params.getOrDefault("blocks", "0"));
+        boolean randomBlockHeight = Boolean.parseBoolean(params.getOrDefault("random_block_height", "false"));
         int coinCount = Integer.parseInt(params.getOrDefault("coins", "0"));
         int enemyCount = Integer.parseInt(params.getOrDefault("enemies", "0"));
+        boolean randomEnemyHeight = Boolean.parseBoolean(params.getOrDefault("random_enemy_height", "false"));
         int pitCount = Integer.parseInt(params.getOrDefault("pits", "0"));
         int pipeCount = Integer.parseInt(params.getOrDefault("pipes", "0"));
         int rampCount = Integer.parseInt(params.getOrDefault("ramps", "0"));
         int widthMin = Integer.parseInt(params.getOrDefault("width_min", "15"));
         int widthMax = Integer.parseInt(params.getOrDefault("width_max", "15"));
 
-        return doParseLevel(widthMin, widthMax, blockCount, coinCount, enemyCount, pitCount, pipeCount, rampCount);
+        return doParseLevel(widthMin, widthMax, blockCount, randomBlockHeight, coinCount, enemyCount, randomEnemyHeight, pitCount, pipeCount, rampCount);
     }
 
-    private static ProceduralContentGenerationLevel doParseLevel(int widthMin, int widthMax, int blockCount, int coinCount, int enemyCount, int pitCount, int pipeCount, int rampCount){
+    private static ProceduralContentGenerationLevel doParseLevel(int widthMin, int widthMax, int blockCount, boolean randomBlockHeight, int coinCount, int enemyCount, boolean randomEnemyHeight, int pitCount, int pipeCount, int rampCount){
 
         try{
             ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel.randomWidth(widthMin,widthMax);
@@ -58,11 +60,11 @@ public class ProceduralContentGenerationLevel {
             }
 
             if(enemyCount > 0){
-                pcgLevel.addEnemy(6,2, enemyCount);
+                pcgLevel.addEnemy(6,2, enemyCount, randomEnemyHeight);
             }
 
             if(blockCount > 0){
-                pcgLevel.addBlock(6, 2, blockCount);
+                pcgLevel.addBlock(6, 2, blockCount, randomBlockHeight);
             }
 
             if(coinCount > 0){
@@ -74,7 +76,7 @@ public class ProceduralContentGenerationLevel {
         catch (IllegalArgumentException ex){
             System.out.println(ex.getMessage());
             System.out.println(MessageFormat.format( "Retry with new width min {0} max {1}", widthMin * 2, widthMax * 2));
-            return doParseLevel(widthMin * 2, widthMax * 2, blockCount, coinCount, enemyCount, pitCount, pipeCount, rampCount);
+            return doParseLevel(widthMin * 2, widthMax * 2, blockCount, randomBlockHeight, coinCount, enemyCount, randomEnemyHeight, pitCount, pipeCount, rampCount);
         }
     }
 
@@ -294,11 +296,11 @@ public class ProceduralContentGenerationLevel {
         }
     }
 
-    public void addEnemy(int offsetFromStart, int offsetFromFlag, int total) throws IllegalArgumentException {
+    public void addEnemy(int offsetFromStart, int offsetFromFlag, int total, boolean randomEnemyHeight) throws IllegalArgumentException {
         for (int k = 0; k < total; k++) {
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
-            boolean randomHeight = rand.nextInt(2) == 0;
+            boolean randomHeight = randomEnemyHeight && rand.nextInt(2) == 0;
             int height = LAN_LEVEL;
             if(randomHeight){
                 height = rand.nextInt(LAN_LEVEL - 8, LAN_LEVEL + 1);
@@ -322,20 +324,20 @@ public class ProceduralContentGenerationLevel {
         }
     }
 
-    public void addBlock(int offsetFromStart, int offsetFromFlag, int total) throws IllegalArgumentException {
+    public void addBlock(int offsetFromStart, int offsetFromFlag, int total, boolean randomBlockHeight) throws IllegalArgumentException {
         int k = 0;
         while (k < total) {
             int randomBlock = rand.nextInt(0, blocks.length);
             EnumBlockType blockType = blocks[randomBlock];
-            doAddBlock(blockType, offsetFromStart, offsetFromFlag);
+            doAddBlock(blockType, offsetFromStart, offsetFromFlag, randomBlockHeight);
             if((k + 1) % 4 == 0){
-                doAddBlock(EnumBlockType.NORMAL_BLOCK, offsetFromStart, offsetFromFlag);
+                doAddBlock(EnumBlockType.NORMAL_BLOCK, offsetFromStart, offsetFromFlag, randomBlockHeight);
             }
             k++;
         }
     }
 
-    private void doAddBlock(EnumBlockType blockType, int offsetFromStart, int offsetFromFlag) throws IllegalArgumentException {
+    private void doAddBlock(EnumBlockType blockType, int offsetFromStart, int offsetFromFlag, boolean randomBlockHeight) throws IllegalArgumentException {
         int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
         int addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
         while (true){
@@ -344,9 +346,7 @@ public class ProceduralContentGenerationLevel {
             }
             addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
         }
-
-        boolean heightBlock = rand.nextInt(2) == 0;
-        heightBlock = false;
+        boolean heightBlock = randomBlockHeight && rand.nextInt(2) == 0;
         for (int i = 0; i < levels.size(); i++) {
             ArrayList<Character> currentLevel = levels.get(i);
             if (i == GROUND_1_LEVEL || i == GROUND_2_LEVEL) {
