@@ -40,7 +40,7 @@ public class RewardSystem {
     float bumpReward;
     float coinReward;
     float powerUpReward;
-    float explorerReward = 0.005f;
+    float explorerReward = 0.01f;
 
     ProceduralContentGenerationLevel pcg;
     private String workingDir;

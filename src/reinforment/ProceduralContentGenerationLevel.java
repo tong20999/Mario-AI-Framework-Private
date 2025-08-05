@@ -346,12 +346,10 @@ public class ProceduralContentGenerationLevel {
         }
 
         boolean heightBlock = rand.nextInt(2) == 0;
+        heightBlock = false;
         for (int i = 0; i < levels.size(); i++) {
-            // Get the current level's list once and reuse it
             ArrayList<Character> currentLevel = levels.get(i);
-            // Add the characters based on the conditions
             if (i == GROUND_1_LEVEL || i == GROUND_2_LEVEL) {
-                // Add 'X' at index and index + 1
                 for (int j = -1; j < 2; j++) {
                     currentLevel.add(addIndex + j, 'X');
                 }

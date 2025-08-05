@@ -97,6 +97,7 @@ class PPO():
         self.tau = tau
         self.n_workers = n_workers
         self.received_data_queue = queue.Queue()
+        self.best_score = 0
 
     def optimize_model(self):
         policy_losses = []
@@ -314,7 +315,11 @@ class PPO():
                 evaluation_count +=1
                 logger.info('evaluation {} score {} value losses {}'.format(evaluation_count, np.round(evaluation_score, 2), np.round(value_losses, 2)))
                 
-                    
+                if evaluation_score > 1 and evaluation_score > self.best_score:
+                    self.best_score = evaluation_score
+                    self.save_checkpoint('best', self.policy_model, 'policy')
+                    self.save_checkpoint('best', self.value_model, 'value')
+
                 training_time += episode_seconds.sum()
                 wallclock_time = time.time() - training_start
 

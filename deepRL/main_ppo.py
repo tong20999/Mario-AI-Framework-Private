@@ -39,7 +39,7 @@ if __name__ == '__main__':
   default_pcg = "blocks=1,enemies=0,pits=0,pipes=0,width_min=15,width_max=15" 
   pcg = sys.argv[1] if len(sys.argv) > 1 else default_pcg
 
-  default_hyper_params = '''{"policyOptimizerLr":0.00001,"policyOptimizationEpochs":3,"policyClipRange":0.1,"valueOptimizerLr":0.0005,"valueOptimizationEpochs":3,"ewcLambda":0,"maxBufferEpisodes":32,"maxBufferEpisodeSteps":1500,"entropyLossWeight":0.005,"nWorkers":12}'''
+  default_hyper_params = '''{"policyOptimizerLr":0.0001,"policyOptimizationEpochs":5,"policyClipRange":0.1,"valueOptimizerLr":0.0001,"valueOptimizationEpochs":5,"ewcLambda":0,"maxBufferEpisodes":64,"maxBufferEpisodeSteps":1000,"entropyLossWeight":0.01,"nWorkers":12}'''
   hyperParams = json.loads(base64.b64decode(sys.argv[2]).decode("utf-8")) if len(sys.argv) > 2 else json.loads(default_hyper_params)
 
 
@@ -111,7 +111,7 @@ if __name__ == '__main__':
   #evaluation_levels = ["file=./levels/evaluation/lvl-1.txt"]
   evaluation_levels = [pcg]
 
-  agent.play(make_env_fn, policy_model_fn, "blocks=1,enemies=0,pits=0,pipes=0,width_min=15,width_max=15,fps=45")
+  # agent.play(make_env_fn, policy_model_fn, "blocks=1,enemies=0,pits=0,pipes=0,width_min=15,width_max=15,fps=45")
   agent.train(make_envs_fn,
               make_env_fn,
               gamma,
