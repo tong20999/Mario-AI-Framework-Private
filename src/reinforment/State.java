@@ -86,6 +86,13 @@ public class State {
         var normalizedTimer = (float) model.getRemainingTime() / (float) model.getInitialTimer();
         byte[] payloadNormalizedTimer = float2ByteArray(normalizedTimer);
 
+        var marioScreenTilePos = model.getMarioScreenTilePos();
+        float normalizeMarioScreenTilePosX = marioScreenTilePos[0]/16f;
+        float normalizeMarioScreenTilePosY = marioScreenTilePos[1]/16f;
+
+        byte[] normalizeMarioScreenTilePosXPayload = float2ByteArray(normalizeMarioScreenTilePosX);
+        byte[] normalizeMarioScreenTilePosYPayload = float2ByteArray(normalizeMarioScreenTilePosY);
+
         ByteBuffer buffer = ByteBuffer.allocate(
                 sceneObservationPayload.length +
                         enemiesObservationPayload.length
@@ -94,7 +101,9 @@ public class State {
                         + 3
                         + 4
                         + 8
-                        + 4);
+                        + 4
+                        + 8
+        );
 
         buffer.put(sceneObservationPayload);
         buffer.put(enemiesObservationPayload);
@@ -117,6 +126,9 @@ public class State {
         buffer.put(marioWorldXPayload);
         buffer.put(marioWorldYPayload);
         buffer.put(payloadNormalizedTimer);
+
+        buffer.put(normalizeMarioScreenTilePosXPayload);
+        buffer.put(normalizeMarioScreenTilePosYPayload);
         return buffer.array();
     }
 }
