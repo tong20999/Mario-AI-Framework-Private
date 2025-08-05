@@ -306,6 +306,7 @@ class PPO():
                 
                 n_ep_batch = len(episode_timestep)
                 policy_losses, value_losses, entropy_losses, entropies, values, kls, mses = self.optimize_model()
+                self.log_vram_usage()
                 self.episode_buffer.clear()
 
                 # stats
@@ -540,3 +541,14 @@ class PPO():
     def write_info(self, working_dir, filename, value):
         with open(os.path.join(working_dir, filename), "a") as file:
                     file.write(value)
+
+    def log_vram_usage(threshold=0.9):
+        device = torch.device("cuda")
+        total_vram = torch.cuda.get_device_properties(device).total_memory
+        allocated = torch.cuda.memory_allocated(device)
+        usage_ratio = allocated / total_vram
+        
+        logger.info(f"VRAM usage: {allocated / (1024 ** 3):.2f} GB / {total_vram / (1024 ** 3):.2f} GB ({usage_ratio*100:.1f}%)")
+        
+        if usage_ratio > threshold:
+            logger.error(f"VRAM usage is above {threshold*100:.0f}%. Risk of using shared/system RAM, which may cause slowdowns!")
