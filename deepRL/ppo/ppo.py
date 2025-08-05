@@ -61,7 +61,8 @@ class PPO():
                  max_buffer_episode_steps,
                  entropy_loss_weight,
                  tau,
-                 n_workers):
+                 n_workers,
+                 batch_size):
         assert n_workers > 1
         assert max_buffer_episodes >= n_workers
         setup_logging(logging.INFO)
@@ -98,6 +99,7 @@ class PPO():
         self.n_workers = n_workers
         self.received_data_queue = queue.Queue()
         self.best_score = 0
+        self.batch_size = batch_size
 
     def optimize_model(self):
         policy_losses = []
@@ -118,7 +120,6 @@ class PPO():
         value_optimize_samples = int(n_samples * self.value_sample_ratio)
         logger.info(f'start optimize model samples {policy_optimize_samples},{value_optimize_samples} batch size {self.batch_size}')
         start_optimize_time = time.time()
-        logger.info(f'start optimize policy model')
         start_time = time.time()
         for _ in range(self.policy_optimization_epochs):
             early_stop = False
@@ -173,7 +174,6 @@ class PPO():
                 break
         duration = end_time - start_time
         logger.info(f'optimize policy model finished {duration:.2f} seconds')
-        logger.info(f'start optimize value model')
         start_time = time.time()
         for _ in range(self.value_optimization_epochs):
             early_stop = False
@@ -232,7 +232,6 @@ class PPO():
               level_pool:list, rehearsal_level_tasks:list[list],
               evaluation_levels:list[str]):
         training_start, last_debug_time = time.time(), float('-inf')
-        self.batch_size = 256
         self.make_envs_fn = make_envs_fn
         self.make_env_fn = make_env_fn
         self.gamma = gamma
@@ -290,7 +289,6 @@ class PPO():
         try:
             while True:
                 try:
-                    logger.info('start filling buffer')
                     start_time = time.time()
                     episode_timestep, episode_reward, episode_exploration, \
                     episode_seconds = self.episode_buffer.fill(
@@ -313,7 +311,7 @@ class PPO():
                 # stats
                 evaluation_score, _ = self.evaluate(self.policy_model, env, random.choice(evaluation_levels))
                 evaluation_count +=1
-                logger.info('evaluation {} score {} value losses {}'.format(evaluation_count, np.round(evaluation_score, 2), np.round(value_losses, 2)))
+                logger.info('evaluation {} score {} value losses {}'.format(evaluation_count, np.round(evaluation_score, 2), np.round(value_losses, 3)))
                 
                 if evaluation_score > 1 and evaluation_score > self.best_score:
                     self.best_score = evaluation_score

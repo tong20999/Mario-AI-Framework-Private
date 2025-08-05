@@ -9,12 +9,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="add ramp">
+    <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="add random height">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/main_ppo.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/main_ppo.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deepRL/ppo/ppo.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ppo/ppo.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/reinforment/ProceduralContentGenerationLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/reinforment/ProceduralContentGenerationLevel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/reinforment/RewardSystem.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/reinforment/RewardSystem.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -187,7 +184,15 @@
       <option name="project" value="LOCAL" />
       <updated>1754018666804</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="add random height">
+      <option name="closed" value="true" />
+      <created>1754390361257</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1754390361257</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -208,7 +213,8 @@
     <MESSAGE value="refactor kill" />
     <MESSAGE value="clean up" />
     <MESSAGE value="add ramp" />
-    <option name="LAST_COMMIT_MESSAGE" value="add ramp" />
+    <MESSAGE value="add random height" />
+    <option name="LAST_COMMIT_MESSAGE" value="add random height" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
