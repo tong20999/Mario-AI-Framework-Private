@@ -17,6 +17,7 @@ def write_hyperparameters(
               entropy_loss_weight,
               tau,
               n_workers,
+              batch_size,     
               level_pool,
               evaluation_levels,
               rehearsal_level_tasks):
@@ -40,6 +41,7 @@ def write_hyperparameters(
                     file.write("entropy_loss_weight {}\n".format(entropy_loss_weight))
                     file.write("tau {}\n".format(tau))
                     file.write("n_workers {}\n".format(n_workers))
+                    file.write("batch_size {}\n".format(batch_size))
                     file.write("levels\n")
                     for level in level_pool:
                           file.write("{}\n".format(level))

@@ -457,6 +457,7 @@ class PPO():
                                 self.entropy_loss_weight,
                                 self.tau,
                                 self.n_workers,
+                                self.batch_size,
                                 level_pool,
                                 evaluation_levels,
                                 rehearsal_level_tasks
