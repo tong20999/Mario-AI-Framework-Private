@@ -36,10 +36,10 @@ if __name__ == '__main__':
       'goal_mean_100_reward': 25000
   }
 
-  default_pcg = "blocks=1,enemies=0,pits=0,pipes=0,width_min=15,width_max=15" 
+  default_pcg = "blocks=1,enemies=1,pits=0,pipes=0,width_min=25,width_max=25" 
   pcg = sys.argv[1] if len(sys.argv) > 1 else default_pcg
 
-  default_hyper_params = '''{"policyOptimizerLr":0.0001,"policyOptimizationEpochs":5,"policyClipRange":0.1,"valueOptimizerLr":0.0001,"valueOptimizationEpochs":5,"ewcLambda":0,"maxBufferEpisodes":64,"maxBufferEpisodeSteps":1000,"entropyLossWeight":0.01,"nWorkers":12,"batchSize":64}'''
+  default_hyper_params = '''{"policyOptimizerLr":0.00001,"policyOptimizationEpochs":5,"policyClipRange":0.1,"valueOptimizerLr":0.00005,"valueOptimizationEpochs":5,"ewcLambda":0,"maxBufferEpisodes":256,"maxBufferEpisodeSteps":1000,"entropyLossWeight":0.01,"nWorkers":12,"batchSize":256}'''
   hyperParams = json.loads(base64.b64decode(sys.argv[2]).decode("utf-8")) if len(sys.argv) > 2 else json.loads(default_hyper_params)
 
 

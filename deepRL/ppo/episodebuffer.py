@@ -26,12 +26,6 @@ class EpisodeBuffer():
         self.max_episodes = max_episodes
         self.max_episode_steps = max_episode_steps
 
-        self._truncated_fn = np.vectorize(lambda x: 'TimeLimit.truncated' in x and x['TimeLimit.truncated'])
-
-        device = 'cpu'
-        if torch.cuda.is_available():
-            device = 'cuda:0'
-        self.device = torch.device(device)
 
         self.clear()
 
@@ -183,23 +177,25 @@ class EpisodeBuffer():
         self.vector_states_mem = np.concatenate(vector_mem)
         
         self.actions_mem = np.concatenate([row[:ep_t[i]] for i, row in enumerate(self.actions_mem[ep_idxs])])
-        self.returns_mem = torch.tensor(np.concatenate([row[:ep_t[i]] for i, row in enumerate(self.returns_mem[ep_idxs])]), device=value_model.device)
-        self.gaes_mem = torch.tensor(np.concatenate([row[:ep_t[i]] for i, row in enumerate(self.gaes_mem[ep_idxs])]), device=value_model.device)
-        self.logpas_mem = torch.tensor(np.concatenate([row[:ep_t[i]] for i, row in enumerate(self.logpas_mem[ep_idxs])]), device=value_model.device)
+        self.returns_mem = np.concatenate([row[:ep_t[i]] for i, row in enumerate(self.returns_mem[ep_idxs])])
+        self.gaes_mem = np.concatenate([row[:ep_t[i]] for i, row in enumerate(self.gaes_mem[ep_idxs])])
+        self.logpas_mem = np.concatenate([row[:ep_t[i]] for i, row in enumerate(self.logpas_mem[ep_idxs])])
 
         ep_r = self.episode_reward[ep_idxs]
         ep_x = self.episode_exploration[ep_idxs]
         ep_s = self.episode_seconds[ep_idxs]
         return ep_t, ep_r, ep_x, ep_s
 
-    def get_stacks(self):
-        states_dict = {
-            'gridScene': torch.tensor(self.grid_scene_states_mem, device=self.device, dtype=torch.long),
-            'gridEnemies': torch.tensor(self.grid_enemies_states_mem, device=self.device, dtype=torch.long),
-            'vector': torch.tensor(self.vector_states_mem, device=self.device, dtype=torch.float32)
-        }
-        return (states_dict, self.actions_mem, 
-                self.returns_mem, self.gaes_mem, self.logpas_mem)
+    def get_data(self):
+        return (
+           self.grid_scene_states_mem,
+           self.grid_enemies_states_mem,
+           self.vector_states_mem,
+           self.actions_mem,
+           self.returns_mem,
+           self.gaes_mem,
+           self.logpas_mem,
+       )
 
     def __len__(self):
         return self.episode_steps[self.episode_steps > 0].sum()

@@ -102,98 +102,108 @@ class PPO():
         self.batch_size = batch_size
 
     def optimize_model(self):
-        policy_losses = []
-        value_losses = []
-        entropy_losses = []
-        values_ = []
-        entropies = []
-        kls = []
-        mses = []
-        states, actions_np, returns, gaes, logpas = self.episode_buffer.get_stacks()
+        # 1. Get data from the buffer (as NumPy arrays on the CPU)
+        grid_scene_states_np, grid_enemies_states_np, vector_states_np, actions_np, \
+        returns_np, gaes_np, logpas_np = self.episode_buffer.get_data()
         device = self.device
-        actions = torch.from_numpy(actions_np).to(device)
-        with torch.no_grad():
-            values = self.value_model(states).detach()
-        gaes = (gaes - gaes.mean()) / (gaes.std() + EPS)
-        n_samples = len(actions)
-        policy_optimize_samples = int(n_samples * self.policy_sample_ratio)
-        value_optimize_samples = int(n_samples * self.value_sample_ratio)
-        logger.info(f'start optimize model samples {policy_optimize_samples},{value_optimize_samples} batch size {self.batch_size}')
+        n_samples = len(actions_np)
+
+        # 2. Normalize GAE on the CPU once
+        gaes_mean = np.mean(gaes_np)
+        gaes_std = np.std(gaes_np)
+        gaes_np = (gaes_np - gaes_mean) / (gaes_std + EPS)
+
+        # --- METRIC TRACKING ---
+        policy_losses, value_losses, entropy_losses = [], [], []
+        entropies, values_, kls, mses = [], [], [], []
+
+        logger.info(f'Starting model optimization with {n_samples} samples...')
         start_optimize_time = time.time()
-        start_time = time.time()
+
+        # =================================================================
+        # Policy Optimization Loop
+        # =================================================================
+        policy_start_time = time.time()
         for _ in range(self.policy_optimization_epochs):
             early_stop = False
-            indices = torch.randperm(policy_optimize_samples, device=actions.device)
+            # Generate indices on CPU
+            indices = np.random.permutation(n_samples)
+            for i in range(0, n_samples, self.batch_size):
+                batch_idxs = indices[i : i + self.batch_size]
 
-            for i in range(0, policy_optimize_samples, self.batch_size):
-                if not self.received_data_queue.empty():
-                    try:
-                        addr, value = self.received_data_queue.get_nowait()
-                        raise Exception('signal stop receive')
-                    except queue.Empty:
-                        pass
+                # 3. Move ONLY the current batch to the GPU
+                states_batch = {
+                    'gridScene': torch.from_numpy(grid_scene_states_np[batch_idxs]).to(device),
+                    'gridEnemies': torch.from_numpy(grid_enemies_states_np[batch_idxs]).to(device),
+                    'vector': torch.from_numpy(vector_states_np[batch_idxs]).to(dtype=torch.float32).to(device),
+                }
+                actions_batch = torch.from_numpy(actions_np[batch_idxs]).to(device)
+                gaes_batch = torch.from_numpy(gaes_np[batch_idxs]).to(device)
+                logpas_batch = torch.from_numpy(logpas_np[batch_idxs]).to(device)
 
-                batch_idxs = indices[i:i + self.batch_size]
-                states_batch = {key: val[batch_idxs] for key, val in states.items()}
-                actions_batch = actions[batch_idxs]
-                gaes_batch = gaes[batch_idxs]
-                logpas_batch = logpas[batch_idxs]
+                # --- Forward pass and Loss Calculation ---
                 logpas_pred, entropies_pred = self.policy_model.get_predictions(states_batch, actions_batch)
-                entropies.append(entropies_pred.mean().item())
-
                 ratios = (logpas_pred - logpas_batch).exp()
+
                 pi_obj = gaes_batch * ratios
-                pi_obj_clipped = gaes_batch * ratios.clamp(1.0 - self.policy_clip_range,
-                                                        1.0 + self.policy_clip_range)
+                pi_obj_clipped = gaes_batch * ratios.clamp(
+                    1.0 - self.policy_clip_range, 1.0 + self.policy_clip_range
+                )
+                
                 policy_loss = -torch.min(pi_obj, pi_obj_clipped).mean()
                 entropy_loss = -entropies_pred.mean() * self.entropy_loss_weight
                 
-                policy_losses.append(policy_loss.item())
-                entropy_losses.append(entropy_loss.item())
-
-                # ewc_penalty = self.ewc.penalty()
-                ewc_penalty = 0
-
+                # --- Backward Pass and Optimization Step ---
                 self.policy_optimizer.zero_grad()
-                total_policy_loss = policy_loss + entropy_loss + ewc_penalty
+                total_policy_loss = policy_loss + entropy_loss # + ewc_penalty
                 total_policy_loss.backward()
-                torch.nn.utils.clip_grad_norm_(self.policy_model.parameters(), 
-                                            self.policy_model_max_grad_norm)
+                torch.nn.utils.clip_grad_norm_(self.policy_model.parameters(), self.policy_model_max_grad_norm)
                 self.policy_optimizer.step()
 
-                with torch.no_grad():
-                    kl = (logpas_batch - logpas_pred).mean()
-                    kls.append(kl.item())
-                    if kl.item() > self.policy_stopping_kl:
-                        early_stop = True
-                        break
-            
-            end_time = time.time()
+                # --- Metrics and Early Stopping ---
+                policy_losses.append(policy_loss.item())
+                entropy_losses.append(entropy_loss.item())
+                entropies.append(entropies_pred.mean().item())
 
+                # 4. CRITICAL: Detach KL from graph before check
+                with torch.no_grad():
+                    kl_div = (logpas_batch - logpas_pred).mean().item()
+                kls.append(kl_div)
+                
+                if kl_div > self.policy_stopping_kl:
+                    early_stop = True
+                    break
+            
             if early_stop:
+                logger.info(f'Early stopping policy training due to KL divergence: {kl_div:.4f}')
                 break
-        duration = end_time - start_time
-        logger.info(f'optimize policy model finished {duration:.2f} seconds')
-        start_time = time.time()
+                
+        logger.info(f'Policy optimization finished in {time.time() - policy_start_time:.2f} seconds')
+            
+        # =================================================================
+        # Value Optimization Loop
+        # =================================================================
+        value_start_time = time.time()
         for _ in range(self.value_optimization_epochs):
             early_stop = False
-            indices = torch.randperm(value_optimize_samples, device=actions.device)
+            indices = np.random.permutation(n_samples) # Re-shuffle for value function
 
-            for i in range(0, value_optimize_samples, self.batch_size):
-                if not self.received_data_queue.empty():
-                    try:
-                        addr, value = self.received_data_queue.get_nowait()
-                        raise Exception('signal stop receive')
-                    except queue.Empty:
-                        pass
+            for i in range(0, n_samples, self.batch_size):
+                batch_idxs = indices[i : i + self.batch_size]
 
-                batch_idxs = indices[i:i + self.batch_size]
-                states_batch = {key: val[batch_idxs] for key, val in states.items()}
-                returns_batch = returns[batch_idxs]
-                values_batch = values[batch_idxs]
+                # Move ONLY the current batch to the GPU
+                states_batch = {
+                    'gridScene': torch.from_numpy(grid_scene_states_np[batch_idxs]).to(device),
+                    'gridEnemies': torch.from_numpy(grid_enemies_states_np[batch_idxs]).to(device),
+                    'vector': torch.from_numpy(vector_states_np[batch_idxs]).to(dtype=torch.float32).to(device),
+                }
+                returns_batch = torch.from_numpy(returns_np[batch_idxs]).to(device)
+                # We need old values for clipping, get them from a forward pass
+                with torch.no_grad():
+                    values_batch = self.value_model(states_batch)
 
+                # --- Forward pass and Loss Calculation ---
                 values_pred = self.value_model(states_batch)
-                values_.append(values_pred.mean().item())
                 
                 values_pred_clipped = values_batch + (values_pred - values_batch).clamp(
                     -self.value_clip_range, self.value_clip_range
@@ -201,31 +211,36 @@ class PPO():
                 v_loss = (returns_batch - values_pred).pow(2)
                 v_loss_clipped = (returns_batch - values_pred_clipped).pow(2)
                 value_loss = torch.max(v_loss, v_loss_clipped).mul(0.5).mean()
-                value_losses.append(value_loss.item())
-                
+
+                # --- Backward Pass and Optimization Step ---
                 self.value_optimizer.zero_grad()
                 value_loss.backward()
-                torch.nn.utils.clip_grad_norm_(self.value_model.parameters(),
-                                            self.value_model_max_grad_norm)
+                torch.nn.utils.clip_grad_norm_(self.value_model.parameters(), self.value_model_max_grad_norm)
                 self.value_optimizer.step()
 
+                # --- Metrics and Early Stopping ---
+                value_losses.append(value_loss.item())
+                values_.append(values_pred.mean().item())
+                
+                # 4. CRITICAL: Detach MSE from graph before check
                 with torch.no_grad():
-                    mse = (values_batch - values_pred).pow(2).mul(0.5).mean()
-                    mses.append(mse.item())
-                    if hasattr(self, 'value_stopping_mse') and mse.item() > self.value_stopping_mse:
-                        early_stop = True
-                        break
-            
-            end_time = time.time()
-           
+                    mse = (values_batch - values_pred).pow(2).mul(0.5).mean().item()
+                mses.append(mse)
+
+                if hasattr(self, 'value_stopping_mse') and mse > self.value_stopping_mse:
+                    early_stop = True
+                    break
             
             if early_stop:
+                logger.info(f'Early stopping value training due to MSE: {mse:.4f}')
                 break
-        duration = end_time - start_time
-        logger.info(f'optimize value model finish {duration:.2f} seconds')
-        duration_optinize = end_time - start_optimize_time       
-        logger.info(f'optimize model finish {duration_optinize:.2f} seconds')
-        return np.mean(policy_losses), np.mean(value_losses), np.mean(entropy_losses), np.mean(entropies), np.mean(values_), np.mean(kls), np.mean(mses)
+
+        logger.info(f'Value optimization finished in {time.time() - value_start_time:.2f} seconds')
+        logger.info(f'Total optimization finished in {time.time() - start_optimize_time:.2f} seconds')
+        
+        # Return mean of collected metrics
+        return (np.mean(policy_losses), np.mean(value_losses), np.mean(entropy_losses), 
+                np.mean(entropies), np.mean(values_), np.mean(kls), np.mean(mses))
 
     def train(self, make_envs_fn:Callable, make_env_fn:Callable, gamma, 
               max_minutes, max_episodes, goal_mean_100_reward, 
@@ -306,7 +321,6 @@ class PPO():
                 
                 n_ep_batch = len(episode_timestep)
                 policy_losses, value_losses, entropy_losses, entropies, values, kls, mses = self.optimize_model()
-                self.log_vram_usage()
                 self.episode_buffer.clear()
 
                 # stats
@@ -485,31 +499,31 @@ class PPO():
                 pass
         return np.mean(rs), np.std(rs)
 
-    def finish_task(self, level_pool: list, rehearsal_level_tasks: list[list]):
-        temp_buffer:EpisodeBuffer = self.episode_buffer_fn(
-            self.nS,
-            self.gamma,
-            self.tau,
-            self.n_workers,
-            self.max_buffer_episodes,
-            self.max_buffer_episode_steps
-        )
+    # def finish_task(self, level_pool: list, rehearsal_level_tasks: list[list]):
+    #     temp_buffer:EpisodeBuffer = self.episode_buffer_fn(
+    #         self.nS,
+    #         self.gamma,
+    #         self.tau,
+    #         self.n_workers,
+    #         self.max_buffer_episodes,
+    #         self.max_buffer_episode_steps
+    #     )
         
-        envs = self.make_envs_fn(self.make_env_fn, self.n_workers)
-        temp_buffer.fill(envs, self.policy_model, self.value_model, 
-                        episodeStart=0,
-                        level_pool=level_pool,
-                        rehearsal_level_tasks=rehearsal_level_tasks,
-                        mode='ewc',
-                        visual=False)
-        envs.close()
+    #     envs = self.make_envs_fn(self.make_env_fn, self.n_workers)
+    #     temp_buffer.fill(envs, self.policy_model, self.value_model, 
+    #                     episodeStart=0,
+    #                     level_pool=level_pool,
+    #                     rehearsal_level_tasks=rehearsal_level_tasks,
+    #                     mode='ewc',
+    #                     visual=False)
+    #     envs.close()
         
-        states, actions, _, _, _ = temp_buffer.get_stacks()
+    #     states, actions, _, _, _ = temp_buffer.get_stacks()
         
-        dataset = CustomDictDataset(
-            states_dict=states, 
-            actions_tensor=actions
-        )
+    #     dataset = CustomDictDataset(
+    #         states_dict=states, 
+    #         actions_tensor=actions
+    #     )
         
         #self.ewc.register_task(dataset)
 
@@ -541,14 +555,3 @@ class PPO():
     def write_info(self, working_dir, filename, value):
         with open(os.path.join(working_dir, filename), "a") as file:
                     file.write(value)
-
-    def log_vram_usage(threshold=0.9):
-        device = torch.device("cuda")
-        total_vram = torch.cuda.get_device_properties(device).total_memory
-        allocated = torch.cuda.memory_allocated(device)
-        usage_ratio = allocated / total_vram
-        
-        logger.info(f"VRAM usage: {allocated / (1024 ** 3):.2f} GB / {total_vram / (1024 ** 3):.2f} GB ({usage_ratio*100:.1f}%)")
-        
-        if usage_ratio > threshold:
-            logger.error(f"VRAM usage is above {threshold*100:.0f}%. Risk of using shared/system RAM, which may cause slowdowns!")

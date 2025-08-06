@@ -67,7 +67,7 @@ public class MarioForwardModel {
     public static final int OBS_ENEMY = 1;
     public boolean evaluation;
 
-    public int getMarioFacing(){
+    public int getMarioFacing() {
         return this.world.mario.facing;
     }
 
@@ -309,7 +309,7 @@ public class MarioForwardModel {
      * @return the first value is level width and second is level height
      */
     public float[] getLevelFloatDimensions() {
-        return new float[]{this.world.level.width, this.world.level.height};
+        return new float[] { this.world.level.width, this.world.level.height };
     }
 
     /**
@@ -327,7 +327,7 @@ public class MarioForwardModel {
      * @return the actual mario position in the current state
      */
     public float[] getMarioFloatPos() {
-        return new float[]{this.world.mario.x, this.world.mario.y};
+        return new float[] { this.world.mario.x, this.world.mario.y };
     }
 
     /**
@@ -336,7 +336,7 @@ public class MarioForwardModel {
      * @return the actual mario velocity in the current state
      */
     public float[] getMarioFloatVelocity() {
-        return new float[]{this.world.mario.xa, this.world.mario.ya};
+        return new float[] { this.world.mario.xa, this.world.mario.ya };
     }
 
     /**
@@ -386,7 +386,7 @@ public class MarioForwardModel {
      * Get a 3x float list that contain the type of enemies, x position, y position
      *
      * @return an array of 3 floats that contain the enemy type, x position, y
-     * position for each enemy sprite
+     *         position for each enemy sprite
      */
     public float[] getEnemiesFloatPos() {
         ArrayList<MarioSprite> enemiesAlive = this.world.getEnemies();
@@ -495,7 +495,7 @@ public class MarioForwardModel {
      * @return the x and y location of mario on the screen as tile values
      */
     public int[] getMarioScreenTilePos() {
-        return new int[]{(int) ((this.world.mario.x - this.world.cameraX) / 16), (int) (this.world.mario.y / 16)};
+        return new int[] { (int) ((this.world.mario.x - this.world.cameraX) / 16), (int) (this.world.mario.y / 16) };
     }
 
     /**
@@ -513,8 +513,8 @@ public class MarioForwardModel {
      * screen with a detail value of 0
      *
      * @return 2D grid where each tile contain either 0 to indicate no enemy or a
-     * number to indicate a certain enemy. Look at SpriteTypes for enemy
-     * values (Detail 0).
+     *         number to indicate a certain enemy. Look at SpriteTypes for enemy
+     *         values (Detail 0).
      */
     public int[][] getScreenEnemiesObservation() {
         return this.getScreenEnemiesObservation(0);
@@ -525,8 +525,8 @@ public class MarioForwardModel {
      * center of screen with a detail value of 1
      *
      * @return 2D grid where each tile contain either 0 which means it is empty or a
-     * value that reflect the type of the tile in that area. Look at
-     * TileTypes for the meaning of values (Detail 1)
+     *         value that reflect the type of the tile in that area. Look at
+     *         TileTypes for the meaning of values (Detail 1)
      */
     public int[][] getScreenSceneObservation() {
         return this.getScreenSceneObservation(1);
@@ -547,8 +547,8 @@ public class MarioForwardModel {
      * detail value of 0
      *
      * @return 2D grid where each tile contain either 0 to indicate no enemy or a
-     * number to indicate a certain enemy. Look at SpriteTypes for enemy
-     * values (Detail 0).
+     *         number to indicate a certain enemy. Look at SpriteTypes for enemy
+     *         values (Detail 0).
      */
     public int[][] getMarioEnemiesObservation() {
         return this.getMarioEnemiesObservation(0);
@@ -559,8 +559,8 @@ public class MarioForwardModel {
      * mario with a detail value of 1
      *
      * @return 2D grid where each tile contain either 0 which means it is empty or a
-     * value that reflect the type of the tile in that area. Look at
-     * TileTypes for the meaning of values (Detail 1)
+     *         value that reflect the type of the tile in that area. Look at
+     *         TileTypes for the meaning of values (Detail 1)
      */
     public int[][] getMarioSceneObservation() {
         return this.getMarioSceneObservation(1);
@@ -569,9 +569,11 @@ public class MarioForwardModel {
     /**
      * The current screen status as a 2D tile grid around the center of screen
      *
-     * @param sceneDetail the detail level of the scene: 0 all detail, 1 less detailed, 2
+     * @param sceneDetail the detail level of the scene: 0 all detail, 1 less
+     *                    detailed, 2
      *                    binary detail
-     * @param enemyDetail the detail level of the current enemies: 0 all details, 1 less
+     * @param enemyDetail the detail level of the current enemies: 0 all details, 1
+     *                    less
      *                    detailed, 2 binary detail
      * @return 2D grid that have all the information about all objects on the screen
      */
@@ -587,8 +589,8 @@ public class MarioForwardModel {
      * @param detail the detail level of the current enemies: 0 all details, 1 less
      *               detailed, 2 binary detail
      * @return 2D grid where each tile contain either 0 to indicate no enemy or a
-     * number to indicate a certain enemy. Look at SpriteTypes for enemy
-     * values (Detail 0).
+     *         number to indicate a certain enemy. Look at SpriteTypes for enemy
+     *         values (Detail 0).
      */
     public int[][] getScreenEnemiesObservation(int detail) {
         return this.world.getEnemiesObservation(this.world.cameraX + MarioGame.width / 2, MarioGame.height / 2, detail);
@@ -601,8 +603,8 @@ public class MarioForwardModel {
      * @param detail the detail level of the scene: 0 all detail, 1 less detailed, 2
      *               binary detail
      * @return 2D grid where each tile contain either 0 which means it is empty or a
-     * value that reflect the type of the tile in that area. Look at
-     * TileTypes for the meaning of values (Detail 1)
+     *         value that reflect the type of the tile in that area. Look at
+     *         TileTypes for the meaning of values (Detail 1)
      */
     public int[][] getScreenSceneObservation(int detail) {
         return this.world.getSceneObservation(this.world.cameraX + MarioGame.width / 2, MarioGame.height / 2, detail);
@@ -611,9 +613,11 @@ public class MarioForwardModel {
     /**
      * The current screen status as a 2D tile grid around mario
      *
-     * @param sceneDetail the detail level of the scene: 0 all detail, 1 less detailed, 2
+     * @param sceneDetail the detail level of the scene: 0 all detail, 1 less
+     *                    detailed, 2
      *                    binary detail
-     * @param enemyDetail the detail level of the current enemies: 0 all details, 1 less
+     * @param enemyDetail the detail level of the current enemies: 0 all details, 1
+     *                    less
      *                    detailed, 2 binary detail
      * @return 2D grid that have all the information about all objects on the screen
      */
@@ -627,8 +631,8 @@ public class MarioForwardModel {
      * @param detail the detail level of the current enemies: 0 all details, 1 less
      *               detailed, 2 binary detail
      * @return 2D grid where each tile contain either 0 to indicate no enemy or a
-     * number to indicate a certain enemy. Look at SpriteTypes for enemy
-     * values (Detail 0).
+     *         number to indicate a certain enemy. Look at SpriteTypes for enemy
+     *         values (Detail 0).
      */
     public int[][] getMarioEnemiesObservation(int detail) {
         return this.world.getEnemiesObservation(this.world.mario.x, this.world.mario.y, detail);
@@ -641,8 +645,8 @@ public class MarioForwardModel {
      * @param detail the detail level of the scene: 0 all detail, 1 less detailed, 2
      *               binary detail
      * @return 2D grid where each tile contain either 0 which means it is empty or a
-     * value that reflect the type of the tile in that area. Look at
-     * TileTypes for the meaning of values (Detail 1)
+     *         value that reflect the type of the tile in that area. Look at
+     *         TileTypes for the meaning of values (Detail 1)
      */
     public int[][] getMarioSceneObservation(int detail) {
         return this.world.getSceneObservation(this.world.mario.x, this.world.mario.y, detail);
@@ -662,5 +666,115 @@ public class MarioForwardModel {
 
     public int getInitialTimer() {
         return this.world.initTimer;
+    }
+
+    public int[] getNearestUnhitBlockScreenPos() {
+        // Default vector for when no block is found on screen
+        int[] offScreenVector = new int[] { 0, 0 };
+
+        // Get the list of blocks that can be bumped but haven't been yet
+        ArrayList<Block> unhitBlocks = this.world.getUnbumpBlocks();
+        if (unhitBlocks == null || unhitBlocks.isEmpty()) {
+            return offScreenVector;
+        }
+
+        int minDistanceSquared = Integer.MAX_VALUE;
+        Mario mario = this.world.mario;
+        Block nearestBlock = null;
+
+        // Find the closest block to Mario in terms of world coordinates
+        for (Block block : unhitBlocks) {
+            int dx = block.getX() - mario.getMapX();
+            int dy = block.getY() - mario.getMapY();
+            int distanceSquared = dx * dx + dy * dy;
+
+            if (distanceSquared < minDistanceSquared) {
+                minDistanceSquared = distanceSquared;
+                nearestBlock = block;
+            }
+        }
+
+        // If a nearest block was found, check if it's on screen
+        if (nearestBlock != null) {
+            float blockPixelX = nearestBlock.getX() * 16;
+            float blockPixelY = nearestBlock.getY() * 16;
+            float cameraX = this.world.cameraX;
+            float cameraY = this.world.cameraY;
+
+            int screenTileX = (int) ((blockPixelX - cameraX) / 16);
+            int screenTileY = (int) ((blockPixelY - cameraY) / 16);
+
+            // Check if the block's screen coordinates are within the visible grid
+            if (screenTileX >= 0 && screenTileX < this.obsGridWidth &&
+                    screenTileY >= 0 && screenTileY < this.obsGridHeight) {
+                int[] marioScreenPos = getMarioScreenTilePos();
+                int marioTileX = mario.getMapX();
+                int blockTileX = nearestBlock.getX();
+                int tileDiffX = blockTileX - marioTileX;
+
+                int finalBlockScreenX = marioScreenPos[0] + tileDiffX;
+                int finalBlockScreenY = nearestBlock.getY(); // Y is absolute world tile, as per alignment requirement
+
+                return new int[] { finalBlockScreenX, finalBlockScreenY };
+            }
+        }
+
+        // Return the default vector if no block was found or the nearest was off-screen
+        return offScreenVector;
+    }
+
+    public int[] getNearestAliveEnemyScreenPos() {
+        // Default vector for when no block is found on screen
+        int[] offScreenVector = new int[] { 0, 0 };
+
+        // Get the list of blocks that can be bumped but haven't been yet
+        ArrayList<MarioSprite> aliveEnemies = this.world.getAliveEnemies();
+        if (aliveEnemies == null || aliveEnemies.isEmpty()) {
+            return offScreenVector;
+        }
+
+        int minDistanceSquared = Integer.MAX_VALUE;
+        Mario mario = this.world.mario;
+        MarioSprite nearestEnemy = null;
+
+        // Find the closest block to Mario in terms of world coordinates
+        for (MarioSprite enemy : aliveEnemies) {
+            int dx = (int) enemy.x - mario.getMapX();
+            int dy = (int) enemy.y - mario.getMapY();
+            int distanceSquared = dx * dx + dy * dy;
+
+            if (distanceSquared < minDistanceSquared) {
+                minDistanceSquared = distanceSquared;
+                nearestEnemy = enemy;
+            }
+        }
+
+        // If a nearest block was found, check if it's on screen
+        if (nearestEnemy != null) {
+            float enemyPixelX = (int) nearestEnemy.x * 16;
+            float enemyPixelY = (int) nearestEnemy.y * 16;
+            float cameraX = this.world.cameraX;
+            float cameraY = this.world.cameraY;
+
+            int screenTileX = (int) ((enemyPixelX - cameraX) / 16);
+            int screenTileY = (int) ((enemyPixelY - cameraY) / 16);
+
+            // Check if the block's screen coordinates are within the visible grid
+            if (screenTileX >= 0 && screenTileX < this.obsGridWidth &&
+                    screenTileY >= 0 && screenTileY < this.obsGridHeight) {
+                int[] marioScreenPos = getMarioScreenTilePos();
+                int marioTileX = mario.getMapX();
+                int enemyTileX = (int) nearestEnemy.x;
+                int tileDiffX = enemyTileX - marioTileX;
+
+                int finalBlockScreenX = marioScreenPos[0] + tileDiffX;
+                int finalBlockScreenY = (int) nearestEnemy.y; // Y is absolute world tile, as per alignment requirement
+
+                return new int[] { finalBlockScreenX, finalBlockScreenY };
+            }
+        }
+
+        // Return the default vector if no block was found or the nearest was off-screen
+        return offScreenVector;
     }
 }

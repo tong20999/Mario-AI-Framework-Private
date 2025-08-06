@@ -1,0 +1,108 @@
+2025-08-05 21:22:26 - Agent:PPO - INFO: filling buffer finished 4.72 seconds
+2025-08-05 21:22:26 - Agent:PPO - INFO: start optimize model samples 4340,4340 batch size 256
+2025-08-05 21:22:27 - Agent:PPO - INFO: optimize policy model finished 0.19 seconds
+2025-08-05 21:22:27 - Agent:PPO - INFO: optimize value model finish 0.05 seconds
+2025-08-05 21:22:27 - Agent:PPO - INFO: optimize model finish 0.24 seconds
+2025-08-05 21:22:27 - Agent:PPO - INFO: VRAM usage: 0.08 GB / 15.92 GB (0.5%)
+2025-08-05 21:22:28 - Agent:PPO - INFO: evaluation 1 score 0.67 value losses 0.123
+2025-08-05 21:22:30 - Agent:PPO - INFO: filling buffer finished 2.51 seconds
+2025-08-05 21:22:30 - Agent:PPO - INFO: start optimize model samples 6473,6473 batch size 256
+2025-08-05 21:22:30 - Agent:PPO - INFO: optimize policy model finished 0.11 seconds
+2025-08-05 21:22:30 - Agent:PPO - INFO: optimize value model finish 0.04 seconds
+2025-08-05 21:22:30 - Agent:PPO - INFO: optimize model finish 0.16 seconds
+2025-08-05 21:22:30 - Agent:PPO - INFO: VRAM usage: 0.08 GB / 15.92 GB (0.5%)
+2025-08-05 21:22:31 - Agent:PPO - INFO: evaluation 2 score 0.64 value losses 0.046
+2025-08-05 21:22:33 - Agent:PPO - INFO: filling buffer finished 2.73 seconds
+2025-08-05 21:22:33 - Agent:PPO - INFO: start optimize model samples 6860,6860 batch size 256
+2025-08-05 21:22:34 - Agent:PPO - INFO: optimize policy model finished 0.16 seconds
+2025-08-05 21:22:34 - Agent:PPO - INFO: optimize value model finish 0.04 seconds
+2025-08-05 21:22:34 - Agent:PPO - INFO: optimize model finish 0.20 seconds
+2025-08-05 21:22:34 - Agent:PPO - INFO: VRAM usage: 0.08 GB / 15.92 GB (0.5%)
+2025-08-05 21:22:35 - Agent:PPO - INFO: evaluation 3 score 0.78 value losses 0.025
+2025-08-05 21:22:38 - Agent:PPO - INFO: filling buffer finished 3.10 seconds
+2025-08-05 21:22:38 - Agent:PPO - INFO: start optimize model samples 7552,7552 batch size 256
+2025-08-05 21:22:38 - Agent:PPO - INFO: optimize policy model finished 0.50 seconds
+2025-08-05 21:22:40 - Agent:PPO - INFO: optimize value model finish 1.40 seconds
+2025-08-05 21:22:40 - Agent:PPO - INFO: optimize model finish 1.90 seconds
+2025-08-05 21:22:40 - Agent:PPO - INFO: VRAM usage: 0.08 GB / 15.92 GB (0.5%)
+2025-08-05 21:22:41 - Agent:PPO - INFO: evaluation 4 score 0.83 value losses 0.009
+2025-08-05 21:22:44 - Agent:PPO - INFO: filling buffer finished 3.30 seconds
+2025-08-05 21:22:44 - Agent:PPO - INFO: start optimize model samples 8439,8439 batch size 256
+2025-08-05 21:22:44 - Agent:PPO - INFO: optimize policy model finished 0.20 seconds
+2025-08-05 21:22:46 - Agent:PPO - INFO: optimize value model finish 1.55 seconds
+2025-08-05 21:22:46 - Agent:PPO - INFO: optimize model finish 1.75 seconds
+2025-08-05 21:22:46 - Agent:PPO - INFO: VRAM usage: 0.08 GB / 15.92 GB (0.5%)
+2025-08-05 21:22:46 - Agent:PPO - INFO: evaluation 5 score 0.88 value losses 0.004
+2025-08-05 21:22:51 - Agent:PPO - INFO: filling buffer finished 4.48 seconds
+2025-08-05 21:22:51 - Agent:PPO - INFO: start optimize model samples 10833,10833 batch size 256
+2025-08-05 21:22:51 - Agent:PPO - INFO: optimize policy model finished 0.36 seconds
+2025-08-05 21:22:53 - Agent:PPO - INFO: optimize value model finish 2.10 seconds
+2025-08-05 21:22:53 - Agent:PPO - INFO: optimize model finish 2.45 seconds
+2025-08-05 21:22:53 - Agent:PPO - INFO: VRAM usage: 0.08 GB / 15.92 GB (0.5%)
+2025-08-05 21:22:54 - Agent:PPO - INFO: evaluation 6 score 0.7 value losses 0.004
+2025-08-05 21:22:59 - Agent:PPO - INFO: filling buffer finished 4.62 seconds
+2025-08-05 21:22:59 - Agent:PPO - INFO: start optimize model samples 11977,11977 batch size 256
+2025-08-05 21:23:00 - Agent:PPO - INFO: optimize policy model finished 1.09 seconds
+2025-08-05 21:23:02 - Agent:PPO - INFO: optimize value model finish 2.30 seconds
+2025-08-05 21:23:02 - Agent:PPO - INFO: optimize model finish 3.38 seconds
+2025-08-05 21:23:02 - Agent:PPO - INFO: VRAM usage: 0.08 GB / 15.92 GB (0.5%)
+2025-08-05 21:23:03 - Agent:PPO - INFO: evaluation 7 score 0.62 value losses 0.004
+2025-08-05 21:23:09 - Agent:PPO - INFO: filling buffer finished 5.27 seconds
+2025-08-05 21:23:09 - Agent:PPO - INFO: start optimize model samples 13772,13772 batch size 256
+2025-08-05 21:23:11 - Agent:PPO - INFO: optimize policy model finished 2.18 seconds
+2025-08-05 21:23:13 - Agent:PPO - INFO: optimize value model finish 2.59 seconds
+2025-08-05 21:23:13 - Agent:PPO - INFO: optimize model finish 4.77 seconds
+2025-08-05 21:23:13 - Agent:PPO - INFO: VRAM usage: 0.08 GB / 15.92 GB (0.5%)
+2025-08-05 21:23:14 - Agent:PPO - INFO: evaluation 8 score 0.5 value losses 0.004
+2025-08-05 21:23:20 - Agent:PPO - INFO: filling buffer finished 5.57 seconds
+2025-08-05 21:23:20 - Agent:PPO - INFO: start optimize model samples 14225,14225 batch size 256
+2025-08-05 21:23:22 - Agent:PPO - INFO: optimize policy model finished 1.95 seconds
+2025-08-05 21:23:25 - Agent:PPO - INFO: optimize value model finish 2.91 seconds
+2025-08-05 21:23:25 - Agent:PPO - INFO: optimize model finish 4.86 seconds
+2025-08-05 21:23:25 - Agent:PPO - INFO: VRAM usage: 0.08 GB / 15.92 GB (0.5%)
+2025-08-05 21:23:26 - Agent:PPO - INFO: evaluation 9 score 0.87 value losses 0.004
+2025-08-05 21:23:33 - Agent:PPO - INFO: filling buffer finished 6.55 seconds
+2025-08-05 21:23:34 - Agent:PPO - INFO: start optimize model samples 16972,16972 batch size 256
+2025-08-05 21:23:35 - Agent:PPO - INFO: optimize policy model finished 1.14 seconds
+2025-08-05 21:23:39 - Agent:PPO - INFO: optimize value model finish 3.27 seconds
+2025-08-05 21:23:39 - Agent:PPO - INFO: optimize model finish 4.42 seconds
+2025-08-05 21:23:39 - Agent:PPO - INFO: VRAM usage: 0.08 GB / 15.92 GB (0.5%)
+2025-08-05 21:23:40 - Agent:PPO - INFO: evaluation 10 score 0.74 value losses 0.004
+2025-08-05 21:23:47 - Agent:PPO - INFO: filling buffer finished 6.83 seconds
+2025-08-05 21:23:47 - Agent:PPO - INFO: start optimize model samples 17396,17396 batch size 256
+2025-08-05 21:23:48 - Agent:PPO - INFO: optimize policy model finished 1.03 seconds
+2025-08-05 21:23:51 - Agent:PPO - INFO: optimize value model finish 3.25 seconds
+2025-08-05 21:23:51 - Agent:PPO - INFO: optimize model finish 4.28 seconds
+2025-08-05 21:23:51 - Agent:PPO - INFO: VRAM usage: 0.08 GB / 15.92 GB (0.5%)
+2025-08-05 21:23:52 - Agent:PPO - INFO: evaluation 11 score 1.02 value losses 0.004
+2025-08-05 21:23:59 - Agent:PPO - INFO: filling buffer finished 6.87 seconds
+2025-08-05 21:23:59 - Agent:PPO - INFO: start optimize model samples 17550,17550 batch size 256
+2025-08-05 21:24:02 - Agent:PPO - INFO: optimize policy model finished 2.63 seconds
+2025-08-05 21:24:05 - Agent:PPO - INFO: optimize value model finish 3.20 seconds
+2025-08-05 21:24:05 - Agent:PPO - INFO: optimize model finish 5.84 seconds
+2025-08-05 21:24:05 - Agent:PPO - INFO: VRAM usage: 0.08 GB / 15.92 GB (0.5%)
+2025-08-05 21:24:06 - Agent:PPO - INFO: evaluation 12 score 0.85 value losses 0.004
+2025-08-05 21:24:13 - Agent:PPO - INFO: filling buffer finished 7.11 seconds
+2025-08-05 21:24:13 - Agent:PPO - INFO: start optimize model samples 18539,18539 batch size 256
+2025-08-05 21:24:16 - Agent:PPO - INFO: optimize policy model finished 3.19 seconds
+2025-08-05 21:24:19 - Agent:PPO - INFO: optimize value model finish 3.39 seconds
+2025-08-05 21:24:19 - Agent:PPO - INFO: optimize model finish 6.58 seconds
+2025-08-05 21:24:19 - Agent:PPO - INFO: VRAM usage: 0.08 GB / 15.92 GB (0.5%)
+2025-08-05 21:24:20 - Agent:PPO - INFO: evaluation 13 score 0.61 value losses 0.004
+2025-08-05 21:24:28 - Agent:PPO - INFO: filling buffer finished 7.07 seconds
+2025-08-05 21:24:40 - Agent:PPO - INFO: start optimize model samples 18962,18962 batch size 256
+2025-08-05 21:24:42 - Agent:PPO - INFO: optimize policy model finished 1.91 seconds
+2025-08-05 21:24:45 - Agent:PPO - INFO: optimize value model finish 3.54 seconds
+2025-08-05 21:24:45 - Agent:PPO - INFO: optimize model finish 5.45 seconds
+2025-08-05 21:24:45 - Agent:PPO - INFO: VRAM usage: 0.08 GB / 15.92 GB (0.5%)
+2025-08-05 21:24:46 - Agent:PPO - INFO: evaluation 14 score 0.57 value losses 0.005
+2025-08-05 21:24:54 - Agent:PPO - INFO: filling buffer finished 8.20 seconds
+2025-08-05 21:24:54 - Agent:PPO - INFO: start optimize model samples 21044,21044 batch size 256
+2025-08-05 21:25:02 - Agent:PPO - INFO: optimize policy model finished 7.97 seconds
+2025-08-05 21:25:13 - Agent:PPO - INFO: optimize value model finish 10.06 seconds
+2025-08-05 21:25:13 - Agent:PPO - INFO: optimize model finish 18.03 seconds
+2025-08-05 21:25:13 - Agent:PPO - INFO: VRAM usage: 0.08 GB / 15.92 GB (0.5%)
+2025-08-05 21:25:13 - Agent:PPO - INFO: evaluation 15 score 0.88 value losses 0.004
+2025-08-05 21:25:22 - Agent:PPO - INFO: filling buffer finished 8.13 seconds
+2025-08-05 21:25:22 - Agent:PPO - INFO: start optimize model samples 21239,21239 batch size 256
+2025-08-05 21:25:51 - Agent:PPO - INFO: optimize policy model finished 28.89 seconds

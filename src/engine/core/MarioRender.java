@@ -62,13 +62,13 @@ public class MarioRender extends JComponent implements FocusListener {
 //        }
 
         //drawStringDropShadow(og, "Complete: " + String.format("%.2f", completePercentage), 0, 4, 7);
-        var enemyCompass = world.nearestCompass(world.findNearestEnemyVector());
-        var totalEnemy = MessageFormat.format("{0} {1}", world.level.getEnemies().size(), enemyCompass);
+        //var enemyCompass = world.nearestCompass(world.findNearestEnemyVector());
+        var totalEnemy = MessageFormat.format("{0}", world.level.getEnemies().size());
         drawStringDropShadow(og, "Enemy: " + totalEnemy, 0, 4, 7);
         drawStringDropShadow(og, "Kill: " + (world.level.getEnemies().size() - world.getAliveEnemies().size()), 0, 6, 7);
 
-        var blockCompass = world.nearestCompass(world.findNearestBlockVector());
-        var totalBlock = MessageFormat.format("{0} {1}", world.level.getBumpableBlocks().size(), blockCompass);
+        //var blockCompass = world.nearestCompass(world.findNearestBlockVector());
+        var totalBlock = MessageFormat.format("{0}", world.level.getBumpableBlocks().size());
         drawStringDropShadow(og, "Block: " + totalBlock, 0, 8, 7);
         drawStringDropShadow(og, "Bump: " + (world.level.getBumpableBlocks().size() - world.getUnbumpBlocks().size()), 0, 10, 7);
         if (MarioGame.verbose) {

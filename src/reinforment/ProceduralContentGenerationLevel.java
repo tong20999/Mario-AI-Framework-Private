@@ -347,6 +347,7 @@ public class ProceduralContentGenerationLevel {
             addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
         }
         boolean heightBlock = randomBlockHeight && rand.nextInt(2) == 0;
+        heightBlock = true;
         for (int i = 0; i < levels.size(); i++) {
             ArrayList<Character> currentLevel = levels.get(i);
             if (i == GROUND_1_LEVEL || i == GROUND_2_LEVEL) {

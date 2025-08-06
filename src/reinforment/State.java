@@ -93,6 +93,18 @@ public class State {
         byte[] normalizeMarioScreenTilePosXPayload = float2ByteArray(normalizeMarioScreenTilePosX);
         byte[] normalizeMarioScreenTilePosYPayload = float2ByteArray(normalizeMarioScreenTilePosY);
 
+        var nearestBlock = model.getNearestUnhitBlockScreenPos();
+        float normalizeNearestBlockX = nearestBlock[0]/16f;
+        float normalizeNearestBlockY = nearestBlock[1]/16f;
+        byte[] normalizeNearestBlockXPayload = float2ByteArray(normalizeNearestBlockX);
+        byte[] normalizeNearestBlockYPayload = float2ByteArray(normalizeNearestBlockY);
+
+        var nearestEnemy = model.getNearestAliveEnemyScreenPos();
+        float normalizeNearestEnemyX = nearestEnemy[0]/16f;
+        float normalizeNearestEnemyY = nearestEnemy[1]/16f;
+        byte[] normalizeNearestEnemyXPayload = float2ByteArray(normalizeNearestEnemyX);
+        byte[] normalizeNearestEnemyYPayload = float2ByteArray(normalizeNearestEnemyY);
+
         ByteBuffer buffer = ByteBuffer.allocate(
                 sceneObservationPayload.length +
                         enemiesObservationPayload.length
@@ -102,6 +114,8 @@ public class State {
                         + 4
                         + 8
                         + 4
+                        + 8
+                        + 8
                         + 8
         );
 
@@ -129,6 +143,12 @@ public class State {
 
         buffer.put(normalizeMarioScreenTilePosXPayload);
         buffer.put(normalizeMarioScreenTilePosYPayload);
+
+        buffer.put(normalizeNearestBlockXPayload);
+        buffer.put(normalizeNearestBlockYPayload);
+
+        buffer.put(normalizeNearestEnemyXPayload);
+        buffer.put(normalizeNearestEnemyYPayload);
         return buffer.array();
     }
 }
