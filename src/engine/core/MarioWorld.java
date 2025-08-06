@@ -488,13 +488,13 @@ public class MarioWorld {
         addedSprites.clear();
         removedSprites.clear();
 
-        var marioTileX = this.mario.getMapX();
-        var marioTileY = this.mario.getMapY();
-        this.visitedTiles.add(new Point(marioTileX, marioTileY));
-
-        if (this.visitedTiles.size() > prevVisitedTile) {
-            this.addEvent(EventType.EXPLORER, EventType.EXPLORER.getValue());
-        }
+//        var marioTileX = this.mario.getMapX();
+//        var marioTileY = this.mario.getMapY();
+//        this.visitedTiles.add(new Point(marioTileX, marioTileY));
+//
+//        if (this.visitedTiles.size() > prevVisitedTile) {
+//            this.addEvent(EventType.EXPLORER, EventType.EXPLORER.getValue());
+//        }
 
         // punishing forward model
         if (this.killEvents != null) {
