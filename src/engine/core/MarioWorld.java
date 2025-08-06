@@ -558,7 +558,6 @@ public class MarioWorld {
         if (TileFeature.getTileType(block).contains(TileFeature.PICKABLE)) {
             this.addEvent(EventType.COLLECT, block);
             this.mario.collectCoin();
-            unCollectCoin.removeIf(c -> c.getX() == xTile && c.getY() == yTile);
             level.setBlock(xTile, yTile, 0);
             if (this.visuals) {
                 this.addEffect(new CoinEffect(xTile * 16 + 8, yTile * 16 + 8));
@@ -615,6 +614,10 @@ public class MarioWorld {
 
     public ArrayList<Block> getUnbumpBlocks() {
         return unbumpBlocks;
+    }
+
+    public ArrayList<Coin> getUnCollectCoinBlocks() {
+        return unCollectCoin;
     }
 
     public String nearestCompass(int[] position) {

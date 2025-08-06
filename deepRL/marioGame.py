@@ -24,8 +24,8 @@ class MarioGame(SocketEnv):
     def __init__(self, fps: int = 10):
         super(MarioGame, self).__init__()
         self.fps = fps
-        self.vector_transfer_byte_len = 57
-        self.vector_size = 21
+        self.vector_transfer_byte_len = 65
+        self.vector_size = 23
         self._init_spaces()
 
     def _init_spaces(self):
@@ -45,7 +45,7 @@ class MarioGame(SocketEnv):
         grid_enemies_part = np.array(list(payload[grid_scene_end:grid_enemies_end]), dtype=np.uint8).reshape(1, 16, 16)
         # vector_part = np.array(list(payload[grid_enemies_end:]), dtype=np.uint8)
         vector_bytes = payload[grid_enemies_end:]
-        format_string  = '>bbbbbbbbbffffffffffff'
+        format_string  = '>bbbbbbbbbffffffffffffff'
         unpacked_values = struct.unpack(format_string, vector_bytes)
         vector_part = np.array(unpacked_values, dtype=np.float32)
         

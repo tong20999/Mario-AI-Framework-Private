@@ -7,6 +7,7 @@ import engine.helper.GameStatus;
 import engine.helper.SpriteType;
 import engine.sprites.Mario;
 import reinforment.Block;
+import reinforment.Coin;
 
 public class MarioForwardModel {
     private static final int OBS_SCENE_SHIFT = 16;
@@ -714,6 +715,61 @@ public class MarioForwardModel {
 
                 int finalBlockScreenX = marioScreenPos[0] + tileDiffX;
                 int finalBlockScreenY = nearestBlock.getY(); // Y is absolute world tile, as per alignment requirement
+
+                return new int[] { finalBlockScreenX, finalBlockScreenY };
+            }
+        }
+
+        // Return the default vector if no block was found or the nearest was off-screen
+        return offScreenVector;
+    }
+
+    public int[] getNearestUnCollectCoinScreenPos() {
+        // Default vector for when no block is found on screen
+        int[] offScreenVector = new int[] { 0, 0 };
+
+        // Get the list of blocks that can be bumped but haven't been yet
+        ArrayList<Coin> unCollectCoins = this.world.getUnCollectCoinBlocks();
+        if (unCollectCoins == null || unCollectCoins.isEmpty()) {
+            return offScreenVector;
+        }
+
+        int minDistanceSquared = Integer.MAX_VALUE;
+        Mario mario = this.world.mario;
+        Coin nearestCoin = null;
+
+        // Find the closest block to Mario in terms of world coordinates
+        for (Coin coin : unCollectCoins) {
+            int dx = coin.getX() - mario.getMapX();
+            int dy = coin.getY() - mario.getMapY();
+            int distanceSquared = dx * dx + dy * dy;
+
+            if (distanceSquared < minDistanceSquared) {
+                minDistanceSquared = distanceSquared;
+                nearestCoin = coin;
+            }
+        }
+
+        // If a nearest block was found, check if it's on screen
+        if (nearestCoin != null) {
+            float coinPixelX = nearestCoin.getX() * 16;
+            float coinPixelY = nearestCoin.getY() * 16;
+            float cameraX = this.world.cameraX;
+            float cameraY = this.world.cameraY;
+
+            int screenTileX = (int) ((coinPixelX - cameraX) / 16);
+            int screenTileY = (int) ((coinPixelY - cameraY) / 16);
+
+            // Check if the block's screen coordinates are within the visible grid
+            if (screenTileX >= 0 && screenTileX < this.obsGridWidth &&
+                    screenTileY >= 0 && screenTileY < this.obsGridHeight) {
+                int[] marioScreenPos = getMarioScreenTilePos();
+                int marioTileX = mario.getMapX();
+                int coinTileX = nearestCoin.getX();
+                int tileDiffX = coinTileX - marioTileX;
+
+                int finalBlockScreenX = marioScreenPos[0] + tileDiffX;
+                int finalBlockScreenY = nearestCoin.getY(); // Y is absolute world tile, as per alignment requirement
 
                 return new int[] { finalBlockScreenX, finalBlockScreenY };
             }

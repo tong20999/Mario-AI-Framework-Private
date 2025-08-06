@@ -105,6 +105,12 @@ public class State {
         byte[] normalizeNearestEnemyXPayload = float2ByteArray(normalizeNearestEnemyX);
         byte[] normalizeNearestEnemyYPayload = float2ByteArray(normalizeNearestEnemyY);
 
+        var nearestCoin = model.getNearestUnCollectCoinScreenPos();
+        float normalizeNearestCoinX = nearestCoin[0]/16f;
+        float normalizeNearestCoinY = nearestCoin[1]/16f;
+        byte[] normalizeNearestCoinXPayload = float2ByteArray(normalizeNearestCoinX);
+        byte[] normalizeNearestCoinYPayload = float2ByteArray(normalizeNearestCoinY);
+
         ByteBuffer buffer = ByteBuffer.allocate(
                 sceneObservationPayload.length +
                         enemiesObservationPayload.length
@@ -114,6 +120,7 @@ public class State {
                         + 4
                         + 8
                         + 4
+                        + 8
                         + 8
                         + 8
                         + 8
@@ -149,6 +156,9 @@ public class State {
 
         buffer.put(normalizeNearestEnemyXPayload);
         buffer.put(normalizeNearestEnemyYPayload);
+
+        buffer.put(normalizeNearestCoinXPayload);
+        buffer.put(normalizeNearestCoinYPayload);
         return buffer.array();
     }
 }
