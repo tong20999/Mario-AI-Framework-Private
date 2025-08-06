@@ -347,7 +347,9 @@ public class ProceduralContentGenerationLevel {
             addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
         }
         boolean heightBlock = randomBlockHeight && rand.nextInt(2) == 0;
-        heightBlock = true;
+        heightBlock = false;
+        boolean randomNormalBlockLeft = rand.nextInt(2) == 0;
+        boolean randomNormalBlockRight = rand.nextInt(2) == 0;
         for (int i = 0; i < levels.size(); i++) {
             ArrayList<Character> currentLevel = levels.get(i);
             if (i == GROUND_1_LEVEL || i == GROUND_2_LEVEL) {
@@ -355,25 +357,19 @@ public class ProceduralContentGenerationLevel {
                     currentLevel.add(addIndex + j, 'X');
                 }
             } else if (i == LAN_LEVEL - 7 && heightBlock) {
-                int randomNormalBlock = rand.nextInt(2);
-                currentLevel.add(addIndex - 1, randomNormalBlock == 0 ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
+                currentLevel.add(addIndex - 1, randomNormalBlockLeft ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
                 currentLevel.add(addIndex, blockType.getValue());
-                randomNormalBlock = rand.nextInt(2);
-                currentLevel.add(addIndex + 1, randomNormalBlock == 0 ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
+                currentLevel.add(addIndex + 1, randomNormalBlockRight ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
             } else if (i == LAN_LEVEL - 3) {
                 if(!heightBlock){
-                    int randomNormalBlock = rand.nextInt(2);
-                    currentLevel.add(addIndex - 1, randomNormalBlock == 0 ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
+                    currentLevel.add(addIndex - 1, randomNormalBlockLeft ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
                     currentLevel.add(addIndex, blockType.getValue());
-                    randomNormalBlock = rand.nextInt(2);
-                    currentLevel.add(addIndex + 1, randomNormalBlock == 0 ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
+                    currentLevel.add(addIndex + 1, randomNormalBlockRight ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
                 }
                 else {
-                    int randomNormalBlock = rand.nextInt(2);
-                    currentLevel.add(addIndex - 1, randomNormalBlock == 0 ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
+                    currentLevel.add(addIndex - 1, randomNormalBlockLeft ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
                     currentLevel.add(addIndex, EnumBlockType.NORMAL_BLOCK.getValue());
-                    randomNormalBlock = rand.nextInt(2);
-                    currentLevel.add(addIndex + 1, randomNormalBlock == 0 ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
+                    currentLevel.add(addIndex + 1, randomNormalBlockRight ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
                 }
             } else {
                 for (int j = -1; j < 2; j++) {
