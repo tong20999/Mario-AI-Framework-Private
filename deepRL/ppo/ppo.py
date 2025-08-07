@@ -84,8 +84,6 @@ class PPO():
         self.value_sample_ratio = value_sample_ratio
         self.value_clip_range = value_clip_range
         self.value_stopping_mse = value_stopping_mse
-        
-        self.evaluatationCount = 0
 
         self.ewc_fn = ewc_fn
         self.ewc_lambda = ewc_lambda
@@ -324,8 +322,8 @@ class PPO():
                 self.episode_buffer.clear()
 
                 # stats
-                evaluation_score, _ = self.evaluate(self.policy_model, env, random.choice(evaluation_levels))
                 evaluation_count +=1
+                evaluation_score, _ = self.evaluate(evaluation_count, self.policy_model, env, random.choice(evaluation_levels))
                 logger.info('evaluation {} score {} value losses {}'.format(evaluation_count, np.round(evaluation_score, 2), np.round(value_losses, 3)))
                 
                 if evaluation_score > 1 and evaluation_score > self.best_score:
@@ -478,12 +476,11 @@ class PPO():
                                 rehearsal_level_tasks
                     )
 
-    def evaluate(self, eval_model:CNNActor, eval_env, level:str, n_episodes=1, greedy=True, visual=True):
+    def evaluate(self, evaluation_count, eval_model:CNNActor, eval_env, level:str, n_episodes=1, greedy=True, visual=True):
         rs = []
         for _ in range(n_episodes):
             try:
-                info = {"episode" : self.evaluatationCount, "evaluation" : True, "visual":visual, "level" : level}
-                self.evaluatationCount += 1
+                info = {"episode" : evaluation_count, "evaluation" : True, "visual":visual, "level" : level}
                 s, _  = eval_env.reset(options=info)
                 d = False
                 rs.append(0)
@@ -550,7 +547,7 @@ class PPO():
                 policy_model.load_state_dict(torch.load(policy_model_state, weights_only=True))
                 policy_model.eval()
                 
-            final_eval_score, score_std = self.evaluate(policy_model, env, level, n_episodes=100, visual=True)
+            final_eval_score, score_std = self.evaluate(-1, policy_model, env, level, n_episodes=100, visual=True)
 
     def write_info(self, working_dir, filename, value):
         with open(os.path.join(working_dir, filename), "a") as file:

@@ -11,6 +11,7 @@ public class ProceduralContentGenerationLevel {
     private static final int FLAG_LEVEL = 12;
     private final Map<Integer, ArrayList<Character>> levels = new HashMap<>();
 
+    private String pcgName = null;
     private EnumBlockType[] blocks = {
             EnumBlockType.COIN_QUESTION_BLOCK,
             //EnumBlockType.COIN_BLOCK,
@@ -26,6 +27,10 @@ public class ProceduralContentGenerationLevel {
 
     public String content = null;
 
+    public String getPcgName() {
+        return pcgName;
+    }
+
     public static ProceduralContentGenerationLevel parseLevel(String pcgName) {
         Map<String, String> params = Helper.parseParameter(pcgName);
         int blockCount = Integer.parseInt(params.getOrDefault("blocks", "0"));
@@ -40,14 +45,14 @@ public class ProceduralContentGenerationLevel {
         int widthMin = Integer.parseInt(params.getOrDefault("width_min", "15"));
         int widthMax = Integer.parseInt(params.getOrDefault("width_max", "15"));
 
-        return doParseLevel(widthMin, widthMax, blockCount, randomBlockHeight, coinCount, randomCoinHeight, enemyCount, randomEnemyHeight, pitCount, pipeCount, rampCount);
+        return doParseLevel(pcgName, widthMin, widthMax, blockCount, randomBlockHeight, coinCount, randomCoinHeight, enemyCount, randomEnemyHeight, pitCount, pipeCount, rampCount);
     }
 
-    private static ProceduralContentGenerationLevel doParseLevel(int widthMin, int widthMax, int blockCount, boolean randomBlockHeight, int coinCount, boolean randomCoinHeight, int enemyCount, boolean randomEnemyHeight, int pitCount, int pipeCount, int rampCount){
+    private static ProceduralContentGenerationLevel doParseLevel(String pcgName, int widthMin, int widthMax, int blockCount, boolean randomBlockHeight, int coinCount, boolean randomCoinHeight, int enemyCount, boolean randomEnemyHeight, int pitCount, int pipeCount, int rampCount){
 
         try{
             ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel.randomWidth(widthMin,widthMax);
-
+            pcgLevel.pcgName = pcgName;
             if(rampCount > 0){
                 pcgLevel.addRamp(8,2,rampCount);
             }
@@ -77,7 +82,7 @@ public class ProceduralContentGenerationLevel {
         catch (IllegalArgumentException ex){
             System.out.println(ex.getMessage());
             System.out.println(MessageFormat.format( "Retry with new width min {0} max {1}", widthMin * 2, widthMax * 2));
-            return doParseLevel(widthMin * 2, widthMax * 2, blockCount, randomBlockHeight, coinCount, randomCoinHeight, enemyCount, randomEnemyHeight, pitCount, pipeCount, rampCount);
+            return doParseLevel(pcgName, widthMin * 2, widthMax * 2, blockCount, randomBlockHeight, coinCount, randomCoinHeight, enemyCount, randomEnemyHeight, pitCount, pipeCount, rampCount);
         }
     }
 

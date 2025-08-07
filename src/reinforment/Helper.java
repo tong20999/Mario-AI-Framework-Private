@@ -6,10 +6,7 @@ import engine.helper.EventType;
 import engine.helper.GameStatus;
 import info.EndInfo;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
@@ -151,5 +148,45 @@ public class Helper {
     public static String getLevel(String level){
         var levelLocation = MessageFormat.format("./levels/{0}", level);
         return getFileFromLevel(levelLocation);
+    }
+
+
+
+    public static void logTerminate(int evaluationEpisode, String name, ProceduralContentGenerationLevel pcg) {
+        String workingDir = null;
+        try {
+            workingDir = getWorkingDir(pcg.getPcgName());
+        } catch (IOException e) {
+            System.out.println("WARN: can't get working dir");
+            return;
+        }
+
+        // First, let's construct the full file path.
+        String filePath = MessageFormat.format(workingDir + "\\zpcg\\{0}\\pgc_{1}_{2}.txt", name, name,
+                evaluationEpisode);
+
+        // Now, let's get the parent directory path from the file path.
+        File file = new File(filePath);
+        File parentDir = file.getParentFile();
+
+        // Check if the parent directory exists. If not, create it.
+        if (parentDir != null && !parentDir.exists()) {
+            boolean dirCreated = parentDir.mkdirs(); // mkdirs() creates all necessary but nonexistent parent
+            // directories.
+            if (dirCreated) {
+                System.out.println("Created directory: " + parentDir.getAbsolutePath());
+            } else {
+                System.err.println("Failed to create directory: " + parentDir.getAbsolutePath());
+                // You might want to throw an exception here or return to prevent
+                // the file writing from failing later.
+                return;
+            }
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, false))) {
+            writer.write(pcg.getContent());
+        } catch (IOException e) {
+            System.err.println("Error writing to file: " + e.getMessage());
+        }
     }
 }

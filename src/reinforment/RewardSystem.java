@@ -1,6 +1,7 @@
 package reinforment;
 
 import engine.core.MarioEvent;
+import engine.core.MarioForwardModel;
 import engine.core.MarioLevel;
 import engine.core.MarioWorld;
 import engine.helper.EventType;
@@ -16,48 +17,18 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 public class RewardSystem {
-
     static float winReward = 1;
-    // static float winRewardMultiplier = 5;
-    // static float mileStoneReward = 0.0f;
-    // static float jumpOverPitReward = 0f;
-    // static float killReward = 0.7f;
-    // static float bumpReward = 0.5f;
-    // static float coinReward = 0.5f;
-    // static float fireworkReward = 0.5f;
-    // static float mushroomReward = 0.5f;
-    // static float lifeMushroomReward = 0.5f;
     static float losePenalty = -0.0f;
     static float timeoutPenalty = -0.0f;
-    // static float hurtReward = -0.0f;
-    // static float hitWallReward = -0.0f;
-    // static float fallPitReward = -0f;
-    // static float timePenaltyRewardCoefficient = 0;
-    static float jumpSpamPenalty = -0.00f;
-    float killReward;
-    float bumpReward;
-    float coinReward;
-    float powerUpReward;
-    float explorerReward = 0.01f;
-
+    static float killReward = 0.2f;
+    static float bumpReward = 0.2f;
+    static float coinReward = 0.2f;
+    static float powerUpReward = 0.2f;
+    static float explorerReward = 0.01f;
     ProceduralContentGenerationLevel pcg;
-    private String workingDir;
 
-    public RewardSystem(MarioLevel level, ProceduralContentGenerationLevel pcg, String workingDir) {
-        this.pcg = pcg;
-        this.workingDir = workingDir;
-
-        killReward = 0.2f;
-        bumpReward = 0.2f;
-        coinReward = 0.2f;
-        powerUpReward = 0.2f;
-    }
-
-    public float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents, boolean[] actions,
-            boolean isEvaluation,
-            int evaluationEpisode) {
+    public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = 0.0f;
-        // Event-based rewards (kills, power-ups) and penalties (hurt, walls)
         for (MarioEvent e : miniStepEvents) {
             if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
                     e.getEventType() == EventType.FIRE_KILL.getValue() ||
@@ -79,19 +50,7 @@ public class RewardSystem {
                 reward += powerUpReward;
             }
 
-            // if (e.getEventType() == EventType.HURT.getValue()) {
-            // if(world.mario.isFire || world.mario.isLarge){
-            // reward += hurtReward;
-            // }
-            // }
-            // if (e.getEventType() == EventType.HIT_WALL.getValue()) {
-            // reward += hitWallReward;
-            // }
-            // if (e.getEventType() == EventType.FALL_PIT.getValue()) {
-            // reward += fallPitReward;
-            // }
-
-            if (e.getEventType() == EventType.BUMP.getValue()) {
+            if (e.getEventType() == EventType.BUMP.getValue() && e.getEventParam() == MarioForwardModel.OBS_QUESTION_BLOCK) {
                 reward += bumpReward;
             }
 
@@ -106,75 +65,20 @@ public class RewardSystem {
 
         // --- 3. Define the outcome: Keep your score or lose it all ---
         if (world.gameStatus == GameStatus.WIN) {
-            // The reward for winning is that you get to keep the score you earned.
-            // We can add a small bonus to break ties, but the bulk of the score is from the
-            // run itself.
-            // float total = (world.kill) + (world.bumpBlock) + (world.collectCoin);
-            // reward += total * winRewardMultiplier;
             if (world.isSubGoalBlockMet() && world.isSubGoalCoinMet() && world.isSubGoalEnemyMet()) {
                 reward += winReward;
             } else {
                 reward += 0;
             }
-            if (isEvaluation && this.pcg != null) {
-                logPcg(evaluationEpisode, world.gameStatus.name());
-                // System.out.println(MessageFormat.format("win reward {0}", reward));
-            }
+
             // reward += distanceToFlag(world.mario);
         } else if (world.gameStatus == GameStatus.TIME_OUT) {
-            // A massive penalty that ensures any failure is always worse than even the
-            // "laziest" win.
             reward += timeoutPenalty;
-            if (isEvaluation && this.pcg != null) {
-                logPcg(evaluationEpisode, world.gameStatus.name());
-                // System.out.println(MessageFormat.format("win reward {0}", reward));
-            }
-            // reward += distanceToFlag(world.mario);
         } else if (world.gameStatus == GameStatus.LOSE) {
-            // A massive penalty that ensures any failure is always worse than even the
-            // "laziest" win.
             reward += losePenalty;
-            if (isEvaluation && this.pcg != null) {
-                logPcg(evaluationEpisode, world.gameStatus.name());
-                // System.out.println(MessageFormat.format("win reward {0}", reward));
-            }
-            // reward += distanceToFlag(world.mario);
         }
 
         return reward;
-    }
-
-    private void logPcg(int evaluationEpisode, String name) {
-        if (this.workingDir == null) {
-            return;
-        }
-        // First, let's construct the full file path.
-        String filePath = MessageFormat.format(this.workingDir + "\\zpcg\\{0}\\pgc_{1}_{2}.txt", name, name,
-                evaluationEpisode);
-
-        // Now, let's get the parent directory path from the file path.
-        File file = new File(filePath);
-        File parentDir = file.getParentFile();
-
-        // Check if the parent directory exists. If not, create it.
-        if (parentDir != null && !parentDir.exists()) {
-            boolean dirCreated = parentDir.mkdirs(); // mkdirs() creates all necessary but nonexistent parent
-                                                     // directories.
-            if (dirCreated) {
-                System.out.println("Created directory: " + parentDir.getAbsolutePath());
-            } else {
-                System.err.println("Failed to create directory: " + parentDir.getAbsolutePath());
-                // You might want to throw an exception here or return to prevent
-                // the file writing from failing later.
-                return;
-            }
-        }
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, false))) {
-            writer.write(pcg.getContent());
-        } catch (IOException e) {
-            System.err.println("Error writing to file: " + e.getMessage());
-        }
     }
 
     public String getRewardInfo() {

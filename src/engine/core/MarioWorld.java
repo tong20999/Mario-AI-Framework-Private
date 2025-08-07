@@ -28,8 +28,6 @@ public class MarioWorld {
     // Status
     public int coins, lives, collectCoin;
 
-    // AI
-    public float reward = 0;
     public ArrayList<MarioEvent> lastFrameEvents;
 
     private MarioEvent[] killEvents;
@@ -146,7 +144,6 @@ public class MarioWorld {
         // stats
         world.coins = this.coins;
         world.lives = this.lives;
-        world.evaluation = this.evaluation;
         world.listKill = this.listKill;
         world.aliveEnemy = this.aliveEnemy;
         world.unbumpBlocks = this.unbumpBlocks;
@@ -155,8 +152,6 @@ public class MarioWorld {
         return world;
     }
 
-    public boolean evaluation = false;
-
     public void addEvent(EventType eventType, int eventParam) {
         int marioState = 0;
         if (this.mario.isLarge) {
@@ -164,9 +159,6 @@ public class MarioWorld {
         }
         if (this.mario.isFire) {
             marioState = 2;
-        }
-        if (this.evaluation && eventType == EventType.COLLECT) {
-            int a = 5;
         }
         this.lastFrameEvents.add(new MarioEvent(eventType, eventParam, mario.x, mario.y, marioState, this.currentTick));
     }
