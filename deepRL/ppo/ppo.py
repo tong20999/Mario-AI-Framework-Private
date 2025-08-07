@@ -201,7 +201,7 @@ class PPO():
                     values_batch = self.value_model(states_batch)
 
                 # --- Forward pass and Loss Calculation ---
-                values_pred = self.value_model(states_batch)
+                values_pred:torch.Tensor = self.value_model(states_batch)
                 
                 values_pred_clipped = values_batch + (values_pred - values_batch).clamp(
                     -self.value_clip_range, self.value_clip_range
@@ -222,7 +222,7 @@ class PPO():
                 
                 # 4. CRITICAL: Detach MSE from graph before check
                 with torch.no_grad():
-                    mse = (values_batch - values_pred).pow(2).mul(0.5).mean().item()
+                    mse = (returns_batch - values_pred).pow(2).mul(0.5).mean().item()
                 mses.append(mse)
 
                 if hasattr(self, 'value_stopping_mse') and mse > self.value_stopping_mse:
