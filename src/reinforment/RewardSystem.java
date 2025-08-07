@@ -13,6 +13,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class RewardSystem {
 
@@ -26,16 +27,13 @@ public class RewardSystem {
     // static float fireworkReward = 0.5f;
     // static float mushroomReward = 0.5f;
     // static float lifeMushroomReward = 0.5f;
-    static float losePenalty = 0.0f;
-    static float timeoutPenalty = 0.0f;
+    static float losePenalty = -0.0f;
+    static float timeoutPenalty = -0.0f;
     // static float hurtReward = -0.0f;
     // static float hitWallReward = -0.0f;
     // static float fallPitReward = -0f;
     // static float timePenaltyRewardCoefficient = 0;
     static float jumpSpamPenalty = -0.00f;
-    private final int totalBumpBlock;
-    private final int totalCoins;
-    private final int totalEnemies;
     float killReward;
     float bumpReward;
     float coinReward;
@@ -48,9 +46,6 @@ public class RewardSystem {
     public RewardSystem(MarioLevel level, ProceduralContentGenerationLevel pcg, String workingDir) {
         this.pcg = pcg;
         this.workingDir = workingDir;
-        this.totalBumpBlock = level.getBumpableBlocks().size();
-        this.totalCoins = level.getCoins().size();
-        this.totalEnemies = level.getEnemies().size();
 
         killReward = 0.2f;
         bumpReward = 0.2f;
@@ -62,7 +57,6 @@ public class RewardSystem {
             boolean isEvaluation,
             int evaluationEpisode) {
         float reward = 0.0f;
-
         // Event-based rewards (kills, power-ups) and penalties (hurt, walls)
         for (MarioEvent e : miniStepEvents) {
             if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
@@ -203,29 +197,4 @@ public class RewardSystem {
                 powerUpReward);
     }
 
-    public String getLevelInfo() {
-        return MessageFormat.format("""
-                LEVEL
-                ENEMY {0}
-                COIN {1}
-                BLOCK {2}
-                POWER {3}
-                """,
-                totalEnemies,
-                totalCoins,
-                totalBumpBlock);
-
-        // logger.writeLog(rewardInformation);
-        // logger.appendLog("\r\n");
-        // logger.appendLog(levelInformation);
-        //
-        // try (BufferedWriter writer = new BufferedWriter(new
-        // FileWriter("C:\\thesis_data\\reward.txt", false))) {
-        // writer.write(rewardInformation);
-        // writer.newLine();
-        // writer.write(levelInformation);
-        // } catch (IOException e) {
-        // System.err.println("Error writing to file: " + e.getMessage());
-        // }
-    }
 }
