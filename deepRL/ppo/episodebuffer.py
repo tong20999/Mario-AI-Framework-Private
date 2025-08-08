@@ -1,3 +1,4 @@
+import logging
 import random
 import numpy as np
 import torch
@@ -7,6 +8,8 @@ from scipy.signal import lfilter
 
 from ppo.cnn import CNNActor, CNNCritic
 from ppo.multiprocessenv import MultiprocessEnv
+
+logger = logging.getLogger('Agent:EpisodeBuffer')
 
 class EpisodeBuffer():
     def __init__(self,
@@ -25,7 +28,9 @@ class EpisodeBuffer():
         self.n_workers = n_workers
         self.max_episodes = max_episodes
         self.max_episode_steps = max_episode_steps
-
+        self.progress_25 = False
+        self.progress_50 = False
+        self.progress_75 = False
 
         self.clear()
 
@@ -52,6 +57,9 @@ class EpisodeBuffer():
         self.episode_seconds = np.zeros(shape=(self.max_episodes), dtype=np.float64)
 
         self.current_ep_idxs = np.arange(self.n_workers, dtype=np.uint16)
+        self.progress_25 = False
+        self.progress_50 = False
+        self.progress_75 = False
         gc.collect()
 
     def fill(self, envs:MultiprocessEnv, policy_model:CNNActor, value_model:CNNCritic, episodeStart:int,
@@ -113,6 +121,17 @@ class EpisodeBuffer():
             worker_steps += 1
 
             dones = terminals | truncateds
+
+            percent = length / self.max_episodes
+            if percent >= 0.25 and percent < 0.5 and not self.progress_25:
+                self.progress_25 = True
+                logger.info(f'filling {(percent * 100):.2f}%')
+            elif percent >= 0.5 and percent < 0.75 and  not self.progress_50:
+                self.progress_50 = True
+                logger.info(f'filling {(percent * 100):.2f}%')
+            elif percent >= 0.75  and not self.progress_75:
+                self.progress_75 = True
+                logger.info(f'filling {(percent * 100):.2f}%')
 
             if dones.sum() > 0:
                 with torch.no_grad():
@@ -184,6 +203,7 @@ class EpisodeBuffer():
         ep_r = self.episode_reward[ep_idxs]
         ep_x = self.episode_exploration[ep_idxs]
         ep_s = self.episode_seconds[ep_idxs]
+        logger.info(f'filling 100%')
         return ep_t, ep_r, ep_x, ep_s
 
     def get_data(self):
