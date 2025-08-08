@@ -1,14 +1,8 @@
 package engine.core;
 
 import java.awt.image.VolatileImage;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 
 import javax.swing.JFrame;
@@ -18,8 +12,6 @@ import engine.helper.GameStatus;
 import engine.helper.MarioActions;
 import info.EndInfo;
 import info.Info;
-
-import static reinforment.ProceduralContentGenerationLevel.rand;
 
 public class MarioGameTraining {
     /**
@@ -60,6 +52,8 @@ public class MarioGameTraining {
      * events that kills the player when it happens only care about type and param
      */
     private MarioEvent[] killEvents;
+
+    private static final Random rand = new Random();
 
     // visualization
     private JFrame window = null;
@@ -167,7 +161,7 @@ public class MarioGameTraining {
         this.evaluation = info.isEvaluation();
         this.world = new MarioWorld(this.killEvents);
         this.world.visuals = visual;
-        int randomTimer = ProceduralContentGenerationLevel.rand.nextInt(5,15);
+        int randomTimer = rand.nextInt(5,15);
         this.timer = randomTimer + Integer.parseInt(params.getOrDefault("width_min", "15"));
         this.lastMilestone = 0;
         this.lastCoinCount = 0;

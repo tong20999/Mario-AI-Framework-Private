@@ -360,7 +360,7 @@ public class ProceduralContentGenerationLevel {
                 if(needPlatform){
                     currentLevel.add(addIndex - 1, randomNormalBlockLeft ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
                     currentLevel.add(addIndex, EnumBlockType.NORMAL_BLOCK.getValue());
-                    currentLevel.add(addIndex + 1, randomNormalBlockLeft ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
+                    currentLevel.add(addIndex + 1, randomNormalBlockRight ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
                 }
                 else {
                     currentLevel.add(addIndex - 1, '-');
