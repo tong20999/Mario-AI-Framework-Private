@@ -547,7 +547,7 @@ class PPO():
                 policy_model.load_state_dict(torch.load(policy_model_state, weights_only=True))
                 policy_model.eval()
                 
-            final_eval_score, score_std = self.evaluate(-1, policy_model, env, level, n_episodes=100, visual=True)
+            final_eval_score, score_std = self.evaluate(1, policy_model, env, level, n_episodes=10000, visual=True)
 
     def write_info(self, working_dir, filename, value):
         with open(os.path.join(working_dir, filename), "a") as file:

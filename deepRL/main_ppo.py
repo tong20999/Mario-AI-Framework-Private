@@ -36,7 +36,7 @@ if __name__ == '__main__':
       'goal_mean_100_reward': 25000
   }
 
-  default_pcg = "blocks=1,random_block_height=false,enemies=0,pits=0,pipes=0,width_min=15,width_max=15" 
+  default_pcg = "blocks=5,random_block_height=false,enemies=0,pits=0,pipes=0,width_min=15,width_max=15" 
   pcg = sys.argv[1] if len(sys.argv) > 1 else default_pcg
 
   default_hyper_params = '''{"policyOptimizerLr":0.00005,"policyOptimizationEpochs":3,"policyClipRange":0.1,"valueOptimizerLr":0.00005,"valueOptimizationEpochs":3,"ewcLambda":0,"maxBufferEpisodes":64,"maxBufferEpisodeSteps":1000,"entropyLossWeight":0.1,"nWorkers":8,"batchSize":2048}'''
@@ -59,7 +59,7 @@ if __name__ == '__main__':
   value_optimization_epochs = hyperParams.get('valueOptimizationEpochs', 5)
   value_sample_ratio = 0.8
   value_clip_range = float('inf')
-  value_stopping_mse = 0.01
+  value_stopping_mse = 0.02
 
   ewc_fn = lambda policy_model, ewc_lambda: EWC(policy_model, ewc_lambda)
   ewc_lambda = hyperParams.get('ewcLambda', 10000.0)
@@ -112,8 +112,8 @@ if __name__ == '__main__':
 
   #evaluation_levels = ["file=./levels/evaluation/lvl-1.txt"]
   evaluation_levels = [pcg]
-
-  # agent.play(make_env_fn, policy_model_fn, "blocks=1,enemies=0,pits=0,pipes=0,width_min=15,width_max=15,fps=45")
+  # agent.play(make_env_fn, policy_model_fn, "file=./levels/evaluation/lvl-1.txt,fps=50")
+  # agent.play(make_env_fn, policy_model_fn, "blocks=1,random_block_height=true,enemies=0,random_enemy_height=false,coins=0,random_coin_height=false,pits=0,pipes=0,ramps=0,width_min=20,width_max=20,fps=50")
   agent.train(make_envs_fn,
               make_env_fn,
               gamma,

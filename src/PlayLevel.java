@@ -37,8 +37,6 @@ public class PlayLevel {
 
     public static void main(String[] args) throws Exception {
         MarioGame game = new MarioGame();
-
-        System.setProperty("sun.java2d.uiScale", "1.0");
         // printResults(game.playGame(getLevel("../levels/original/lvl-1-basic-move-right.txt"), 200, 0));
         var level = getLevel("./levels/training/100-basic/104-basic-block-enemy-pit/lvl-1a.txt");
         var original = getLevel("./levels/evaluation/lvl-1.txt");
@@ -55,7 +53,7 @@ public class PlayLevel {
             //pcgLevel.addBlock(2, 2, 1);
             pcgLevel.generate(false);
             String mod = pcgLevel.getContent();
-            printResults(game.runGame(new agents.human.Agent(), mod, 10, 0, true));
+            printResults(game.runGame(new agents.human.Agent(), mod, 1000, 0, true));
         }
 
     }
