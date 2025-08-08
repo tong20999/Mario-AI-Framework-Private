@@ -19,6 +19,8 @@ import engine.helper.MarioActions;
 import info.EndInfo;
 import info.Info;
 
+import static reinforment.ProceduralContentGenerationLevel.rand;
+
 public class MarioGameTraining {
     /**
      * the maximum time that agent takes for each step
@@ -165,7 +167,8 @@ public class MarioGameTraining {
         this.evaluation = info.isEvaluation();
         this.world = new MarioWorld(this.killEvents);
         this.world.visuals = visual;
-        this.timer = 15 + Integer.parseInt(params.getOrDefault("width_min", "15"));
+        int randomTimer = ProceduralContentGenerationLevel.rand.nextInt(5,15);
+        this.timer = randomTimer + Integer.parseInt(params.getOrDefault("width_min", "15"));
         this.lastMilestone = 0;
         this.lastCoinCount = 0;
         String level;
@@ -223,7 +226,7 @@ public class MarioGameTraining {
             this.episodeTimer = this.world.currentTimer;
         }
 
-        if(this.world.gameStatus != GameStatus.RUNNING && this.evaluation){
+        if(this.world.gameStatus != GameStatus.RUNNING && this.evaluation && this.fps < 30){
             Helper.logTerminate(this.episode, this.world.gameStatus.toString(), this.pcg);
         }
 
@@ -237,6 +240,12 @@ public class MarioGameTraining {
         this.world.update(action);
         this.gameEvents.addAll(this.world.lastFrameEvents);
         if (visual) {
+            int v = renderTarget.validate(render.getGraphicsConfiguration());
+            if(v != VolatileImage.IMAGE_OK && v != VolatileImage.IMAGE_RESTORED){
+                renderTarget = this.render.createVolatileImage(MarioGame.width, MarioGame.height);
+                backBuffer = this.render.getGraphics();
+                currentBuffer = renderTarget.getGraphics();
+            }
             this.render.renderWorld(this.world, renderTarget, backBuffer, currentBuffer);
         }
 
