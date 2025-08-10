@@ -1,13 +1,13 @@
 package engine.core;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import engine.helper.EventType;
 import engine.helper.GameStatus;
 import engine.helper.SpriteType;
 import engine.sprites.Mario;
-import reinforment.Block;
-import reinforment.Coin;
+import reinforment.Point;
 
 public class MarioForwardModel {
     private static final int OBS_SCENE_SHIFT = 16;
@@ -71,6 +71,8 @@ public class MarioForwardModel {
     public int getMarioFacing() {
         return this.world.mario.facing;
     }
+
+    private List<MarioEvent> miniStepEvents = new ArrayList<>();
 
     public static int getSpriteTypeGeneralization(SpriteType sprite, int detail) {
         switch (detail) {
@@ -234,6 +236,11 @@ public class MarioForwardModel {
         this.world = world;
     }
 
+    public MarioForwardModel(MarioWorld world, List<MarioEvent> miniStepEvents) {
+        this.world = world;
+        this.miniStepEvents = miniStepEvents;
+    }
+
     /**
      * Create a clone from the current forward model state
      *
@@ -248,6 +255,20 @@ public class MarioForwardModel {
         model.mushrooms = this.mushrooms;
         model.flowers = this.flowers;
         model.breakBlock = this.breakBlock;
+        model.miniStepEvents = new ArrayList<>();
+        for (MarioEvent e : this.miniStepEvents) {
+            model.miniStepEvents.add(
+                    new MarioEvent(
+                            e.getEventTypeEnum(), // convert int back to EventType
+                            e.getEventParam(),
+                            e.getMarioX(),
+                            e.getMarioY(),
+                            e.getMarioState(),
+                            e.getTime(),
+                            e.getSprintCode()
+                    )
+            );
+        }
         return model;
     }
 
@@ -669,168 +690,206 @@ public class MarioForwardModel {
         return this.world.initTimer;
     }
 
-    public int[] getNearestUnhitBlockScreenPos() {
-        // Default vector for when no block is found on screen
-        int[] offScreenVector = new int[] { 0, 0 };
-
-        // Get the list of blocks that can be bumped but haven't been yet
-        ArrayList<Block> unhitBlocks = this.world.getUnbumpBlocks();
-        if (unhitBlocks == null || unhitBlocks.isEmpty()) {
-            return offScreenVector;
-        }
-
-        int minDistanceSquared = Integer.MAX_VALUE;
-        Mario mario = this.world.mario;
-        Block nearestBlock = null;
-
-        // Find the closest block to Mario in terms of world coordinates
-        for (Block block : unhitBlocks) {
-            int dx = block.getX() - mario.getMapX();
-            int dy = block.getY() - mario.getMapY();
-            int distanceSquared = dx * dx + dy * dy;
-
-            if (distanceSquared < minDistanceSquared) {
-                minDistanceSquared = distanceSquared;
-                nearestBlock = block;
-            }
-        }
-
-        // If a nearest block was found, check if it's on screen
-        if (nearestBlock != null) {
-            float blockPixelX = nearestBlock.getX() * 16;
-            float blockPixelY = nearestBlock.getY() * 16;
-            float cameraX = this.world.cameraX;
-            float cameraY = this.world.cameraY;
-
-            int screenTileX = (int) ((blockPixelX - cameraX) / 16);
-            int screenTileY = (int) ((blockPixelY - cameraY) / 16);
-
-            // Check if the block's screen coordinates are within the visible grid
-            if (screenTileX >= 0 && screenTileX < this.obsGridWidth &&
-                    screenTileY >= 0 && screenTileY < this.obsGridHeight) {
-                int[] marioScreenPos = getMarioScreenTilePos();
-                int marioTileX = mario.getMapX();
-                int blockTileX = nearestBlock.getX();
-                int tileDiffX = blockTileX - marioTileX;
-
-                int finalBlockScreenX = marioScreenPos[0] + tileDiffX;
-                int finalBlockScreenY = nearestBlock.getY(); // Y is absolute world tile, as per alignment requirement
-
-                return new int[] { finalBlockScreenX, finalBlockScreenY };
-            }
-        }
-
-        // Return the default vector if no block was found or the nearest was off-screen
-        return offScreenVector;
+    public float[] getNearestBlockScreenPos() {
+        return getNearestObjectScreenPos(this.world.getUnbumpBlocks());
     }
 
-    public int[] getNearestUnCollectCoinScreenPos() {
-        // Default vector for when no block is found on screen
-        int[] offScreenVector = new int[] { 0, 0 };
-
-        // Get the list of blocks that can be bumped but haven't been yet
-        ArrayList<Coin> unCollectCoins = this.world.getUnCollectCoinBlocks();
-        if (unCollectCoins == null || unCollectCoins.isEmpty()) {
-            return offScreenVector;
-        }
-
-        int minDistanceSquared = Integer.MAX_VALUE;
-        Mario mario = this.world.mario;
-        Coin nearestCoin = null;
-
-        // Find the closest block to Mario in terms of world coordinates
-        for (Coin coin : unCollectCoins) {
-            int dx = coin.getX() - mario.getMapX();
-            int dy = coin.getY() - mario.getMapY();
-            int distanceSquared = dx * dx + dy * dy;
-
-            if (distanceSquared < minDistanceSquared) {
-                minDistanceSquared = distanceSquared;
-                nearestCoin = coin;
-            }
-        }
-
-        // If a nearest block was found, check if it's on screen
-        if (nearestCoin != null) {
-            float coinPixelX = nearestCoin.getX() * 16;
-            float coinPixelY = nearestCoin.getY() * 16;
-            float cameraX = this.world.cameraX;
-            float cameraY = this.world.cameraY;
-
-            int screenTileX = (int) ((coinPixelX - cameraX) / 16);
-            int screenTileY = (int) ((coinPixelY - cameraY) / 16);
-
-            // Check if the block's screen coordinates are within the visible grid
-            if (screenTileX >= 0 && screenTileX < this.obsGridWidth &&
-                    screenTileY >= 0 && screenTileY < this.obsGridHeight) {
-                int[] marioScreenPos = getMarioScreenTilePos();
-                int marioTileX = mario.getMapX();
-                int coinTileX = nearestCoin.getX();
-                int tileDiffX = coinTileX - marioTileX;
-
-                int finalBlockScreenX = marioScreenPos[0] + tileDiffX;
-                int finalBlockScreenY = nearestCoin.getY(); // Y is absolute world tile, as per alignment requirement
-
-                return new int[] { finalBlockScreenX, finalBlockScreenY };
-            }
-        }
-
-        // Return the default vector if no block was found or the nearest was off-screen
-        return offScreenVector;
+    public float[] getNearestCoinScreenPos() {
+        return getNearestObjectScreenPos(this.world.getUnCollectCoin());
     }
 
-    public int[] getNearestAliveEnemyScreenPos() {
-        // Default vector for when no block is found on screen
-        int[] offScreenVector = new int[] { 0, 0 };
+    private float[] getNearestObjectScreenPos(ArrayList<Point> collections) {
+        if (collections == null || collections.isEmpty()) {
+            return null;
+        }
 
+        float minDistance = Float.MAX_VALUE;
+        Mario mario = this.world.mario;
+        Point nearestPoint = null;
+
+        // Find the closest block to Mario
+        for (Point p : collections) {
+            float dx = p.getX() - (mario.x - 8) / 16f;
+            float dy = p.getY() - (mario.y - 16) / 16f;
+            float distance = (float) Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestPoint = p;
+            }
+        }
+
+        if (nearestPoint != null) {
+            // Recalculate dx and dy for the nearest block
+            float dx = nearestPoint.getX() - (mario.x - 8) / 16f;
+            float dy = nearestPoint.getY() - (mario.y - 16) / 16f;
+
+            if(dx > 8 || dx < -8){
+                return new float[]{0, 0, 0};
+            }
+
+            // Normalizing the direction vector (dx, dy)
+            // Check for zero distance to avoid division by zero
+            if (minDistance == 0) {
+                return new float[]{0, 0, 0};
+            }
+
+            // Normalize dx and dy
+            float dxNormalized = dx/8;
+            float dyNormalized = dy/8;
+
+            // Return the normalized vector and the normalized distance
+            // Assuming a max distance of 11.31f (e.g., in an 8x16 grid)
+            float normalizedDistance = minDistance / 17.89f;
+
+            return new float[]{dxNormalized, dyNormalized, normalizedDistance};
+        }
+
+        // Return null if no block was found
+        return null;
+    }
+
+    public float[] getNearestAliveEnemyScreenPos() {
         // Get the list of blocks that can be bumped but haven't been yet
-        ArrayList<MarioSprite> aliveEnemies = this.world.getAliveEnemies();
+        ArrayList<MarioSprite> aliveEnemies = this.world.getEnemies();
         if (aliveEnemies == null || aliveEnemies.isEmpty()) {
-            return offScreenVector;
+            return null;
         }
 
-        int minDistanceSquared = Integer.MAX_VALUE;
-        Mario mario = this.world.mario;
-        MarioSprite nearestEnemy = null;
 
-        // Find the closest block to Mario in terms of world coordinates
-        for (MarioSprite enemy : aliveEnemies) {
-            int dx = (int) enemy.x - mario.getMapX();
-            int dy = (int) enemy.y - mario.getMapY();
-            int distanceSquared = dx * dx + dy * dy;
+        ArrayList<Point> collection = new ArrayList<>();
+        for (MarioSprite s:  aliveEnemies
+             ) {
+            collection.add(new Point(s.getMapX(), s.getMapY()));
+        }
 
-            if (distanceSquared < minDistanceSquared) {
-                minDistanceSquared = distanceSquared;
-                nearestEnemy = enemy;
+        return getNearestObjectScreenPos(collection);
+    }
+
+    private boolean isCeilingBlockingTile(int shiftedId) {
+        return shiftedId == OBS_PYRAMID_SOLID
+                || shiftedId == OBS_BRICK
+                || shiftedId == OBS_BULLET_BILL_NECT   // keep your constant name
+                || shiftedId == OBS_BULLET_BILL_BODY
+                || shiftedId == OBS_BULLET_BILL_HEAD
+                || shiftedId == OBS_USED_BLOCK;
+    }
+
+    public float isHeadRoomClearance() {
+        return isHeadRoomClearance(0);
+    }
+
+    public float isHeadRoomClearance(int forwardColumnOffset) {
+        int marioTileX = (int) ((world.mario.x + world.mario.width) / 16);
+        int marioTileX2 = (int) ((world.mario.x - world.mario.width) / 16);
+        final int marioTileY = (int) (world.mario.y / 16f);
+        final int targetColumn = marioTileX + forwardColumnOffset;
+        final int targetColumn2 = marioTileX2 + forwardColumnOffset;
+        int clearTilesCount = 0;
+
+        for (int tilesAbove = 1; tilesAbove <= 4; tilesAbove++) {
+            final int sampleRow = marioTileY - tilesAbove;
+            final int shiftedBlockId2 = world.level.getBlock(targetColumn2, sampleRow) + OBS_SCENE_SHIFT;
+            final int shiftedBlockId = world.level.getBlock(targetColumn, sampleRow) + OBS_SCENE_SHIFT;
+            boolean collide;
+            collide = isCeilingBlockingTile(shiftedBlockId);
+            if(collide){
+                break;
+            }
+            collide = isCeilingBlockingTile(shiftedBlockId2);
+            if(collide){
+                break;
+            }
+
+            clearTilesCount++;
+        }
+
+        return clearTilesCount / 4.0f;
+    }
+
+    public float isHeadRoomForwardClearance() {
+
+        final int facingDirection = (getMarioFacing() >= 0) ? 1 : -1; // +1 right, -1 left
+        int marioTileX = (int) Math.floor(world.mario.x/ 16f);
+        int marioTileX2 = (int) ((world.mario.x - world.mario.width) / 16);
+        final int marioTileY = (int) Math.floor(world.mario.y / 16f);
+        float minFraction = 1.0f;
+
+        for (int stepAhead = 1; stepAhead <= 3; stepAhead++) {
+            final int targetColumn = marioTileX + (stepAhead * facingDirection);
+            final int targetColumn2 = marioTileX2 + (stepAhead * facingDirection);
+            int clearTilesCount = 0;
+            for (int tilesAbove = 1; tilesAbove <= 4; tilesAbove++) {
+                final int sampleRow = marioTileY - tilesAbove;
+                final int shiftedBlockId = world.level.getBlock(targetColumn, sampleRow) + OBS_SCENE_SHIFT;
+                final int shiftedBlockId2 = world.level.getBlock(targetColumn2, sampleRow) + OBS_SCENE_SHIFT;
+                boolean collide;
+                collide = isCeilingBlockingTile(shiftedBlockId);
+                if(collide){
+                    break;
+                }
+                collide = isCeilingBlockingTile(shiftedBlockId2);
+                if(collide){
+                    break;
+                }
+
+                clearTilesCount++;
+            }
+
+            final float fraction = clearTilesCount / 4.0f;
+            if (fraction < minFraction) minFraction = fraction;
+        }
+
+        return minFraction;
+    }
+
+
+
+    public float gapAheadDistance(){
+        final int marioTileX = (int) Math.floor(world.mario.x / 16f);
+        final int marioTileY = (int) Math.floor(world.mario.y / 16f);
+        int underMarioFirstLevel = marioTileY + 1;
+        int underMarioSecondLevel = marioTileY + 2;
+        if(world.level.getBlock(marioTileX, underMarioFirstLevel) == OBS_NONE &&
+                world.level.getBlock(marioTileX, underMarioSecondLevel) == OBS_NONE){
+            final int tileXWidth = (int) Math.floor((world.mario.x + 16 -1f) / 16f);
+            if(tileXWidth != marioTileX){
+                return 0.0f;
+            }
+        }
+        for (int tilesAhead = 1; tilesAhead <= 8; tilesAhead++) {
+
+            final int shiftedBlockIdFloor1 = world.level.getBlock(marioTileX + tilesAhead, underMarioFirstLevel);
+            final int shiftedBlockIdFloor2 = world.level.getBlock(marioTileX + tilesAhead, underMarioSecondLevel);
+            if(shiftedBlockIdFloor1 == OBS_NONE && shiftedBlockIdFloor2 == OBS_NONE){
+                return tilesAhead / (float) 8;
             }
         }
 
-        // If a nearest block was found, check if it's on screen
-        if (nearestEnemy != null) {
-            float enemyPixelX = (int) nearestEnemy.x * 16;
-            float enemyPixelY = (int) nearestEnemy.y * 16;
-            float cameraX = this.world.cameraX;
-            float cameraY = this.world.cameraY;
+        return 1.0f;
+    }
 
-            int screenTileX = (int) ((enemyPixelX - cameraX) / 16);
-            int screenTileY = (int) ((enemyPixelY - cameraY) / 16);
 
-            // Check if the block's screen coordinates are within the visible grid
-            if (screenTileX >= 0 && screenTileX < this.obsGridWidth &&
-                    screenTileY >= 0 && screenTileY < this.obsGridHeight) {
-                int[] marioScreenPos = getMarioScreenTilePos();
-                int marioTileX = mario.getMapX();
-                int enemyTileX = (int) nearestEnemy.x;
-                int tileDiffX = enemyTileX - marioTileX;
+    public void test(){
+        int blockHit = world.getHitBlockCount();
+        int totalBlock = world.level.getBumpableBlocks().size();
+        int killCount = world.getKillCount();
+        int totalEnemies = world.level.getEnemies().size();
+        int collectedCoin = world.getCollectedCoinCount();
+        int totalCoin = world.level.getCoins().size();
+        float reward = (float) (blockHit + killCount + collectedCoin) /(totalCoin + totalEnemies + totalEnemies);
+        System.out.println(blockHit + " " + totalBlock + " " + killCount + " " + totalEnemies + " " + collectedCoin + " " + totalCoin + " " + reward);
+    }
 
-                int finalBlockScreenX = marioScreenPos[0] + tileDiffX;
-                int finalBlockScreenY = (int) nearestEnemy.y; // Y is absolute world tile, as per alignment requirement
+    public int getKillCount() {
+        return world.getKillCount();
+    }
 
-                return new int[] { finalBlockScreenX, finalBlockScreenY };
-            }
-        }
+    public int getHitBlockCount() {
+        return world.getHitBlockCount();
+    }
 
-        // Return the default vector if no block was found or the nearest was off-screen
-        return offScreenVector;
+    public int getCollectedCoinCount() {
+        return world.getCollectedCoinCount();
     }
 }

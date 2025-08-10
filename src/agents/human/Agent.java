@@ -2,13 +2,12 @@ package agents.human;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.text.MessageFormat;
 
-import reinforment.State;
 import engine.core.MarioAgent;
 import engine.core.MarioForwardModel;
 import engine.core.MarioTimer;
 import engine.helper.MarioActions;
+import reinforment.State;
 
 public class Agent extends KeyAdapter implements MarioAgent {
     private boolean[] actions = null;
@@ -23,6 +22,7 @@ public class Agent extends KeyAdapter implements MarioAgent {
     @Override
     public boolean[] getActions(MarioForwardModel model, MarioTimer timer) {
         this.model = model;
+
         return actions;
     }
 
@@ -70,10 +70,11 @@ public class Agent extends KeyAdapter implements MarioAgent {
                 this.actions[MarioActions.SPEED.getValue()] = isPressed;
                 break;
             case KeyEvent.VK_M:
-                var obs = model.getMarioSceneObservation(0);
-                var ene = model.getScreenSceneObservation(0);
-                var a = model.getMarioScreenTilePos();
-                int b = 5;
+                if(isPressed){
+                    var sceneObservation = State.toByte(model);
+                    model.test();
+                }
+
                 break;
         }
     }

@@ -5,6 +5,8 @@ import engine.core.MarioForwardModel;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import static java.nio.ByteOrder.BIG_ENDIAN;
+
 public class State {
 
     private static float maxVelocity = 10.0f;
@@ -34,131 +36,236 @@ public class State {
         return ByteBuffer.allocate(4).putInt(value).array();
     }
 
+    private static byte[] createObservationPayload(int[][] observation) throws Exception {
+        int size = observation.length;
+        int[][] binaryScene = new int[size][size];
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (observation[i][j] != 0) {
+                    binaryScene[i][j] = 1;
+                } else {
+                    binaryScene[i][j] = 0;
+                }
+            }
+        }
+        int[] flatObservation = Arrays.stream(binaryScene)
+                .flatMapToInt(Arrays::stream)
+                .toArray();
+
+        return intArrayToBytes(flatObservation);
+    }
+
+    private static ObservationGrid createObservationGrid(MarioForwardModel model) throws Exception {
+        int size = 16;
+        var sceneObservation = model.getScreenSceneObservation(1);
+        var flagObservation = model.getScreenSceneObservation(0);
+        var enemyObservation = model.getScreenEnemiesObservation(1);
+        int[][] solid = new int[size][size];
+        int[][] semiSolid = new int[size][size];
+        int[][] collectible = new int[size][size];
+        int[][] stompableEnemy = new int[size][size];
+        int[][] unstompableEnemy = new int[size][size];
+
+        for (int col = 0; col < size; col++) {
+            for (int row = 0; row < size; row++) {
+                int scene = sceneObservation[col][row];
+                int enemy = enemyObservation[col][row];
+                int flag = flagObservation[col][row];
+
+                if(flag == 40 + 16 || flag == 39 + 16){
+                    collectible[col][row] = 2;
+                }
+
+                if(scene == MarioForwardModel.OBS_SOLID
+                        || scene == MarioForwardModel.OBS_CANNON
+                        || scene == MarioForwardModel.OBS_PIPE){
+                    solid[col][row] = 1;
+                }
+
+                if( scene == MarioForwardModel.OBS_BRICK
+                        || scene == MarioForwardModel.OBS_PLATFORM)  {
+                    semiSolid[col][row] = 1;
+                }
+
+                if(scene == MarioForwardModel.OBS_QUESTION_BLOCK
+                        || scene == MarioForwardModel.OBS_COIN){
+                    collectible[col][row] = 1;
+                }
+
+                if(enemy == MarioForwardModel.OBS_SPECIAL_ITEM){
+                    var itemIndex = row - 1;
+                    if(itemIndex < 0){
+                        itemIndex = 0;
+                    }
+                    collectible[col][itemIndex] = 1;
+                }
+
+                if(enemy == MarioForwardModel.OBS_STOMPABLE_ENEMY){
+                    stompableEnemy[col][row] = 1;
+                }
+
+                if(enemy == MarioForwardModel.OBS_NONSTOMPABLE_ENEMY){
+                    unstompableEnemy[col][row] = 1;
+                }
+            }
+        }
+
+        int[] flatSolid = Arrays.stream(solid)
+                .flatMapToInt(Arrays::stream)
+                .toArray();
+
+        int[] flatSemiSolid = Arrays.stream(semiSolid)
+                .flatMapToInt(Arrays::stream)
+                .toArray();
+
+        int[] flatCollectible = Arrays.stream(collectible)
+                .flatMapToInt(Arrays::stream)
+                .toArray();
+
+        int[] flatStompableEnemy = Arrays.stream(stompableEnemy)
+                .flatMapToInt(Arrays::stream)
+                .toArray();
+
+        int[] flatUnStompableEnemy = Arrays.stream(unstompableEnemy)
+                .flatMapToInt(Arrays::stream)
+                .toArray();
+
+        return new ObservationGrid(
+                intArrayToBytes(flatSolid),
+                intArrayToBytes(flatSemiSolid),
+                intArrayToBytes(flatCollectible),
+                intArrayToBytes(flatStompableEnemy),
+                intArrayToBytes(flatUnStompableEnemy)
+        );
+    }
+
+    private static byte[] getMode(MarioForwardModel model){
+        byte[] output = new byte[3];
+        var mode = model.getMarioMode();
+        output[mode] = 1;
+        return output;
+    }
+
     public static byte[] toByte(MarioForwardModel model) throws Exception {
-        var sceneObservation = model.getScreenSceneObservation(0);
-        var enemiesObservation = model.getScreenEnemiesObservation(0);
+        //Grid observation
+        var observationGrid = createObservationGrid(model);
+        byte[] solid = observationGrid.getSolid();
+        byte[] semiSolid =observationGrid.getSemiSolid();
+        byte[] collectible =observationGrid.getCollectible();
+        byte[] stompableEnemy = observationGrid.getStompableEnemy();
+        byte[] unstopableEnemy = observationGrid.getUnstompableEnemy();
 
-        int[] flatSceneObservation = Arrays.stream(sceneObservation)
-                .flatMapToInt(Arrays::stream)
-                .toArray();
-
-        int[] flatEnemiesObservation = Arrays.stream(enemiesObservation)
-                .flatMapToInt(Arrays::stream)
-                .toArray();
-
-        byte[] sceneObservationPayload = intArrayToBytes(flatSceneObservation);
-        byte[] enemiesObservationPayload = intArrayToBytes(flatEnemiesObservation);
-
-        byte marioMode = (byte) model.getMarioMode();
+        byte[] marioMode = getMode(model);
         byte isMarioOnGround = (byte) (model.isMarioOnGround() ? 1 : 0);
         byte isMarioCanJumpHigher = (byte) (model.getMarioCanJumpHigher() ? 1 : 0);
         byte marioFacing = (byte) (model.getMarioFacing());
+        //var isHeadRoomClearance =  model.isHeadRoomClearance();
+        //var isHeadRoomForwardClearance = model.isHeadRoomForwardClearance();
+        //var gapAheadDistance = model.gapAheadDistance();
 
+        //Velocity
         var velocity = model.getMarioFloatVelocity();
-        byte velocityXSign = (byte) (velocity[0] > 0 ? 1 : 0);
-        byte velocityYSign = (byte) (velocity[1] > 0 ? 1 : 0);
-
         float normalizedVelX = Math.max(-1.0f, Math.min(1.0f, velocity[0] / maxVelocity));
-        if(Math.abs(normalizedVelX) < 0.001f){
+        if (Math.abs(normalizedVelX) < 0.001f) {
             normalizedVelX = 0.0f;
         }
         byte[] velocityX = float2ByteArray(normalizedVelX);
 
         float normalizedVelY = Math.max(-1.0f, Math.min(1.0f, velocity[1] / maxVelocity));
-        if(Math.abs(normalizedVelY) < 0.001f){
+        if (Math.abs(normalizedVelY) < 0.001f) {
             normalizedVelY = 0.0f;
         }
         byte[] velocityY = float2ByteArray(normalizedVelY);
 
-        byte isSubGoalBlockMet = (byte) (model.isSubGoalBlockMet() ? 1 : 0);
-        byte isSubGoalEnemyMet = (byte) (model.isSubGoalEnemyMet() ? 1 : 0);
-        byte isSubGoalCoinMet = (byte) (model.isSubGoalCoinMet() ? 1 : 0);
+        // Block
+        var nearestBlock = model.getNearestAliveEnemyScreenPos();
+        var dxNormalize = nearestBlock == null ? 0 : nearestBlock[0];
+        var dyNormalize = nearestBlock == null ? 0 : nearestBlock[1];
+        var distNormalize =  nearestBlock == null ? 0 : nearestBlock[2];
+        byte nearestBlockFound = (byte) (nearestBlock == null ? 0 : 1);
+        byte[] nearestBlockDx = float2ByteArray(dxNormalize);
+        byte[] nearestBlockDy = float2ByteArray(dyNormalize);
+        byte[] nearestBlockDistance = float2ByteArray(distNormalize);
 
-        byte[] percentComplete = float2ByteArray(model.getCompletionPercentage());
+        // Coin
+        var nearestCoin = model.getNearestCoinScreenPos();
+        dxNormalize = nearestCoin == null ? 0 : nearestCoin[0];
+        dyNormalize = nearestCoin == null ? 0 : nearestCoin[1];
+        distNormalize =  nearestCoin == null ? 0 : nearestCoin[2];
+        byte nearestCoinFound = (byte) (nearestCoin == null ? 0 : 1);
+        byte[] nearestCoinDx = float2ByteArray(dxNormalize);
+        byte[] nearestCoinDy = float2ByteArray(dyNormalize);
+        byte[] nearestCoinDistance = float2ByteArray(distNormalize);
 
-        float[] pos = model.getMarioFloatPos();
-        float[] levelDims = model.getLevelFloatDimensions(); // [width, height]
-        float normalizedWorldX = pos[0] / levelDims[0];
-        float normalizedWorldY = pos[1] / levelDims[1];
-        byte[] marioWorldXPayload = float2ByteArray(normalizedWorldX);
-        byte[] marioWorldYPayload = float2ByteArray(normalizedWorldY);
+        //Enemy
+        var nearestEnemy = model.getNearestCoinScreenPos();
+        dxNormalize = nearestEnemy == null ? 0 : nearestEnemy[0];
+        dyNormalize = nearestEnemy == null ? 0 : nearestEnemy[1];
+        distNormalize =  nearestEnemy == null ? 0 : nearestEnemy[2];
+        byte nearestEnemyFound = (byte) (nearestEnemy == null ? 0 : 1);
+        byte[] nearestEnemyDx = float2ByteArray(dxNormalize);
+        byte[] nearestEnemyDy = float2ByteArray(dyNormalize);
+        byte[] nearestEnemyDistance = float2ByteArray(distNormalize);
 
+        //Timer
         var normalizedTimer = (float) model.getRemainingTime() / (float) model.getInitialTimer();
         byte[] payloadNormalizedTimer = float2ByteArray(normalizedTimer);
 
-        var marioScreenTilePos = model.getMarioScreenTilePos();
-        float normalizeMarioScreenTilePosX = marioScreenTilePos[0]/16f;
-        float normalizeMarioScreenTilePosY = marioScreenTilePos[1]/16f;
-
-        byte[] normalizeMarioScreenTilePosXPayload = float2ByteArray(normalizeMarioScreenTilePosX);
-        byte[] normalizeMarioScreenTilePosYPayload = float2ByteArray(normalizeMarioScreenTilePosY);
-
-        var nearestBlock = model.getNearestUnhitBlockScreenPos();
-        float normalizeNearestBlockX = nearestBlock[0]/16f;
-        float normalizeNearestBlockY = nearestBlock[1]/16f;
-        byte[] normalizeNearestBlockXPayload = float2ByteArray(normalizeNearestBlockX);
-        byte[] normalizeNearestBlockYPayload = float2ByteArray(normalizeNearestBlockY);
-
-        var nearestEnemy = model.getNearestAliveEnemyScreenPos();
-        float normalizeNearestEnemyX = nearestEnemy[0]/16f;
-        float normalizeNearestEnemyY = nearestEnemy[1]/16f;
-        byte[] normalizeNearestEnemyXPayload = float2ByteArray(normalizeNearestEnemyX);
-        byte[] normalizeNearestEnemyYPayload = float2ByteArray(normalizeNearestEnemyY);
-
-        var nearestCoin = model.getNearestUnCollectCoinScreenPos();
-        float normalizeNearestCoinX = nearestCoin[0]/16f;
-        float normalizeNearestCoinY = nearestCoin[1]/16f;
-        byte[] normalizeNearestCoinXPayload = float2ByteArray(normalizeNearestCoinX);
-        byte[] normalizeNearestCoinYPayload = float2ByteArray(normalizeNearestCoinY);
+        byte collectedCoin = (byte)(Math.min(model.getCollectedCoinCount(), 255));
+        byte killedCount = (byte)(Math.min(model.getKillCount(), 255));
+        byte hitBlockCount = (byte)(Math.min(model.getHitBlockCount(), 255));
 
         ByteBuffer buffer = ByteBuffer.allocate(
-                sceneObservationPayload.length +
-                        enemiesObservationPayload.length
-                        + 4
-                        + 10
-                        + 3
-                        + 4
-                        + 8
-                        + 4
-                        + 8
-                        + 8
-                        + 8
-                        + 8
+                solid.length +
+                        semiSolid.length +
+                        collectible.length +
+                        stompableEnemy.length +
+                        unstopableEnemy.length +
+                        7 +
+                        8 +
+                        13 +
+                        13 +
+                        13 +
+                        4 +
+                        3
         );
+        buffer.order(BIG_ENDIAN);
 
-        buffer.put(sceneObservationPayload);
-        buffer.put(enemiesObservationPayload);
+        buffer.put(solid);
+        buffer.put(semiSolid);
+        buffer.put(collectible);
+        buffer.put(stompableEnemy);
+        buffer.put(unstopableEnemy);
 
-        // single byte
         buffer.put(marioMode);
         buffer.put(isMarioOnGround);
         buffer.put(isMarioCanJumpHigher);
         buffer.put(marioFacing);
-        buffer.put(velocityXSign);
-        buffer.put(velocityYSign);
-        buffer.put(isSubGoalBlockMet);
-        buffer.put(isSubGoalEnemyMet);
-        buffer.put(isSubGoalCoinMet);
 
         // float
         buffer.put(velocityX);
         buffer.put(velocityY);
-        buffer.put(percentComplete);
-        buffer.put(marioWorldXPayload);
-        buffer.put(marioWorldYPayload);
+
+        buffer.put(nearestBlockFound);
+        buffer.put(nearestBlockDx);
+        buffer.put(nearestBlockDy);
+        buffer.put(nearestBlockDistance);
+
+        buffer.put(nearestCoinFound);
+        buffer.put(nearestCoinDx);
+        buffer.put(nearestCoinDy);
+        buffer.put(nearestCoinDistance);
+
+        buffer.put(nearestEnemyFound);
+        buffer.put(nearestEnemyDx);
+        buffer.put(nearestEnemyDy);
+        buffer.put(nearestEnemyDistance);
+
         buffer.put(payloadNormalizedTimer);
 
-        buffer.put(normalizeMarioScreenTilePosXPayload);
-        buffer.put(normalizeMarioScreenTilePosYPayload);
-
-        buffer.put(normalizeNearestBlockXPayload);
-        buffer.put(normalizeNearestBlockYPayload);
-
-        buffer.put(normalizeNearestEnemyXPayload);
-        buffer.put(normalizeNearestEnemyYPayload);
-
-        buffer.put(normalizeNearestCoinXPayload);
-        buffer.put(normalizeNearestCoinYPayload);
+        buffer.put(collectedCoin);
+        buffer.put(killedCount);
+        buffer.put(hitBlockCount);
         return buffer.array();
     }
 }

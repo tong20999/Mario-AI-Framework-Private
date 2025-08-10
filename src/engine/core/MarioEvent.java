@@ -61,6 +61,10 @@ public class MarioEvent {
         return this.eventType.getValue();
     }
 
+    public EventType getEventTypeEnum() {
+        return this.eventType;
+    }
+
     public String getSprintCode() {
         return this.sprintCode;
     }

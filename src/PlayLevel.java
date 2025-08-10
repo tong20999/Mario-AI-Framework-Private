@@ -38,9 +38,9 @@ public class PlayLevel {
     public static void main(String[] args) throws Exception {
         MarioGame game = new MarioGame();
         // printResults(game.playGame(getLevel("../levels/original/lvl-1-basic-move-right.txt"), 200, 0));
-        var level = getLevel("./levels/training/100-basic/104-basic-block-enemy-pit/lvl-1a.txt");
+        var level = getLevel("./levels/evaluation/lvl-1a.txt");
         var original = getLevel("./levels/evaluation/lvl-1.txt");
-        String levelFileName = "blocks=3,enemies=0,pits=0,pipes=0,ramps=0,width_min=50,width_max=50";
+        String levelFileName = "blocks=1,random_block_height=true,enemies=0,pits=0,coins=0,pipes=0,ramps=0,width_min=50,width_max=50";
         //testPcg(levelFileName);
 
         while (true){
@@ -53,7 +53,7 @@ public class PlayLevel {
             //pcgLevel.addBlock(2, 2, 1);
             pcgLevel.generate(false);
             String mod = pcgLevel.getContent();
-            printResults(game.runGame(new agents.human.Agent(), mod, 1000, 0, true));
+            printResults(game.runGame(new agents.human.Agent(), level, 1000, 1, true));
         }
 
     }

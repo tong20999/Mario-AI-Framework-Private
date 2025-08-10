@@ -36,7 +36,7 @@ class SocketEnv(gym.Env):
         assert len(buffer) == 1024
         self.client_socket.sendall(buffer)
 
-    def _receive_fixed(self, size: int = 1024) -> bytes:
+    def _receive_fixed(self, size: int = 2048) -> bytes:
         self._connect() # Ensure connection exists before receiving.
         chunks = []
         bytes_recd = 0

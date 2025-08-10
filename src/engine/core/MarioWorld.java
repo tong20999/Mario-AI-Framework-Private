@@ -9,8 +9,6 @@ import engine.effects.*;
 import engine.graphics.MarioBackground;
 import engine.helper.*;
 import engine.sprites.*;
-import reinforment.Block;
-import reinforment.Coin;
 import reinforment.Point;
 
 public class MarioWorld {
@@ -43,8 +41,8 @@ public class MarioWorld {
 
     private Set<MarioSprite> listKill = new HashSet<>();
     private ArrayList<MarioSprite> aliveEnemy = new ArrayList<>();
-    private ArrayList<Block> unbumpBlocks = new ArrayList<>();
-    private ArrayList<Coin> unCollectCoin = new ArrayList<>();
+    private ArrayList<Point> unbumpBlocks = new ArrayList<>();
+    private ArrayList<Point> unCollectCoin = new ArrayList<>();
     private Set<Point> visitedTiles = new HashSet<>();;
 
     public MarioWorld(MarioEvent[] killEvents) {
@@ -118,6 +116,7 @@ public class MarioWorld {
         return enemies;
     }
 
+
     public MarioWorld clone() {
         MarioWorld world = new MarioWorld(this.killEvents);
         world.visuals = false;
@@ -130,6 +129,8 @@ public class MarioWorld {
         world.initTimer = this.initTimer;
         world.currentTick = this.currentTick;
         world.level = this.level.clone();
+
+        // Clone sprites
         for (MarioSprite sprite : this.sprites) {
             MarioSprite cloneSprite = sprite.clone();
             cloneSprite.world = world;
@@ -141,14 +142,37 @@ public class MarioWorld {
         if (world.mario == null) {
             world.mario = (Mario) this.mario.clone();
         }
-        // stats
+
+        // Stats
         world.coins = this.coins;
         world.lives = this.lives;
-        world.listKill = this.listKill;
-        world.aliveEnemy = this.aliveEnemy;
-        world.unbumpBlocks = this.unbumpBlocks;
-        world.unCollectCoin = this.unCollectCoin;
-        world.visitedTiles = this.visitedTiles;
+
+        // Deep copy collections using for loops
+        world.listKill = new HashSet<>();
+        for (MarioSprite s : this.listKill) {
+            world.listKill.add(s.clone());
+        }
+
+        world.aliveEnemy = new ArrayList<>();
+        for (MarioSprite s : this.aliveEnemy) {
+            world.aliveEnemy.add(s.clone());
+        }
+
+        world.unbumpBlocks = new ArrayList<>();
+        for (Point b : this.unbumpBlocks) {
+            world.unbumpBlocks.add(new Point(b.getX(),b.getY()));
+        }
+
+        world.unCollectCoin = new ArrayList<>();
+        for (Point c : this.unCollectCoin) {
+            world.unCollectCoin.add(new Point(c.getX(),c.getY()));
+        }
+
+        world.visitedTiles = new HashSet<>();
+        for (Point p : this.visitedTiles) {
+            world.visitedTiles.add(new Point(p.getX(),p.getY()));
+        }
+
         return world;
     }
 
@@ -480,13 +504,13 @@ public class MarioWorld {
         addedSprites.clear();
         removedSprites.clear();
 
-//        var marioTileX = this.mario.getMapX();
-//        var marioTileY = this.mario.getMapY();
-//        this.visitedTiles.add(new Point(marioTileX, marioTileY));
-//
-//        if (this.visitedTiles.size() > prevVisitedTile) {
-//            this.addEvent(EventType.EXPLORER, EventType.EXPLORER.getValue());
-//        }
+        var marioTileX = this.mario.getMapX();
+        var marioTileY = this.mario.getMapY();
+        this.visitedTiles.add(new Point(marioTileX, marioTileY));
+
+        if (this.visitedTiles.size() > prevVisitedTile) {
+            this.addEvent(EventType.EXPLORER, EventType.EXPLORER.getValue());
+        }
 
         // punishing forward model
         if (this.killEvents != null) {
@@ -526,10 +550,10 @@ public class MarioWorld {
         }
 
         if (features.contains(TileFeature.BREAKABLE)) {
+            this.addEvent(EventType.BUMP, MarioForwardModel.OBS_BRICK);
             bumpInto(xTile, yTile - 1);
             if (canBreakBricks) {
-                // this.bumpBlock++;
-                this.addEvent(EventType.BUMP, MarioForwardModel.OBS_BRICK);
+                this.addEvent(EventType.BREAK, MarioForwardModel.OBS_BRICK);
                 level.setBlock(xTile, yTile, 0);
                 if (this.visuals) {
                     for (int xx = 0; xx < 2; xx++) {
@@ -604,11 +628,11 @@ public class MarioWorld {
         return aliveEnemy;
     }
 
-    public ArrayList<Block> getUnbumpBlocks() {
+    public ArrayList<Point> getUnbumpBlocks() {
         return unbumpBlocks;
     }
 
-    public ArrayList<Coin> getUnCollectCoinBlocks() {
+    public ArrayList<Point> getUnCollectCoin() {
         return unCollectCoin;
     }
 
@@ -652,85 +676,17 @@ public class MarioWorld {
         return finalDir;
     }
 
-    public int[] findNearestBlockVector() {
-        int[] vector = new int[2];
-        if (this.getUnbumpBlocks().size() == 0) {
-            return vector;
-        }
-        int minDistanceSquared = Integer.MAX_VALUE;
-        Mario mario = this.mario;
-        Block nearestBlock = null;
 
-        for (Block block : this.getUnbumpBlocks()) {
-            // Calculate squared distance (more efficient than true distance for
-            // comparison).
-            int dx = block.getX() - mario.getMapX();
-            int dy = block.getY() - mario.getMapY();
-            int distanceSquared = dx * dx + dy * dy;
 
-            // If this enemy is closer than the previous closest, update our records.
-            if (distanceSquared < minDistanceSquared) {
-                minDistanceSquared = distanceSquared;
-                nearestBlock = block;
-            }
-        }
-
-        if (nearestBlock != null) {
-            vector[0] = nearestBlock.getX() - mario.getMapX();
-            vector[1] = nearestBlock.getY() - mario.getMapY();
-            return vector;
-        }
-
-        return vector;
+    public int getKillCount(){
+        return this.level.getEnemies().size() - this.getAliveEnemies().size();
     }
 
-    public int[] findNearestEnemyVector() {
-        int[] vector = new int[2];
-        if (this.getAliveEnemies().isEmpty()) {
-            return vector;
-        }
-        int minDistanceSquared = Integer.MAX_VALUE;
-        Mario mario = this.mario;
-        MarioSprite nearestEnemy = null;
+    public int getHitBlockCount(){
+        return this.level.getBumpableBlocks().size() - this.getUnbumpBlocks().size();
+    }
 
-        for (MarioSprite sprite : this.getEnemies()) {
-            int dx = sprite.getMapX() - mario.getMapX();
-            int dy = sprite.getMapY() - mario.getMapY();
-            int distanceSquared = dx * dx + dy * dy;
-
-            // If this enemy is closer than the previous closest, update our records.
-            if (distanceSquared < minDistanceSquared) {
-                minDistanceSquared = distanceSquared;
-                nearestEnemy = sprite;
-            }
-        }
-
-        if (nearestEnemy != null) {
-            vector[0] = nearestEnemy.getMapX() - mario.getMapX();
-            vector[1] = nearestEnemy.getMapY() - mario.getMapY();
-            return vector;
-        }
-
-        for (MarioSprite sprite : this.getAliveEnemies()) {
-            // Calculate squared distance (more efficient than true distance for
-            // comparison).
-            int dx = (int) sprite.x - mario.getMapX();
-            int dy = (int) sprite.y - mario.getMapY();
-            int distanceSquared = dx * dx + dy * dy;
-
-            // If this enemy is closer than the previous closest, update our records.
-            if (distanceSquared < minDistanceSquared) {
-                minDistanceSquared = distanceSquared;
-                nearestEnemy = sprite;
-            }
-        }
-
-        if (nearestEnemy != null) {
-            vector[0] = (int) nearestEnemy.x - mario.getMapX();
-            vector[1] = (int) nearestEnemy.y - mario.getMapY();
-            return vector;
-        }
-
-        return vector;
+    public int getCollectedCoinCount() {
+        return this.level.getCoins().size() - this.getUnCollectCoin().size();
     }
 }

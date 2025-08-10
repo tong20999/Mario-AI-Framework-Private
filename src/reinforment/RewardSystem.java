@@ -17,15 +17,13 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 public class RewardSystem {
-    static float winReward = 1;
+    //static float winReward = 1;
     static float losePenalty = -0.0f;
     static float timeoutPenalty = -0.0f;
-    static float killReward = 0.2f;
+    static float killReward = 0.3f;
     static float bumpReward = 0.2f;
     static float coinReward = 0.2f;
     static float powerUpReward = 0.2f;
-    static float explorerReward = 0.01f;
-    ProceduralContentGenerationLevel pcg;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = 0.0f;
@@ -44,6 +42,9 @@ public class RewardSystem {
             if (e.getEventType() == EventType.COLLECT.getValue()
                     && e.getEventParam() == SpriteType.MUSHROOM.getValue()) {
                 reward += powerUpReward;
+                if(reward > 1){
+                    System.out.println(reward);
+                }
             }
             if (e.getEventType() == EventType.COLLECT.getValue()
                     && e.getEventParam() == SpriteType.LIFE_MUSHROOM.getValue()) {
@@ -52,53 +53,35 @@ public class RewardSystem {
 
             if (e.getEventType() == EventType.BUMP.getValue() && e.getEventParam() == MarioForwardModel.OBS_QUESTION_BLOCK) {
                 reward += bumpReward;
+                if(reward > 1){
+                    System.out.println(reward);
+                }
+
             }
 
             if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == 15) {
                 reward += coinReward;
             }
-
-            if (e.getEventType() == EventType.EXPLORER.getValue()) {
-                reward += explorerReward;
-            }
         }
 
         // --- 3. Define the outcome: Keep your score or lose it all ---
         if (world.gameStatus == GameStatus.WIN) {
-            if (world.isSubGoalBlockMet() && world.isSubGoalCoinMet() && world.isSubGoalEnemyMet()) {
-                reward += winReward;
-            } else {
-                reward += 0;
+            int blockHit = world.getHitBlockCount();
+            int totalBlock = world.level.getBumpableBlocks().size();
+            int killCount = world.getKillCount();
+            int totalEnemies = world.level.getEnemies().size();
+            int collectedCoin = world.getCollectedCoinCount();
+            int totalCoin = world.level.getCoins().size();
+            float winReward = (float) (blockHit + killCount + collectedCoin) /(totalCoin + totalBlock + totalEnemies);
+            reward += winReward;
+            if(reward > 1){
+                System.out.println(reward);
             }
-
-            // reward += distanceToFlag(world.mario);
         } else if (world.gameStatus == GameStatus.TIME_OUT) {
             reward += timeoutPenalty;
         } else if (world.gameStatus == GameStatus.LOSE) {
             reward += losePenalty;
         }
-
         return reward;
     }
-
-    public String getRewardInfo() {
-        return MessageFormat.format("""
-                REWARDS
-                WIN {0}
-                LOSE {1}
-                TIME_OUT {2}
-                KILL {3}
-                COLLECT_COIN {4}
-                HIT_BLOCK {5}
-                COLLECT_MUSHROOM {6}
-                """,
-                winReward,
-                losePenalty,
-                timeoutPenalty,
-                killReward,
-                coinReward,
-                bumpReward,
-                powerUpReward);
-    }
-
 }

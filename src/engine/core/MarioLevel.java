@@ -11,8 +11,7 @@ import engine.helper.Assets;
 import engine.helper.SpriteType;
 import engine.helper.TileFeature;
 import engine.sprites.Enemy;
-import reinforment.Block;
-import reinforment.Coin;
+import reinforment.Point;
 
 public class MarioLevel {
 
@@ -28,8 +27,8 @@ public class MarioLevel {
     private MarioTilemap graphics;
     private MarioImage flag;
     private ArrayList<Enemy> enemies = new ArrayList<>();
-    private ArrayList<Block> blocks = new ArrayList<>();
-    private ArrayList<Coin> coins = new ArrayList<>();
+    private ArrayList<Point> blocks = new ArrayList<>();
+    private ArrayList<Point> coins = new ArrayList<>();
 
     public MarioLevel(String level, boolean visuals) {
         if (level.trim().length() == 0) {
@@ -155,13 +154,13 @@ public class MarioLevel {
                     case '@':
                         //mushroom question block
                         this.levelTiles[x][y] = 8;
-                        blocks.add(new Block(x,y, TileFeature.getTileType(8)));
+                        blocks.add(new Point(x,y));
                         break;
                     case 'Q':
                     case '!':
                         //coin question block
                         this.levelTiles[x][y] = 11;
-                        blocks.add(new Block(x,y, TileFeature.getTileType(11)));
+                        blocks.add(new Point(x,y));
                         break;
                     case '1':
                         //invisible 1 up block
@@ -178,7 +177,7 @@ public class MarioLevel {
                     case 'S':
                         //normal block
                         this.levelTiles[x][y] = 6;
-                        blocks.add(new Block(x,y, TileFeature.getTileType(6)));
+                        //blocks.add(new Block(x,y, TileFeature.getTileType(6)));
                         break;
                     case 'C':
                         //coin block
@@ -193,12 +192,12 @@ public class MarioLevel {
                     case 'L':
                         //1up block
                         this.levelTiles[x][y] = 51;
-                        blocks.add(new Block(x,y, TileFeature.getTileType(51)));
+                        blocks.add(new Point(x,y));
                         break;
                     case 'o':
                         //coin
                         this.levelTiles[x][y] = 15;
-                        coins.add(new Coin(x,y));
+                        coins.add(new Point(x,y));
                         break;
                     case 't':
                         //empty Pipe
@@ -411,11 +410,11 @@ public class MarioLevel {
         return enemies;
     }
 
-    public ArrayList<Coin> getCoins(){
+    public ArrayList<Point> getCoins(){
         return coins;
     }
 
-    public List<Block> getBumpableBlocks() {
-        return this.blocks.stream().filter(b -> b.getTileFeatures().contains(TileFeature.BUMPABLE)).collect(Collectors.toList());
+    public List<Point> getBumpableBlocks() {
+        return this.blocks;
     }
 }

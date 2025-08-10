@@ -7,84 +7,65 @@ from gymnasium.spaces import Dict
 class CNNBase(nn.Module):
     def __init__(self, observation_space: Dict, embedding_dim: int = 16, hidden_dims=(256, 256)):
         super(CNNBase, self).__init__()
-        num_object_types = 128
-        
-        self.scene_embedding = nn.Embedding(num_object_types, embedding_dim)
-        self.enemy_embedding = nn.Embedding(num_object_types, embedding_dim)
-        
-        self.scene_cnn = nn.Sequential(
-            nn.Conv2d(embedding_dim, 32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Flatten(),
-        )
-        
-        self.enemy_cnn = nn.Sequential(
-            nn.Conv2d(embedding_dim, 32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Flatten(),
-        )
-
-        cnn_feature_size = 64 * 4 * 4 
-        
+        scene_vocab_size = 3
+        enemy_vocab_size = 2
+        self.scene_embedding = nn.Embedding(scene_vocab_size, embedding_dim)
+        self.enemy_embedding = nn.Embedding(enemy_vocab_size, embedding_dim)
         scene_channels = observation_space['gridScene'].shape[0]
-        scene_cnn_total_dim = scene_channels * cnn_feature_size
-
         enemy_channels = observation_space['gridEnemies'].shape[0]
-        enemy_cnn_total_dim = enemy_channels * cnn_feature_size
-
+        scene_in = embedding_dim * scene_channels
+        enemy_in = embedding_dim * enemy_channels
+        self.scene_stream = nn.Sequential(
+            nn.Conv2d(scene_in, 32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+        )
+        self.enemy_stream = nn.Sequential(
+            nn.Conv2d(enemy_in, 32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+        )
+        self.shared_cnn = nn.Sequential(
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.Flatten(),
+        )
+        cnn_feature_size = 64 * 4 * 4
         vector_shape = observation_space['vector'].shape
         self.mlp = nn.Sequential(
             nn.Linear(vector_shape[0], 64),
             nn.ReLU()
         )
-        
-        combined_cnn_dim = scene_cnn_total_dim + enemy_cnn_total_dim
         self.combined_mlp = nn.Sequential(
-            nn.Linear(combined_cnn_dim + 64, hidden_dims[0]),
+            nn.Linear(cnn_feature_size + 64, hidden_dims[0]),
             nn.ReLU(),
             nn.Linear(hidden_dims[0], hidden_dims[1]),
             nn.ReLU(),
         )
-        
         self.feature_dim = hidden_dims[1]
 
     def forward(self, states: dict):
         scene_grid = states['gridScene'].long()
-        b, c, h, w = scene_grid.shape
-        scene_grid_reshaped = scene_grid.view(b * c, h, w)
-        embedded_scene = self.scene_embedding(scene_grid_reshaped)
-        permuted_scene = embedded_scene.permute(0, 3, 1, 2)
-        scene_out_flat = self.scene_cnn(permuted_scene)
-        scene_out = scene_out_flat.view(b, -1)
-        
+        batch_size, channels, height, width = scene_grid.shape
+        embedded_scene = self.scene_embedding(scene_grid).permute(0, 1, 4, 2, 3).reshape(batch_size, channels * self.scene_embedding.embedding_dim, height, width)
         enemy_grid = states['gridEnemies'].long()
-        b_e, c_e, h_e, w_e = enemy_grid.shape
-        enemy_grid_reshaped = enemy_grid.view(b_e * c_e, h_e, w_e)
-        embedded_enemy = self.enemy_embedding(enemy_grid_reshaped)
-        permuted_enemy = embedded_enemy.permute(0, 3, 1, 2)
-        enemy_out_flat = self.enemy_cnn(permuted_enemy)
-        enemy_out = enemy_out_flat.view(b_e, -1)
-        
+        batch_size_e, channels_e, height_e, width_e = enemy_grid.shape
+        embedded_enemy = self.enemy_embedding(enemy_grid).permute(0, 1, 4, 2, 3).reshape(batch_size_e, channels_e * self.enemy_embedding.embedding_dim, height_e, width_e)
+        s = self.scene_stream(embedded_scene)
+        e = self.enemy_stream(embedded_enemy)
+        fused = torch.cat([s, e], dim=1)
+        cnn_out = self.shared_cnn(fused)
         mlp_out = self.mlp(states['vector'])
-        
-        combined_features = torch.cat([scene_out, enemy_out, mlp_out], dim=1)
+        combined_features = torch.cat([cnn_out, mlp_out], dim=1)
         final_features = self.combined_mlp(combined_features)
-        
         return final_features
 
 class CNNActor(CNNBase):
     def __init__(self, observation_space, output_dim, embedding_dim=16, hidden_dims=(256, 256)):
         super(CNNActor, self).__init__(observation_space, embedding_dim, hidden_dims)
         self.actor_head = nn.Linear(self.feature_dim, output_dim)
-        
         device = "cpu"
         if torch.cuda.is_available():
             device = "cuda:0"
@@ -110,7 +91,6 @@ class CNNActor(CNNBase):
             states = self._format_single_obs(states)
         elif not isinstance(states['gridScene'], torch.Tensor):
             states = self._format_obs(states)
-
         features = super().forward(states)
         logits = self.actor_head(features)
         return logits
@@ -129,7 +109,6 @@ class CNNActor(CNNBase):
     def get_predictions(self, states, actions):
         if not isinstance(actions, torch.Tensor):
             actions = torch.tensor(actions, device=self.device)
-        
         logits = self.forward(states, is_batched=True)
         dist = torch.distributions.Categorical(logits=logits)
         logpas = dist.log_prob(actions.squeeze())
@@ -147,12 +126,10 @@ class CNNActor(CNNBase):
         action = np.argmax(logits.detach().cpu().numpy()[0])
         return action
 
-
 class CNNCritic(CNNBase):
     def __init__(self, observation_space, embedding_dim=16, hidden_dims=(256, 256)):
         super(CNNCritic, self).__init__(observation_space, embedding_dim, hidden_dims)
         self.critic_head = nn.Linear(self.feature_dim, 1)
-
         device = "cpu"
         if torch.cuda.is_available():
             device = "cuda:0"
@@ -166,7 +143,6 @@ class CNNCritic(CNNBase):
                 'gridEnemies': torch.tensor(states['gridEnemies'], dtype=torch.long, device=self.device),
                 'vector': torch.tensor(states['vector'], dtype=torch.float32, device=self.device)
             }
-
         features = super().forward(states)
         values = self.critic_head(features)
         return values.squeeze(-1)
