@@ -255,42 +255,40 @@ public class MarioGameTraining {
                 rewardEvents.add(new RewardEvent(RewardSystem.BUMP_REWARD, e));
             } else if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == 15) { // COIN
                 rewardEvents.add(new RewardEvent(RewardSystem.COIN_REWARD, e));
-            }// else if (e.getEventType() == EventType.EXPLORER.getValue()) {
-             //   rewardEvents.add(new RewardEvent(RewardSystem.EXPLORATION_REWARD, e));
-            //}
-            else if (e.getEventType() == EventType.BONK.getValue()) {
+            } else if (e.getEventType() == EventType.BONK.getValue()) {
                     rewardEvents.add(new RewardEvent(RewardSystem.BONK_REWARD, e));
-                }
-            else if(e.getEventType() == EventType.WIN.getValue()){
-                    var objectiveClear = world.isSubGoalBlockMet() && world.isSubGoalCoinMet()
-                            && world.isSubGoalCoinMet();
-                    float winReward = 0;
-                    if(objectiveClear){
-                        winReward = RewardSystem.WIN_REWARD;
-                    } else {
-                        var remainTask = world.getUnbumpBlocks().size() +
-                                world.getUnCollectCoin().size() +
-                                world.getAliveEnemies().size();
-                        winReward += Math.min(RewardSystem.FLAG_PENALTY,
-                                RewardSystem.DEBT_PENALTY_FACTOR * remainTask);
-                    }
-                    rewardEvents.add(new RewardEvent(winReward, e));
-                } else if (world.gameStatus == GameStatus.TIME_OUT) {
-                float r = getTimeoutReward();
-                int marioState = 0;
-                if (this.world.mario.isLarge) {
-                    marioState = 1;
-                }
-                if (this.world.mario.isFire) {
-                    marioState = 2;
-                }
-                    rewardEvents.add(new RewardEvent(r,
-                            new MarioEvent(EventType.TIME_OUT, 0, this.world.mario.x,
-                                    this.world.mario.y, marioState, this.world.currentTick)));
+            } else if(e.getEventType() == EventType.WIN.getValue()){
+                var objectiveClear = world.isSubGoalBlockMet() && world.isSubGoalCoinMet()
+                        && world.isSubGoalCoinMet();
+                float winReward = 0;
+                if(objectiveClear){
+                    winReward = RewardSystem.WIN_REWARD;
                 } else {
-                    rewardEvents.add(new RewardEvent(0, e));
+                    var remainTask = world.getUnbumpBlocks().size() +
+                            world.getUnCollectCoin().size() +
+                            world.getAliveEnemies().size();
+                    winReward += Math.min(RewardSystem.FLAG_PENALTY,
+                            RewardSystem.DEBT_PENALTY_FACTOR * remainTask);
                 }
+                rewardEvents.add(new RewardEvent(winReward, e));
+            } else {
+                rewardEvents.add(new RewardEvent(0, e));
             }
+        }
+
+        if (gameStatus.equals(GameStatus.TIME_OUT)) {
+            float timeoutReward = getTimeoutReward();
+            int marioState = 0;
+            if (this.world.mario.isLarge) {
+                marioState = 1;
+            }
+            if (this.world.mario.isFire) {
+                marioState = 2;
+            }
+            rewardEvents.add(new RewardEvent(timeoutReward,
+                    new MarioEvent(EventType.TIME_OUT, 0, this.world.mario.x,
+                            this.world.mario.y, marioState, this.world.currentTick)));
+        }
     }
 
     private float getTimeoutReward() {
