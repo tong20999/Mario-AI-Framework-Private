@@ -2,86 +2,93 @@ package reinforment;
 
 import engine.core.MarioEvent;
 import engine.core.MarioForwardModel;
-import engine.core.MarioLevel;
 import engine.core.MarioWorld;
 import engine.helper.EventType;
 import engine.helper.GameStatus;
 import engine.helper.SpriteType;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.UUID;
 
 public class RewardSystem {
-    //static float winReward = 1;
-    static float losePenalty = -0.0f;
-    static float timeoutPenalty = -0.0f;
-    static float killReward = 0.3f;
-    static float bumpReward = 0.2f;
-    static float coinReward = 0.2f;
-    static float powerUpReward = 0.2f;
+    public static float WIN_REWARD = 0.3f;
+    static float LOSE_PENALTY = -0.9f;
+    static float TIMEOUT_PENALTY = -0.0f;
+    public static float BONK_REWARD = -0.01f;
+    public static float KILL_REWARD = 0.1f;
+    public static float BUMP_REWARD = 0.1f;
+    public static float COIN_REWARD = 0.1f;
+    public static float POWER_UP_REWARD = 0.1f;
+    public static float DEBT_PENALTY_FACTOR = -0.12f;
+    public static float EXPLORATION_REWARD = 0.01f;
+    public static float FLAG_PENALTY = -0.9f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = 0.0f;
         for (MarioEvent e : miniStepEvents) {
+            boolean bumpKill = e.getEventType() == EventType.BUMP_KILL.getValue();
             if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
                     e.getEventType() == EventType.FIRE_KILL.getValue() ||
                     e.getEventType() == EventType.SHELL_KILL.getValue() ||
                     e.getEventType() == EventType.BUMP_KILL.getValue() ||
                     e.getEventType() == EventType.FALL_KILL.getValue()) {
-                reward += killReward;
+                reward += KILL_REWARD;
             }
             if (e.getEventType() == EventType.COLLECT.getValue()
                     && e.getEventParam() == SpriteType.FIRE_FLOWER.getValue()) {
-                reward += powerUpReward;
+                reward += POWER_UP_REWARD;
             }
             if (e.getEventType() == EventType.COLLECT.getValue()
                     && e.getEventParam() == SpriteType.MUSHROOM.getValue()) {
-                reward += powerUpReward;
-                if(reward > 1){
-                    System.out.println(reward);
-                }
-            }
-            if (e.getEventType() == EventType.COLLECT.getValue()
-                    && e.getEventParam() == SpriteType.LIFE_MUSHROOM.getValue()) {
-                reward += powerUpReward;
+                reward += POWER_UP_REWARD;
             }
 
             if (e.getEventType() == EventType.BUMP.getValue() && e.getEventParam() == MarioForwardModel.OBS_QUESTION_BLOCK) {
-                reward += bumpReward;
-                if(reward > 1){
-                    System.out.println(reward);
-                }
+                reward += BUMP_REWARD;
+            }
 
+            if (!bumpKill && e.getEventType() == EventType.BONK.getValue()) {
+                reward += BONK_REWARD;
             }
 
             if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == 15) {
-                reward += coinReward;
+                reward += COIN_REWARD;
             }
+
+            //if (e.getEventType() == EventType.EXPLORER.getValue()) {
+                //reward += EXPLORATION_REWARD;
+            //}
         }
 
-        // --- 3. Define the outcome: Keep your score or lose it all ---
         if (world.gameStatus == GameStatus.WIN) {
-            int blockHit = world.getHitBlockCount();
-            int totalBlock = world.level.getBumpableBlocks().size();
-            int killCount = world.getKillCount();
-            int totalEnemies = world.level.getEnemies().size();
-            int collectedCoin = world.getCollectedCoinCount();
-            int totalCoin = world.level.getCoins().size();
-            float winReward = (float) (blockHit + killCount + collectedCoin) /(totalCoin + totalBlock + totalEnemies);
-            reward += winReward;
-            if(reward > 1){
-                System.out.println(reward);
+            var objectiveClear = world.isSubGoalBlockMet() && world.isSubGoalCoinMet()
+                    && world.isSubGoalCoinMet();
+            if(objectiveClear){
+                reward += WIN_REWARD;
+            } else {
+                var remainTask = world.getUnbumpBlocks().size() +
+                        world.getUnCollectCoin().size() +
+                        world.getAliveEnemies().size();
+                reward += Math.min(FLAG_PENALTY, DEBT_PENALTY_FACTOR * remainTask);
             }
         } else if (world.gameStatus == GameStatus.TIME_OUT) {
-            reward += timeoutPenalty;
+            var debtBlock = world.level.getBumpableBlocks().size() -
+                    world.getUnbumpBlocks().size();
+            var debtCoin = world.level.getCoins().size() -
+                    world.getUnCollectCoin().size();
+            var debtEnemy = world.level.getEnemies().size() -
+                    world.getAliveEnemies().size();
+            var debt = debtBlock + debtEnemy + debtCoin;
+            if(debt == 0){
+                reward = 0.1f;
+            }
+            else {
+                float penalty = Math.min(-0.90f, -0.12f * debt);
+                reward += penalty;
+            }
         } else if (world.gameStatus == GameStatus.LOSE) {
-            reward += losePenalty;
+            reward += LOSE_PENALTY;
         }
+        reward = Math.max(-1.0f, Math.min(1.0f, reward));
         return reward;
     }
 }

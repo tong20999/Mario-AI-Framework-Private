@@ -7,6 +7,8 @@ from logger import setup_logging
 
 logger = logging.getLogger('Agent:SocketEnv')
 
+payload_size = 2048 + 128
+
 class SocketEnv(gym.Env):
     #def __init__(self, host='192.168.1.47', port=4455):
     def __init__(self, host='localhost', port=4455):
@@ -36,12 +38,12 @@ class SocketEnv(gym.Env):
         assert len(buffer) == 1024
         self.client_socket.sendall(buffer)
 
-    def _receive_fixed(self, size: int = 2048) -> bytes:
+    def _receive_fixed(self, size: int = payload_size) -> bytes:
         self._connect() # Ensure connection exists before receiving.
         chunks = []
         bytes_recd = 0
         while bytes_recd < size:
-            chunk = self.client_socket.recv(min(size - bytes_recd, 2048))
+            chunk = self.client_socket.recv(min(size - bytes_recd, payload_size))
             if not chunk:
                 raise ConnectionError("Socket connection closed before all data was received.")
             chunks.append(chunk)

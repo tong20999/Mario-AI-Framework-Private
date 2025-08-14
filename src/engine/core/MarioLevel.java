@@ -29,6 +29,11 @@ public class MarioLevel {
     private ArrayList<Enemy> enemies = new ArrayList<>();
     private ArrayList<Point> blocks = new ArrayList<>();
     private ArrayList<Point> coins = new ArrayList<>();
+    private int[][] visitHeat;
+
+    public int getVisitHeat(int tileX, int tileY) {
+        return visitHeat[tileX][tileY];
+    }
 
     public MarioLevel(String level, boolean visuals) {
         if (level.trim().length() == 0) {
@@ -45,6 +50,7 @@ public class MarioLevel {
         this.height = this.tileHeight * 16;
 
         this.levelTiles = new int[lines[0].length()][lines.length];
+        this.visitHeat = new int[lines[0].length()][lines.length];
         this.spriteTemplates = new SpriteType[lines[0].length()][lines.length];
         this.lastSpawnTime = new int[lines[0].length()][lines.length];
         for (int y = 0; y < lines.length; y++) {
@@ -52,6 +58,7 @@ public class MarioLevel {
                 this.levelTiles[x][y] = 0;
                 this.spriteTemplates[x][y] = SpriteType.NONE;
                 this.lastSpawnTime[x][y] = -40;
+                this.visitHeat[x][y] = 0;
             }
         }
 
@@ -298,11 +305,13 @@ public class MarioLevel {
         level.exitTileX = this.exitTileX;
         level.exitTileY = this.exitTileY;
         level.levelTiles = new int[this.levelTiles.length][this.levelTiles[0].length];
+        level.visitHeat = new int[this.levelTiles.length][this.levelTiles[0].length];
         level.lastSpawnTime = new int[this.levelTiles.length][this.levelTiles[0].length];
         for (int x = 0; x < level.levelTiles.length; x++) {
             for (int y = 0; y < level.levelTiles[x].length; y++) {
                 level.levelTiles[x][y] = this.levelTiles[x][y];
                 level.lastSpawnTime[x][y] = this.lastSpawnTime[x][y];
+                level.visitHeat[x][y] = this.visitHeat[x][y];
             }
         }
         level.spriteTemplates = this.spriteTemplates;
@@ -416,5 +425,12 @@ public class MarioLevel {
 
     public List<Point> getBumpableBlocks() {
         return this.blocks;
+    }
+
+    public void updateVisitHeat(int tileX, int tileY) {
+        if( this.visitHeat[tileX][tileY] == 1){
+            return;
+        }
+        this.visitHeat[tileX][tileY] = 1;
     }
 }

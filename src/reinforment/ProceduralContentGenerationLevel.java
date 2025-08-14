@@ -31,6 +31,19 @@ public class ProceduralContentGenerationLevel {
         return pcgName;
     }
 
+    private int blockCount;
+    private boolean randomBlockHeight;
+    private int enemyCount;
+    private boolean randomEnemyHeight;
+    private int coinCount;
+    private boolean randomCoinHeight;
+    private int pitCount;
+
+    private int pipeCount;
+    private int rampCount;
+    private int widthMin;
+    private int widthMax;
+
     public static ProceduralContentGenerationLevel parseLevel(String pcgName) {
         Map<String, String> params = Helper.parseParameter(pcgName);
         int blockCount = Integer.parseInt(params.getOrDefault("blocks", "0"));
@@ -52,21 +65,32 @@ public class ProceduralContentGenerationLevel {
 
         try{
             ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel.randomWidth(widthMin,widthMax);
+            pcgLevel.blockCount = blockCount;
+            pcgLevel.randomBlockHeight = randomBlockHeight;
+            pcgLevel.coinCount = coinCount;
+            pcgLevel.randomCoinHeight = randomCoinHeight;
+            pcgLevel.enemyCount = enemyCount;
+            pcgLevel.randomEnemyHeight = randomEnemyHeight;
+            pcgLevel.pitCount = pitCount;
+            pcgLevel.pipeCount = pipeCount;
+            pcgLevel.rampCount = rampCount;
+            pcgLevel.widthMin = widthMin;
+            pcgLevel.widthMax = widthMax;
             pcgLevel.pcgName = pcgName;
             if(rampCount > 0){
-                pcgLevel.addRamp(8,2,rampCount);
+                pcgLevel.addRamp(10,2,rampCount);
             }
 
             if(pitCount > 0){
-                pcgLevel.addPit(6,2, 2, 5, pitCount);
+                pcgLevel.addPit(10,2, 2, 5, pitCount);
             }
 
             if(pipeCount > 0){
-                pcgLevel.addPipe(6, 2, pipeCount);
+                pcgLevel.addPipe(10, 2, pipeCount);
             }
 
             if(enemyCount > 0){
-                pcgLevel.addEnemy(6,2, enemyCount, randomEnemyHeight);
+                pcgLevel.addEnemy(10,2, enemyCount, randomEnemyHeight);
             }
 
             if(blockCount > 0){
@@ -74,7 +98,7 @@ public class ProceduralContentGenerationLevel {
             }
 
             if(coinCount > 0){
-                pcgLevel.addCoin(6,2, coinCount, randomCoinHeight);
+                pcgLevel.addCoin(10,2, coinCount, randomCoinHeight);
             }
 
             return pcgLevel;
@@ -86,9 +110,15 @@ public class ProceduralContentGenerationLevel {
         }
     }
 
+    public PcgParameters getPcgDto(){
+        return new PcgParameters(content, width, blockCount, randomBlockHeight, enemyCount,
+                randomEnemyHeight,  coinCount, randomCoinHeight, pitCount, pipeCount, rampCount, widthMin, widthMax);
+    }
+
     public static ProceduralContentGenerationLevel randomWidth(int min, int max) {
         int width = rand.nextInt(min, max + 1);
         ProceduralContentGenerationLevel pcg = new ProceduralContentGenerationLevel(width);
+        pcg.width = width;
         return pcg;
     }
 
@@ -346,6 +376,7 @@ public class ProceduralContentGenerationLevel {
         boolean needPlatform = height < 9;
         boolean randomNormalBlockLeft = rand.nextInt(2) == 0;
         boolean randomNormalBlockRight = rand.nextInt(2) == 0;
+        randomNormalBlockLeft = true;
         for (int i = 0; i < levels.size(); i++) {
             ArrayList<Character> currentLevel = levels.get(i);
             if (i == GROUND_1_LEVEL || i == GROUND_2_LEVEL) {

@@ -1,6 +1,6 @@
 package reinforment;
 
-public class PcgDto {
+public class PcgParameters {
     private String content;
     private int width;
 
@@ -68,7 +68,9 @@ public class PcgDto {
         return content;
     }
 
-    public PcgDto(String content, int width, int blockCount, boolean randomBlockHeight, int enemyCount, boolean randomEnemyHeight, int coinCount, boolean randomCoinHeight, int pitCount, int pipeCount, int rampCount, int widthMin, int widthMax) {
+    public PcgParameters(String content, int width, int blockCount, boolean randomBlockHeight, int enemyCount,
+                         boolean randomEnemyHeight, int coinCount, boolean randomCoinHeight, int pitCount,
+                         int pipeCount, int rampCount, int widthMin, int widthMax) {
         this.content = content;
         this.width = width;
         this.blockCount = blockCount;
@@ -84,7 +86,7 @@ public class PcgDto {
         this.widthMax = widthMax;
     }
 
-    public PcgDto(String content, int width){
+    public PcgParameters(String content, int width){
         this.content = content;
         this.width = width;
     }

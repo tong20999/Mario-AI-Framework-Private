@@ -43,7 +43,6 @@ public class MarioWorld {
     private ArrayList<MarioSprite> aliveEnemy = new ArrayList<>();
     private ArrayList<Point> unbumpBlocks = new ArrayList<>();
     private ArrayList<Point> unCollectCoin = new ArrayList<>();
-    private Set<Point> visitedTiles = new HashSet<>();;
 
     public MarioWorld(MarioEvent[] killEvents) {
         this.pauseTimer = 0;
@@ -166,11 +165,6 @@ public class MarioWorld {
         world.unCollectCoin = new ArrayList<>();
         for (Point c : this.unCollectCoin) {
             world.unCollectCoin.add(new Point(c.getX(),c.getY()));
-        }
-
-        world.visitedTiles = new HashSet<>();
-        for (Point p : this.visitedTiles) {
-            world.visitedTiles.add(new Point(p.getX(),p.getY()));
         }
 
         return world;
@@ -363,7 +357,6 @@ public class MarioWorld {
 
     public void update(boolean[] actions) {
         this.lastFrameEvents.clear();
-        int prevVisitedTile = this.visitedTiles.size();
         if (this.gameStatus != GameStatus.RUNNING) {
             return;
         }
@@ -504,13 +497,20 @@ public class MarioWorld {
         addedSprites.clear();
         removedSprites.clear();
 
-        var marioTileX = this.mario.getMapX();
-        var marioTileY = this.mario.getMapY();
-        this.visitedTiles.add(new Point(marioTileX, marioTileY));
-
-        if (this.visitedTiles.size() > prevVisitedTile) {
-            this.addEvent(EventType.EXPLORER, EventType.EXPLORER.getValue());
-        }
+//        var marioTileX = this.mario.getMapX();
+//        var marioTileY = this.mario.getMapY();
+//        if(marioTileX > 15){
+//            marioTileX = 15;
+//        }
+//        if(marioTileY > 15){
+//            marioTileY = 15;
+//        }
+//
+//        int countBefore = level.getVisitHeat(marioTileX, marioTileY);
+//        if(countBefore == 0){
+//            this.addEvent(EventType.EXPLORER, 0);
+//        }
+//        this.level.updateVisitHeat(marioTileX, marioTileY);
 
         // punishing forward model
         if (this.killEvents != null) {
@@ -549,8 +549,13 @@ public class MarioWorld {
             }
         }
 
+        if(MarioForwardModel.isCeilingBlockingTile(block + 16)){
+            if (block + 16 != MarioForwardModel.OBS_BRICK || !canBreakBricks) {
+                this.addEvent(EventType.BONK, block + 16);
+            }
+        }
+
         if (features.contains(TileFeature.BREAKABLE)) {
-            this.addEvent(EventType.BUMP, MarioForwardModel.OBS_BRICK);
             bumpInto(xTile, yTile - 1);
             if (canBreakBricks) {
                 this.addEvent(EventType.BREAK, MarioForwardModel.OBS_BRICK);
@@ -564,6 +569,9 @@ public class MarioWorld {
                     }
                 }
             } else {
+                if(MarioForwardModel.isCeilingBlockingTile(block + 16)){
+                    this.addEvent(EventType.BONK, block + 16);
+                }
                 level.setShiftIndex(xTile, yTile, 4);
             }
         }
@@ -579,6 +587,8 @@ public class MarioWorld {
                 this.addEffect(new CoinEffect(xTile * 16 + 8, yTile * 16 + 8));
             }
         }
+
+
 
         for (MarioSprite sprite : sprites) {
             sprite.bumpCheck(xTile, yTile);
@@ -636,48 +646,6 @@ public class MarioWorld {
         return unCollectCoin;
     }
 
-    public String nearestCompass(int[] position) {
-        int dx = position[0];
-        int dy = position[1];
-
-        // Handle the case where there is no enemy or it's at the same position
-        if (dx == 0 && dy == 0) {
-            return "NONE";
-        }
-
-        String verticalDir = "";
-        String horizontalDir = "";
-
-        // Determine vertical direction (UP/DOWN)
-        // In many 2D game engines, a smaller Y value is higher up.
-        if (dy < 0) {
-            verticalDir = "UP";
-        } else if (dy > 0) {
-            verticalDir = "DOWN";
-        }
-
-        // Determine horizontal direction (LEFT/RIGHT)
-        if (dx < 0) {
-            horizontalDir = "LEFT";
-        } else if (dx > 0) {
-            horizontalDir = "RIGHT";
-        }
-
-        // Combine the directions
-        String finalDir = verticalDir;
-
-        // Add a hyphen for diagonal directions (e.g., "UP-RIGHT")
-        if (!verticalDir.isEmpty() && !horizontalDir.isEmpty()) {
-            finalDir += "-";
-        }
-
-        finalDir += horizontalDir;
-
-        return finalDir;
-    }
-
-
-
     public int getKillCount(){
         return this.level.getEnemies().size() - this.getAliveEnemies().size();
     }
@@ -688,5 +656,34 @@ public class MarioWorld {
 
     public int getCollectedCoinCount() {
         return this.level.getCoins().size() - this.getUnCollectCoin().size();
+    }
+
+    public int[][] getVisitHeat(float centerX, float centerY){
+        int[][] ret = new int[MarioGame.tileWidth][MarioGame.tileHeight];
+        int centerXInMap = (int) centerX / 16;
+        int centerYInMap = (int) centerY / 16;
+
+        for (int y = centerYInMap - MarioGame.tileHeight / 2,
+             obsY = 0; y < centerYInMap + MarioGame.tileHeight / 2; y++, obsY++) {
+            for (int x = centerXInMap - MarioGame.tileWidth / 2,
+                 obsX = 0; x < centerXInMap + MarioGame.tileWidth / 2; x++, obsX++) {
+                int currentX = x;
+                if (currentX < 0) {
+                    currentX = 0;
+                }
+                if (currentX > level.tileWidth - 1) {
+                    currentX = level.tileWidth - 1;
+                }
+                int currentY = y;
+                if (currentY < 0) {
+                    currentY = 0;
+                }
+                if (currentY > level.tileHeight - 1) {
+                    currentY = level.tileHeight - 1;
+                }
+                ret[obsX][obsY] = this.level.getVisitHeat(currentX, currentY);
+            }
+        }
+        return ret;
     }
 }

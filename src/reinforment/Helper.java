@@ -1,5 +1,7 @@
 package reinforment;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import engine.core.MarioEvent;
 import engine.core.MarioWorld;
 import engine.helper.EventType;
@@ -152,8 +154,8 @@ public class Helper {
 
 
 
-    public static void logTerminate(int evaluationEpisode, String name, ProceduralContentGenerationLevel pcg) {
-        String workingDir = null;
+    public static void logEvaluationResult(int evaluationEpisode, String gameStatus, ProceduralContentGenerationLevel pcg, MarioWorld world, ArrayList<RewardEvent> rewardEvents, float evaluationReward, int minTimer, int maxTimer) throws IOException {
+        String workingDir;
         try {
             workingDir = getWorkingDir(pcg.getPcgName());
         } catch (IOException e) {
@@ -161,15 +163,72 @@ public class Helper {
             return;
         }
 
-        // First, let's construct the full file path.
-        String filePath = MessageFormat.format(workingDir + "\\zpcg\\{0}\\pgc_{1}_{2}.txt", name, name,
+        boolean blockClear = world.getHitBlockCount() == world.level.getBumpableBlocks().size();
+        boolean killClear = world.getKillCount() == world.level.getEnemies().size();
+        boolean coinClear = world.getCollectedCoinCount() == world.level.getCoins().size();
+        boolean completeObjective = blockClear && killClear && coinClear;
+
+        String status = gameStatus;
+        if(!completeObjective && gameStatus.equals(GameStatus.WIN.toString())){
+            status = "PARTIAL_WIN";
+        }
+
+        String pcgFilePath = MessageFormat.format(workingDir + "\\zpcg\\{0}\\pgc_{1}_{2}.txt", status, status,
                 evaluationEpisode);
 
-        // Now, let's get the parent directory path from the file path.
-        File file = new File(filePath);
-        File parentDir = file.getParentFile();
+        String resultPath = MessageFormat.format(workingDir + "\\results\\{0}\\result_{1}_{2}.json", status, status,
+                evaluationEpisode);
 
-        // Check if the parent directory exists. If not, create it.
+        createDirectory(pcgFilePath);
+        createDirectory(resultPath);
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(pcgFilePath, false))) {
+            writer.write(pcg.getContent());
+        } catch (IOException e) {
+            System.err.println("Error writing to file: " + e.getMessage());
+        }
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("mode", world.mario.isLarge ? 1 : world.mario.isFire ? 2 : 0);
+        data.put("blocks", world.getUnbumpBlocks());
+        data.put("coins", world.getUnCollectCoin());
+        data.put("enemies", world.getAliveEnemies().stream().map(e -> new Point((int)e.x, (int)e.y)).toList());
+        data.put("events", rewardEvents);
+        data.put("totalBlock", world.level.getBumpableBlocks().size());
+        data.put("totalCoin", world.level.getCoins().size());
+        data.put("totalEnemies", world.level.getEnemies().size());
+        data.put("blockClear", blockClear);
+        data.put("killClear", killClear);
+        data.put("coinClear", coinClear);
+        data.put("gameStatus", status);
+        data.put("pcg",pcg.getPcgDto());
+        data.put("timer", world.initTimer);
+        data.put("min_timer", minTimer);
+        data.put("max_timer", maxTimer);
+        data.put("totalReward", evaluationReward);
+
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(resultPath, false))) {
+            gson.toJson(data,writer);
+        } catch (IOException e) {
+            System.err.println("Error writing to file: " + e.getMessage());
+        }
+
+        String path = completeObjective ? MessageFormat.format(workingDir + "\\results\\OBJECTIVES_CLEAR\\result_OBJECTIVES_CLEAR_{0}.json", evaluationEpisode)
+                : MessageFormat.format(workingDir + "\\results\\OBJECTIVES_FAILED\\result_OBJECTIVES_FAILED_{0}.json", evaluationEpisode);
+
+        createDirectory(path);
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(path, false))) {
+            gson.toJson(data,writer);
+        } catch (IOException e) {
+            System.err.println("Error writing to file: " + e.getMessage());
+        }
+    }
+
+    private static void createDirectory(String path) throws IOException {
+        File file = new File(path);
+        File parentDir = file.getParentFile();
         if (parentDir != null && !parentDir.exists()) {
             boolean dirCreated = parentDir.mkdirs(); // mkdirs() creates all necessary but nonexistent parent
             // directories.
@@ -177,16 +236,8 @@ public class Helper {
                 System.out.println("Created directory: " + parentDir.getAbsolutePath());
             } else {
                 System.err.println("Failed to create directory: " + parentDir.getAbsolutePath());
-                // You might want to throw an exception here or return to prevent
-                // the file writing from failing later.
-                return;
+                throw new IOException("Failed to create directory");
             }
-        }
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, false))) {
-            writer.write(pcg.getContent());
-        } catch (IOException e) {
-            System.err.println("Error writing to file: " + e.getMessage());
         }
     }
 }

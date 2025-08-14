@@ -22,7 +22,6 @@ public class Agent extends KeyAdapter implements MarioAgent {
     @Override
     public boolean[] getActions(MarioForwardModel model, MarioTimer timer) {
         this.model = model;
-
         return actions;
     }
 
@@ -72,7 +71,6 @@ public class Agent extends KeyAdapter implements MarioAgent {
             case KeyEvent.VK_M:
                 if(isPressed){
                     var sceneObservation = State.toByte(model);
-                    model.test();
                 }
 
                 break;

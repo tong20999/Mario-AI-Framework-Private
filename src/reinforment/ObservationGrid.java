@@ -8,6 +8,11 @@ public class ObservationGrid {
     private byte[] stompableEnemy;
     private byte[] unstompableEnemy;
 
+    private byte[] flags;
+    private byte[] visited;
+    private byte[] blocks;
+    private byte[] coins;
+
     public byte[] getStompableEnemy() {
         return stompableEnemy;
     }
@@ -27,11 +32,30 @@ public class ObservationGrid {
     public byte[] getSemiSolid() {
         return semiSolid;
     }
+    public byte[] getFlag() {
+        return flags;
+    }
+    public byte[] getVisited() {
+        return visited;
+    }
 
-    public ObservationGrid(byte[] solid, byte[] semiSolid, byte[] collectible, byte[] stompableEnemy, byte[] unstompableEnemy){
+    public byte[] getBlocks() {
+        return blocks;
+    }
+
+    public byte[] getCoins() {
+        return coins;
+    }
+
+    public ObservationGrid(byte[] solid, byte[] semiSolid, byte[] collectible, byte[] flags,
+                           byte[] blocks, byte[] coins, byte[] stompableEnemy, byte[] unstompableEnemy){
         this.solid = solid;
         this.semiSolid = semiSolid;
         this.collectible = collectible;
+        this.flags = flags;
+        //this.visited = visited;
+        this.blocks = blocks;
+        this.coins = coins;
         this.stompableEnemy = stompableEnemy;
         this.unstompableEnemy = unstompableEnemy;
     }

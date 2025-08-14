@@ -6,6 +6,8 @@ import numpy as np
 # Assuming socketEnv.py is in the same directory.
 from socketEnv import SocketEnv
 
+payload_size = 2048 + 128
+
 all_possible_input:list[list[bool]] = [
     # [LEFT, RIGHT , DOWN, SPEED, JUMP]
     [False, False, False, False, False], # Do nothing
@@ -24,18 +26,18 @@ class MarioGame(SocketEnv):
     def __init__(self, fps: int = 10):
         super(MarioGame, self).__init__()
         self.fps = fps
-        self.scene_channels = 3  # e.g., solid, semisolid, collectible
+        self.scene_channels = 6  # e.g., solid, semisolid, collectible
         self.enemy_channels = 2  # e.g., stompable unstompable
         self.grid_h = 16
         self.grid_w = 16
 
-        self.vector_transfer_byte_len = 60
-        self.vector_size = 24
+        self.vector_transfer_byte_len = 57
+        self.vector_size = 21
         self._init_spaces()
 
     def _init_spaces(self):
         self.observation_space = gym.spaces.Dict({
-            'gridScene': gym.spaces.Box(low=0, high=2, shape=(self.scene_channels, self.grid_h, self.grid_w), dtype=np.uint8),
+            'gridScene': gym.spaces.Box(low=0, high=1, shape=(self.scene_channels, self.grid_h, self.grid_w), dtype=np.uint8),
             'gridEnemies': gym.spaces.Box(low=0, high=1, shape=(self.enemy_channels, self.grid_h, self.grid_w), dtype=np.uint8),
             'vector': gym.spaces.Box(low=0, high=255, shape=(self.vector_size,), dtype=np.uint8)
         })
@@ -58,7 +60,7 @@ class MarioGame(SocketEnv):
 
             # Vector (matches State.java ByteBuffer order; big-endian)
             vector_bytes = payload[enemies_end:enemies_end + self.vector_transfer_byte_len]
-            format_string  = '>BBBBBBffBfffBfffBffffBBB'
+            format_string  = '>BBBBBBffBfffBfffBffff'
             unpacked_values = struct.unpack(format_string, vector_bytes)
             vector_part = np.array(unpacked_values, dtype=np.float32)
             
@@ -85,7 +87,7 @@ class MarioGame(SocketEnv):
         return (self.scene_channels * grid_size) + (self.enemy_channels * grid_size) + self.vector_transfer_byte_len
 
     def _receive_reset(self):
-        data = self._receive_fixed(2048)
+        data = self._receive_fixed(payload_size)
         op_code = data[:2].decode('utf-8')
         assert op_code == '01'
         
@@ -95,7 +97,7 @@ class MarioGame(SocketEnv):
         return self._parse_observation(payload)
     
     def _receive_step(self) -> tuple[Any, SupportsFloat, bool, bool, dict[str, Any]]:
-        data = self._receive_fixed(2048)
+        data = self._receive_fixed(payload_size)
         op_code = data[:2].decode('utf-8')
         assert op_code == '02'
 

@@ -2,12 +2,13 @@ package reinforment;
 
 import engine.helper.TileFeature;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Objects;
 
 public class Point {
-    int x;
-    int y;
+    private int x;
+    private int y;
 
     public int getX() {
         return x;

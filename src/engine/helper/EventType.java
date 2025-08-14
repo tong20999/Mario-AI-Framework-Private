@@ -18,7 +18,9 @@ public enum EventType {
     FLAG(15),
     BUMP_KILL(16),
     EXPLORER(17),
-    BREAK(18);
+    BREAK(18),
+    BONK(19),
+    TIME_OUT(20);
 
     private final int value;
 

@@ -686,6 +686,18 @@ public class MarioForwardModel {
         return world.isSubGoalCoinMet() == null || world.isSubGoalCoinMet();
     }
 
+    public int getKillCount() {
+        return world.getKillCount();
+    }
+
+    public int getHitBlockCount() {
+        return world.getHitBlockCount();
+    }
+
+    public int getCollectedCoinCount() {
+        return world.getCollectedCoinCount();
+    }
+
     public int getInitialTimer() {
         return this.world.initTimer;
     }
@@ -766,10 +778,10 @@ public class MarioForwardModel {
         return getNearestObjectScreenPos(collection);
     }
 
-    private boolean isCeilingBlockingTile(int shiftedId) {
+    public static boolean isCeilingBlockingTile(int shiftedId) {
         return shiftedId == OBS_PYRAMID_SOLID
                 || shiftedId == OBS_BRICK
-                || shiftedId == OBS_BULLET_BILL_NECT   // keep your constant name
+                || shiftedId == OBS_BULLET_BILL_NECT
                 || shiftedId == OBS_BULLET_BILL_BODY
                 || shiftedId == OBS_BULLET_BILL_HEAD
                 || shiftedId == OBS_USED_BLOCK;
@@ -869,27 +881,28 @@ public class MarioForwardModel {
         return 1.0f;
     }
 
-
-    public void test(){
-        int blockHit = world.getHitBlockCount();
-        int totalBlock = world.level.getBumpableBlocks().size();
-        int killCount = world.getKillCount();
-        int totalEnemies = world.level.getEnemies().size();
-        int collectedCoin = world.getCollectedCoinCount();
-        int totalCoin = world.level.getCoins().size();
-        float reward = (float) (blockHit + killCount + collectedCoin) /(totalCoin + totalEnemies + totalEnemies);
-        System.out.println(blockHit + " " + totalBlock + " " + killCount + " " + totalEnemies + " " + collectedCoin + " " + totalCoin + " " + reward);
+    public byte[] getRiskDensity() {
+        int[][] enemies = getMarioEnemiesObservation(2);
+        int width = enemies.length;
+        int height = enemies[0].length;
+        int cx = width / 2, cy = height / 2;
+        int near = 0, mid = 0, far = 0;
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                if (enemies[x][y] == 0) continue;
+                int r = Math.max(Math.abs(x - cx), Math.abs(y - cy));
+                if (r >= 1 && r <= 3) near++;
+                else if (r >= 4 && r < 7) mid++;
+                else if (r >= 7 && r <= 12) far++;
+            }
+        }
+        if (near > 3) near = 3;
+        if (mid > 3) mid = 3;
+        if (far > 3) far = 3;
+        return new byte[]{ (byte) near, (byte) mid, (byte) far };
     }
 
-    public int getKillCount() {
-        return world.getKillCount();
-    }
-
-    public int getHitBlockCount() {
-        return world.getHitBlockCount();
-    }
-
-    public int getCollectedCoinCount() {
-        return world.getCollectedCoinCount();
+    public int[][] getVisitHeat() {
+       return this.world.getVisitHeat(this.world.cameraX + MarioGame.width / 2, MarioGame.height / 2);
     }
 }

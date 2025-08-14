@@ -30,13 +30,13 @@ if __name__ == '__main__':
 
   environment_settings = {
       'env_name': 'LunarLander-v2',
-      'gamma': 0.99,
+      'gamma': 0.997,
       'max_minutes': 6000,
       'max_episodes': 100000,
       'goal_mean_100_reward': 25000
   }
 
-  default_pcg = "blocks=1,random_block_height=true,enemies=0,pits=0,pipes=0,width_min=15,width_max=20" 
+  default_pcg = "blocks=1,random_block_height=true,enemies=0,pits=0,pipes=0,width_min=20,width_max=25,timer_min=20,timer_max=25" 
   pcg = sys.argv[1] if len(sys.argv) > 1 else default_pcg
 
   default_hyper_params = '''{
@@ -48,8 +48,8 @@ if __name__ == '__main__':
   "ewcLambda": 0,
   "maxBufferEpisodes": 128,
   "maxBufferEpisodeSteps": 1000,
-  "entropyLossWeight": 0.1,
-  "nWorkers": 8,
+  "entropyLossWeight": 0.01,
+  "nWorkers": 2,
   "batchSize": 1024
   }'''
   hyperParams = json.loads(base64.b64decode(sys.argv[2]).decode("utf-8")) if len(sys.argv) > 2 else json.loads(default_hyper_params)
@@ -71,7 +71,7 @@ if __name__ == '__main__':
   value_optimization_epochs = hyperParams.get('valueOptimizationEpochs', 5)
   value_sample_ratio = 0.8
   value_clip_range = float('inf')
-  value_stopping_mse = 0.02
+  value_stopping_mse = float('inf')
 
   ewc_fn = lambda policy_model, ewc_lambda: EWC(policy_model, ewc_lambda)
   ewc_lambda = hyperParams.get('ewcLambda', 10000.0)

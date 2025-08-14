@@ -7,7 +7,7 @@ from gymnasium.spaces import Dict
 class CNNBase(nn.Module):
     def __init__(self, observation_space: Dict, embedding_dim: int = 16, hidden_dims=(256, 256)):
         super(CNNBase, self).__init__()
-        scene_vocab_size = 3
+        scene_vocab_size = 2
         enemy_vocab_size = 2
         self.scene_embedding = nn.Embedding(scene_vocab_size, embedding_dim)
         self.enemy_embedding = nn.Embedding(enemy_vocab_size, embedding_dim)
