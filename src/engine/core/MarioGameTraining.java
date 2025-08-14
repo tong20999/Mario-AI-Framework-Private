@@ -292,22 +292,18 @@ public class MarioGameTraining {
     }
 
     private float getTimeoutReward() {
-        float r = 0;
-        var debtBlock = world.level.getBumpableBlocks().size() -
-                world.getUnbumpBlocks().size();
-        var debtCoin = world.level.getCoins().size() -
-                world.getUnCollectCoin().size();
-        var debtEnemy = world.level.getEnemies().size() -
+        float reward = 0;
+        var debt = world.getUnbumpBlocks().size() +
+                world.getUnCollectCoin().size() +
                 world.getAliveEnemies().size();
-        var debt = debtBlock + debtEnemy + debtCoin;
         if(debt == 0){
-            r = 0.1f;
-        }
-        else {
+            reward = 0.1f;
+        } else {
             float penalty = Math.min(-0.90f, -0.12f * debt);
-            r += penalty;
+            reward += penalty;
         }
-        return r;
+        System.out.println("getTimeoutReward " + debt + " " + reward);
+        return reward;
     }
 
     public ArrayList<MarioEvent> miniStep(boolean[] action) throws Exception {

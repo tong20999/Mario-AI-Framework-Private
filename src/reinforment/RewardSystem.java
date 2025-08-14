@@ -71,17 +71,16 @@ public class RewardSystem {
                 reward += Math.min(FLAG_PENALTY, DEBT_PENALTY_FACTOR * remainTask);
             }
         } else if (world.gameStatus == GameStatus.TIME_OUT) {
-            var debtBlock = world.getUnbumpBlocks().size();
-            var debtCoin = world.getUnCollectCoin().size();
-            var debtEnemy = world.getAliveEnemies().size();
-            var debt = debtBlock + debtEnemy + debtCoin;
+            var debt = world.getUnbumpBlocks().size() +
+                    world.getUnCollectCoin().size() +
+                    world.getAliveEnemies().size();
             if(debt == 0){
                 reward = 0.1f;
-            }
-            else {
+            } else {
                 float penalty = Math.min(-0.90f, -0.12f * debt);
                 reward += penalty;
             }
+            System.out.println("Reward System " + debt + " " + reward);
         } else if (world.gameStatus == GameStatus.LOSE) {
             reward += LOSE_PENALTY;
         }
