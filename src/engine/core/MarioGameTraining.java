@@ -255,8 +255,10 @@ public class MarioGameTraining {
                 rewardEvents.add(new RewardEvent(RewardSystem.BUMP_REWARD, e));
             } else if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == 15) { // COIN
                 rewardEvents.add(new RewardEvent(RewardSystem.COIN_REWARD, e));
-            } else if (e.getEventType() == EventType.BONK.getValue()) {
-                    rewardEvents.add(new RewardEvent(RewardSystem.BONK_REWARD, e));
+            } else if(e.getEventType() == EventType.EXPLORER.getValue()){
+                var tileY = (int)(e.getMarioY()/16f);
+                var grade = tileY < 6 ? 2f : tileY < 10 ? 1.5f : 1f;
+                rewardEvents.add(new RewardEvent(RewardSystem.EXPLORATION_REWARD * grade, e));
             } else if(e.getEventType() == EventType.WIN.getValue()){
                 var objectiveClear = world.isSubGoalBlockMet() && world.isSubGoalCoinMet()
                         && world.isSubGoalCoinMet();
@@ -302,7 +304,6 @@ public class MarioGameTraining {
             float penalty = Math.min(-0.90f, -0.12f * debt);
             reward += penalty;
         }
-        System.out.println("getTimeoutReward " + debt + " " + reward);
         return reward;
     }
 

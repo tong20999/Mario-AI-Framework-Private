@@ -19,13 +19,12 @@ public class RewardSystem {
     public static float COIN_REWARD = 0.1f;
     public static float POWER_UP_REWARD = 0.1f;
     public static float DEBT_PENALTY_FACTOR = -0.12f;
-    public static float EXPLORATION_REWARD = 0.01f;
+    public static float EXPLORATION_REWARD = 0.0002f;
     public static float FLAG_PENALTY = -0.9f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
-        float reward = 0.0f;
+        float reward = 0;
         for (MarioEvent e : miniStepEvents) {
-            boolean bumpKill = e.getEventType() == EventType.BUMP_KILL.getValue();
             if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
                     e.getEventType() == EventType.FIRE_KILL.getValue() ||
                     e.getEventType() == EventType.SHELL_KILL.getValue() ||
@@ -46,17 +45,19 @@ public class RewardSystem {
                 reward += BUMP_REWARD;
             }
 
-            if (!bumpKill && e.getEventType() == EventType.BONK.getValue()) {
-                reward += BONK_REWARD;
-            }
+//            if (!bumpKill && e.getEventType() == EventType.BONK.getValue()) {
+//                reward += BONK_REWARD;
+//            }
 
             if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == 15) {
                 reward += COIN_REWARD;
             }
 
-            //if (e.getEventType() == EventType.EXPLORER.getValue()) {
-                //reward += EXPLORATION_REWARD;
-            //}
+            if (e.getEventType() == EventType.EXPLORER.getValue()) {
+                var tileY = (int)(e.getMarioY()/16f);
+                var grade = tileY < 6 ? 2f : tileY < 10 ? 1.5f : 1f;
+                reward += EXPLORATION_REWARD * grade;
+            }
         }
 
         if (world.gameStatus == GameStatus.WIN) {
@@ -80,7 +81,6 @@ public class RewardSystem {
                 float penalty = Math.min(-0.90f, -0.12f * debt);
                 reward += penalty;
             }
-            System.out.println("Reward System " + debt + " " + reward);
         } else if (world.gameStatus == GameStatus.LOSE) {
             reward += LOSE_PENALTY;
         }

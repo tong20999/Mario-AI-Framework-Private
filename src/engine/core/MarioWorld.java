@@ -497,20 +497,17 @@ public class MarioWorld {
         addedSprites.clear();
         removedSprites.clear();
 
-//        var marioTileX = this.mario.getMapX();
-//        var marioTileY = this.mario.getMapY();
-//        if(marioTileX > 15){
-//            marioTileX = 15;
-//        }
-//        if(marioTileY > 15){
-//            marioTileY = 15;
-//        }
-//
-//        int countBefore = level.getVisitHeat(marioTileX, marioTileY);
-//        if(countBefore == 0){
-//            this.addEvent(EventType.EXPLORER, 0);
-//        }
-//        this.level.updateVisitHeat(marioTileX, marioTileY);
+        var marioTileX = this.mario.getMapX();
+        var marioTileY = this.mario.getMapY();
+        if(marioTileY > 15){
+            marioTileY = 15;
+        }
+
+        int countBefore = level.getVisitHeat(marioTileX, marioTileY);
+        if(countBefore == 0){
+            this.addEvent(EventType.EXPLORER, 0);
+        }
+        this.level.updateVisitHeat(marioTileX, marioTileY);
 
         // punishing forward model
         if (this.killEvents != null) {
