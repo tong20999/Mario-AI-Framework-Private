@@ -1,3 +1,4 @@
+import json
 import logging
 import random
 import matplotlib
@@ -5,7 +6,7 @@ import rlstatistics as statistics
 from logger import setup_logging
 matplotlib.use('TkAgg')
 from scipy import stats
-from typing import Callable
+from typing import Any, Callable, Dict, Tuple
 import pandas as pd
 import torch
 import numpy as np
@@ -95,7 +96,7 @@ class PPO():
         self.entropy_loss_weight = entropy_loss_weight
         self.tau = tau
         self.n_workers = n_workers
-        self.received_data_queue = queue.Queue()
+        self.received_data_queue: queue.Queue[Tuple[str, Dict[str, Any]]] = queue.Queue()
         self.best_score = 0
         self.batch_size = batch_size
 
@@ -363,7 +364,19 @@ class PPO():
                 if not self.received_data_queue.empty():
                     try:
                         addr, value = self.received_data_queue.get_nowait()
-                        break
+                        command = value.get('command', '')
+                        if command == 'shutdown':
+                            logger.info(f'shutdown receive stop training ')
+                            break
+                        if command == 'save_model':
+                            logger.info('saving policy model {}'.format(evaluation_count))
+                            self.save_checkpoint(evaluation_count, self.policy_model, 'policy')
+                            logger.info('saving value model {}'.format(evaluation_count))
+                            self.save_checkpoint(evaluation_count, self.value_model, 'value')
+                        elif command == 'update_entropy_loss_weight':
+                            new_entropy_loss_weight = value.get('value')
+                            logger.info(f'update entropy_loss_weight from {self.entropy_loss_weight} to {new_entropy_loss_weight}')
+                            self.entropy_loss_weight = new_entropy_loss_weight
                     except queue.Empty:
                         pass
         
@@ -389,13 +402,13 @@ class PPO():
     def handle_client(self, conn:socket.socket, addr):
         try:
             while True:
-                data = conn.recv(64)
+                data = conn.recv(512)
                 if not data:
                     logger.info(f"Client {addr} disconnected.")
                     break
                 decoded_data = data.decode('utf-8')
-                logger.info(f"Received from {addr}: {decoded_data}")
-                self.received_data_queue.put((addr, decoded_data)) # Put data (with client address) into the queue
+                json_data = json.loads(decoded_data)
+                self.received_data_queue.put((addr, json_data))
 
         except Exception as e:
             logger.error(f"Error handling client {addr}: {e}")
