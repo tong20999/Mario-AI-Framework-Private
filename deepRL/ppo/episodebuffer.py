@@ -114,7 +114,6 @@ class EpisodeBuffer():
 
             for w_idx in range(self.n_workers):
                 if worker_steps[w_idx] + 1 == self.max_episode_steps:
-                    terminals[w_idx] = 1
                     truncateds[w_idx] = 1
             
             states = next_states

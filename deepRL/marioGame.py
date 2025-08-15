@@ -6,7 +6,7 @@ import numpy as np
 # Assuming socketEnv.py is in the same directory.
 from socketEnv import SocketEnv
 
-payload_size = 2048 + 128
+payload_size = 2048 + 512
 
 all_possible_input:list[list[bool]] = [
     # [LEFT, RIGHT , DOWN, SPEED, JUMP]
@@ -26,7 +26,7 @@ class MarioGame(SocketEnv):
     def __init__(self, fps: int = 10):
         super(MarioGame, self).__init__()
         self.fps = fps
-        self.scene_channels = 6  # e.g., solid, semisolid, collectible
+        self.scene_channels = 7  # e.g., solid, semisolid, collectible
         self.enemy_channels = 2  # e.g., stompable unstompable
         self.grid_h = 16
         self.grid_w = 16
