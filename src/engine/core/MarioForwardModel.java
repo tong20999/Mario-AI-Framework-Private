@@ -902,7 +902,7 @@ public class MarioForwardModel {
         return new byte[]{ (byte) near, (byte) mid, (byte) far };
     }
 
-    public int[][] getVisitHeat() {
-       return this.world.getVisitHeat(this.world.cameraX + MarioGame.width / 2, MarioGame.height / 2);
+    public int[][] getMarioVisitHeat() {
+       return this.world.getVisitHeat(this.world.mario.x, this.world.mario.y);
     }
 }

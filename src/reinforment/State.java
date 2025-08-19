@@ -38,10 +38,10 @@ public class State {
 
     private static ObservationGrid createObservationGrid(MarioForwardModel model) throws Exception {
         int size = 16;
-        var sceneObservation = model.getScreenSceneObservation(1);
-        var flagObservation = model.getScreenSceneObservation(0);
-        var enemyObservation = model.getScreenEnemiesObservation(1);
-        var visitObservation = model.getVisitHeat();
+        var sceneObservation = model.getMarioSceneObservation(1);
+        var flagObservation = model.getMarioSceneObservation(0);
+        var enemyObservation = model.getMarioEnemiesObservation(1);
+        var visitObservation = model.getMarioVisitHeat();
         int[][] solid = new int[size][size];
         int[][] semiSolid = new int[size][size];
         int[][] flags = new int[size][size];
