@@ -223,9 +223,8 @@ public class MarioGameTraining {
         var nextState = new MarioForwardModel(nextWorldState, miniStepEvents);
         float reward = RewardSystem.getReward(this.world, miniStepEvents);
 
-        logRewardEvent(miniStepEvents, this.world.gameStatus);
-
         if (this.evaluation) {
+            logRewardEvent(miniStepEvents, this.world.gameStatus);
             this.evaluationReward += reward;
             this.evaluationTimer = this.world.currentTimer;
         } else {
@@ -267,18 +266,18 @@ public class MarioGameTraining {
                 var grade = tileY < 6 ? 2f : tileY < 10 ? 1.5f : 1f;
                 rewardEvents.add(new RewardEvent(RewardSystem.EXPLORATION_REWARD * grade, e));
             } else if(e.getEventType() == EventType.WIN.getValue()){
-                var objectiveClear = world.isSubGoalBlockMet() && world.isSubGoalCoinMet()
-                        && world.isSubGoalCoinMet();
-                float winReward = 0;
-                if(objectiveClear){
-                    winReward = RewardSystem.WIN_REWARD;
-                } else {
-                    var remainTask = world.getUnbumpBlocks().size() +
-                            world.getUnCollectCoin().size() +
-                            world.getAliveEnemies().size();
-                    winReward += Math.min(RewardSystem.FLAG_PENALTY,
-                            RewardSystem.DEBT_PENALTY_FACTOR * remainTask);
+                var remainTask = world.getUnbumpBlocks().size() +
+                        world.getUnCollectCoin().size() +
+                        world.getAliveEnemies().size();
+
+                int totalTasksInThisLevel = world.level.getBumpableBlocks().size()
+                        + world.level.getCoins().size() + world.level.getEnemies().size();
+                float taskBonusForThisLevel = 0;
+                if (totalTasksInThisLevel > 0) {
+                    taskBonusForThisLevel = (RewardSystem.TARGET_PERFECT_REWARD - RewardSystem.WIN_REWARD) / totalTasksInThisLevel;
                 }
+                int tasksCompleted = totalTasksInThisLevel - remainTask;
+                float winReward = RewardSystem.WIN_REWARD + (tasksCompleted * taskBonusForThisLevel);
                 rewardEvents.add(new RewardEvent(winReward, e));
             } else {
                 rewardEvents.add(new RewardEvent(0, e));
