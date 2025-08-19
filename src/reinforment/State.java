@@ -41,7 +41,7 @@ public class State {
         var sceneObservation = model.getScreenSceneObservation(1);
         var flagObservation = model.getScreenSceneObservation(0);
         var enemyObservation = model.getScreenEnemiesObservation(1);
-        //var visitObservation = model.getVisitHeat();
+        var visitObservation = model.getVisitHeat();
         int[][] solid = new int[size][size];
         int[][] semiSolid = new int[size][size];
         int[][] flags = new int[size][size];
@@ -110,9 +110,9 @@ public class State {
                 .flatMapToInt(Arrays::stream)
                 .toArray();
 
-//        int[] flatVisited = Arrays.stream(visitObservation)
-//                .flatMapToInt(Arrays::stream)
-//                .toArray();
+        int[] flatVisited = Arrays.stream(visitObservation)
+                .flatMapToInt(Arrays::stream)
+                .toArray();
 
         int[] flatBlocks = Arrays.stream(blocks)
                 .flatMapToInt(Arrays::stream)
@@ -135,6 +135,7 @@ public class State {
                 intArrayToBytes(flatSemiSolid),
                 intArrayToBytes(flatCollectible),
                 intArrayToBytes(flatFlags),
+                intArrayToBytes(flatVisited),
                 intArrayToBytes(flatBlocks),
                 intArrayToBytes(flatCoins),
                 intArrayToBytes(flatStompableEnemy),
@@ -156,6 +157,7 @@ public class State {
         byte[] semiSolid =observationGrid.getSemiSolid();
         byte[] collectible =observationGrid.getCollectible();
         byte[] flags = observationGrid.getFlag();
+        byte[] visited = observationGrid.getVisited();
         byte[] blocks = observationGrid.getBlocks();
         byte[] coins = observationGrid.getCoins();
         byte[] stompableEnemy = observationGrid.getStompableEnemy();
@@ -224,6 +226,7 @@ public class State {
                         semiSolid.length +
                         collectible.length +
                         flags.length +
+                        visited.length +
                         blocks.length +
                         coins.length +
                         stompableEnemy.length +
@@ -241,6 +244,7 @@ public class State {
         buffer.put(semiSolid);
         buffer.put(collectible);
         buffer.put(flags);
+        buffer.put(visited);
         buffer.put(blocks);
         buffer.put(coins);
 

@@ -100,6 +100,21 @@ class PPO():
         self.best_score = 0
         self.batch_size = batch_size
 
+        logger.info(f'policy_optimizer_lr {policy_optimizer_lr}')
+        logger.info(f'policy_sample_ratio {policy_sample_ratio}')
+        logger.info(f'policy_clip_range {policy_clip_range}')
+        logger.info(f'policy_stopping_kl {policy_stopping_kl}')
+
+        logger.info(f'value_optimizer_lr {value_optimizer_lr}')
+        logger.info(f'value_sample_ratio {value_sample_ratio}')
+        logger.info(f'value_clip_range {value_clip_range}')
+        logger.info(f'value_stopping_mse {value_stopping_mse}')
+
+        logger.info(f'max_buffer_episodes {max_buffer_episodes}')
+        logger.info(f'max_buffer_episode_steps {max_buffer_episode_steps}')
+        logger.info(f'entropy_loss_weight {entropy_loss_weight}')
+        logger.info(f'n_workers {n_workers}')
+
     def optimize_model(self):
         # 1. Get data from the buffer (as NumPy arrays on the CPU)
         grid_scene_states_np, grid_enemies_states_np, vector_states_np, actions_np, \
@@ -132,8 +147,8 @@ class PPO():
 
                 # 3. Move ONLY the current batch to the GPU
                 states_batch = {
-                    'gridScene': torch.from_numpy(grid_scene_states_np[batch_idxs]).to(device),
-                    'gridEnemies': torch.from_numpy(grid_enemies_states_np[batch_idxs]).to(device),
+                    'gridScene': torch.from_numpy(grid_scene_states_np[batch_idxs]).to(dtype=torch.float32).to(device),
+                    'gridEnemies': torch.from_numpy(grid_enemies_states_np[batch_idxs]).to(dtype=torch.float32).to(device),
                     'vector': torch.from_numpy(vector_states_np[batch_idxs]).to(dtype=torch.float32).to(device),
                 }
                 actions_batch = torch.from_numpy(actions_np[batch_idxs]).to(device)
@@ -174,7 +189,7 @@ class PPO():
                     break
             
             if early_stop:
-                logger.info(f'Early stopping policy training due to KL divergence: {kl_div:.4f}')
+                logger.warning(f'Early stopping policy training due to KL divergence: {kl_div:.4f}')
                 break
                 
         logger.info(f'Policy optimization finished in {time.time() - policy_start_time:.2f} seconds')
@@ -192,8 +207,8 @@ class PPO():
 
                 # Move ONLY the current batch to the GPU
                 states_batch = {
-                    'gridScene': torch.from_numpy(grid_scene_states_np[batch_idxs]).to(device),
-                    'gridEnemies': torch.from_numpy(grid_enemies_states_np[batch_idxs]).to(device),
+                    'gridScene': torch.from_numpy(grid_scene_states_np[batch_idxs]).to(dtype=torch.float32).to(device),
+                    'gridEnemies': torch.from_numpy(grid_enemies_states_np[batch_idxs]).to(dtype=torch.float32).to(device),
                     'vector': torch.from_numpy(vector_states_np[batch_idxs]).to(dtype=torch.float32).to(device),
                 }
                 returns_batch = torch.from_numpy(returns_np[batch_idxs]).to(device)
@@ -231,7 +246,7 @@ class PPO():
                     break
             
             if early_stop:
-                logger.info(f'Early stopping value training due to MSE: {mse:.4f}')
+                logger.warning(f'Early stopping value training due to MSE: {mse:.4f}')
                 break
 
         logger.info(f'Value optimization finished in {time.time() - value_start_time:.2f} seconds')
@@ -243,8 +258,7 @@ class PPO():
 
     def train(self, make_envs_fn:Callable, make_env_fn:Callable, gamma, 
               max_minutes, max_episodes, goal_mean_100_reward, 
-              level_pool:list, rehearsal_level_tasks:list[list],
-              evaluation_levels:list[str]):
+              pcgBase64:str, hyper_params:str, rehearsal_level_tasks:list[list]):
         training_start, last_debug_time = time.time(), float('-inf')
         self.make_envs_fn = make_envs_fn
         self.make_env_fn = make_env_fn
@@ -298,8 +312,12 @@ class PPO():
         training_time = 0
         episode = 0
         evaluation_count = 0
-        self.create_dir(level_pool)
-        self.write_statistic(level_pool, rehearsal_level_tasks, evaluation_levels)
+        self.create_dir()
+        statistics.write_hyperparameters(
+                        self.working_dir,
+                        hyper_params,
+                        pcgBase64,
+                    )
         try:
             while True:
                 try:
@@ -307,8 +325,7 @@ class PPO():
                     episode_timestep, episode_reward, episode_exploration, \
                     episode_seconds = self.episode_buffer.fill(
                         envs, self.policy_model, self.value_model, episode, 
-                        level_pool, 
-                        rehearsal_level_tasks,
+                        pcgBase64, 
                         visual=False)
                     end_time = time.time()
                     duration = end_time - start_time
@@ -324,7 +341,7 @@ class PPO():
 
                 # stats
                 evaluation_count +=1
-                evaluation_score, _ = self.evaluate(evaluation_count, self.policy_model, env, random.choice(evaluation_levels))
+                evaluation_score, _ = self.evaluate(evaluation_count, self.policy_model, env, pcgBase64)
                 logger.info('evaluation {} score {} value losses {}'.format(evaluation_count, np.round(evaluation_score, 2), np.round(value_losses, 3)))
                 
                 if evaluation_score > 1 and evaluation_score > self.best_score:
@@ -356,7 +373,7 @@ class PPO():
                     self.write_info(self.working_dir, filename, f"{value}\n")
 
                
-                if evaluation_count % 1000 == 0:
+                if evaluation_count % 100 == 0:
                     self.save_checkpoint(evaluation_count, self.policy_model, 'policy')
                     self.save_checkpoint(evaluation_count, self.value_model, 'value')
                 
@@ -445,49 +462,19 @@ class PPO():
                 return os.path.join(current_dir, f)
         return None
     
-    def create_dir(self, level_pool):
-        root_dir = 'C:/thesis_data/{}'.format(level_pool[0])
-        if not os.path.exists(root_dir):
-            logger.info('create training directory')
-            os.makedirs(root_dir)
-            
-        subfolders = [name for name in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, name))]
-        numbers = [int(name) for name in subfolders if name.isdigit()]
-        latest = -1
-        if numbers:
-            latest = max(numbers)
-            working_dir = os.path.join(root_dir, str(latest + 1))
+    def create_dir(self):
+        numeric_folders = sorted([int(f) for f in os.listdir('C:/thesis_data/training/') if f.isdigit()])
+        if len(numeric_folders) != 0:
+            latest = numeric_folders[-1]
         else:
-            working_dir = os.path.join(root_dir, '1')
-
+            latest = 0
+        
+        working_dir = f'C:/thesis_data/training/{latest + 1}'
         if not os.path.exists(working_dir):
-            logger.info('create training number directory')
+            logger.info('create training directory')
             os.makedirs(working_dir)
+            
         self.working_dir = working_dir
-
-    def write_statistic(self, level_pool, rehearsal_level_tasks, evaluation_levels):
-        statistics.write_hyperparameters(
-                        self.working_dir,
-                                self.policy_optimizer_lr,
-                                self.policy_optimization_epochs,
-                                self.policy_sample_ratio,
-                                self.policy_clip_range,
-                                self.policy_stopping_kl,
-                                self.value_optimizer_lr,
-                                self.value_optimization_epochs,
-                                self.value_clip_range,
-                                self.value_stopping_mse,
-                                self.ewc_lambda,
-                                self.max_buffer_episodes,
-                                self.max_buffer_episode_steps,
-                                self.entropy_loss_weight,
-                                self.tau,
-                                self.n_workers,
-                                self.batch_size,
-                                level_pool,
-                                evaluation_levels,
-                                rehearsal_level_tasks
-                    )
 
     def evaluate(self, evaluation_count, eval_model:CNNActor, eval_env, level:str, n_episodes=1, greedy=True, visual=True):
         rs = []

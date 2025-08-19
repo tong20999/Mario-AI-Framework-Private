@@ -9,7 +9,7 @@ from scipy.signal import lfilter
 from ppo.cnn import CNNActor, CNNCritic
 from ppo.multiprocessenv import MultiprocessEnv
 
-logger = logging.getLogger('Agent:EpisodeBuffer')
+logger = logging.getLogger('Agent:EPBUFFER')
 
 class EpisodeBuffer():
     def __init__(self,
@@ -63,28 +63,11 @@ class EpisodeBuffer():
         gc.collect()
 
     def fill(self, envs:MultiprocessEnv, policy_model:CNNActor, value_model:CNNCritic, episodeStart:int,
-             level_pool: list[str], 
-             rehearsal_level_tasks: list[list[str]],
-             mode:str = 'train',
+             pcgBase64: str,
              visual: bool = True):
-        
-        rehearsal_value =  self.n_workers // 3
-        
-        workers = self.n_workers - rehearsal_value
-        rehearsal_workers = rehearsal_value
-
-        if mode == 'ewc' or len(rehearsal_level_tasks) == 0:
-            rehearsal_workers = 0
-            workers = self.n_workers
             
-        levels_to_assign = []
-        for _ in range(rehearsal_workers):
-            task = random.choice(rehearsal_level_tasks)
-            rehearsal_level = random.choice(task)
-            levels_to_assign.append(rehearsal_level)
-        
-        for _ in range(workers):
-            levels_to_assign.append(random.choice(level_pool))
+        levels_to_assign = [pcgBase64 for _ in range(self.n_workers)] 
+
         random.shuffle(levels_to_assign)
         states = envs.reset(episodeStart, ranks=None, visual=visual, levels=levels_to_assign)
 
@@ -141,7 +124,7 @@ class EpisodeBuffer():
                         next_values[idx_truncated] = value_model(truncated_states).cpu().numpy()
 
                 idx_dones = np.flatnonzero(dones)
-                reset_levels = [random.choice(level_pool) for _ in idx_dones]
+                reset_levels = [pcgBase64 for _ in idx_dones]
                 episodeStart += dones.sum()
                 new_states = envs.reset(episodeStart, ranks=idx_dones, levels=reset_levels, visual=visual)
                 

@@ -16,7 +16,7 @@ logger = logging.getLogger('Agent:Main')
 def make_env_fn():
   # Wrap the base environment with our new frame stacker
   env = MarioGame()
-  env = MultiGridStack(env, num_stack=4, grid_keys=['gridScene', 'gridEnemies'])
+  env = MultiGridStack(env, num_stack=4)
   return env
 
 
@@ -36,54 +36,74 @@ if __name__ == '__main__':
       'goal_mean_100_reward': 25000
   }
 
-  default_pcg = "blocks=1,random_block_height=true,enemies=0,pits=0,pipes=0,width_min=20,width_max=25,timer_min=20,timer_max=25" 
-  pcg = sys.argv[1] if len(sys.argv) > 1 else default_pcg
+  default_pcg = '''{
+    "WidthMin": 10,
+    "WidthMax": 15,
+    "TimerMin": 10,
+    "TimerMax": 15,
+    "Blocks": 0,
+    "BlocksHeightOrigin": 10,
+    "BlocksHeightBound": 9,
+    "Coins": 0,
+    "CoinsHeightOrigin": 10,
+    "CoinsHeightBound": 9,
+    "Enemies": 0,
+    "EnemiesHeightOrigin": 5,
+    "EnemiesHeightBound": 14,
+    "Pits": 0,
+    "PitsMinWidth": 2,
+    "PitsMaxWidth": 5,
+    "Pipes": 0,
+    "Ramp": 0
+}'''
+  pcgBase64_string = sys.argv[1] if len(sys.argv) > 1 else base64.b64encode(default_pcg.encode('utf-8')).decode('utf-8')
 
   default_hyper_params = '''{
-  "policyOptimizerLr": 0.0001,
-  "policyOptimizationEpochs": 3,
-  "policyClipRange": 0.1,
-  "valueOptimizerLr": 0.0001,
-  "valueOptimizationEpochs": 3,
-  "ewcLambda": 0,
-  "maxBufferEpisodes": 128,
-  "maxBufferEpisodeSteps": 1000,
-  "entropyLossWeight": 0.01,
-  "nWorkers": 2,
-  "batchSize": 1024
-  }'''
-  hyperParams = json.loads(base64.b64decode(sys.argv[2]).decode("utf-8")) if len(sys.argv) > 2 else json.loads(default_hyper_params)
+  "PolicyOptimizerLr": 0.0001,
+  "PolicyOptimizationEpochs": 5,
+  "PolicyClipRange": 0.2,
+  "ValueOptimizerLr": 0.0001,
+  "ValueOptimizationEpochs": 3,
+  "EwcLambda": 0,
+  "MaxBufferEpisodes": 2,
+  "MaxBufferEpisodeSteps": 70,
+  "EntropyLossWeight": 0.01,
+  "NWorkers": 2,
+  "BatchSize": 1024
+}'''
 
+  hyperParamsString = base64.b64decode(sys.argv[2]).decode("utf-8") if len(sys.argv) > 2 else default_hyper_params
+  hyperParams = json.loads(hyperParamsString)
 
   policy_model_fn = lambda nS, nA: CNNActor(nS, nA, hidden_dims=(256,256))
   policy_model_max_grad_norm = 0.5
   policy_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
-  policy_optimizer_lr = hyperParams.get('policyOptimizerLr', 0.0005)
-  policy_optimization_epochs = hyperParams.get('policyOptimizationEpochs', 5)
+  policy_optimizer_lr = hyperParams.get('PolicyOptimizerLr')
+  policy_optimization_epochs = hyperParams.get('PolicyOptimizationEpochs')
   policy_sample_ratio = 0.8
-  policy_clip_range = hyperParams.get('policyClipRange', 0.1)
-  policy_stopping_kl = 0.02
+  policy_clip_range = hyperParams.get('PolicyClipRange')
+  policy_stopping_kl = hyperParams.get('PolicyStoppingKl')
 
   value_model_fn = lambda nS: CNNCritic(nS, hidden_dims=(256,256))
   value_model_max_grad_norm = 0.5
   value_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
-  value_optimizer_lr = hyperParams.get('valueOptimizerLr', 0.0005)
-  value_optimization_epochs = hyperParams.get('valueOptimizationEpochs', 5)
+  value_optimizer_lr = hyperParams.get('ValueOptimizerLr')
+  value_optimization_epochs = hyperParams.get('ValueOptimizationEpochs')
   value_sample_ratio = 0.8
-  value_clip_range = float('inf')
+  value_clip_range = 0.2
   value_stopping_mse = float('inf')
 
   ewc_fn = lambda policy_model, ewc_lambda: EWC(policy_model, ewc_lambda)
-  ewc_lambda = hyperParams.get('ewcLambda', 10000.0)
+  ewc_lambda = hyperParams.get('EwcLambda')
 
   episode_buffer_fn = lambda sd, g, t, nw, me, mes: EpisodeBuffer(sd, g, t, nw, me, mes)
-  max_buffer_episodes = hyperParams.get('maxBufferEpisodes', 60)
-  max_buffer_episode_steps = hyperParams.get('maxBufferEpisodeSteps', 3000)
+  max_buffer_episodes = hyperParams.get('MaxBufferEpisodes')
+  max_buffer_episode_steps = hyperParams.get('MaxBufferEpisodeSteps')
 
-  entropy_loss_weight = hyperParams.get('entropyLossWeight', 0.01)
+  entropy_loss_weight = hyperParams.get('EntropyLossWeight')
   tau = 0.97
-  n_workers = hyperParams.get('nWorkers', 2)
-  batch_size = hyperParams.get('batchSize', 64)
+  n_workers = hyperParams.get('NWorkers')
+  batch_size = hyperParams.get('BatchSize')
 
   env_name, gamma, max_minutes, \
   max_episodes, goal_mean_100_reward = environment_settings.values()
@@ -113,9 +133,6 @@ if __name__ == '__main__':
               n_workers,
               batch_size)
 
-  # level_pool = all_abs_paths
-  level_pool = [pcg]
-  
   rehearsal_level_tasks = [
     #["blocks=1,enemies=0,pits=1,pipes=0,width_min=40,width_max=40"],
     #["blocks=0,enemies=1,pits=1,pipes=0,width_min=50,width_max=50"],
@@ -123,7 +140,6 @@ if __name__ == '__main__':
   ]
 
   #evaluation_levels = ["file=./levels/evaluation/lvl-1.txt"]
-  evaluation_levels = [pcg]
   # agent.play(make_env_fn, policy_model_fn, "file=./levels/evaluation/lvl-1.txt,fps=50")
   # agent.play(make_env_fn, policy_model_fn, "blocks=1,random_block_height=true,enemies=0,pits=0,pipes=0,width_min=15,width_max=20,fps=50")
   agent.train(make_envs_fn,
@@ -132,9 +148,9 @@ if __name__ == '__main__':
               max_minutes,
               max_episodes,
               goal_mean_100_reward,
-              level_pool,
-              rehearsal_level_tasks,
-              evaluation_levels)
+              pcgBase64_string,
+              hyperParamsString,
+              rehearsal_level_tasks)
 
 
 

@@ -4,10 +4,7 @@ import java.nio.file.Paths;
 
 import engine.core.MarioGame;
 import engine.core.MarioResult;
-import reinforment.EnumBlockType;
-import reinforment.EnumEnemy;
-import reinforment.Helper;
-import reinforment.ProceduralContentGenerationLevel;
+import reinforment.*;
 
 public class PlayLevel {
     public static void printResults(MarioResult result) {
@@ -40,31 +37,31 @@ public class PlayLevel {
         // printResults(game.playGame(getLevel("../levels/original/lvl-1-basic-move-right.txt"), 200, 0));
         var level = getLevel("./levels/evaluation/lvl-1a.txt");
         var original = getLevel("./levels/evaluation/lvl-1.txt");
-        String levelFileName = "blocks=1,random_block_height=true,enemies=0,pits=0,coins=0,pipes=0,ramps=1,width_min=20,width_max=25";
+
         //testPcg(levelFileName);
 
         while (true){
-            ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel
-                    .parseLevel(levelFileName);
-            //pcgLevel.addPit(4,2, 2, 5, 1);
-            //pcgLevel.addPipe(1,2,1);
-            //pcgLevel.addBlock(1,2,1);
-            //pcgLevel.addEnemy(1,2, 2, EnumEnemy.GOOMBA);
-            //pcgLevel.addBlock(2, 2, 1);
-            pcgLevel.generate(false);
-            String mod = pcgLevel.getContent();
-            printResults(game.runGame(new agents.human.Agent(), mod, 1000, 0, true));
+//            ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel
+//                    .parseLevel(levelFileName);
+//            //pcgLevel.addPit(4,2, 2, 5, 1);
+//            //pcgLevel.addPipe(1,2,1);
+//            //pcgLevel.addBlock(1,2,1);
+//            //pcgLevel.addEnemy(1,2, 2, EnumEnemy.GOOMBA);
+//            //pcgLevel.addBlock(2, 2, 1);
+//            pcgLevel.generate(false);
+//            String mod = pcgLevel.getContent();
+            printResults(game.runGame(new agents.human.Agent(), original, 1000, 0, true));
         }
 
     }
 
-    private static void testPcg(String level) throws Exception {
-        for (int i = 0; i < 100000; i++) {
-            ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel
-                    .parseLevel(level);
-            pcgLevel.generate(false);
-            String mod = pcgLevel.getContent();
-        }
-        System.out.println("Test Done");
-    }
+//    private static void testPcg(String level) throws Exception {
+//        for (int i = 0; i < 100000; i++) {
+//            ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel
+//                    .parseLevel(level);
+//            pcgLevel.generate(false);
+//            String mod = pcgLevel.getContent();
+//        }
+//        System.out.println("Test Done");
+//    }
 }

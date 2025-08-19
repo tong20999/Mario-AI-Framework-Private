@@ -10,17 +10,18 @@ import engine.helper.SpriteType;
 import java.util.ArrayList;
 
 public class RewardSystem {
-    public static float WIN_REWARD = 0.3f;
+    public static float WIN_REWARD = 1.0f;
+    public static float TARGET_PERFECT_REWARD  = 5.0f;
     static float LOSE_PENALTY = -0.9f;
-    static float TIMEOUT_PENALTY = -0.0f;
+    public static float TIMEOUT_PENALTY = -0.5f;
     public static float BONK_REWARD = -0.01f;
     public static float KILL_REWARD = 0.1f;
     public static float BUMP_REWARD = 0.1f;
     public static float COIN_REWARD = 0.1f;
     public static float POWER_UP_REWARD = 0.1f;
     public static float DEBT_PENALTY_FACTOR = -0.12f;
-    public static float EXPLORATION_REWARD = 0.0002f;
-    public static float FLAG_PENALTY = -0.9f;
+    public static float EXPLORATION_REWARD = 0.0005f;
+    public static float FLAG_PENALTY = -0.3f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = 0;
@@ -59,32 +60,25 @@ public class RewardSystem {
                 reward += EXPLORATION_REWARD * grade;
             }
         }
-
+        var remainTask = world.getUnbumpBlocks().size() +
+                world.getUnCollectCoin().size() +
+                world.getAliveEnemies().size();
         if (world.gameStatus == GameStatus.WIN) {
-            var objectiveClear = world.isSubGoalBlockMet() && world.isSubGoalCoinMet()
-                    && world.isSubGoalCoinMet();
-            if(objectiveClear){
-                reward += WIN_REWARD;
-            } else {
-                var remainTask = world.getUnbumpBlocks().size() +
-                        world.getUnCollectCoin().size() +
-                        world.getAliveEnemies().size();
-                reward += Math.min(FLAG_PENALTY, DEBT_PENALTY_FACTOR * remainTask);
+            int totalTasksInThisLevel = world.level.getBumpableBlocks().size()
+                    + world.level.getCoins().size() + world.level.getEnemies().size();
+            float taskBonusForThisLevel = 0;
+            if (totalTasksInThisLevel > 0) {
+                taskBonusForThisLevel = (TARGET_PERFECT_REWARD - WIN_REWARD) / totalTasksInThisLevel;
             }
+            int tasksCompleted = totalTasksInThisLevel - remainTask;
+            reward += WIN_REWARD + (tasksCompleted * taskBonusForThisLevel);
         } else if (world.gameStatus == GameStatus.TIME_OUT) {
-            var debt = world.getUnbumpBlocks().size() +
-                    world.getUnCollectCoin().size() +
-                    world.getAliveEnemies().size();
-            if(debt == 0){
-                reward = 0.1f;
-            } else {
-                float penalty = Math.min(-0.90f, -0.12f * debt);
-                reward += penalty;
-            }
+            float penalty = Math.min(TIMEOUT_PENALTY, DEBT_PENALTY_FACTOR * remainTask);
+            reward += penalty;
         } else if (world.gameStatus == GameStatus.LOSE) {
             reward += LOSE_PENALTY;
         }
-        reward = Math.max(-1.0f, Math.min(1.0f, reward));
+        reward = Math.max(-15.0f, Math.min(15.0f, reward));
         return reward;
     }
 }

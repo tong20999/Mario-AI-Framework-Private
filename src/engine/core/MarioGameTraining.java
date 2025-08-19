@@ -1,12 +1,16 @@
 package engine.core;
 
 import java.awt.image.VolatileImage;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.awt.*;
+import java.util.Base64;
 import java.util.Random;
 
 import javax.swing.JFrame;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import engine.helper.EventType;
 import engine.helper.SpriteType;
 import reinforment.*;
@@ -83,7 +87,7 @@ public class MarioGameTraining {
     public float episodeReward = 0;
     int episodeTimer = 0;
     int evaluationTimer = 0;
-    int frameSkip = 5;
+    int frameSkip = 3;
     int episode = -1;
     int minTimer = 20;
     int maxTimer = 30;
@@ -91,7 +95,6 @@ public class MarioGameTraining {
 
     private int fps = 0;
     private ProceduralContentGenerationLevel pcg = null;
-
     /**
      * Create a mario game to be played
      */
@@ -155,25 +158,29 @@ public class MarioGameTraining {
         this.episode = info.getEpisode();
 
         // var levelFileName = info.getLevel();
-        var levelParameters = info.getLevel();
-        var params = Helper.parseParameter(levelParameters);
-        if (params.containsKey("fps")) {
-            this.fps = Integer.parseInt(params.getOrDefault("fps", "30"));
+
+        var b64Level = info.getLevel();
+        byte[] decodedBytes = Base64.getDecoder().decode(b64Level);
+        String jsonString = new String(decodedBytes, StandardCharsets.UTF_8);
+        Gson gson = new GsonBuilder().create();
+        PCGLevelDto pcgLevel = gson.fromJson(jsonString, PCGLevelDto.class);
+        if (pcgLevel.getFps() > 20) {
+            this.fps = pcgLevel.getFps();
         }
 
         this.rewardEvents = new ArrayList<>();
         this.evaluation = info.isEvaluation();
         this.world = new MarioWorld(this.killEvents);
         this.world.visuals = visual;
-        this.minTimer = Integer.parseInt(params.getOrDefault("timer_min", "20"));
-        this.maxTimer = Integer.parseInt(params.getOrDefault("timer_max", "30"));
+        this.minTimer = pcgLevel.getTimerMin();
+        this.maxTimer = pcgLevel.getTimerMax();
         this.timer = rand.nextInt(this.minTimer,this.maxTimer);
         this.lastMilestone = 0;
         this.lastCoinCount = 0;
         String level;
-        String file = params.get("file");
+        String file = pcgLevel.getFile();
         if (file == null) {
-            this.pcg = ProceduralContentGenerationLevel.parseLevel(levelParameters);
+            this.pcg = ProceduralContentGenerationLevel.parseLevel(pcgLevel);
             this.pcg.generate(false);
             level = this.pcg.getContent();
         } else {
@@ -298,12 +305,8 @@ public class MarioGameTraining {
         var debt = world.getUnbumpBlocks().size() +
                 world.getUnCollectCoin().size() +
                 world.getAliveEnemies().size();
-        if(debt == 0){
-            reward = 0.1f;
-        } else {
-            float penalty = Math.min(-0.90f, -0.12f * debt);
-            reward += penalty;
-        }
+        float penalty = Math.min(RewardSystem.TIMEOUT_PENALTY, RewardSystem.DEBT_PENALTY_FACTOR * debt);
+        reward += penalty;
         return reward;
     }
 

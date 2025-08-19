@@ -31,88 +31,28 @@ public class ProceduralContentGenerationLevel {
         return pcgName;
     }
 
-    private int blockCount;
-    private boolean randomBlockHeight;
-    private int enemyCount;
-    private boolean randomEnemyHeight;
-    private int coinCount;
-    private boolean randomCoinHeight;
-    private int pitCount;
-
-    private int pipeCount;
-    private int rampCount;
-    private int widthMin;
-    private int widthMax;
-
-    public static ProceduralContentGenerationLevel parseLevel(String pcgName) {
-        Map<String, String> params = Helper.parseParameter(pcgName);
-        int blockCount = Integer.parseInt(params.getOrDefault("blocks", "0"));
-        boolean randomBlockHeight = Boolean.parseBoolean(params.getOrDefault("random_block_height", "false"));
-        int enemyCount = Integer.parseInt(params.getOrDefault("enemies", "0"));
-        boolean randomEnemyHeight = Boolean.parseBoolean(params.getOrDefault("random_enemy_height", "false"));
-        int coinCount = Integer.parseInt(params.getOrDefault("coins", "0"));
-        boolean randomCoinHeight = Boolean.parseBoolean(params.getOrDefault("random_coin_height", "false"));
-        int pitCount = Integer.parseInt(params.getOrDefault("pits", "0"));
-        int pipeCount = Integer.parseInt(params.getOrDefault("pipes", "0"));
-        int rampCount = Integer.parseInt(params.getOrDefault("ramps", "0"));
-        int widthMin = Integer.parseInt(params.getOrDefault("width_min", "15"));
-        int widthMax = Integer.parseInt(params.getOrDefault("width_max", "15"));
-
-        return doParseLevel(pcgName, widthMin, widthMax, blockCount, randomBlockHeight, coinCount, randomCoinHeight, enemyCount, randomEnemyHeight, pitCount, pipeCount, rampCount);
+    public static ProceduralContentGenerationLevel parseLevel(PCGLevelDto pcgLevelDto) {
+        return doParseLevel(pcgLevelDto);
     }
 
-    private static ProceduralContentGenerationLevel doParseLevel(String pcgName, int widthMin, int widthMax, int blockCount, boolean randomBlockHeight, int coinCount, boolean randomCoinHeight, int enemyCount, boolean randomEnemyHeight, int pitCount, int pipeCount, int rampCount){
+    private static ProceduralContentGenerationLevel doParseLevel(PCGLevelDto pcgLevelDto){
 
         try{
-            ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel.randomWidth(widthMin,widthMax);
-            pcgLevel.blockCount = blockCount;
-            pcgLevel.randomBlockHeight = randomBlockHeight;
-            pcgLevel.coinCount = coinCount;
-            pcgLevel.randomCoinHeight = randomCoinHeight;
-            pcgLevel.enemyCount = enemyCount;
-            pcgLevel.randomEnemyHeight = randomEnemyHeight;
-            pcgLevel.pitCount = pitCount;
-            pcgLevel.pipeCount = pipeCount;
-            pcgLevel.rampCount = rampCount;
-            pcgLevel.widthMin = widthMin;
-            pcgLevel.widthMax = widthMax;
-            pcgLevel.pcgName = pcgName;
-            if(rampCount > 0){
-                pcgLevel.addRamp(10,2,rampCount);
-            }
-
-            if(pitCount > 0){
-                pcgLevel.addPit(10,2, 2, 5, pitCount);
-            }
-
-            if(pipeCount > 0){
-                pcgLevel.addPipe(10, 2, pipeCount);
-            }
-
-            if(enemyCount > 0){
-                pcgLevel.addEnemy(10,2, enemyCount, randomEnemyHeight);
-            }
-
-            if(blockCount > 0){
-                pcgLevel.addBlock(6, 2, blockCount, randomBlockHeight);
-            }
-
-            if(coinCount > 0){
-                pcgLevel.addCoin(10,2, coinCount, randomCoinHeight);
-            }
+            ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel.randomWidth(pcgLevelDto.getWidthMin(), pcgLevelDto.getWidthMax());
+            pcgLevel.addRamp(10,2, pcgLevelDto);
+            pcgLevel.addPit(10,2, pcgLevelDto);
+            pcgLevel.addPipe(10, 2, pcgLevelDto);
+            pcgLevel.addEnemy(10,2, pcgLevelDto);
+            pcgLevel.addBlock(6, 2, pcgLevelDto);
+            pcgLevel.addCoin(6,2, pcgLevelDto);
 
             return pcgLevel;
         }
         catch (IllegalArgumentException ex){
             System.out.println(ex.getMessage());
-            System.out.println(MessageFormat.format( "Retry with new width min {0} max {1}", widthMin * 2, widthMax * 2));
-            return doParseLevel(pcgName, widthMin * 2, widthMax * 2, blockCount, randomBlockHeight, coinCount, randomCoinHeight, enemyCount, randomEnemyHeight, pitCount, pipeCount, rampCount);
+            System.out.println(MessageFormat.format( "Retry with new width min {0} max {1}", pcgLevelDto.getWidthMin() * 2, pcgLevelDto.getWidthMax() * 2));
+            return doParseLevel(pcgLevelDto);
         }
-    }
-
-    public PcgParameters getPcgDto(){
-        return new PcgParameters(content, width, blockCount, randomBlockHeight, enemyCount,
-                randomEnemyHeight,  coinCount, randomCoinHeight, pitCount, pipeCount, rampCount, widthMin, widthMax);
     }
 
     public static ProceduralContentGenerationLevel randomWidth(int min, int max) {
@@ -284,8 +224,8 @@ public class ProceduralContentGenerationLevel {
         return levels.get(level).get(index) == c;
     }
 
-    public void addPit(int offsetFromStart, int offsetFromFlag, int minWidth, int maxWidth, int total){
-        for (int k = 0; k < total; k++) {
+    public void addPit(int offsetFromStart, int offsetFromFlag, PCGLevelDto pcgLevelDto){
+        for (int k = 0; k < pcgLevelDto.getPits(); k++) {
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = rand.nextInt(offsetFromStart, maxIndex);
             while (true){
@@ -294,7 +234,7 @@ public class ProceduralContentGenerationLevel {
                 }
                 addIndex = rand.nextInt(offsetFromStart, maxIndex);
             }
-            int width = rand.nextInt(minWidth, maxWidth + 1);
+            int width = rand.nextInt(pcgLevelDto.getPitsMinWidth(), pcgLevelDto.getPitsMaxWidth() + 1);
             for (int height = 0; height < levels.size(); height++) {
                 // Get the current level's list once and reuse it
                 ArrayList<Character> currentLevel = levels.get(height);
@@ -316,15 +256,11 @@ public class ProceduralContentGenerationLevel {
         }
     }
 
-    public void addEnemy(int offsetFromStart, int offsetFromFlag, int total, boolean randomEnemyHeight) throws IllegalArgumentException {
-        for (int k = 0; k < total; k++) {
+    public void addEnemy(int offsetFromStart, int offsetFromFlag, PCGLevelDto pcgLevelDto) throws IllegalArgumentException {
+        for (int k = 0; k < pcgLevelDto.getEnemies() ; k++) {
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
-            boolean randomHeight = randomEnemyHeight && rand.nextInt(2) == 0;
-            int height = LAN_LEVEL;
-            if(randomHeight){
-                height = rand.nextInt(LAN_LEVEL - 8, LAN_LEVEL + 1);
-            }
+            int height = rand.nextInt(pcgLevelDto.getEnemiesHeightOrigin(), pcgLevelDto.getEnemiesHeightBound());
             for (int i = 0; i < levels.size(); i++) {
                 // Get the current level's list once and reuse it
                 ArrayList<Character> currentLevel = levels.get(i);
@@ -344,20 +280,17 @@ public class ProceduralContentGenerationLevel {
         }
     }
 
-    public void addBlock(int offsetFromStart, int offsetFromFlag, int total, boolean randomBlockHeight) throws IllegalArgumentException {
+    public void addBlock(int offsetFromStart, int offsetFromFlag, PCGLevelDto pcgLevelDto) throws IllegalArgumentException {
         int k = 0;
-        while (k < total) {
+        while (k < pcgLevelDto.getBlocks()) {
             int randomBlock = rand.nextInt(0, blocks.length);
             EnumBlockType blockType = blocks[randomBlock];
-            doAddBlock(blockType, offsetFromStart, offsetFromFlag, randomBlockHeight);
-//            if((k + 1) % 4 == 0){
-//                doAddBlock(EnumBlockType.NORMAL_BLOCK, offsetFromStart, offsetFromFlag, randomBlockHeight);
-//            }
+            doAddBlock(blockType, offsetFromStart, offsetFromFlag, pcgLevelDto);
             k++;
         }
     }
 
-    private void doAddBlock(EnumBlockType blockType, int offsetFromStart, int offsetFromFlag, boolean randomBlockHeight) throws IllegalArgumentException {
+    private void doAddBlock(EnumBlockType blockType, int offsetFromStart, int offsetFromFlag, PCGLevelDto pcgLevelDto) throws IllegalArgumentException {
         int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
         int addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
         while (true){
@@ -366,17 +299,13 @@ public class ProceduralContentGenerationLevel {
             }
             addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
         }
-        int height = LAN_LEVEL - 3;
-        if(randomBlockHeight){
-            height = rand.nextInt(LAN_LEVEL - 8, LAN_LEVEL - 3 + 1);
-            if(height == 8){
-                height = 7;
-            }
+        int height = rand.nextInt(pcgLevelDto.getBlocksHeightOrigin(), pcgLevelDto.getBlocksHeightBound());
+        if(height == 8){
+            height = 7;
         }
         boolean needPlatform = height < 9;
         boolean randomNormalBlockLeft = rand.nextInt(2) == 0;
         boolean randomNormalBlockRight = rand.nextInt(2) == 0;
-        randomNormalBlockLeft = true;
         for (int i = 0; i < levels.size(); i++) {
             ArrayList<Character> currentLevel = levels.get(i);
             if (i == GROUND_1_LEVEL || i == GROUND_2_LEVEL) {
@@ -406,38 +335,47 @@ public class ProceduralContentGenerationLevel {
         }
     }
 
-    private void addCoin(int offsetFromStart, int offsetFromFlag, int total, boolean randomCoinHeight) {
-        for (int k = 0; k < total; k++) {
+    private void addCoin(int offsetFromStart, int offsetFromFlag, PCGLevelDto pcgLevelDto) {
+        for (int k = 0; k < pcgLevelDto.getCoins(); k++) {
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
-            // rand.nextInt(5, 11)
-            int height = LAN_LEVEL - 3;
-            if(randomCoinHeight){
-                height = rand.nextInt(LAN_LEVEL - 8, LAN_LEVEL - 3 + 1);
-            }
+            int height = rand.nextInt(pcgLevelDto.getCoinsHeightOrigin(), pcgLevelDto.getCoinsHeightBound());
             boolean needPlatform = height < 9;
+            boolean randomNormalBlockLeft = rand.nextInt(2) == 0;
+            boolean randomNormalBlockRight = rand.nextInt(2) == 0;
+
             for (int i = 0; i < levels.size(); i++) {
                 ArrayList<Character> currentLevel = levels.get(i);
                 if (i == GROUND_1_LEVEL || i == GROUND_2_LEVEL) {
-                    currentLevel.add(addIndex, 'X');
+                    for (int j = -1; j < 2; j++) {
+                        currentLevel.add(addIndex + j, 'X');
+                    }
                 } else if (i == height) {
+                    currentLevel.add(addIndex - 1, '-');
                     currentLevel.add(addIndex, 'o');
+                    currentLevel.add(addIndex + 1,  '-');
                 } else if(i == LAN_LEVEL - 3){
                     if(needPlatform){
+                        currentLevel.add(addIndex - 1, randomNormalBlockLeft ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
                         currentLevel.add(addIndex, EnumBlockType.NORMAL_BLOCK.getValue());
+                        currentLevel.add(addIndex + 1, randomNormalBlockRight ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
                     } else {
-                        currentLevel.add(addIndex, '-');
+                        for (int j = -1; j < 2; j++) {
+                            currentLevel.add(addIndex + j, '-');
+                        }
                     }
                 }
                 else {
-                    currentLevel.add(addIndex, '-');
+                    for (int j = -1; j < 2; j++) {
+                        currentLevel.add(addIndex + j, '-');
+                    }
                 }
             }
         }
     }
 
-    private void addRamp(int offsetFromStart, int offsetFromFlag, int total) {
-        for (int k = 0; k < total; k++) {
+    private void addRamp(int offsetFromStart, int offsetFromFlag,PCGLevelDto pcgLevelDto) {
+        for (int k = 0; k < pcgLevelDto.getRamps(); k++) {
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = rand.nextInt(offsetFromStart, maxIndex);
             while (true){
@@ -553,9 +491,9 @@ public class ProceduralContentGenerationLevel {
         }
     }
 
-    public void addPipe(int offsetFromStart, int offsetFromFlag, int total){
-        for (int k = 0; k < total; k++) {
-            int pipeHeight = rand.nextInt(2, 5);
+    public void addPipe(int offsetFromStart, int offsetFromFlag, PCGLevelDto pcgLevelDto){
+        for (int k = 0; k < pcgLevelDto.getPipes(); k++) {
+            int pipeHeight = rand.nextInt(pcgLevelDto.getPipesMinHeight(), pcgLevelDto.getPipesMaxHeight());
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = rand.nextInt(offsetFromStart, maxIndex);
 

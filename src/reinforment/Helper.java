@@ -110,23 +110,42 @@ public class Helper {
         return params;
     }
 
-    public static String getWorkingDir(String pcgName) throws IOException {
-        File folder = new File(MessageFormat.format("C:\\thesis_data\\{0}",pcgName));
+    public static Optional<File> getWorkingDir() throws IOException {
+        File directory = new File("C:/thesis_data/training");
 
-        // List subfolders and parse numeric names
-        int latestNumber = Arrays.stream(Objects.requireNonNull(folder.listFiles()))
-                .filter(File::isDirectory)
-                .map(File::getName)
-                .filter(name -> name.matches("\\d+")) // Keep only numeric folder names
-                .mapToInt(Integer::parseInt)
-                .max()
-                .orElse(-1); // Use -1 if no numeric folders
-
-        if (latestNumber != -1) {
-            return MessageFormat.format("C:\\thesis_data\\{0}\\{1}",pcgName, latestNumber);
-        } else {
-            throw new IOException("Folder not found");
+        // Crucial check: Ensure the path is a valid directory.
+        if (!directory.isDirectory()) {
+            return Optional.empty();
         }
+
+        File[] folders = directory.listFiles(File::isDirectory);
+
+        // Crucial check: Ensure the array is not null or empty.
+        if (folders == null || folders.length == 0) {
+            return Optional.empty();
+        }
+
+        // Sort the folders numerically, handling non-numeric names.
+        Arrays.sort(folders, Comparator.comparingInt((File f) -> {
+            try {
+                return Integer.parseInt(f.getName());
+            } catch (NumberFormatException e) {
+                // Use a negative value to place non-numeric folders at the end.
+                return -1;
+            }
+        }).reversed());
+
+        // Find and return the first valid numeric folder.
+        for (File folder : folders) {
+            try {
+                Integer.parseInt(folder.getName());
+                return Optional.of(folder);
+            } catch (NumberFormatException e) {
+                // Ignore non-numeric folders and continue.
+            }
+        }
+
+        return Optional.empty();
     }
 
     public static void writeToFile(String path, String value){
@@ -155,13 +174,8 @@ public class Helper {
 
 
     public static void logEvaluationResult(int evaluationEpisode, String gameStatus, ProceduralContentGenerationLevel pcg, MarioWorld world, ArrayList<RewardEvent> rewardEvents, float evaluationReward, int minTimer, int maxTimer) throws IOException {
-        String workingDir;
-        try {
-            workingDir = getWorkingDir(pcg.getPcgName());
-        } catch (IOException e) {
-            System.out.println("WARN: can't get working dir");
-            return;
-        }
+        Optional<File> optional = getWorkingDir();
+        var workingDir = optional.get().getAbsolutePath();
 
         boolean blockClear = world.getHitBlockCount() == world.level.getBumpableBlocks().size();
         boolean killClear = world.getKillCount() == world.level.getEnemies().size();
@@ -173,20 +187,10 @@ public class Helper {
             status = "PARTIAL_WIN";
         }
 
-        String pcgFilePath = MessageFormat.format(workingDir + "\\zpcg\\{0}\\pgc_{1}_{2}.txt", status, status,
-                evaluationEpisode);
-
         String resultPath = MessageFormat.format(workingDir + "\\results\\{0}\\result_{1}_{2}.json", status, status,
                 evaluationEpisode);
 
-        createDirectory(pcgFilePath);
         createDirectory(resultPath);
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(pcgFilePath, false))) {
-            writer.write(pcg.getContent());
-        } catch (IOException e) {
-            System.err.println("Error writing to file: " + e.getMessage());
-        }
 
         Map<String, Object> data = new HashMap<>();
         data.put("mode", world.mario.isLarge ? 1 : world.mario.isFire ? 2 : 0);
@@ -201,7 +205,7 @@ public class Helper {
         data.put("killClear", killClear);
         data.put("coinClear", coinClear);
         data.put("gameStatus", status);
-        data.put("pcg",pcg.getPcgDto());
+        data.put("pcg",pcg.content);
         data.put("timer", world.initTimer);
         data.put("min_timer", minTimer);
         data.put("max_timer", maxTimer);

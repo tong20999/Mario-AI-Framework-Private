@@ -5,7 +5,7 @@ import os, sys
 
 from logger import setup_logging
 
-logger = logging.getLogger('Agent:SocketEnv')
+logger = logging.getLogger('Agent')
 
 payload_size = 2048 + 512
 

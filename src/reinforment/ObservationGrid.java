@@ -47,13 +47,13 @@ public class ObservationGrid {
         return coins;
     }
 
-    public ObservationGrid(byte[] solid, byte[] semiSolid, byte[] collectible, byte[] flags,
+    public ObservationGrid(byte[] solid, byte[] semiSolid, byte[] collectible, byte[] flags, byte[] visited,
                            byte[] blocks, byte[] coins, byte[] stompableEnemy, byte[] unstompableEnemy){
         this.solid = solid;
         this.semiSolid = semiSolid;
         this.collectible = collectible;
         this.flags = flags;
-        //this.visited = visited;
+        this.visited = visited;
         this.blocks = blocks;
         this.coins = coins;
         this.stompableEnemy = stompableEnemy;
