@@ -394,6 +394,16 @@ class PPO():
                             new_entropy_loss_weight = value.get('value')
                             logger.info(f'update entropy_loss_weight from {self.entropy_loss_weight} to {new_entropy_loss_weight}')
                             self.entropy_loss_weight = new_entropy_loss_weight
+                        elif command == 'update_hyperparameters':
+                            parameter_name = value.get('name', '')
+                            new_value = value.get('value')
+                            if hasattr(self, parameter_name) and new_value is not None:
+                                if isinstance(getattr(self, parameter_name), float):
+                                    new_value = float(new_value)
+                                elif isinstance(getattr(self, parameter_name), int):
+                                    new_value = int(new_value)
+                                setattr(self, parameter_name, new_value)
+                            logger.warning(f"updated {parameter_name} to {new_value}")
                     except queue.Empty:
                         pass
         

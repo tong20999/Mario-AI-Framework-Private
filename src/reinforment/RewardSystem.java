@@ -12,16 +12,16 @@ import java.util.ArrayList;
 public class RewardSystem {
     public static float WIN_REWARD = 1.0f;
     public static float TARGET_PERFECT_REWARD  = 5.0f;
-    static float LOSE_PENALTY = -0.9f;
-    public static float TIMEOUT_PENALTY = -0.5f;
+    static float LOSE_PENALTY = -5.0f;
+    public static float TIMEOUT_PENALTY = -2.0f;
     public static float BONK_REWARD = -0.01f;
-    public static float KILL_REWARD = 0.1f;
-    public static float BUMP_REWARD = 0.1f;
-    public static float COIN_REWARD = 0.1f;
-    public static float POWER_UP_REWARD = 0.1f;
-    public static float DEBT_PENALTY_FACTOR = -0.12f;
-    public static float EXPLORATION_REWARD = 0.0005f;
-    public static float FLAG_PENALTY = -0.3f;
+    public static float KILL_REWARD = 2.0f;
+    public static float BUMP_REWARD = 2.0f;
+    public static float COIN_REWARD = 2.0f;
+    public static float POWER_UP_REWARD = 2.0f;
+    //public static float DEBT_PENALTY_FACTOR = -0.12f;
+    public static float EXPLORATION_REWARD = 0.005f;
+    //public static float FLAG_PENALTY = -0.3f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = 0;
@@ -60,10 +60,11 @@ public class RewardSystem {
                 reward += EXPLORATION_REWARD * grade;
             }
         }
-        var remainTask = world.getUnbumpBlocks().size() +
-                world.getUnCollectCoin().size() +
-                world.getAliveEnemies().size();
+
         if (world.gameStatus == GameStatus.WIN) {
+            var remainTask = world.getUnbumpBlocks().size() +
+                    world.getUnCollectCoin().size() +
+                    world.getAliveEnemies().size();
             int totalTasksInThisLevel = world.level.getBumpableBlocks().size()
                     + world.level.getCoins().size() + world.level.getEnemies().size();
             float taskBonusForThisLevel = 0;
@@ -73,8 +74,7 @@ public class RewardSystem {
             int tasksCompleted = totalTasksInThisLevel - remainTask;
             reward += WIN_REWARD + (tasksCompleted * taskBonusForThisLevel);
         } else if (world.gameStatus == GameStatus.TIME_OUT) {
-            float penalty = Math.min(TIMEOUT_PENALTY, DEBT_PENALTY_FACTOR * remainTask);
-            reward += penalty;
+            reward += TIMEOUT_PENALTY;
         } else if (world.gameStatus == GameStatus.LOSE) {
             reward += LOSE_PENALTY;
         }

@@ -292,7 +292,9 @@ public class ProceduralContentGenerationLevel {
 
     private void doAddBlock(EnumBlockType blockType, int offsetFromStart, int offsetFromFlag, PCGLevelDto pcgLevelDto) throws IllegalArgumentException {
         int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
-        int addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
+
+        int addIndex = pcgLevelDto.isSpawnBlockCenter() ? maxIndex - offsetFromFlag :
+            getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
         while (true){
             if(isValidToAdd(addIndex)){
                 break;
@@ -304,8 +306,8 @@ public class ProceduralContentGenerationLevel {
             height = 7;
         }
         boolean needPlatform = height < 9;
-        boolean randomNormalBlockLeft = rand.nextInt(2) == 0;
-        boolean randomNormalBlockRight = rand.nextInt(2) == 0;
+        boolean randomNormalBlockLeft = pcgLevelDto.isRandomNormalBlockLeft() && rand.nextInt(2) == 0;
+        boolean randomNormalBlockRight = pcgLevelDto.isRandomNormalBlockRight() && rand.nextInt(2) == 0;
         for (int i = 0; i < levels.size(); i++) {
             ArrayList<Character> currentLevel = levels.get(i);
             if (i == GROUND_1_LEVEL || i == GROUND_2_LEVEL) {

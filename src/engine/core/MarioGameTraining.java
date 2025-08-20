@@ -285,7 +285,7 @@ public class MarioGameTraining {
         }
 
         if (gameStatus.equals(GameStatus.TIME_OUT)) {
-            float timeoutReward = getTimeoutReward();
+            float timeoutReward = RewardSystem.TIMEOUT_PENALTY;
             int marioState = 0;
             if (this.world.mario.isLarge) {
                 marioState = 1;
@@ -299,15 +299,15 @@ public class MarioGameTraining {
         }
     }
 
-    private float getTimeoutReward() {
-        float reward = 0;
-        var debt = world.getUnbumpBlocks().size() +
-                world.getUnCollectCoin().size() +
-                world.getAliveEnemies().size();
-        float penalty = Math.min(RewardSystem.TIMEOUT_PENALTY, RewardSystem.DEBT_PENALTY_FACTOR * debt);
-        reward += penalty;
-        return reward;
-    }
+//    private float getTimeoutReward() {
+//        float reward = 0;
+//        var debt = world.getUnbumpBlocks().size() +
+//                world.getUnCollectCoin().size() +
+//                world.getAliveEnemies().size();
+//        float penalty = Math.min(RewardSystem.TIMEOUT_PENALTY, RewardSystem.DEBT_PENALTY_FACTOR * debt);
+//        reward += penalty;
+//        return reward;
+//    }
 
     public ArrayList<MarioEvent> miniStep(boolean[] action) throws Exception {
         long currentTime = System.currentTimeMillis();

@@ -69,8 +69,20 @@ public class PCGLevelDto {
     @SerializedName("File")
     private final String file;
 
+    @SerializedName("RandomNormalBlockLeft")
+    private final boolean randomNormalBlockLeft;
+
+    @SerializedName("RandomNormalBlockRight")
+    private final boolean randomNormalBlockRight;
+
+    @SerializedName("SpawnBlockCenter")
+    private final boolean spawnBlockCenter;
+
     public PCGLevelDto(int widthMin, int widthMax, int timerMin, int timerMax, int blocks,
-                       int blocksHeightOrigin, int blocksHeightBound, int coins, int coinsHeightOrigin,
+                       int blocksHeightOrigin, int blocksHeightBound,
+                       boolean randomNormalBlockLeft, boolean randomNormalBlockRight,
+                       boolean spawnBlockCenter,
+                       int coins, int coinsHeightOrigin,
                        int coinsHeightBound, int enemies, int enemiesHeightOrigin, int enemiesHeightBound,
                        int pits, int pitsMinWidth, int pitsMaxWidth, int pipes, int pipesMinHeight, int pipesMaxHeight,
                        int ramps, int fps, String file) {
@@ -81,6 +93,9 @@ public class PCGLevelDto {
         this.blocks = blocks;
         this.blocksHeightOrigin = blocksHeightOrigin;
         this.blocksHeightBound = blocksHeightBound;
+        this.spawnBlockCenter = spawnBlockCenter;
+        this.randomNormalBlockLeft = randomNormalBlockLeft;
+        this.randomNormalBlockRight = randomNormalBlockRight;
         this.coins = coins;
         this.coinsHeightOrigin = coinsHeightOrigin;
         this.coinsHeightBound = coinsHeightBound;
@@ -184,5 +199,17 @@ public class PCGLevelDto {
 
     public String getFile() {
         return file;
+    }
+
+    public boolean isRandomNormalBlockLeft() {
+        return randomNormalBlockLeft;
+    }
+
+    public boolean isRandomNormalBlockRight() {
+        return randomNormalBlockRight;
+    }
+
+    public boolean isSpawnBlockCenter() {
+        return spawnBlockCenter;
     }
 }
