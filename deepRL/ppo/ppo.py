@@ -100,20 +100,21 @@ class PPO():
         self.best_score = 0
         self.batch_size = batch_size
 
-        logger.info(f'policy_optimizer_lr {policy_optimizer_lr}')
-        logger.info(f'policy_sample_ratio {policy_sample_ratio}')
-        logger.info(f'policy_clip_range {policy_clip_range}')
-        logger.info(f'policy_stopping_kl {policy_stopping_kl}')
+        logger.info(f'policy_optimizer_lr {self.policy_optimizer_lr}')
+        logger.info(f'policy_sample_ratio {self.policy_sample_ratio}')
+        logger.info(f'policy_clip_range {self.policy_clip_range}')
+        logger.info(f'policy_stopping_kl {self.policy_stopping_kl}')
 
-        logger.info(f'value_optimizer_lr {value_optimizer_lr}')
-        logger.info(f'value_sample_ratio {value_sample_ratio}')
-        logger.info(f'value_clip_range {value_clip_range}')
-        logger.info(f'value_stopping_mse {value_stopping_mse}')
+        logger.info(f'value_optimizer_lr {self.value_optimizer_lr}')
+        logger.info(f'value_sample_ratio {self.value_sample_ratio}')
+        logger.info(f'value_clip_range {self.value_clip_range}')
+        logger.info(f'value_stopping_mse {self.value_stopping_mse}')
 
-        logger.info(f'max_buffer_episodes {max_buffer_episodes}')
-        logger.info(f'max_buffer_episode_steps {max_buffer_episode_steps}')
-        logger.info(f'entropy_loss_weight {entropy_loss_weight}')
-        logger.info(f'n_workers {n_workers}')
+        logger.info(f'max_buffer_episodes {self.max_buffer_episodes}')
+        logger.info(f'max_buffer_episode_steps {self.max_buffer_episode_steps}')
+        logger.info(f'entropy_loss_weight {self.entropy_loss_weight}')
+        logger.info(f'batch_size {self.batch_size}')
+        logger.info(f'n_workers {self.n_workers}')
 
     def optimize_model(self):
         # 1. Get data from the buffer (as NumPy arrays on the CPU)
@@ -258,7 +259,8 @@ class PPO():
 
     def train(self, make_envs_fn:Callable, make_env_fn:Callable, gamma, 
               max_minutes, max_episodes, goal_mean_100_reward, 
-              pcgBase64:str, hyper_params:str, rehearsal_level_tasks:list[list]):
+              pcgBase64:str, hyper_params:str, rehearsal_level_tasks:list[list], 
+              load_optimizer:bool):
         training_start, last_debug_time = time.time(), float('-inf')
         self.make_envs_fn = make_envs_fn
         self.make_env_fn = make_env_fn
@@ -286,23 +288,28 @@ class PPO():
         self.value_model = self.value_model_fn(self.nS)
         self.value_optimizer = self.value_optimizer_fn(self.value_model, self.value_optimizer_lr)
 
-        # self.ewc:EWC = self.ewc_fn(self.policy_model, self.ewc_lambda)
+        checkpoint_path = self.find_model_file_path('checkpoint_')
+        if checkpoint_path is not None:
+            checkpoint = torch.load(checkpoint_path)
+            logger.info("Loading model states from checkpoint.")
+            self.policy_model.load_state_dict(checkpoint['policy_model_state_dict'])
+            self.value_model.load_state_dict(checkpoint['value_model_state_dict'])
+            if load_optimizer:
+                logger.info("Loading optimizer states from checkpoint.")
+                self.policy_optimizer.load_state_dict(checkpoint['policy_optimizer_state_dict'])
+                self.value_optimizer.load_state_dict(checkpoint['value_optimizer_state_dict'])
+            else:
+                logger.info("Using a fresh optimizer for fine-tuning.")
 
-        policy_model_state = self.find_model_file_path('model.policy')
-        if policy_model_state is not None:
-            self.policy_model.load_state_dict(torch.load(policy_model_state, weights_only=True))
-            self.policy_model.eval()
+            self.policy_model.train()
+            self.value_model.train()
 
-        value_model_state = self.find_model_file_path('model.value')
-        if value_model_state is not None:
-            self.value_model.load_state_dict(torch.load(value_model_state, weights_only=True))
-            self.value_model.eval()
-
-        ewc_state_path = self.find_model_file_path('model.ewc_state')
-        if ewc_state_path is not None:
-            ewc_state = torch.load(ewc_state_path, map_location=self.policy_model.device, weights_only=True)
-            #self.ewc.fisher_matrix = ewc_state.get('fisher', self.ewc.create_empty_clone())
-            #self.ewc.optimal_params = ewc_state.get('params', {}) # Params can start as empty dict
+        self.create_dir()
+        statistics.write_hyperparameters(
+                        self.working_dir,
+                        hyper_params,
+                        pcgBase64,
+                    )
 
         self.episode_buffer:EpisodeBuffer = self.episode_buffer_fn(self.nS, self.gamma, self.tau,
                                                      self.n_workers, 
@@ -312,12 +319,7 @@ class PPO():
         training_time = 0
         episode = 0
         evaluation_count = 0
-        self.create_dir()
-        statistics.write_hyperparameters(
-                        self.working_dir,
-                        hyper_params,
-                        pcgBase64,
-                    )
+
         try:
             while True:
                 try:
@@ -343,11 +345,6 @@ class PPO():
                 evaluation_count +=1
                 evaluation_score, _ = self.evaluate(evaluation_count, self.policy_model, env, pcgBase64)
                 logger.info('evaluation {} score {} value losses {}'.format(evaluation_count, np.round(evaluation_score, 2), np.round(value_losses, 3)))
-                
-                if evaluation_score > 1 and evaluation_score > self.best_score:
-                    self.best_score = evaluation_score
-                    self.save_checkpoint('best', self.policy_model, 'policy')
-                    self.save_checkpoint('best', self.value_model, 'value')
 
                 training_time += episode_seconds.sum()
                 wallclock_time = time.time() - training_start
@@ -374,8 +371,7 @@ class PPO():
 
                
                 if evaluation_count % 100 == 0:
-                    self.save_checkpoint(evaluation_count, self.policy_model, 'policy')
-                    self.save_checkpoint(evaluation_count, self.value_model, 'value')
+                    self.save_checkpoint(evaluation_count)
                 
                 episode += n_ep_batch
                 if not self.received_data_queue.empty():
@@ -386,10 +382,8 @@ class PPO():
                             logger.info(f'shutdown receive stop training ')
                             break
                         if command == 'save_model':
-                            logger.info('saving policy model {}'.format(evaluation_count))
-                            self.save_checkpoint(evaluation_count, self.policy_model, 'policy')
-                            logger.info('saving value model {}'.format(evaluation_count))
-                            self.save_checkpoint(evaluation_count, self.value_model, 'value')
+                            logger.info('saving checkpoint {}'.format(evaluation_count))
+                            self.save_checkpoint(evaluation_count)
                         elif command == 'update_entropy_loss_weight':
                             new_entropy_loss_weight = value.get('value')
                             logger.info(f'update entropy_loss_weight from {self.entropy_loss_weight} to {new_entropy_loss_weight}')
@@ -419,12 +413,8 @@ class PPO():
                 envs.close()
                 del envs
             if evaluation_count > 0:
-                logger.info('saving policy model {}'.format(evaluation_count))
-                self.save_checkpoint(evaluation_count, self.policy_model, 'policy')
-                logger.info('saving value model {}'.format(evaluation_count))
-                self.save_checkpoint(evaluation_count, self.value_model, 'value')
-                #logger.info('saving ewc model {}'.format(evaluation_count))
-                #self.save_ewc(level_pool, rehearsal_level_tasks)
+                logger.info('saving checkpoint {}'.format(evaluation_count))
+                self.save_checkpoint(evaluation_count)
 
     def handle_client(self, conn:socket.socket, addr):
         try:
@@ -505,49 +495,15 @@ class PPO():
             except KeyboardInterrupt:
                 pass
         return np.mean(rs), np.std(rs)
-
-    # def finish_task(self, level_pool: list, rehearsal_level_tasks: list[list]):
-    #     temp_buffer:EpisodeBuffer = self.episode_buffer_fn(
-    #         self.nS,
-    #         self.gamma,
-    #         self.tau,
-    #         self.n_workers,
-    #         self.max_buffer_episodes,
-    #         self.max_buffer_episode_steps
-    #     )
-        
-    #     envs = self.make_envs_fn(self.make_env_fn, self.n_workers)
-    #     temp_buffer.fill(envs, self.policy_model, self.value_model, 
-    #                     episodeStart=0,
-    #                     level_pool=level_pool,
-    #                     rehearsal_level_tasks=rehearsal_level_tasks,
-    #                     mode='ewc',
-    #                     visual=False)
-    #     envs.close()
-        
-    #     states, actions, _, _, _ = temp_buffer.get_stacks()
-        
-    #     dataset = CustomDictDataset(
-    #         states_dict=states, 
-    #         actions_tensor=actions
-    #     )
-        
-        #self.ewc.register_task(dataset)
-
-    def save_checkpoint(self, evaluation_idx, model, suffix):
-            torch.save(model.state_dict(), 
-                            os.path.join(self.working_dir, 'model.{}.{}.tar'.format(suffix, evaluation_idx)))
             
-    # def save_ewc(self, level_pool, rehearsal_level_tasks):
-    #     self.finish_task(level_pool=level_pool, rehearsal_level_tasks=rehearsal_level_tasks)
-
-    #     ewc_state = {
-    #         'fisher': self.ewc.fisher_matrix,
-    #         'params': self.ewc.optimal_params
-    #     }
-        
-    #     save_path = os.path.join(self.working_dir, 'model.ewc_state.tar')
-    #     torch.save(ewc_state, save_path)
+    def save_checkpoint(self, evaluation_idx: str):
+        checkpoint_path = os.path.join(self.working_dir, f'checkpoint_{evaluation_idx}.tar')
+        torch.save({
+            'policy_model_state_dict': self.policy_model.state_dict(),
+            'value_model_state_dict': self.value_model.state_dict(),
+            'policy_optimizer_state_dict': self.policy_optimizer.state_dict(),
+            'value_optimizer_state_dict': self.value_optimizer.state_dict(),
+        }, checkpoint_path)
 
     def play(self, make_env_fn, policy_model_fn, level):
             env = make_env_fn()
