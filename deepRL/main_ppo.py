@@ -134,7 +134,8 @@ if __name__ == '__main__':
               entropy_loss_weight,
               tau,
               n_workers,
-              batch_size)
+              batch_size,
+              load_optimizer)
 
   rehearsal_level_tasks = [
     #["blocks=1,enemies=0,pits=1,pipes=0,width_min=40,width_max=40"],
@@ -153,8 +154,7 @@ if __name__ == '__main__':
               goal_mean_100_reward,
               pcgBase64_string,
               hyperParamsString,
-              rehearsal_level_tasks,
-              load_optimizer)
+              rehearsal_level_tasks)
 
 
 

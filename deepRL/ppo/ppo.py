@@ -63,7 +63,8 @@ class PPO():
                  entropy_loss_weight,
                  tau,
                  n_workers,
-                 batch_size):
+                 batch_size, 
+                 load_optimizer:bool):
         assert n_workers > 1
         assert max_buffer_episodes >= n_workers
         setup_logging(logging.INFO)
@@ -99,6 +100,7 @@ class PPO():
         self.received_data_queue: queue.Queue[Tuple[str, Dict[str, Any]]] = queue.Queue()
         self.best_score = 0
         self.batch_size = batch_size
+        self.load_optimizer = load_optimizer
 
         logger.info(f'policy_optimizer_lr {self.policy_optimizer_lr}')
         logger.info(f'policy_sample_ratio {self.policy_sample_ratio}')
@@ -115,6 +117,7 @@ class PPO():
         logger.info(f'entropy_loss_weight {self.entropy_loss_weight}')
         logger.info(f'batch_size {self.batch_size}')
         logger.info(f'n_workers {self.n_workers}')
+        logger.info(f'load_optimizer {self.load_optimizer}')
 
     def optimize_model(self):
         # 1. Get data from the buffer (as NumPy arrays on the CPU)
@@ -259,8 +262,7 @@ class PPO():
 
     def train(self, make_envs_fn:Callable, make_env_fn:Callable, gamma, 
               max_minutes, max_episodes, goal_mean_100_reward, 
-              pcgBase64:str, hyper_params:str, rehearsal_level_tasks:list[list], 
-              load_optimizer:bool):
+              pcgBase64:str, hyper_params:str, rehearsal_level_tasks:list[list]):
         training_start, last_debug_time = time.time(), float('-inf')
         self.make_envs_fn = make_envs_fn
         self.make_env_fn = make_env_fn
@@ -294,7 +296,7 @@ class PPO():
             logger.info("Loading model states from checkpoint.")
             self.policy_model.load_state_dict(checkpoint['policy_model_state_dict'])
             self.value_model.load_state_dict(checkpoint['value_model_state_dict'])
-            if load_optimizer:
+            if self.load_optimizer:
                 logger.info("Loading optimizer states from checkpoint.")
                 self.policy_optimizer.load_state_dict(checkpoint['policy_optimizer_state_dict'])
                 self.value_optimizer.load_state_dict(checkpoint['value_optimizer_state_dict'])
