@@ -70,7 +70,7 @@ if __name__ == '__main__':
   "EntropyLossWeight": 0.01,
   "NWorkers": 2,
   "BatchSize": 1024,
-  "LoadOptimizer": false
+  "LoadOptimizer": true
 }'''
 
   hyperParamsString = base64.b64decode(sys.argv[2]).decode("utf-8") if len(sys.argv) > 2 else default_hyper_params
