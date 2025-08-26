@@ -95,6 +95,7 @@ public class MarioGameTraining {
 
     private int fps = 0;
     private ProceduralContentGenerationLevel pcg = null;
+
     /**
      * Create a mario game to be played
      */
@@ -174,7 +175,7 @@ public class MarioGameTraining {
         this.world.visuals = visual;
         this.minTimer = pcgLevel.getTimerMin();
         this.maxTimer = pcgLevel.getTimerMax();
-        this.timer = rand.nextInt(this.minTimer,this.maxTimer);
+        this.timer = rand.nextInt(this.minTimer, this.maxTimer);
         this.lastMilestone = 0;
         this.lastCoinCount = 0;
         String level;
@@ -213,7 +214,14 @@ public class MarioGameTraining {
         return State.toByte(new MarioForwardModel(this.world.clone()));
     }
 
+    private int idleCount = 0;
+
     public byte[] step(boolean[] action) throws Exception {
+
+        int beforePositionX = (int) (this.world.mario.x / 16);
+
+        boolean isIdlePenalty = false;
+
         miniStepEvents.clear();
         for (int i = 0; i < this.frameSkip; i++) {
             var events = miniStep(action);
@@ -221,10 +229,26 @@ public class MarioGameTraining {
         }
         var nextWorldState = this.world.clone();
         var nextState = new MarioForwardModel(nextWorldState, miniStepEvents);
+
+        int afterPositionX = (int) (this.world.mario.x / 16);
+        if (beforePositionX == afterPositionX) {
+            idleCount++;
+        } else {
+            idleCount = 0;
+        }
+
         float reward = RewardSystem.getReward(this.world, miniStepEvents);
 
+        isIdlePenalty = idleCount == 3;
+        if (isIdlePenalty) {
+            idleCount = 0;
+            reward += RewardSystem.IDLE_PENALTY;
+        }
+
         if (this.evaluation) {
-            logRewardEvent(miniStepEvents, this.world.gameStatus);
+            ArrayList<RewardEvent> miniStepRewardEvents = RewardSystem.logRewardEvent(this.world, miniStepEvents,
+                    this.world.gameStatus, isIdlePenalty);
+            rewardEvents.addAll(miniStepRewardEvents);
             this.evaluationReward += reward;
             this.evaluationTimer = this.world.currentTimer;
         } else {
@@ -232,7 +256,7 @@ public class MarioGameTraining {
             this.episodeTimer = this.world.currentTimer;
         }
 
-        if(this.world.gameStatus != GameStatus.RUNNING && this.evaluation && this.fps < 30){
+        if (this.world.gameStatus != GameStatus.RUNNING && this.evaluation && this.fps < 30) {
 
             Helper.logEvaluationResult(this.episode, this.world.gameStatus.toString(),
                     this.pcg, this.world, this.rewardEvents, this.evaluationReward, this.minTimer, this.maxTimer);
@@ -243,78 +267,23 @@ public class MarioGameTraining {
                 false);
     }
 
-    private void logRewardEvent(ArrayList<MarioEvent> miniStepEvents, GameStatus gameStatus) {
-        for (MarioEvent e : miniStepEvents) {
-            if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
-                    e.getEventType() == EventType.FIRE_KILL.getValue() ||
-                    e.getEventType() == EventType.SHELL_KILL.getValue() ||
-                    e.getEventType() == EventType.BUMP_KILL.getValue() ||
-                    e.getEventType() == EventType.FALL_KILL.getValue()) {
-                rewardEvents.add(new RewardEvent(RewardSystem.KILL_REWARD, e));
-            } else if (e.getEventType() == EventType.COLLECT.getValue()
-                    && e.getEventParam() == SpriteType.FIRE_FLOWER.getValue()) {
-                rewardEvents.add(new RewardEvent(RewardSystem.POWER_UP_REWARD, e));
-            } else if (e.getEventType() == EventType.COLLECT.getValue()
-                    && e.getEventParam() == SpriteType.MUSHROOM.getValue()) {
-                rewardEvents.add(new RewardEvent(RewardSystem.POWER_UP_REWARD, e));
-            } else if (e.getEventType() == EventType.BUMP.getValue() && e.getEventParam() == MarioForwardModel.OBS_QUESTION_BLOCK) {
-                rewardEvents.add(new RewardEvent(RewardSystem.BUMP_REWARD, e));
-            } else if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == 15) { // COIN
-                rewardEvents.add(new RewardEvent(RewardSystem.COIN_REWARD, e));
-            } else if(e.getEventType() == EventType.EXPLORER.getValue()){
-                var tileY = (int)(e.getMarioY()/16f);
-                var grade = tileY < 6 ? 2f : tileY < 10 ? 1.5f : 1f;
-                rewardEvents.add(new RewardEvent(RewardSystem.EXPLORATION_REWARD * grade, e));
-            } else if(e.getEventType() == EventType.WIN.getValue()){
-                var remainTask = world.getUnbumpBlocks().size() +
-                        world.getUnCollectCoin().size() +
-                        world.getAliveEnemies().size();
-
-                int totalTasksInThisLevel = world.level.getBumpableBlocks().size()
-                        + world.level.getCoins().size() + world.level.getEnemies().size();
-                float taskBonusForThisLevel = 0;
-                if (totalTasksInThisLevel > 0) {
-                    taskBonusForThisLevel = (RewardSystem.TARGET_PERFECT_REWARD - RewardSystem.WIN_REWARD) / totalTasksInThisLevel;
-                }
-                int tasksCompleted = totalTasksInThisLevel - remainTask;
-                float winReward = RewardSystem.WIN_REWARD + (tasksCompleted * taskBonusForThisLevel);
-                rewardEvents.add(new RewardEvent(winReward, e));
-            } else {
-                rewardEvents.add(new RewardEvent(0, e));
-            }
-        }
-
-        if (gameStatus.equals(GameStatus.TIME_OUT)) {
-            float timeoutReward = RewardSystem.TIMEOUT_PENALTY;
-            int marioState = 0;
-            if (this.world.mario.isLarge) {
-                marioState = 1;
-            }
-            if (this.world.mario.isFire) {
-                marioState = 2;
-            }
-            rewardEvents.add(new RewardEvent(timeoutReward,
-                    new MarioEvent(EventType.TIME_OUT, 0, this.world.mario.x,
-                            this.world.mario.y, marioState, this.world.currentTick)));
-        }
-    }
-
-//    private float getTimeoutReward() {
-//        float reward = 0;
-//        var debt = world.getUnbumpBlocks().size() +
-//                world.getUnCollectCoin().size() +
-//                world.getAliveEnemies().size();
-//        float penalty = Math.min(RewardSystem.TIMEOUT_PENALTY, RewardSystem.DEBT_PENALTY_FACTOR * debt);
-//        reward += penalty;
-//        return reward;
-//    }
+    // private float getTimeoutReward() {
+    // float reward = 0;
+    // var debt = world.getUnbumpBlocks().size() +
+    // world.getUnCollectCoin().size() +
+    // world.getAliveEnemies().size();
+    // float penalty = Math.min(RewardSystem.TIMEOUT_PENALTY,
+    // RewardSystem.DEBT_PENALTY_FACTOR * debt);
+    // reward += penalty;
+    // return reward;
+    // }
 
     public ArrayList<MarioEvent> miniStep(boolean[] action) throws Exception {
         long currentTime = System.currentTimeMillis();
         this.world.update(action);
         if (visual) {
             int v = renderTarget.validate(render.getGraphicsConfiguration());
-            if(v != VolatileImage.IMAGE_OK && v != VolatileImage.IMAGE_RESTORED){
+            if (v != VolatileImage.IMAGE_OK && v != VolatileImage.IMAGE_RESTORED) {
                 renderTarget = this.render.createVolatileImage(MarioGame.width, MarioGame.height);
                 backBuffer = this.render.getGraphics();
                 currentBuffer = renderTarget.getGraphics();

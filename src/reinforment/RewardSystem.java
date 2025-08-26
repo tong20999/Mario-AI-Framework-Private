@@ -10,18 +10,19 @@ import engine.helper.SpriteType;
 import java.util.ArrayList;
 
 public class RewardSystem {
-    public static float WIN_REWARD = 1.0f;
-    public static float TARGET_PERFECT_REWARD  = 5.0f;
-    static float LOSE_PENALTY = -5.0f;
-    public static float TIMEOUT_PENALTY = -2.0f;
-    public static float BONK_REWARD = -0.01f;
-    public static float KILL_REWARD = 2.0f;
-    public static float BUMP_REWARD = 2.0f;
-    public static float COIN_REWARD = 2.0f;
-    public static float POWER_UP_REWARD = 2.0f;
+    private final static float WIN_REWARD = 20.0f;
+    private final static float OBJECTIVE_CLEAR = 5.0f;
+    private final static float LOSE_PENALTY = -5.0f;
+    private final static float TIMEOUT_PENALTY = -5.0f;
+    private final static float BONK_REWARD = -0.01f;
+    private final static float KILL_REWARD = 2.0f;
+    private final static float BUMP_REWARD = 2.0f;
+    private final static float COIN_REWARD = 2.0f;
+    private static final float POWER_UP_REWARD = 2.0f;
     //public static float DEBT_PENALTY_FACTOR = -0.12f;
-    public static float EXPLORATION_REWARD = 0.005f;
+    private static final float EXPLORATION_REWARD = 0.02f;
     //public static float FLAG_PENALTY = -0.3f;
+    public static final float IDLE_PENALTY = -2.0f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = 0;
@@ -59,26 +60,102 @@ public class RewardSystem {
                 var grade = tileY < 6 ? 2f : tileY < 10 ? 1.5f : 1f;
                 reward += EXPLORATION_REWARD * grade;
             }
+
+            if (e.getEventType() == EventType.OBJECTIVE_KILL_CLEAR.getValue()){
+                reward += OBJECTIVE_CLEAR;
+            }
+
+            if (e.getEventType() == EventType.OBJECTIVE_BLOCK_CLEAR.getValue()){
+                reward += OBJECTIVE_CLEAR;
+            }
+
+            if (e.getEventType() == EventType.OBJECTIVE_COIN_CLEAR.getValue()){
+                reward += OBJECTIVE_CLEAR;
+            }
         }
 
         if (world.gameStatus == GameStatus.WIN) {
-            var remainTask = world.getUnbumpBlocks().size() +
-                    world.getUnCollectCoin().size() +
-                    world.getAliveEnemies().size();
-            int totalTasksInThisLevel = world.level.getBumpableBlocks().size()
-                    + world.level.getCoins().size() + world.level.getEnemies().size();
-            float taskBonusForThisLevel = 0;
-            if (totalTasksInThisLevel > 0) {
-                taskBonusForThisLevel = (TARGET_PERFECT_REWARD - WIN_REWARD) / totalTasksInThisLevel;
-            }
-            int tasksCompleted = totalTasksInThisLevel - remainTask;
-            reward += WIN_REWARD + (tasksCompleted * taskBonusForThisLevel);
+            int remainTask = world.getUnbumpBlocks().size() + world.getUnCollectCoin().size()
+                    + world.getAliveEnemies().size();
+            reward += remainTask == 0 ? WIN_REWARD : 0;
         } else if (world.gameStatus == GameStatus.TIME_OUT) {
             reward += TIMEOUT_PENALTY;
         } else if (world.gameStatus == GameStatus.LOSE) {
             reward += LOSE_PENALTY;
         }
-        reward = Math.max(-15.0f, Math.min(15.0f, reward));
+        reward = Math.max(-25.0f, Math.min(25.0f, reward));
         return reward;
+    }
+
+    public static  ArrayList<RewardEvent> logRewardEvent(MarioWorld world, ArrayList<MarioEvent> miniStepEvents, GameStatus gameStatus, boolean isIdlePenalty) {
+        ArrayList<RewardEvent> rewardEvents = new ArrayList<>();
+        for (MarioEvent e : miniStepEvents) {
+            if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
+                    e.getEventType() == EventType.FIRE_KILL.getValue() ||
+                    e.getEventType() == EventType.SHELL_KILL.getValue() ||
+                    e.getEventType() == EventType.BUMP_KILL.getValue() ||
+                    e.getEventType() == EventType.FALL_KILL.getValue()) {
+                rewardEvents.add(new RewardEvent(RewardSystem.KILL_REWARD, e));
+            } else if (e.getEventType() == EventType.COLLECT.getValue()
+                    && e.getEventParam() == SpriteType.FIRE_FLOWER.getValue()) {
+                rewardEvents.add(new RewardEvent(RewardSystem.POWER_UP_REWARD, e));
+            } else if (e.getEventType() == EventType.COLLECT.getValue()
+                    && e.getEventParam() == SpriteType.MUSHROOM.getValue()) {
+                rewardEvents.add(new RewardEvent(RewardSystem.POWER_UP_REWARD, e));
+            } else if (e.getEventType() == EventType.BUMP.getValue() && e.getEventParam() == MarioForwardModel.OBS_QUESTION_BLOCK) {
+                rewardEvents.add(new RewardEvent(RewardSystem.BUMP_REWARD, e));
+            } else if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == 15) { // COIN
+                rewardEvents.add(new RewardEvent(RewardSystem.COIN_REWARD, e));
+            } else if(e.getEventType() == EventType.EXPLORER.getValue()){
+                var tileY = (int)(e.getMarioY()/16f);
+                var grade = tileY < 6 ? 2f : tileY < 10 ? 1.5f : 1f;
+                rewardEvents.add(new RewardEvent(RewardSystem.EXPLORATION_REWARD * grade, e));
+            } else if(e.getEventType() == EventType.WIN.getValue()){
+                int remainTask = world.getUnbumpBlocks().size() + world.getUnCollectCoin().size()
+                        + world.getAliveEnemies().size();
+                float winReward = remainTask == 0 ? WIN_REWARD : 0;
+                rewardEvents.add(new RewardEvent(winReward, e));
+            } else if (e.getEventType() == EventType.OBJECTIVE_KILL_CLEAR.getValue()){
+                rewardEvents.add(new RewardEvent(RewardSystem.OBJECTIVE_CLEAR, e));
+            } else if (e.getEventType() == EventType.OBJECTIVE_BLOCK_CLEAR.getValue()){
+                rewardEvents.add(new RewardEvent(RewardSystem.OBJECTIVE_CLEAR, e));
+            } else if (e.getEventType() == EventType.OBJECTIVE_COIN_CLEAR.getValue()){
+                rewardEvents.add(new RewardEvent(RewardSystem.OBJECTIVE_CLEAR, e));
+            } else if(e.getEventType() == EventType.LOSE.getValue()){
+                rewardEvents.add(new RewardEvent(RewardSystem.LOSE_PENALTY, e));
+            }
+            else {
+                rewardEvents.add(new RewardEvent(0, e));
+            }
+        }
+
+        if(isIdlePenalty){
+            int marioState = 0;
+            if (world.mario.isLarge) {
+                marioState = 1;
+            }
+            if (world.mario.isFire) {
+                marioState = 2;
+            }
+
+            rewardEvents.add(new RewardEvent(RewardSystem.IDLE_PENALTY,
+                    new MarioEvent(EventType.IDLE, 0, world.mario.x,
+                            world.mario.y, marioState, world.currentTick)));
+        }
+
+        if (gameStatus.equals(GameStatus.TIME_OUT)) {
+            int marioState = 0;
+            if (world.mario.isLarge) {
+                marioState = 1;
+            }
+            if (world.mario.isFire) {
+                marioState = 2;
+            }
+            rewardEvents.add(new RewardEvent(RewardSystem.TIMEOUT_PENALTY,
+                    new MarioEvent(EventType.TIME_OUT, 0, world.mario.x,
+                            world.mario.y, marioState, world.currentTick)));
+        }
+
+        return rewardEvents;
     }
 }

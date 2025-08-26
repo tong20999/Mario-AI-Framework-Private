@@ -168,6 +168,9 @@ public class Mario extends MarioSprite {
             this.world.collectCoin++;
             this.collectCoin();
             this.world.getUnCollectCoin().removeIf(c -> c.getX() == xTile && c.getY() == yTile);
+            if(world.getUnCollectCoin().isEmpty() && !world.level.getCoins().isEmpty()){
+                this.world.addEvent(EventType.OBJECTIVE_COIN_CLEAR, 0);
+            }
             world.level.setBlock(xTile, yTile, 0);
         }
         if (blocking && ya < 0) {

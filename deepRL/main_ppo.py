@@ -91,7 +91,7 @@ if __name__ == '__main__':
   value_optimizer_lr = hyperParams.get('ValueOptimizerLr')
   value_optimization_epochs = hyperParams.get('ValueOptimizationEpochs')
   value_sample_ratio = 0.8
-  value_clip_range = 0.2
+  value_clip_range = hyperParams.get('ValueClipRange')
   value_stopping_mse = float('inf')
 
   ewc_fn = lambda policy_model, ewc_lambda: EWC(policy_model, ewc_lambda)

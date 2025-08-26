@@ -37,6 +37,23 @@ EPS = 1e-6
 
 fig, ax = plt.subplots()
 
+hyper_params_mapper = {
+    "policyOptimizerLr": "policy_optimizer_lr",
+    "policyOptimizationEpochs": "policy_optimization_epochs",
+    "policyClipRange": "policy_clip_range",
+    "policyStoppingKl": "policy_stopping_kl",
+    "valueOptimizerLr": "value_optimizer_lr",
+    "valueOptimizationEpochs": "value_optimization_epochs",
+    "valueClipRange": "value_clip_range",
+    "ewcLambda": "ewc_lambda",
+    "maxBufferEpisodes": "max_buffer_episodes",
+    "maxBufferEpisodeSteps": "max_buffer_episode_steps",
+    "entropyLossWeight": "entropy_loss_weight",
+    "nWorkers": "n_workers",
+    "batchSize": "batch_size",
+    "loadOptimizer": "load_optimizer",
+}
+
 class PPO():
     def __init__(self, 
                  policy_model_fn, 
@@ -126,14 +143,19 @@ class PPO():
         device = self.device
         n_samples = len(actions_np)
 
+        returns_mean = np.mean(returns_np)
+        returns_std = np.std(returns_np)
+        returns_np = (returns_np - returns_mean) / (returns_std + EPS)
+
+        # --- METRIC TRACKING ---
+        policy_losses, value_losses, entropy_losses = [], [], []
+        entropies, values_, kls = [], [], []
+
         # 2. Normalize GAE on the CPU once
         gaes_mean = np.mean(gaes_np)
         gaes_std = np.std(gaes_np)
         gaes_np = (gaes_np - gaes_mean) / (gaes_std + EPS)
 
-        # --- METRIC TRACKING ---
-        policy_losses, value_losses, entropy_losses = [], [], []
-        entropies, values_, kls, mses = [], [], [], []
 
         logger.info(f'Starting model optimization with {n_samples} samples...')
         start_optimize_time = time.time()
@@ -243,7 +265,6 @@ class PPO():
                 # 4. CRITICAL: Detach MSE from graph before check
                 with torch.no_grad():
                     mse = (returns_batch - values_pred).pow(2).mul(0.5).mean().item()
-                mses.append(mse)
 
                 if hasattr(self, 'value_stopping_mse') and mse > self.value_stopping_mse:
                     early_stop = True
@@ -258,7 +279,7 @@ class PPO():
         
         # Return mean of collected metrics
         return (np.mean(policy_losses), np.mean(value_losses), np.mean(entropy_losses), 
-                np.mean(entropies), np.mean(values_), np.mean(kls), np.mean(mses))
+                np.mean(entropies), np.mean(values_), np.mean(kls), gaes_mean)
 
     def train(self, make_envs_fn:Callable, make_env_fn:Callable, gamma, 
               max_minutes, max_episodes, goal_mean_100_reward, 
@@ -340,7 +361,7 @@ class PPO():
                         shutil.rmtree(self.working_dir)
                 
                 n_ep_batch = len(episode_timestep)
-                policy_losses, value_losses, entropy_losses, entropies, values, kls, mses = self.optimize_model()
+                policy_losses, value_losses, entropy_losses, entropies, values, kls, gaes_mean = self.optimize_model()
                 self.episode_buffer.clear()
 
                 # stats
@@ -365,14 +386,14 @@ class PPO():
                     "entropy.txt": entropies,
                     "values.txt": values,
                     "kls.txt": kls,
-                    "mses.txt": mses
+                    "gaes.txt": gaes_mean
                 }
 
                 for filename, value in stats_to_write.items():
                     self.write_info(self.working_dir, filename, f"{value}\n")
 
                
-                if evaluation_count % 100 == 0:
+                if evaluation_count % 50 == 0:
                     self.save_checkpoint(evaluation_count)
                 
                 episode += n_ep_batch
@@ -391,15 +412,18 @@ class PPO():
                             logger.info(f'update entropy_loss_weight from {self.entropy_loss_weight} to {new_entropy_loss_weight}')
                             self.entropy_loss_weight = new_entropy_loss_weight
                         elif command == 'update_hyperparameters':
-                            parameter_name = value.get('name', '')
+                            parameterName = value.get('name', '')
+                            parameter_name = hyper_params_mapper.get(parameterName)
                             new_value = value.get('value')
-                            if hasattr(self, parameter_name) and new_value is not None:
+                            if parameter_name is not None and hasattr(self, parameter_name) and new_value is not None:
                                 if isinstance(getattr(self, parameter_name), float):
                                     new_value = float(new_value)
                                 elif isinstance(getattr(self, parameter_name), int):
                                     new_value = int(new_value)
                                 setattr(self, parameter_name, new_value)
-                            logger.warning(f"updated {parameter_name} to {new_value}")
+                                logger.warning(f"updated {parameter_name} to {new_value}")
+                            else:
+                                logger.warning(f"error update variable get {parameterName} to {new_value}")
                     except queue.Empty:
                         pass
         
@@ -498,7 +522,7 @@ class PPO():
                 pass
         return np.mean(rs), np.std(rs)
             
-    def save_checkpoint(self, evaluation_idx: str):
+    def save_checkpoint(self, evaluation_idx: int):
         checkpoint_path = os.path.join(self.working_dir, f'checkpoint_{evaluation_idx}.tar')
         torch.save({
             'policy_model_state_dict': self.policy_model.state_dict(),

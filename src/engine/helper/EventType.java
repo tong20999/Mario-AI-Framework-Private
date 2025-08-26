@@ -20,7 +20,11 @@ public enum EventType {
     EXPLORER(17),
     BREAK(18),
     BONK(19),
-    TIME_OUT(20);
+    TIME_OUT(20),
+    IDLE(21),
+    OBJECTIVE_KILL_CLEAR(22),
+    OBJECTIVE_COIN_CLEAR(23),
+    OBJECTIVE_BLOCK_CLEAR(24);
 
     private final int value;
 

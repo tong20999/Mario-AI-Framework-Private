@@ -210,6 +210,10 @@ public class MarioWorld {
         this.addEvent(killEvent, sprite.type.getValue(), sprite.initialCode);
         aliveEnemy.removeIf(a -> Objects.equals(sprite.initialCode,
                 MessageFormat.format("{0}_{1}_{2}", a.x, a.y, a.type.getValue())));
+
+        if(aliveEnemy.isEmpty() && !level.getEnemies().isEmpty()){
+            this.addEvent(EventType.OBJECTIVE_KILL_CLEAR, 0);
+        }
     }
 
     public void removeSprite(MarioSprite sprite) {
@@ -525,6 +529,9 @@ public class MarioWorld {
 
         if (features.contains(TileFeature.BUMPABLE)) {
             unbumpBlocks.removeIf(b -> b.getX() == xTile && b.getY() == yTile);
+            if(unbumpBlocks.isEmpty() && !level.getBumpableBlocks().isEmpty()){
+                this.addEvent(EventType.OBJECTIVE_BLOCK_CLEAR, 0);
+            }
             bumpInto(xTile, yTile - 1);
             this.addEvent(EventType.BUMP, MarioForwardModel.OBS_QUESTION_BLOCK);
             level.setBlock(xTile, yTile, 14);

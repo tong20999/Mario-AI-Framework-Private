@@ -41,7 +41,7 @@ public class ProceduralContentGenerationLevel {
             ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel.randomWidth(pcgLevelDto.getWidthMin(), pcgLevelDto.getWidthMax());
             pcgLevel.addRamp(10,2, pcgLevelDto);
             pcgLevel.addPit(10,2, pcgLevelDto);
-            pcgLevel.addPipe(10, 2, pcgLevelDto);
+            pcgLevel.addPipe(6, 2, pcgLevelDto);
             pcgLevel.addEnemy(10,2, pcgLevelDto);
             pcgLevel.addBlock(6, 2, pcgLevelDto);
             pcgLevel.addCoin(6,2, pcgLevelDto);
@@ -498,7 +498,6 @@ public class ProceduralContentGenerationLevel {
             int pipeHeight = rand.nextInt(pcgLevelDto.getPipesMinHeight(), pcgLevelDto.getPipesMaxHeight());
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = rand.nextInt(offsetFromStart, maxIndex);
-
             while (true){
                 if(isValidToAdd(addIndex)){
                     break;
