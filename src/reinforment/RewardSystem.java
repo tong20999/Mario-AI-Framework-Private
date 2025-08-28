@@ -10,18 +10,16 @@ import engine.helper.SpriteType;
 import java.util.ArrayList;
 
 public class RewardSystem {
-    private final static float WIN_REWARD = 1.0f;
-    //private final static float OBJECTIVE_CLEAR = 10.0f;
-    private final static float LOSE_PENALTY = -1.0f;
-    private final static float TIMEOUT_PENALTY = -1.0f;
+    private final static float WIN_REWARD = 20.0f;
+    private static final float WIN_PENALTY_IMPERFECT = -5.0f;
+    private final static float LOSE_PENALTY = -5.0f;
+    private final static float TIMEOUT_PENALTY = -5.0f;
     private final static float BONK_REWARD = -0.01f;
-    private final static float MAX_KILL_REWARD = 0.1f;
-    private final static float MAX_BUMP_REWARD = 0.1f;
-    private final static float MAX_COIN_REWARD = 0.1f;
-    private static final float POWER_UP_REWARD = 0.05f;
-    //public static float DEBT_PENALTY_FACTOR = -0.12f;
-    private static final float EXPLORATION_REWARD = 0.0f;
-    //public static float FLAG_PENALTY = -0.3f;
+    private final static float MAX_KILL_REWARD = 5.0f;
+    private final static float MAX_BUMP_REWARD = 5.0f;
+    private final static float MAX_COIN_REWARD = 5.0f;
+    private static final float POWER_UP_REWARD = 1.0f;
+    private static final float EXPLORATION_REWARD = 0.001f;
     public static final float IDLE_PENALTY = -0.02f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
@@ -57,38 +55,25 @@ public class RewardSystem {
 //                reward += BONK_REWARD;
 //            }
 
-
-
-//            if (e.getEventType() == EventType.EXPLORER.getValue()) {
-//                var tileY = (int)(e.getMarioY()/16f);
-//                var grade = tileY < 6 ? 2f : tileY < 10 ? 1.5f : 1f;
-//                reward += EXPLORATION_REWARD * grade;
-//            }
-
-//            if (e.getEventType() == EventType.OBJECTIVE_KILL_CLEAR.getValue()){
-//                reward += OBJECTIVE_CLEAR;
-//            }
-//
-//            if (e.getEventType() == EventType.OBJECTIVE_BLOCK_CLEAR.getValue()){
-//                reward += OBJECTIVE_CLEAR;
-//            }
-//
-//            if (e.getEventType() == EventType.OBJECTIVE_COIN_CLEAR.getValue()){
-//                reward += OBJECTIVE_CLEAR;
-//            }
+            if (e.getEventType() == EventType.EXPLORER.getValue()) {
+                //var tileY = (int)(e.getMarioY()/16f);
+                //var grade = tileY < 6 ? 2f : tileY < 10 ? 1.5f : 1f;
+                //reward += EXPLORATION_REWARD * grade;
+                reward += EXPLORATION_REWARD;
+            }
         }
 
         if (world.gameStatus == GameStatus.WIN) {
             var clear = world.getAliveEnemies().isEmpty()
                     && world.getUnCollectCoin().isEmpty() && world.getUnbumpBlocks().isEmpty();
-            reward += clear ? WIN_REWARD : -1;
+            reward += clear ? WIN_REWARD : WIN_PENALTY_IMPERFECT;
         } else if (world.gameStatus == GameStatus.TIME_OUT) {
             reward += TIMEOUT_PENALTY;
         } else if (world.gameStatus == GameStatus.LOSE) {
             reward += LOSE_PENALTY;
         }
 
-        reward = Math.max(-1f, Math.min(1f, reward));
+        reward = Math.max(-20f, Math.min(20f, reward));
         return reward;
     }
 
@@ -139,8 +124,9 @@ public class RewardSystem {
             } else if (e.getEventType() == EventType.COLLECT.getValue()
                     && e.getEventParam() == SpriteType.MUSHROOM.getValue()) {
                 rewardEvents.add(new RewardEvent(POWER_UP_REWARD, e));
+            } else if (e.getEventType() == EventType.EXPLORER.getValue()) {
+                rewardEvents.add(new RewardEvent(EXPLORATION_REWARD, e));
             }
-
             else if(e.getEventType() == EventType.WIN.getValue()){
                 var clear = world.getAliveEnemies().isEmpty()
                         && world.getUnCollectCoin().isEmpty() && world.getUnbumpBlocks().isEmpty();

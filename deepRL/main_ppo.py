@@ -1,7 +1,6 @@
 import logging
 import os, sys, base64, json
 from marioGame import MarioGame
-from multigridstack import MultiGridStack
 from ppo.cnn import CNNActor, CNNCritic
 from ppo.episodebuffer import EpisodeBuffer
 from ppo.ewc import EWC
@@ -16,9 +15,7 @@ logger = logging.getLogger('Agent:Main')
 def make_env_fn():
   # Wrap the base environment with our new frame stacker
   env = MarioGame()
-  env = MultiGridStack(env, num_stack=4)
   return env
-
 
 def make_envs_fn(mef, n):
   return MultiprocessEnv(mef, n)
