@@ -31,8 +31,8 @@ class MarioGame(SocketEnv):
         self.grid_h = 16
         self.grid_w = 16
 
-        self.vector_transfer_byte_len = 57
-        self.vector_size = 21
+        self.vector_transfer_byte_len = 72
+        self.vector_size = 27
         self._init_spaces()
 
     def _init_spaces(self):
@@ -60,7 +60,7 @@ class MarioGame(SocketEnv):
 
             # Vector (matches State.java ByteBuffer order; big-endian)
             vector_bytes = payload[enemies_end:enemies_end + self.vector_transfer_byte_len]
-            format_string  = '>BBBBBBffBfffBfffBffff'
+            format_string  = '>BBBBBBffBfffBfffBfffffBfBfB'
             unpacked_values = struct.unpack(format_string, vector_bytes)
             vector_part = np.array(unpacked_values, dtype=np.float32)
             

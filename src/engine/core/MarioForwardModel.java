@@ -686,16 +686,28 @@ public class MarioForwardModel {
         return world.isSubGoalCoinMet() == null || world.isSubGoalCoinMet();
     }
 
-    public int getKillCount() {
-        return world.getKillCount();
+    public int getAliveEnemies() {
+        return world.getAliveEnemies().size();
     }
 
-    public int getHitBlockCount() {
-        return world.getHitBlockCount();
+    public int getUnbumpBlocks() {
+        return world.getUnbumpBlocks().size();
     }
 
-    public int getCollectedCoinCount() {
-        return world.getCollectedCoinCount();
+    public int getUnCollectCoin() {
+        return world.getUnCollectCoin().size();
+    }
+
+    public int getTotalEnemies() {
+        return world.level.getEnemies().size();
+    }
+
+    public int getTotalBlocks() {
+        return world.level.getBumpableBlocks().size();
+    }
+
+    public int getTotalCoins() {
+        return world.level.getCoins().size();
     }
 
     public int getInitialTimer() {

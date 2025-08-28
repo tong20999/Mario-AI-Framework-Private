@@ -221,6 +221,21 @@ public class State {
         var normalizedTimer = (float) model.getRemainingTime() / (float) model.getInitialTimer();
         byte[] payloadNormalizedTimer = float2ByteArray(normalizedTimer);
 
+        //Objective
+        float normalizedCoinsLeft = model.getTotalCoins() > 0 ? (float) model.getUnCollectCoin() / (float) model.getTotalCoins() : 0.0f;
+        byte goalCoinReach = (byte) (model.getUnCollectCoin() == 0 ? 1 : 0);
+        byte[] payloadNormalizedCoinsLeft = float2ByteArray(normalizedCoinsLeft);
+
+        // Enemy Task
+        float normalizedEnemiesLeft = model.getTotalEnemies() > 0 ? (float) model.getAliveEnemies() / (float) model.getTotalEnemies() : 0.0f;
+        byte goalEnemyReach = (byte) (model.getAliveEnemies() == 0 ? 1 : 0);
+        byte[] payloadNormalizedEnemiesLeft = float2ByteArray(normalizedEnemiesLeft);
+
+        // Block Task
+        float normalizedBlocksLeft = model.getTotalBlocks() > 0 ? (float) model.getUnbumpBlocks() / (float) model.getTotalBlocks() : 0.0f;
+        byte goalBlockReach = (byte) (model.getUnbumpBlocks() == 0 ? 1 : 0);
+        byte[] payloadNormalizedBlocksLeft = float2ByteArray(normalizedBlocksLeft);
+
         ByteBuffer buffer = ByteBuffer.allocate(
                 solid.length +
                         semiSolid.length +
@@ -236,7 +251,8 @@ public class State {
                         13 + // Block
                         13 + // Coin
                         13 + // Enemy
-                        4 // Time
+                        4  +// Time
+                        15
         );
         buffer.order(BIG_ENDIAN);
 
@@ -281,6 +297,13 @@ public class State {
         buffer.put(nearestEnemyDistance);
 
         buffer.put(payloadNormalizedTimer);
+
+        buffer.put(payloadNormalizedCoinsLeft);
+        buffer.put(goalCoinReach);
+        buffer.put(payloadNormalizedEnemiesLeft);
+        buffer.put(goalEnemyReach);
+        buffer.put(payloadNormalizedBlocksLeft);
+        buffer.put(goalBlockReach);
 
         return buffer.array();
     }
