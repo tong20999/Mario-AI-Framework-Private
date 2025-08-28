@@ -188,34 +188,34 @@ public class State {
         byte[] velocityY = float2ByteArray(normalizedVelY);
 
         // Block
-        var nearestBlock = model.getNearestBlockScreenPos();
-        var dxNormalize = nearestBlock == null ? 0 : nearestBlock[0];
-        var dyNormalize = nearestBlock == null ? 0 : nearestBlock[1];
-        var distNormalize =  nearestBlock == null ? 0 : nearestBlock[2];
-        byte nearestBlockFound = (byte) (nearestBlock == null ? 0 : 1);
-        byte[] nearestBlockDx = float2ByteArray(dxNormalize);
-        byte[] nearestBlockDy = float2ByteArray(dyNormalize);
-        byte[] nearestBlockDistance = float2ByteArray(distNormalize);
-
-        // Coin
-        var nearestCoin = model.getNearestCoinScreenPos();
-        dxNormalize = nearestCoin == null ? 0 : nearestCoin[0];
-        dyNormalize = nearestCoin == null ? 0 : nearestCoin[1];
-        distNormalize =  nearestCoin == null ? 0 : nearestCoin[2];
-        byte nearestCoinFound = (byte) (nearestCoin == null ? 0 : 1);
-        byte[] nearestCoinDx = float2ByteArray(dxNormalize);
-        byte[] nearestCoinDy = float2ByteArray(dyNormalize);
-        byte[] nearestCoinDistance = float2ByteArray(distNormalize);
-
-        //Enemy
-        var nearestEnemy = model.getNearestAliveEnemyScreenPos();
-        dxNormalize = nearestEnemy == null ? 0 : nearestEnemy[0];
-        dyNormalize = nearestEnemy == null ? 0 : nearestEnemy[1];
-        distNormalize =  nearestEnemy == null ? 0 : nearestEnemy[2];
-        byte nearestEnemyFound = (byte) (nearestEnemy == null ? 0 : 1);
-        byte[] nearestEnemyDx = float2ByteArray(dxNormalize);
-        byte[] nearestEnemyDy = float2ByteArray(dyNormalize);
-        byte[] nearestEnemyDistance = float2ByteArray(distNormalize);
+//        var nearestBlock = model.getNearestBlockScreenPos();
+//        var dxNormalize = nearestBlock == null ? 0 : nearestBlock[0];
+//        var dyNormalize = nearestBlock == null ? 0 : nearestBlock[1];
+//        var distNormalize =  nearestBlock == null ? 0 : nearestBlock[2];
+//        byte nearestBlockFound = (byte) (nearestBlock == null ? 0 : 1);
+//        byte[] nearestBlockDx = float2ByteArray(dxNormalize);
+//        byte[] nearestBlockDy = float2ByteArray(dyNormalize);
+//        byte[] nearestBlockDistance = float2ByteArray(distNormalize);
+//
+//        // Coin
+//        var nearestCoin = model.getNearestCoinScreenPos();
+//        dxNormalize = nearestCoin == null ? 0 : nearestCoin[0];
+//        dyNormalize = nearestCoin == null ? 0 : nearestCoin[1];
+//        distNormalize =  nearestCoin == null ? 0 : nearestCoin[2];
+//        byte nearestCoinFound = (byte) (nearestCoin == null ? 0 : 1);
+//        byte[] nearestCoinDx = float2ByteArray(dxNormalize);
+//        byte[] nearestCoinDy = float2ByteArray(dyNormalize);
+//        byte[] nearestCoinDistance = float2ByteArray(distNormalize);
+//
+//        //Enemy
+//        var nearestEnemy = model.getNearestAliveEnemyScreenPos();
+//        dxNormalize = nearestEnemy == null ? 0 : nearestEnemy[0];
+//        dyNormalize = nearestEnemy == null ? 0 : nearestEnemy[1];
+//        distNormalize =  nearestEnemy == null ? 0 : nearestEnemy[2];
+//        byte nearestEnemyFound = (byte) (nearestEnemy == null ? 0 : 1);
+//        byte[] nearestEnemyDx = float2ByteArray(dxNormalize);
+//        byte[] nearestEnemyDy = float2ByteArray(dyNormalize);
+//        byte[] nearestEnemyDistance = float2ByteArray(distNormalize);
 
         //Timer
         var normalizedTimer = (float) model.getRemainingTime() / (float) model.getInitialTimer();
@@ -248,9 +248,9 @@ public class State {
                         unstopableEnemy.length +
                         6 +
                         8 + //Velocity
-                        13 + // Block
-                        13 + // Coin
-                        13 + // Enemy
+//                        13 + // Block
+//                        13 + // Coin
+//                        13 + // Enemy
                         4  +// Time
                         15
         );
@@ -281,20 +281,20 @@ public class State {
         buffer.put(velocityX);
         buffer.put(velocityY);
 
-        buffer.put(nearestBlockFound);
-        buffer.put(nearestBlockDx);
-        buffer.put(nearestBlockDy);
-        buffer.put(nearestBlockDistance);
-
-        buffer.put(nearestCoinFound);
-        buffer.put(nearestCoinDx);
-        buffer.put(nearestCoinDy);
-        buffer.put(nearestCoinDistance);
-
-        buffer.put(nearestEnemyFound);
-        buffer.put(nearestEnemyDx);
-        buffer.put(nearestEnemyDy);
-        buffer.put(nearestEnemyDistance);
+//        buffer.put(nearestBlockFound);
+//        buffer.put(nearestBlockDx);
+//        buffer.put(nearestBlockDy);
+//        buffer.put(nearestBlockDistance);
+//
+//        buffer.put(nearestCoinFound);
+//        buffer.put(nearestCoinDx);
+//        buffer.put(nearestCoinDy);
+//        buffer.put(nearestCoinDistance);
+//
+//        buffer.put(nearestEnemyFound);
+//        buffer.put(nearestEnemyDx);
+//        buffer.put(nearestEnemyDy);
+//        buffer.put(nearestEnemyDistance);
 
         buffer.put(payloadNormalizedTimer);
 
