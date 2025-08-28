@@ -12,6 +12,7 @@ import java.util.ArrayList;
 public class RewardSystem {
     private final static float WIN_REWARD = 20.0f;
     private static final float WIN_PENALTY_IMPERFECT = -5.0f;
+    private static final float OBJECTIVE_CLEAR = 5.0f;
     private final static float LOSE_PENALTY = -5.0f;
     private final static float TIMEOUT_PENALTY = -5.0f;
     private final static float BONK_REWARD = -0.01f;
@@ -19,7 +20,7 @@ public class RewardSystem {
     private final static float MAX_BUMP_REWARD = 5.0f;
     private final static float MAX_COIN_REWARD = 5.0f;
     private static final float POWER_UP_REWARD = 1.0f;
-    private static final float EXPLORATION_REWARD = 0.001f;
+    private static final float EXPLORATION_REWARD = 0.0025f;
     public static final float IDLE_PENALTY = -0.02f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
@@ -60,6 +61,18 @@ public class RewardSystem {
                 //var grade = tileY < 6 ? 2f : tileY < 10 ? 1.5f : 1f;
                 //reward += EXPLORATION_REWARD * grade;
                 reward += EXPLORATION_REWARD;
+            }
+
+            if(e.getEventType() == EventType.OBJECTIVE_BLOCK_CLEAR.getValue()){
+                reward += OBJECTIVE_CLEAR;
+            }
+
+            if(e.getEventType() == EventType.OBJECTIVE_KILL_CLEAR.getValue()){
+                reward += OBJECTIVE_CLEAR;
+            }
+
+            if(e.getEventType() == EventType.OBJECTIVE_BLOCK_CLEAR.getValue()){
+                reward += OBJECTIVE_CLEAR;
             }
         }
 
@@ -130,11 +143,18 @@ public class RewardSystem {
             else if(e.getEventType() == EventType.WIN.getValue()){
                 var clear = world.getAliveEnemies().isEmpty()
                         && world.getUnCollectCoin().isEmpty() && world.getUnbumpBlocks().isEmpty();
-                float winReward = clear ? WIN_REWARD : -1;
+                float winReward = clear ? WIN_REWARD : WIN_PENALTY_IMPERFECT;
                 rewardEvents.add(new RewardEvent(winReward, e));
             } else if(e.getEventType() == EventType.LOSE.getValue()){
                 rewardEvents.add(new RewardEvent(RewardSystem.LOSE_PENALTY, e));
-            } else {
+            } else if(e.getEventType() == EventType.OBJECTIVE_BLOCK_CLEAR.getValue()){
+                rewardEvents.add(new RewardEvent(RewardSystem.OBJECTIVE_CLEAR, e));
+            } else if(e.getEventType() == EventType.OBJECTIVE_KILL_CLEAR.getValue()){
+                rewardEvents.add(new RewardEvent(RewardSystem.OBJECTIVE_CLEAR, e));
+            } else if(e.getEventType() == EventType.OBJECTIVE_BLOCK_CLEAR.getValue()){
+                rewardEvents.add(new RewardEvent(RewardSystem.OBJECTIVE_CLEAR, e));
+            }
+            else {
                 rewardEvents.add(new RewardEvent(0, e));
             }
         }
