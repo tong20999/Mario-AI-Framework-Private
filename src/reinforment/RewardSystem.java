@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 public class RewardSystem {
     private final static float WIN_REWARD = 1.0f;
-    private static final float WIN_PENALTY_IMPERFECT = -1.0f;
+    private static final float WIN_PENALTY_IMPERFECT = -0.0f;
     private static final float OBJECTIVE_CLEAR = 1.0f;
     private final static float LOSE_PENALTY = 0.0f;
     private final static float TIMEOUT_PENALTY = 0.0f;
@@ -144,9 +144,9 @@ public class RewardSystem {
                         && world.getUnCollectCoin().isEmpty() && world.getUnbumpBlocks().isEmpty();
                 float winReward = clear ? WIN_REWARD : WIN_PENALTY_IMPERFECT;
                 rewardEvents.add(new RewardEvent(winReward, e));
-            } else if(e.getEventType() == EventType.LOSE.getValue()){
-                rewardEvents.add(new RewardEvent(RewardSystem.LOSE_PENALTY, e));
-            } else if(e.getEventType() == EventType.OBJECTIVE_BLOCK_CLEAR.getValue()){
+//            } else if(e.getEventType() == EventType.LOSE.getValue()){
+//                rewardEvents.add(new RewardEvent(RewardSystem.LOSE_PENALTY, e));
+//            } else if(e.getEventType() == EventType.OBJECTIVE_BLOCK_CLEAR.getValue()){
                 rewardEvents.add(new RewardEvent(RewardSystem.OBJECTIVE_CLEAR, e));
             } else if(e.getEventType() == EventType.OBJECTIVE_KILL_CLEAR.getValue()){
                 rewardEvents.add(new RewardEvent(RewardSystem.OBJECTIVE_CLEAR, e));
