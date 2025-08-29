@@ -10,6 +10,7 @@ import engine.graphics.MarioBackground;
 import engine.helper.*;
 import engine.sprites.*;
 import reinforment.Point;
+import reinforment.RewardSystem;
 
 public class MarioWorld {
     public GameStatus gameStatus;
@@ -43,6 +44,7 @@ public class MarioWorld {
     private ArrayList<MarioSprite> aliveEnemy = new ArrayList<>();
     private ArrayList<Point> unbumpBlocks = new ArrayList<>();
     private ArrayList<Point> unCollectCoin = new ArrayList<>();
+    private int idleCount = 0;
 
     public MarioWorld(MarioEvent[] killEvents) {
         this.pauseTimer = 0;
@@ -121,6 +123,7 @@ public class MarioWorld {
         world.visuals = false;
         world.cameraX = this.cameraX;
         world.cameraY = this.cameraY;
+        world.idleCount = this.idleCount;
         world.fireballsOnScreen = this.fireballsOnScreen;
         world.gameStatus = this.gameStatus;
         world.pauseTimer = this.pauseTimer;
@@ -361,6 +364,7 @@ public class MarioWorld {
 
     public void update(boolean[] actions) {
         this.lastFrameEvents.clear();
+        int beforePositionX = (int) (this.mario.x / 16);
         if (this.gameStatus != GameStatus.RUNNING) {
             return;
         }
@@ -521,6 +525,18 @@ public class MarioWorld {
                 }
             }
         }
+
+        int afterPositionX = (int) (this.mario.x / 16);
+        if (beforePositionX == afterPositionX) {
+            idleCount++;
+        } else {
+            idleCount = 0;
+        }
+
+        if (idleCount == 8) {
+            this.addEvent(EventType.IDLE, idleCount);
+            idleCount = 0;
+        }
     }
 
     public void bump(int xTile, int yTile, boolean canBreakBricks) {
@@ -624,6 +640,10 @@ public class MarioWorld {
             }
             this.effects.get(i).render(og, cameraX, cameraY);
         }
+    }
+
+    public int getIdleCount() {
+        return idleCount;
     }
 
     public Boolean isSubGoalEnemyMet() {

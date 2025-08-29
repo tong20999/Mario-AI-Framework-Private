@@ -214,14 +214,7 @@ public class MarioGameTraining {
         return State.toByte(new MarioForwardModel(this.world.clone()));
     }
 
-    private int idleCount = 0;
-
     public byte[] step(boolean[] action) throws Exception {
-
-        int beforePositionX = (int) (this.world.mario.x / 16);
-
-        boolean isIdlePenalty = false;
-
         miniStepEvents.clear();
         for (int i = 0; i < this.frameSkip; i++) {
             var events = miniStep(action);
@@ -229,25 +222,11 @@ public class MarioGameTraining {
         }
         var nextWorldState = this.world.clone();
         var nextState = new MarioForwardModel(nextWorldState, miniStepEvents);
-
-        int afterPositionX = (int) (this.world.mario.x / 16);
-        if (beforePositionX == afterPositionX) {
-            idleCount++;
-        } else {
-            idleCount = 0;
-        }
-
         float reward = RewardSystem.getReward(this.world, miniStepEvents);
-
-        isIdlePenalty = idleCount == 8;
-        if (isIdlePenalty) {
-            idleCount = 0;
-            reward += RewardSystem.IDLE_PENALTY;
-        }
 
         if (this.evaluation) {
             ArrayList<RewardEvent> miniStepRewardEvents = RewardSystem.logRewardEvent(this.world, miniStepEvents,
-                    this.world.gameStatus, isIdlePenalty);
+                    this.world.gameStatus);
             rewardEvents.addAll(miniStepRewardEvents);
             this.evaluationReward += reward;
             this.evaluationTimer = this.world.currentTimer;

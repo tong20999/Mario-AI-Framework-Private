@@ -20,7 +20,7 @@ public class RewardSystem {
     private final static float MAX_COIN_REWARD = 1.0f;
     private static final float POWER_UP_REWARD = 0.01f;
     private static final float EXPLORATION_REWARD = 0.00f;
-    public static final float IDLE_PENALTY = -0.05f;
+    public static final float IDLE_PENALTY = -0.1f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = 0;
@@ -73,6 +73,10 @@ public class RewardSystem {
             if(e.getEventType() == EventType.OBJECTIVE_COIN_CLEAR.getValue()){
                 reward += OBJECTIVE_CLEAR;
             }
+
+            if(e.getEventType() == EventType.IDLE.getValue()){
+                reward += IDLE_PENALTY;
+            }
         }
 
         if (world.gameStatus == GameStatus.WIN) {
@@ -116,8 +120,7 @@ public class RewardSystem {
 
     public static  ArrayList<RewardEvent> logRewardEvent(MarioWorld world,
                                                          ArrayList<MarioEvent> miniStepEvents,
-                                                         GameStatus gameStatus,
-                                                         boolean isIdle) {
+                                                         GameStatus gameStatus) {
         ArrayList<RewardEvent> rewardEvents = new ArrayList<>();
         for (MarioEvent e : miniStepEvents) {
             if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
@@ -157,24 +160,12 @@ public class RewardSystem {
                 rewardEvents.add(new RewardEvent(RewardSystem.OBJECTIVE_CLEAR, e));
             } else if(e.getEventType() == EventType.OBJECTIVE_COIN_CLEAR.getValue()){
                 rewardEvents.add(new RewardEvent(RewardSystem.OBJECTIVE_CLEAR, e));
+            } else if(e.getEventType() == EventType.IDLE.getValue()){
+                rewardEvents.add(new RewardEvent(RewardSystem.IDLE_PENALTY, e));
             }
             else {
                 rewardEvents.add(new RewardEvent(0, e));
             }
-        }
-
-        if(isIdle){
-            int marioState = 0;
-            if (world.mario.isLarge) {
-                marioState = 1;
-            }
-            if (world.mario.isFire) {
-                marioState = 2;
-            }
-
-            rewardEvents.add(new RewardEvent(RewardSystem.IDLE_PENALTY,
-                    new MarioEvent(EventType.IDLE, 0, world.mario.x,
-                            world.mario.y, marioState, world.currentTick)));
         }
 
         if (gameStatus.equals(GameStatus.TIME_OUT)) {

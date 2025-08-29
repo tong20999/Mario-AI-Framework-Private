@@ -236,6 +236,10 @@ public class State {
         byte goalBlockReach = (byte) (model.getUnbumpBlocks() == 0 ? 1 : 0);
         byte[] payloadNormalizedBlocksLeft = float2ByteArray(normalizedBlocksLeft);
 
+        //Idle Counter
+        float idleCounterNormalize = model.getIdleCount() / 8;
+        byte[] payloadIdleCounterNormalize = float2ByteArray(idleCounterNormalize);
+
         ByteBuffer buffer = ByteBuffer.allocate(
                 solid.length +
                         semiSolid.length +
@@ -252,7 +256,8 @@ public class State {
 //                        13 + // Coin
 //                        13 + // Enemy
                         4  +// Time
-                        15
+                        15 +
+                        4
         );
         buffer.order(BIG_ENDIAN);
 
@@ -305,6 +310,7 @@ public class State {
         buffer.put(payloadNormalizedBlocksLeft);
         buffer.put(goalBlockReach);
 
+        buffer.put(payloadIdleCounterNormalize);
         return buffer.array();
     }
 }
