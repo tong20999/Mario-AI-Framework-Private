@@ -18,15 +18,13 @@ class CNNBase(nn.Module):
             nn.ReLU(),
         )
         self.shared_cnn = nn.Sequential(
-            nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.Flatten(),
         )
-        cnn_feature_size = 64 * 4 * 4
+        cnn_feature_size = 64 * 16 * 16
         vector_shape = observation_space['vector'].shape
         self.mlp = nn.Sequential(
             nn.Linear(vector_shape[0], 64),
