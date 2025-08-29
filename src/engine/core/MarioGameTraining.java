@@ -87,7 +87,7 @@ public class MarioGameTraining {
     public float episodeReward = 0;
     int episodeTimer = 0;
     int evaluationTimer = 0;
-    int frameSkip = 2;
+    int frameSkip = 3;
     int episode = -1;
     int minTimer = 20;
     int maxTimer = 30;

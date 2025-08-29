@@ -16,7 +16,7 @@ logger = logging.getLogger('Agent:Main')
 def make_env_fn():
   # Wrap the base environment with our new frame stacker
   env = MarioGame()
-  env = MultiGridStack(env, num_stack=8)
+  env = MultiGridStack(env, num_stack=4)
   return env
 
 
