@@ -20,8 +20,8 @@ public class RewardSystem {
     private final static float MAX_BUMP_REWARD = 5.0f;
     private final static float MAX_COIN_REWARD = 5.0f;
     private static final float POWER_UP_REWARD = 1.0f;
-    private static final float EXPLORATION_REWARD = 0.0025f;
-    public static final float IDLE_PENALTY = -0.02f;
+    private static final float EXPLORATION_REWARD = 0.01f;
+    public static final float IDLE_PENALTY = -0.2f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = 0;
@@ -151,7 +151,7 @@ public class RewardSystem {
                 rewardEvents.add(new RewardEvent(RewardSystem.OBJECTIVE_CLEAR, e));
             } else if(e.getEventType() == EventType.OBJECTIVE_KILL_CLEAR.getValue()){
                 rewardEvents.add(new RewardEvent(RewardSystem.OBJECTIVE_CLEAR, e));
-            } else if(e.getEventType() == EventType.OBJECTIVE_BLOCK_CLEAR.getValue()){
+            } else if(e.getEventType() == EventType.OBJECTIVE_COIN_CLEAR.getValue()){
                 rewardEvents.add(new RewardEvent(RewardSystem.OBJECTIVE_CLEAR, e));
             }
             else {

@@ -102,7 +102,7 @@ if __name__ == '__main__':
   max_buffer_episode_steps = hyperParams.get('MaxBufferEpisodeSteps')
 
   entropy_loss_weight = hyperParams.get('EntropyLossWeight')
-  tau = 0.97
+  tau = 0.99
   n_workers = hyperParams.get('NWorkers')
   batch_size = hyperParams.get('BatchSize')
 
