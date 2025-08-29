@@ -239,10 +239,10 @@ public class MarioGameTraining {
 
         float reward = RewardSystem.getReward(this.world, miniStepEvents);
 
-        isIdlePenalty = idleCount == 3;
+        isIdlePenalty = idleCount == 4;
         if (isIdlePenalty) {
             idleCount = 0;
-            //reward += RewardSystem.IDLE_PENALTY;
+            reward += RewardSystem.IDLE_PENALTY;
         }
 
         if (this.evaluation) {

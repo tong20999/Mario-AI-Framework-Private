@@ -20,7 +20,7 @@ public class RewardSystem {
     private final static float MAX_COIN_REWARD = 1.0f;
     private static final float POWER_UP_REWARD = 0.01f;
     private static final float EXPLORATION_REWARD = 0.00f;
-    public static final float IDLE_PENALTY = -0.0f;
+    public static final float IDLE_PENALTY = -0.05f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = 0;
