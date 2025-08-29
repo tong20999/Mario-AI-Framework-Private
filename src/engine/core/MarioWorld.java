@@ -533,7 +533,7 @@ public class MarioWorld {
             idleCount = 0;
         }
 
-        if (idleCount == 8) {
+        if (idleCount == 6) {
             this.addEvent(EventType.IDLE, idleCount);
             idleCount = 0;
         }
