@@ -5,3 +5,4 @@ src/deepRL/.venv/
 out/
 deepRL/model.*
 deepRL/checkpoint_*
+.idea/workspace.xml
