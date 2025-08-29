@@ -44,7 +44,7 @@ class EpisodeBuffer():
         self.grid_enemies_states_mem = np.empty(
             shape=(self.max_episodes, self.max_episode_steps, *enemy_shape), dtype=np.uint8)
         self.vector_states_mem = np.empty(
-            shape=(self.max_episodes, self.max_episode_steps, *vec_shape), dtype=np.uint8)
+            shape=(self.max_episodes, self.max_episode_steps, *vec_shape), dtype=np.float32)
 
         self.actions_mem = np.empty(shape=(self.max_episodes, self.max_episode_steps), dtype=np.uint8)
         self.values_mem = np.empty(shape=(self.max_episodes, self.max_episode_steps), dtype=np.float32)
