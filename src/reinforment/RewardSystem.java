@@ -15,9 +15,9 @@ public class RewardSystem {
     private static final float OBJECTIVE_CLEAR = 1.0f;
     private final static float LOSE_PENALTY = 0.0f;
     private final static float TIMEOUT_PENALTY = 0.0f;
-    private final static float MAX_KILL_REWARD = 0.0f;
-    private final static float MAX_BUMP_REWARD = 0.0f;
-    private final static float MAX_COIN_REWARD = 0.0f;
+    private final static float MAX_KILL_REWARD = 1.0f;
+    private final static float MAX_BUMP_REWARD = 1.0f;
+    private final static float MAX_COIN_REWARD = 1.0f;
     private static final float POWER_UP_REWARD = 0.01f;
     private static final float EXPLORATION_REWARD = 0.00f;
     public static final float IDLE_PENALTY = -0.0f;
@@ -25,14 +25,14 @@ public class RewardSystem {
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = 0;
         for (MarioEvent e : miniStepEvents) {
-//            if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
-//                    e.getEventType() == EventType.FIRE_KILL.getValue() ||
-//                    e.getEventType() == EventType.SHELL_KILL.getValue() ||
-//                    e.getEventType() == EventType.BUMP_KILL.getValue() ||
-//                    e.getEventType() == EventType.FALL_KILL.getValue()) {
-//                float killReward = getKilLReward(world);
-//                reward += killReward;
-//            }
+            if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
+                    e.getEventType() == EventType.FIRE_KILL.getValue() ||
+                    e.getEventType() == EventType.SHELL_KILL.getValue() ||
+                    e.getEventType() == EventType.BUMP_KILL.getValue() ||
+                    e.getEventType() == EventType.FALL_KILL.getValue()) {
+                float killReward = getKilLReward(world);
+                reward += killReward;
+            }
             if (e.getEventType() == EventType.COLLECT.getValue()
                     && e.getEventParam() == SpriteType.FIRE_FLOWER.getValue()) {
                 reward += POWER_UP_REWARD;
@@ -41,15 +41,15 @@ public class RewardSystem {
                     && e.getEventParam() == SpriteType.MUSHROOM.getValue()) {
                 reward += POWER_UP_REWARD;
             }
-//
-//            if (e.getEventType() == EventType.BUMP.getValue() && e.getEventParam() == MarioForwardModel.OBS_QUESTION_BLOCK) {
-//                float bumpReward = getBumpReward(world);
-//                reward += bumpReward;
-//            }
-//            if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == 15) {
-//                float coinReward = getCoinReward(world);
-//                reward += coinReward;
-//            }
+
+            if (e.getEventType() == EventType.BUMP.getValue() && e.getEventParam() == MarioForwardModel.OBS_QUESTION_BLOCK) {
+                float bumpReward = getBumpReward(world);
+                reward += bumpReward;
+            }
+            if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == 15) {
+                float coinReward = getCoinReward(world);
+                reward += coinReward;
+            }
 
 //            if (!bumpKill && e.getEventType() == EventType.BONK.getValue()) {
 //                reward += BONK_REWARD;
@@ -70,7 +70,7 @@ public class RewardSystem {
                 reward += OBJECTIVE_CLEAR;
             }
 
-            if(e.getEventType() == EventType.OBJECTIVE_BLOCK_CLEAR.getValue()){
+            if(e.getEventType() == EventType.OBJECTIVE_COIN_CLEAR.getValue()){
                 reward += OBJECTIVE_CLEAR;
             }
         }
@@ -85,34 +85,34 @@ public class RewardSystem {
             reward += LOSE_PENALTY;
         }
 
-        reward = Math.max(-2f, Math.min(2f, reward));
+        reward = Math.max(-5f, Math.min(5f, reward));
         return reward;
     }
 
-//    private static float getKilLReward(MarioWorld world) {
-//        if(world.level.getEnemies().isEmpty()){
-//            return 0;
-//        }
-//
-//        return MAX_KILL_REWARD / world.level.getEnemies().size();
-//    }
-//
-//    private static float getBumpReward(MarioWorld world) {
-//        if(world.level.getBumpableBlocks().isEmpty()){
-//            return 0;
-//        }
-//
-//        return MAX_BUMP_REWARD / world.level.getBumpableBlocks().size();
-//    }
-//
-//
-//    private static float getCoinReward(MarioWorld world) {
-//        if(world.level.getCoins().isEmpty()){
-//            return 0;
-//        }
-//
-//        return MAX_COIN_REWARD / world.level.getCoins().size();
-//    }
+    private static float getKilLReward(MarioWorld world) {
+        if(world.level.getEnemies().isEmpty()){
+            return 0;
+        }
+
+        return MAX_KILL_REWARD / world.level.getEnemies().size();
+    }
+
+    private static float getBumpReward(MarioWorld world) {
+        if(world.level.getBumpableBlocks().isEmpty()){
+            return 0;
+        }
+
+        return MAX_BUMP_REWARD / world.level.getBumpableBlocks().size();
+    }
+
+
+    private static float getCoinReward(MarioWorld world) {
+        if(world.level.getCoins().isEmpty()){
+            return 0;
+        }
+
+        return MAX_COIN_REWARD / world.level.getCoins().size();
+    }
 
     public static  ArrayList<RewardEvent> logRewardEvent(MarioWorld world,
                                                          ArrayList<MarioEvent> miniStepEvents,
@@ -120,20 +120,20 @@ public class RewardSystem {
                                                          boolean isIdle) {
         ArrayList<RewardEvent> rewardEvents = new ArrayList<>();
         for (MarioEvent e : miniStepEvents) {
-//            if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
-//                    e.getEventType() == EventType.FIRE_KILL.getValue() ||
-//                    e.getEventType() == EventType.SHELL_KILL.getValue() ||
-//                    e.getEventType() == EventType.BUMP_KILL.getValue() ||
-//                    e.getEventType() == EventType.FALL_KILL.getValue()) {
-//                float killReward = getKilLReward(world);
-//                rewardEvents.add(new RewardEvent(killReward, e));
-//            } else if (e.getEventType() == EventType.BUMP.getValue() && e.getEventParam() == MarioForwardModel.OBS_QUESTION_BLOCK) {
-//                float bumpReward = getBumpReward(world);
-//                rewardEvents.add(new RewardEvent(bumpReward, e));
-//            } else if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == 15) {
-//                float coinReward = getCoinReward(world);
-//                rewardEvents.add(new RewardEvent(coinReward, e));
-        //}
+            if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
+                    e.getEventType() == EventType.FIRE_KILL.getValue() ||
+                    e.getEventType() == EventType.SHELL_KILL.getValue() ||
+                    e.getEventType() == EventType.BUMP_KILL.getValue() ||
+                    e.getEventType() == EventType.FALL_KILL.getValue()) {
+                float killReward = getKilLReward(world);
+                rewardEvents.add(new RewardEvent(killReward, e));
+            } else if (e.getEventType() == EventType.BUMP.getValue() && e.getEventParam() == MarioForwardModel.OBS_QUESTION_BLOCK) {
+                float bumpReward = getBumpReward(world);
+                rewardEvents.add(new RewardEvent(bumpReward, e));
+            } else if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == 15) {
+                float coinReward = getCoinReward(world);
+                rewardEvents.add(new RewardEvent(coinReward, e));
+        }
         if (e.getEventType() == EventType.COLLECT.getValue()
                     && e.getEventParam() == SpriteType.FIRE_FLOWER.getValue()) {
                 rewardEvents.add(new RewardEvent(POWER_UP_REWARD, e));
@@ -149,8 +149,8 @@ public class RewardSystem {
                         && world.getUnCollectCoin().isEmpty() && world.getUnbumpBlocks().isEmpty();
                 float winReward = clear ? WIN_REWARD : WIN_PENALTY_IMPERFECT;
                 rewardEvents.add(new RewardEvent(winReward, e));
-//            } else if(e.getEventType() == EventType.LOSE.getValue()){
-//                rewardEvents.add(new RewardEvent(RewardSystem.LOSE_PENALTY, e));
+            } else if(e.getEventType() == EventType.LOSE.getValue()){
+                rewardEvents.add(new RewardEvent(RewardSystem.LOSE_PENALTY, e));
             } else if(e.getEventType() == EventType.OBJECTIVE_BLOCK_CLEAR.getValue()){
                 rewardEvents.add(new RewardEvent(RewardSystem.OBJECTIVE_CLEAR, e));
             } else if(e.getEventType() == EventType.OBJECTIVE_KILL_CLEAR.getValue()){
