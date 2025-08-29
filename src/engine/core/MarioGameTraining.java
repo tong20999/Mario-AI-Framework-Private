@@ -87,7 +87,7 @@ public class MarioGameTraining {
     public float episodeReward = 0;
     int episodeTimer = 0;
     int evaluationTimer = 0;
-    //int frameSkip = 3;
+    int frameSkip = 2;
     int episode = -1;
     int minTimer = 20;
     int maxTimer = 30;
@@ -223,8 +223,10 @@ public class MarioGameTraining {
         boolean isIdlePenalty = false;
 
         miniStepEvents.clear();
-        var events = miniStep(action);
-        miniStepEvents.addAll(events);
+        for (int i = 0; i < this.frameSkip; i++) {
+            var events = miniStep(action);
+            miniStepEvents.addAll(events);
+        }
         var nextWorldState = this.world.clone();
         var nextState = new MarioForwardModel(nextWorldState, miniStepEvents);
 
