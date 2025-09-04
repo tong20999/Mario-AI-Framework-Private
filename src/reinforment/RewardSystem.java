@@ -9,7 +9,7 @@ import engine.helper.SpriteType;
 import java.util.ArrayList;
 
 public class RewardSystem {
-    private final static float WIN_REWARD = 3.0f; // Reward for a 100% perfect run
+    private final static float WIN_REWARD = 5.0f; // Reward for a 100% perfect run
     private final static float PARTIAL_WIN_REWARD = 1.0f; // Max penalty for a 0% objective run
     private final static float LOSE_PENALTY = -1.0f;
     private final static float TIMEOUT_PENALTY = -1.0f;
