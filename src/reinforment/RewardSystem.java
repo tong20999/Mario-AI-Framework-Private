@@ -95,12 +95,12 @@ public class RewardSystem {
                     e.getEventType() == EventType.SHELL_KILL.getValue() ||
                     e.getEventType() == EventType.BUMP_KILL.getValue() ||
                     e.getEventType() == EventType.FALL_KILL.getValue()) {
-                rewardEvents.add(new RewardEvent(KILL_REWARD, e));
+                rewardEvents.add(new RewardEvent(getKillReward(world), e));
             } else if (e.getEventType() == EventType.BUMP.getValue()
                     && e.getEventParam() == MarioForwardModel.OBS_QUESTION_BLOCK) {
-                rewardEvents.add(new RewardEvent(BUMP_REWARD, e));
+                rewardEvents.add(new RewardEvent(getBlockReward(world), e));
             } else if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == 15) {
-                rewardEvents.add(new RewardEvent(COIN_REWARD, e));
+                rewardEvents.add(new RewardEvent(getCoinReward(world), e));
             } else if (e.getEventType() == EventType.COLLECT.getValue()
                     && e.getEventParam() == SpriteType.FIRE_FLOWER.getValue()) {
                 rewardEvents.add(new RewardEvent(POWER_UP_REWARD, e));
