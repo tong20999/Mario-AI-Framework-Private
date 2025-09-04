@@ -9,8 +9,8 @@ import engine.helper.SpriteType;
 import java.util.ArrayList;
 
 public class RewardSystem {
-    private final static float WIN_REWARD = 2f; // Reward for a 100% perfect run
-    private final static float CLEAR_ALL_BONUS = 1.0f; // Max penalty for a 0% objective run
+    private final static float WIN_REWARD = 3.0f; // Reward for a 100% perfect run
+    private final static float PARTIAL_WIN_REWARD = 1.0f; // Max penalty for a 0% objective run
     private final static float LOSE_PENALTY = -1.0f;
     private final static float TIMEOUT_PENALTY = -1.0f;
     private final static float KILL_REWARD = 1.0f;
@@ -144,13 +144,12 @@ public class RewardSystem {
         int objectiveBlocksComplete = getUnbumpBlocks(world) == 0 ? 1 : 0;
         int objectiveEnemyComplete = getAliveEnemies(world) == 0 ? 1 : 0;
 
-        float winReward = WIN_REWARD + objectiveCoinsComplete + objectiveBlocksComplete + objectiveEnemyComplete;
         if(getUnCollectCoin(world) == 0 && getUnbumpBlocks(world) == 0 && getAliveEnemies(world) == 0)
         {
-            return winReward + CLEAR_ALL_BONUS;
+            return WIN_REWARD + objectiveCoinsComplete + objectiveBlocksComplete + objectiveEnemyComplete;
         }
 
-        return winReward;
+        return PARTIAL_WIN_REWARD + objectiveCoinsComplete + objectiveBlocksComplete + objectiveEnemyComplete;
     }
 
     private static int getAliveEnemies(MarioWorld world){
