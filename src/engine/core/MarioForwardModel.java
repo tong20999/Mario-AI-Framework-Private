@@ -918,7 +918,7 @@ public class MarioForwardModel {
        return this.world.getVisitHeat(this.world.mario.x, this.world.mario.y);
     }
 
-    public float getIdleCount() {
+    public int getIdleCount() {
         return this.world.getIdleCount();
     }
 }

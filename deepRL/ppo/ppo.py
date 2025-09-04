@@ -49,9 +49,7 @@ hyper_params_mapper = {
     "maxBufferEpisodes": "max_buffer_episodes",
     "maxBufferEpisodeSteps": "max_buffer_episode_steps",
     "entropyLossWeight": "entropy_loss_weight",
-    "nWorkers": "n_workers",
     "batchSize": "batch_size",
-    "loadOptimizer": "load_optimizer",
 }
 
 class PPO():
@@ -118,6 +116,7 @@ class PPO():
         self.best_score = 0
         self.batch_size = batch_size
         self.load_optimizer = load_optimizer
+        self.visual_train:bool = False
 
         logger.info(f'policy_optimizer_lr {self.policy_optimizer_lr}')
         logger.info(f'policy_sample_ratio {self.policy_sample_ratio}')
@@ -351,7 +350,9 @@ class PPO():
                     episode_seconds = self.episode_buffer.fill(
                         envs, self.policy_model, self.value_model, episode, 
                         pcgBase64, 
-                        visual=False)
+                        self.max_buffer_episodes,
+                        self.max_buffer_episode_steps,
+                        visual=self.visual_train)
                     end_time = time.time()
                     duration = end_time - start_time
                     logger.info(f'filling buffer finished {duration:.2f} seconds')
@@ -362,7 +363,6 @@ class PPO():
                 
                 n_ep_batch = len(episode_timestep)
                 policy_losses, value_losses, entropy_losses, entropies, values, kls, gaes_mean = self.optimize_model()
-                self.episode_buffer.clear()
 
                 # stats
                 evaluation_count +=1
@@ -402,15 +402,15 @@ class PPO():
                         addr, value = self.received_data_queue.get_nowait()
                         command = value.get('command', '')
                         if command == 'shutdown':
-                            logger.info(f'shutdown receive stop training ')
+                            logger.warning(f'shutdown receive stop training ')
                             break
                         if command == 'save_model':
-                            logger.info('saving checkpoint {}'.format(evaluation_count))
+                            logger.warning('saving checkpoint {}'.format(evaluation_count))
                             self.save_checkpoint(evaluation_count)
-                        elif command == 'update_entropy_loss_weight':
-                            new_entropy_loss_weight = value.get('value')
-                            logger.info(f'update entropy_loss_weight from {self.entropy_loss_weight} to {new_entropy_loss_weight}')
-                            self.entropy_loss_weight = new_entropy_loss_weight
+                        elif command == 'visual_train':
+                            visual_train:bool = bool(value.get('value', False))
+                            self.visual_train = visual_train
+                            logger.warning('visual_train set to {}'.format(self.visual_train))
                         elif command == 'update_hyperparameters':
                             parameterName = value.get('name', '')
                             parameter_name = hyper_params_mapper.get(parameterName)
@@ -422,6 +422,7 @@ class PPO():
                                     new_value = int(new_value)
                                 setattr(self, parameter_name, new_value)
                                 logger.warning(f"updated {parameter_name} to {new_value}")
+                                self.write_info(self.working_dir, 'update_hyperparameters.txt', f"{parameter_name} {new_value} {evaluation_count}\n")
                             else:
                                 logger.warning(f"error update variable get {parameterName} to {new_value}")
                     except queue.Empty:

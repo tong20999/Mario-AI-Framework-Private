@@ -11,8 +11,6 @@ import javax.swing.JFrame;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import engine.helper.EventType;
-import engine.helper.SpriteType;
 import reinforment.*;
 import engine.helper.GameStatus;
 import engine.helper.MarioActions;
@@ -87,7 +85,6 @@ public class MarioGameTraining {
     public float episodeReward = 0;
     int episodeTimer = 0;
     int evaluationTimer = 0;
-    int frameSkip = 3;
     int episode = -1;
     int minTimer = 20;
     int maxTimer = 30;
@@ -95,6 +92,7 @@ public class MarioGameTraining {
 
     private int fps = 0;
     private ProceduralContentGenerationLevel pcg = null;
+    private final int frameSkip = 3;
 
     /**
      * Create a mario game to be played
@@ -113,7 +111,8 @@ public class MarioGameTraining {
         if (this.window != null) {
             return;
         }
-        this.window = new JFrame("Mario AI Framework");
+
+        this.window = new JFrame(this.evaluation ? "EVALUATION" : "TRAIN");
         this.window.setFocusableWindowState(false);
         this.render = new MarioRender(2);
         this.window.setContentPane(this.render);
@@ -125,16 +124,15 @@ public class MarioGameTraining {
 
         // 1. Get a unique ID for this worker (from 0 to 7)
         // We assume getEpisode() returns the unique worker number.
-        int workerId = episode;
 
         // 2. Define the grid dimensions
         final int NUM_COLS = 4; // We want 4 windows per row
 
         // 3. Calculate the row and column for this worker
         // Integer division gives the row number (0 for top row, 1 for bottom row)
-        int row = workerId / NUM_COLS;
+        int row = episode / NUM_COLS;
         // Modulo operator gives the column number (0, 1, 2, or 3)
-        int col = workerId % NUM_COLS;
+        int col = episode % NUM_COLS;
 
         // 4. Get the size of one game window
         int windowWidth = this.window.getWidth();
@@ -148,15 +146,16 @@ public class MarioGameTraining {
         this.window.setLocation(xPosition, yPosition);
 
         // This makes the window visible at its new position
-        this.window.setVisible(this.visual);
+        this.window.setVisible(true);
     }
 
     public byte[] reset(Info info) throws Exception {
         this.visual = info.isVisual();
-        if (this.visual) {
+        this.episode = info.getEpisode();
+        this.evaluation = info.isEvaluation();
+        if(this.visual){
             setupWindow(info.getEpisode());
         }
-        this.episode = info.getEpisode();
 
         // var levelFileName = info.getLevel();
 
@@ -170,7 +169,6 @@ public class MarioGameTraining {
         }
 
         this.rewardEvents = new ArrayList<>();
-        this.evaluation = info.isEvaluation();
         this.world = new MarioWorld(this.killEvents);
         this.world.visuals = visual;
         this.minTimer = pcgLevel.getTimerMin();
@@ -223,11 +221,10 @@ public class MarioGameTraining {
         var nextWorldState = this.world.clone();
         var nextState = new MarioForwardModel(nextWorldState, miniStepEvents);
         float reward = RewardSystem.getReward(this.world, miniStepEvents);
-
         if (this.evaluation) {
-            ArrayList<RewardEvent> miniStepRewardEvents = RewardSystem.logRewardEvent(this.world, miniStepEvents,
-                    this.world.gameStatus);
+            ArrayList<RewardEvent> miniStepRewardEvents = RewardSystem.logRewardEvent(this.world, miniStepEvents);
             rewardEvents.addAll(miniStepRewardEvents);
+
             this.evaluationReward += reward;
             this.evaluationTimer = this.world.currentTimer;
         } else {

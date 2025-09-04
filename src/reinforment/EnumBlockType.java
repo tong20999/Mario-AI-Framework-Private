@@ -5,7 +5,9 @@ public enum EnumBlockType {
     COIN_BLOCK('C'),
     MUSHROOM_QUESTION_BLOCK('@'),
     MUSHROOM_BLOCK('U'),
-    NORMAL_BLOCK('S');
+    NORMAL_BLOCK('S'),
+    USED_BLOCK('D'),
+    PYRAMID_BLOCK('#');
 
     private final char value;
 

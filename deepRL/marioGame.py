@@ -60,7 +60,7 @@ class MarioGame(SocketEnv):
 
             # Vector (matches State.java ByteBuffer order; big-endian)
             vector_bytes = payload[enemies_end:enemies_end + self.vector_transfer_byte_len]
-            format_string  = '>BBBBBBffffBfBfBf'
+            format_string  = '>BBBBBBffBfBfBfff'
             unpacked_values = struct.unpack(format_string, vector_bytes)
             vector_part = np.array(unpacked_values, dtype=np.float32)
             

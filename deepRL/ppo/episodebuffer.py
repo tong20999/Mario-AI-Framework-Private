@@ -26,35 +26,31 @@ class EpisodeBuffer():
         self.gamma = gamma
         self.tau = tau
         self.n_workers = n_workers
-        self.max_episodes = max_episodes
-        self.max_episode_steps = max_episode_steps
         self.progress_25 = False
         self.progress_50 = False
         self.progress_75 = False
 
-        self.clear()
-
-    def clear(self):
+    def clear(self, max_episodes, max_episode_steps):
         scene_shape = self.state_space['gridScene'].shape
         enemy_shape = self.state_space['gridEnemies'].shape
         vec_shape = self.state_space['vector'].shape
 
         self.grid_scene_states_mem = np.empty(
-            shape=(self.max_episodes, self.max_episode_steps, *scene_shape), dtype=np.uint8)
+            shape=(max_episodes, max_episode_steps, *scene_shape), dtype=np.uint8)
         self.grid_enemies_states_mem = np.empty(
-            shape=(self.max_episodes, self.max_episode_steps, *enemy_shape), dtype=np.uint8)
+            shape=(max_episodes, max_episode_steps, *enemy_shape), dtype=np.uint8)
         self.vector_states_mem = np.empty(
-            shape=(self.max_episodes, self.max_episode_steps, *vec_shape), dtype=np.float32)
+            shape=(max_episodes, max_episode_steps, *vec_shape), dtype=np.float32)
 
-        self.actions_mem = np.empty(shape=(self.max_episodes, self.max_episode_steps), dtype=np.uint8)
-        self.values_mem = np.empty(shape=(self.max_episodes, self.max_episode_steps), dtype=np.float32)
-        self.returns_mem = np.empty(shape=(self.max_episodes,self.max_episode_steps), dtype=np.float32)
-        self.gaes_mem = np.empty(shape=(self.max_episodes, self.max_episode_steps), dtype=np.float32)
-        self.logpas_mem = np.empty(shape=(self.max_episodes, self.max_episode_steps), dtype=np.float32)
-        self.episode_steps = np.zeros(shape=(self.max_episodes), dtype=np.uint16)
-        self.episode_reward = np.zeros(shape=(self.max_episodes), dtype=np.float32)
-        self.episode_exploration = np.zeros(shape=(self.max_episodes), dtype=np.float32)
-        self.episode_seconds = np.zeros(shape=(self.max_episodes), dtype=np.float64)
+        self.actions_mem = np.empty(shape=(max_episodes, max_episode_steps), dtype=np.uint8)
+        self.values_mem = np.empty(shape=(max_episodes, max_episode_steps), dtype=np.float32)
+        self.returns_mem = np.empty(shape=(max_episodes, max_episode_steps), dtype=np.float32)
+        self.gaes_mem = np.empty(shape=(max_episodes, max_episode_steps), dtype=np.float32)
+        self.logpas_mem = np.empty(shape=(max_episodes, max_episode_steps), dtype=np.float32)
+        self.episode_steps = np.zeros(shape=(max_episodes), dtype=np.uint16)
+        self.episode_reward = np.zeros(shape=(max_episodes), dtype=np.float32)
+        self.episode_exploration = np.zeros(shape=(max_episodes), dtype=np.float32)
+        self.episode_seconds = np.zeros(shape=(max_episodes), dtype=np.float64)
 
         self.current_ep_idxs = np.arange(self.n_workers, dtype=np.uint16)
         self.progress_25 = False
@@ -64,22 +60,25 @@ class EpisodeBuffer():
 
     def fill(self, envs:MultiprocessEnv, policy_model:CNNActor, value_model:CNNCritic, episodeStart:int,
              pcgBase64: str,
+             max_episodes:int, 
+             max_episode_steps:int,
              visual: bool = True):
             
+        self.clear(max_episodes, max_episode_steps)
         levels_to_assign = [pcgBase64 for _ in range(self.n_workers)] 
 
         random.shuffle(levels_to_assign)
         states = envs.reset(episodeStart, ranks=None, visual=visual, levels=levels_to_assign)
 
-        worker_rewards = np.zeros(shape=(self.n_workers, self.max_episode_steps), dtype=np.float32)
-        worker_exploratory = np.zeros(shape=(self.n_workers, self.max_episode_steps), dtype=np.bool_)
+        worker_rewards = np.zeros(shape=(self.n_workers, max_episode_steps), dtype=np.float32)
+        worker_exploratory = np.zeros(shape=(self.n_workers, max_episode_steps), dtype=np.bool_)
         worker_steps = np.zeros(shape=(self.n_workers), dtype=np.uint16)
         worker_seconds = np.array([time.time(),] * self.n_workers, dtype=np.float64)
 
         buffer_full = False
         length = len(np.where(self.episode_steps > 0)[0])
         
-        while not buffer_full and length < self.max_episodes:
+        while not buffer_full and length < max_episodes:
             with torch.no_grad():
                 actions, logpas, are_exploratory = policy_model.np_pass(states)
                 values:torch.Tensor = value_model(states)
@@ -96,7 +95,7 @@ class EpisodeBuffer():
             worker_rewards[np.arange(self.n_workers), worker_steps] = rewards
 
             for w_idx in range(self.n_workers):
-                if worker_steps[w_idx] + 1 == self.max_episode_steps:
+                if worker_steps[w_idx] + 1 == max_episode_steps:
                     truncateds[w_idx] = 1
             
             states = next_states
@@ -104,7 +103,7 @@ class EpisodeBuffer():
 
             dones = terminals | truncateds
 
-            percent = length / self.max_episodes
+            percent = length / max_episodes
             if percent >= 0.25 and percent < 0.5 and not self.progress_25:
                 self.progress_25 = True
                 logger.info(f'filling {(percent * 100):.2f}%')
@@ -160,7 +159,7 @@ class EpisodeBuffer():
 
                     length += 1
                     new_ep_id = length - 1 + self.n_workers
-                    if new_ep_id >= self.max_episodes:
+                    if new_ep_id >= max_episodes:
                         buffer_full = True
                         break 
                     self.current_ep_idxs[w_idx] = new_ep_id

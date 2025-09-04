@@ -117,7 +117,6 @@ public class MarioWorld {
         return enemies;
     }
 
-
     public MarioWorld clone() {
         MarioWorld world = new MarioWorld(this.killEvents);
         world.visuals = false;
@@ -162,12 +161,12 @@ public class MarioWorld {
 
         world.unbumpBlocks = new ArrayList<>();
         for (Point b : this.unbumpBlocks) {
-            world.unbumpBlocks.add(new Point(b.getX(),b.getY()));
+            world.unbumpBlocks.add(new Point(b.getX(), b.getY()));
         }
 
         world.unCollectCoin = new ArrayList<>();
         for (Point c : this.unCollectCoin) {
-            world.unCollectCoin.add(new Point(c.getX(),c.getY()));
+            world.unCollectCoin.add(new Point(c.getX(), c.getY()));
         }
 
         return world;
@@ -214,7 +213,7 @@ public class MarioWorld {
         aliveEnemy.removeIf(a -> Objects.equals(sprite.initialCode,
                 MessageFormat.format("{0}_{1}_{2}", a.x, a.y, a.type.getValue())));
 
-        if(aliveEnemy.isEmpty() && !level.getEnemies().isEmpty()){
+        if (aliveEnemy.isEmpty() && !level.getEnemies().isEmpty()) {
             this.addEvent(EventType.OBJECTIVE_KILL_CLEAR, 0);
         }
     }
@@ -246,6 +245,7 @@ public class MarioWorld {
     }
 
     public void timeout() {
+        this.addEvent(EventType.TIME_OUT, 0);
         this.gameStatus = GameStatus.TIME_OUT;
         this.mario.alive = false;
     }
@@ -507,12 +507,12 @@ public class MarioWorld {
 
         var marioTileX = this.mario.getMapX();
         var marioTileY = this.mario.getMapY();
-        if(marioTileY > 15){
+        if (marioTileY > 15) {
             marioTileY = 15;
         }
 
         int countBefore = level.getVisitHeat(marioTileX, marioTileY);
-        if(countBefore == 0){
+        if (countBefore == 0) {
             this.addEvent(EventType.EXPLORER, 0);
         }
         this.level.updateVisitHeat(marioTileX, marioTileY);
@@ -533,9 +533,10 @@ public class MarioWorld {
             idleCount = 0;
         }
 
-        if (idleCount == 6) {
+        // 1000/30 * 5 = 5 seconds (166 update if 30fps)
+        if (idleCount > 166) {
             this.addEvent(EventType.IDLE, idleCount);
-            idleCount = 0;
+            this.timeout();
         }
     }
 
@@ -545,7 +546,7 @@ public class MarioWorld {
 
         if (features.contains(TileFeature.BUMPABLE)) {
             unbumpBlocks.removeIf(b -> b.getX() == xTile && b.getY() == yTile);
-            if(unbumpBlocks.isEmpty() && !level.getBumpableBlocks().isEmpty()){
+            if (unbumpBlocks.isEmpty() && !level.getBumpableBlocks().isEmpty()) {
                 this.addEvent(EventType.OBJECTIVE_BLOCK_CLEAR, 0);
             }
             bumpInto(xTile, yTile - 1);
@@ -569,7 +570,7 @@ public class MarioWorld {
             }
         }
 
-        if(MarioForwardModel.isCeilingBlockingTile(block + 16)){
+        if (MarioForwardModel.isCeilingBlockingTile(block + 16)) {
             if (block + 16 != MarioForwardModel.OBS_BRICK || !canBreakBricks) {
                 this.addEvent(EventType.BONK, block + 16);
             }
@@ -589,7 +590,7 @@ public class MarioWorld {
                     }
                 }
             } else {
-                if(MarioForwardModel.isCeilingBlockingTile(block + 16)){
+                if (MarioForwardModel.isCeilingBlockingTile(block + 16)) {
                     this.addEvent(EventType.BONK, block + 16);
                 }
                 level.setShiftIndex(xTile, yTile, 4);
@@ -607,8 +608,6 @@ public class MarioWorld {
                 this.addEffect(new CoinEffect(xTile * 16 + 8, yTile * 16 + 8));
             }
         }
-
-
 
         for (MarioSprite sprite : sprites) {
             sprite.bumpCheck(xTile, yTile);
@@ -670,11 +669,11 @@ public class MarioWorld {
         return unCollectCoin;
     }
 
-    public int getKillCount(){
+    public int getKillCount() {
         return this.level.getEnemies().size() - this.getAliveEnemies().size();
     }
 
-    public int getHitBlockCount(){
+    public int getHitBlockCount() {
         return this.level.getBumpableBlocks().size() - this.getUnbumpBlocks().size();
     }
 
@@ -682,15 +681,15 @@ public class MarioWorld {
         return this.level.getCoins().size() - this.getUnCollectCoin().size();
     }
 
-    public int[][] getVisitHeat(float centerX, float centerY){
+    public int[][] getVisitHeat(float centerX, float centerY) {
         int[][] ret = new int[MarioGame.tileWidth][MarioGame.tileHeight];
         int centerXInMap = (int) centerX / 16;
         int centerYInMap = (int) centerY / 16;
 
         for (int y = centerYInMap - MarioGame.tileHeight / 2,
-             obsY = 0; y < centerYInMap + MarioGame.tileHeight / 2; y++, obsY++) {
+                obsY = 0; y < centerYInMap + MarioGame.tileHeight / 2; y++, obsY++) {
             for (int x = centerXInMap - MarioGame.tileWidth / 2,
-                 obsX = 0; x < centerXInMap + MarioGame.tileWidth / 2; x++, obsX++) {
+                    obsX = 0; x < centerXInMap + MarioGame.tileWidth / 2; x++, obsX++) {
                 int currentX = x;
                 if (currentX < 0) {
                     currentX = 0;
