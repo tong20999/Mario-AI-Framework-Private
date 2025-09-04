@@ -9,17 +9,15 @@ import engine.helper.SpriteType;
 import java.util.ArrayList;
 
 public class RewardSystem {
-    private final static float MAX_WIN_REWARD = 0; // Reward for a 100% perfect run
-    private final static float BONUS_WIN_BASE = 20.0f; // Max penalty for a 0% objective run
-    private final static float LOSE_PENALTY = -10.0f;
-    private final static float TIMEOUT_PENALTY = -10.0f;
-    private final static float KILL_REWARD = 2.0f;
-    private final static float BUMP_REWARD = 2.0f;
-    private final static float COIN_REWARD = 2.0f;
-    private static final float POWER_UP_REWARD = 4.0f;
-    private static final float EXPLORATION_REWARD = 0.02f;
-    private static final float BONK_PENALTY = -0.0f;
-    private static final float BREAK_PENALTY = -0.0f;
+    private final static float WIN_REWARD = 2f; // Reward for a 100% perfect run
+    private final static float CLEAR_ALL_BONUS = 1.0f; // Max penalty for a 0% objective run
+    private final static float LOSE_PENALTY = -1.0f;
+    private final static float TIMEOUT_PENALTY = -1.0f;
+    private final static float KILL_REWARD = 1.0f;
+    private final static float BUMP_REWARD = 1.0f;
+    private final static float COIN_REWARD = 1.0f;
+    private static final float POWER_UP_REWARD = 0.2f;
+    private static final float EXPLORATION_REWARD = 0.002f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = 0;
@@ -29,7 +27,7 @@ public class RewardSystem {
                     e.getEventType() == EventType.SHELL_KILL.getValue() ||
                     e.getEventType() == EventType.BUMP_KILL.getValue() ||
                     e.getEventType() == EventType.FALL_KILL.getValue()) {
-                reward += KILL_REWARD;
+                reward += getKillReward(world);
             }
             if (e.getEventType() == EventType.COLLECT.getValue()
                     && e.getEventParam() == SpriteType.FIRE_FLOWER.getValue()) {
@@ -42,10 +40,10 @@ public class RewardSystem {
 
             if (e.getEventType() == EventType.BUMP.getValue()
                     && e.getEventParam() == MarioForwardModel.OBS_QUESTION_BLOCK) {
-                reward += BUMP_REWARD;
+                reward += getBlockReward(world);
             }
             if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == 15) {
-                reward += COIN_REWARD;
+                reward += getCoinReward(world);
             }
 
             if (e.getEventType() == EventType.EXPLORER.getValue()) {
@@ -75,6 +73,18 @@ public class RewardSystem {
         }
 
         return reward;
+    }
+
+    private static float getCoinReward(MarioWorld world) {
+        return COIN_REWARD/getTotalCoins(world);
+    }
+
+    private static float getBlockReward(MarioWorld world) {
+        return BUMP_REWARD/getTotalBlocks(world);
+    }
+
+    private static float getKillReward(MarioWorld world) {
+        return KILL_REWARD/getTotalEnemies(world);
     }
 
     public static ArrayList<RewardEvent> logRewardEvent(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
@@ -127,17 +137,20 @@ public class RewardSystem {
 
         // Avoid division by zero on levels with no objectives
         if (totalObjectives == 0) {
-            return MAX_WIN_REWARD; // No objectives to complete, so it's a perfect run
+            return WIN_REWARD; // No objectives to complete, so it's a perfect run
         }
 
-        // Calculate the completion fraction (from 0.0 to 1.0)
-        float completionFraction = (float) objectivesCompleted / totalObjectives;
+        int objectiveCoinsComplete = getUnCollectCoin(world) == 0 ? 1 : 0;
+        int objectiveBlocksComplete = getUnbumpBlocks(world) == 0 ? 1 : 0;
+        int objectiveEnemyComplete = getAliveEnemies(world) == 0 ? 1 : 0;
 
-        if (completionFraction >= 1.0){
-            return (BONUS_WIN_BASE) + objectivesCompleted;
+        float winReward = WIN_REWARD + objectiveCoinsComplete + objectiveBlocksComplete + objectiveEnemyComplete;
+        if(getUnCollectCoin(world) == 0 && getUnbumpBlocks(world) == 0 && getAliveEnemies(world) == 0)
+        {
+            return winReward + CLEAR_ALL_BONUS;
         }
 
-        return (float) objectivesCompleted / 2;
+        return winReward;
     }
 
     private static int getAliveEnemies(MarioWorld world){
