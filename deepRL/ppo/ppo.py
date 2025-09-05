@@ -28,6 +28,7 @@ import socket
 import threading
 import time
 import queue
+from torch.optim.lr_scheduler import LinearLR
 
 logger = logging.getLogger('Agent:PPO')
 
@@ -306,9 +307,21 @@ class PPO():
 
         self.policy_model = self.policy_model_fn(self.nS, nA)
         self.policy_optimizer = self.policy_optimizer_fn(self.policy_model, self.policy_optimizer_lr)
+        self.policy_scheduler = LinearLR(
+            self.policy_optimizer,
+            start_factor=1.0,
+            end_factor=0.05,
+            total_iters=max_episodes // self.n_workers
+        )
 
         self.value_model = self.value_model_fn(self.nS)
         self.value_optimizer = self.value_optimizer_fn(self.value_model, self.value_optimizer_lr)
+        self.value_scheduler = LinearLR(
+            self.value_optimizer,
+            start_factor=1.0,
+            end_factor=0.05,
+            total_iters=max_episodes // self.n_workers
+        )
 
         checkpoint_path = self.find_model_file_path('checkpoint_')
         if checkpoint_path is not None:
@@ -363,6 +376,8 @@ class PPO():
                 
                 n_ep_batch = len(episode_timestep)
                 policy_losses, value_losses, entropy_losses, entropies, values, kls, gaes_mean = self.optimize_model()
+                self.policy_scheduler.step()
+                self.value_scheduler.step()
 
                 # stats
                 evaluation_count +=1
