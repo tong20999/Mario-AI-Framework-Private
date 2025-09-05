@@ -9,8 +9,8 @@ import engine.helper.SpriteType;
 import java.util.ArrayList;
 
 public class RewardSystem {
-    private final static float WIN_REWARD = 5.0f; // Reward for a 100% perfect run
-    private final static float BONUS_WIN = 10.0f; // Max penalty for a 0% objective run
+    private final static float WIN_REWARD = 20.0f; // Reward for a 100% perfect run
+    private final static float WIN_PENALTY = -5.0f; // Max penalty for a 0% objective run
     private final static float LOSE_PENALTY = -10.0f;
     private final static float TIMEOUT_PENALTY = -10.0f;
     private final static float KILL_REWARD = 2.0f;
@@ -129,10 +129,6 @@ public class RewardSystem {
     }
 
     private static float calculateScaledWinReward(MarioWorld world) {
-        // Tally up the total objectives and the number completed
-        int objectivesCompleted = (getTotalCoins(world) - getUnCollectCoin(world)) +
-                (getTotalEnemies(world) - getAliveEnemies(world)) +
-                (getTotalBlocks(world) - getUnbumpBlocks(world));
         int totalObjectives = getTotalCoins(world) + getTotalEnemies(world) + getTotalBlocks(world);
 
         // Avoid division by zero on levels with no objectives
@@ -140,16 +136,11 @@ public class RewardSystem {
             return WIN_REWARD; // No objectives to complete, so it's a perfect run
         }
 
-        // Calculate the completion fraction (from 0.0 to 1.0)
-        // float completionFraction = (float) objectivesCompleted / totalObjectives;
-        int c = getUnCollectCoin(world);
-        int b = getUnbumpBlocks(world);
-        int e = getAliveEnemies(world);
-        int result = c+b+e;
+        int result = getUnCollectCoin(world) + getUnbumpBlocks(world) + getAliveEnemies(world);
         if (result == 0){
-            return 20 + totalObjectives;
+            return WIN_REWARD + totalObjectives;
         }
-        return -10 - (c+b+e);
+        return WIN_PENALTY - (result);
     }
 
     private static int getAliveEnemies(MarioWorld world){
