@@ -311,7 +311,7 @@ class PPO():
             self.policy_optimizer,
             start_factor=1.0,
             end_factor=0.05,
-            total_iters=max_episodes // self.n_workers
+            total_iters=max_episodes * self.n_workers
         )
 
         self.value_model = self.value_model_fn(self.nS)
@@ -320,7 +320,7 @@ class PPO():
             self.value_optimizer,
             start_factor=1.0,
             end_factor=0.05,
-            total_iters=max_episodes // self.n_workers
+            total_iters=max_episodes * self.n_workers
         )
 
         checkpoint_path = self.find_model_file_path('checkpoint_')
