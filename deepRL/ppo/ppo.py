@@ -311,7 +311,7 @@ class PPO():
         start_factor=1.0
         end_factor=0.05
 
-        logger.loginfo(f'scheduler lr total iteration {total_iterations} start factor {start_factor} end factor {end_factor}')
+        logger.info(f'scheduler lr total iteration {total_iterations} start factor {start_factor} end factor {end_factor}')
         
         self.policy_scheduler = LinearLR(
             self.policy_optimizer,
