@@ -379,6 +379,9 @@ class PPO():
                 self.policy_scheduler.step()
                 self.value_scheduler.step()
 
+                logger.info(f'policy LR: {self.policy_scheduler.get_last_lr()[0]}')
+                logger.info(f'value LR: {self.value_scheduler.get_last_lr()[0]}')
+
                 # stats
                 evaluation_count +=1
                 evaluation_score, _ = self.evaluate(evaluation_count, self.policy_model, env, pcgBase64)
@@ -401,7 +404,9 @@ class PPO():
                     "entropy.txt": entropies,
                     "values.txt": values,
                     "kls.txt": kls,
-                    "gaes.txt": gaes_mean
+                    "gaes.txt": gaes_mean,
+                    "policy_lr.txt": self.policy_scheduler.get_last_lr()[0],
+                    "value_lr.txt": self.value_scheduler.get_last_lr()[0],
                 }
 
                 for filename, value in stats_to_write.items():
