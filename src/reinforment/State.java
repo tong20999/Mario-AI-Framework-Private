@@ -41,9 +41,7 @@ public class State {
         var sceneObservation = model.getMarioSceneObservation(1);
         var flagObservation = model.getMarioSceneObservation(0);
         var enemyObservation = model.getMarioEnemiesObservation(1);
-        var visitObservation = model.getMarioVisitHeat();
         int[][] solid = new int[size][size];
-        int[][] semiSolid = new int[size][size];
         int[][] flags = new int[size][size];
         int[][] collectible = new int[size][size];
         int[][] blocks = new int[size][size];
@@ -63,13 +61,11 @@ public class State {
 
                 if (scene == MarioForwardModel.OBS_SOLID
                         || scene == MarioForwardModel.OBS_CANNON
-                        || scene == MarioForwardModel.OBS_PIPE) {
+                        || scene == MarioForwardModel.OBS_PIPE
+                        || scene == MarioForwardModel.OBS_BRICK
+                        || scene == MarioForwardModel.OBS_PLATFORM
+                ) {
                     solid[col][row] = 1;
-                }
-
-                if (scene == MarioForwardModel.OBS_BRICK
-                        || scene == MarioForwardModel.OBS_PLATFORM) {
-                    semiSolid[col][row] = 1;
                 }
 
                 if (scene == MarioForwardModel.OBS_QUESTION_BLOCK) {
@@ -98,19 +94,11 @@ public class State {
                 .flatMapToInt(Arrays::stream)
                 .toArray();
 
-        int[] flatSemiSolid = Arrays.stream(semiSolid)
-                .flatMapToInt(Arrays::stream)
-                .toArray();
-
         int[] flatCollectible = Arrays.stream(collectible)
                 .flatMapToInt(Arrays::stream)
                 .toArray();
 
         int[] flatFlags = Arrays.stream(flags)
-                .flatMapToInt(Arrays::stream)
-                .toArray();
-
-        int[] flatVisited = Arrays.stream(visitObservation)
                 .flatMapToInt(Arrays::stream)
                 .toArray();
 
@@ -132,10 +120,8 @@ public class State {
 
         return new ObservationGrid(
                 intArrayToBytes(flatSolid),
-                intArrayToBytes(flatSemiSolid),
                 intArrayToBytes(flatCollectible),
                 intArrayToBytes(flatFlags),
-                intArrayToBytes(flatVisited),
                 intArrayToBytes(flatBlocks),
                 intArrayToBytes(flatCoins),
                 intArrayToBytes(flatStompableEnemy),
@@ -153,10 +139,8 @@ public class State {
         // Grid observation
         var observationGrid = createObservationGrid(model);
         byte[] solid = observationGrid.getSolid();
-        byte[] semiSolid = observationGrid.getSemiSolid();
         byte[] collectible = observationGrid.getCollectible();
         byte[] flags = observationGrid.getFlag();
-        byte[] visited = observationGrid.getVisited();
         byte[] blocks = observationGrid.getBlocks();
         byte[] coins = observationGrid.getCoins();
         byte[] stompableEnemy = observationGrid.getStompableEnemy();
@@ -260,12 +244,12 @@ public class State {
         byte[] payloadSubTileX = float2ByteArray(subTileX);
         byte[] payloadSubTileY = float2ByteArray(subTileY);
 
+        byte[] payloadCompletion = float2ByteArray(model.getCompletionPercentage());
+
         ByteBuffer buffer = ByteBuffer.allocate(
                 solid.length +
-                        semiSolid.length +
                         collectible.length +
                         flags.length +
-                        visited.length +
                         blocks.length +
                         coins.length +
                         stompableEnemy.length +
@@ -288,15 +272,14 @@ public class State {
                         1 + payloadNormalizedCoinsLeft.length +
                         payloadIdleCounterNormalize.length +
                         payloadSubTileX.length +
-                        payloadSubTileY.length
+                        payloadSubTileY.length +
+                        payloadCompletion.length
         );
         buffer.order(BIG_ENDIAN);
 
         buffer.put(solid);
-        buffer.put(semiSolid);
         buffer.put(collectible);
         buffer.put(flags);
-        buffer.put(visited);
         buffer.put(blocks);
         buffer.put(coins);
 
@@ -307,11 +290,6 @@ public class State {
         buffer.put(isMarioOnGround);
         buffer.put(isMarioCanJumpHigher);
         buffer.put(marioFacing);
-
-        // buffer.put(isHeadRoomClearance);
-        // buffer.put(isHeadRoomForwardClearance);
-        // buffer.put(gapAheadDistance);
-        // buffer.put(riskDensity);
 
         // float
         buffer.put(velocityX);
@@ -345,6 +323,8 @@ public class State {
 
         buffer.put(payloadSubTileX);
         buffer.put(payloadSubTileY);
+
+        buffer.put(payloadCompletion);
         return buffer.array();
     }
 }
