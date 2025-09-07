@@ -159,36 +159,43 @@ public class MarioGameTraining {
             setupWindow(info.getEpisode());
         }
 
-        // var levelFileName = info.getLevel();
-
-        var b64Level = info.getLevel();
-        byte[] decodedBytes = Base64.getDecoder().decode(b64Level);
-        String jsonString = new String(decodedBytes, StandardCharsets.UTF_8);
-        Gson gson = new GsonBuilder().create();
-        PCGLevelDto pcgLevel = gson.fromJson(jsonString, PCGLevelDto.class);
-        if (pcgLevel.getFps() > 20) {
-            this.fps = pcgLevel.getFps();
+        var playMode = info.isPlayMode();
+        PCGLevelDto pcgLevel = null;
+        if(!playMode){
+            var b64Level = info.getPayload();
+            byte[] decodedBytes = Base64.getDecoder().decode(b64Level);
+            String jsonString = new String(decodedBytes, StandardCharsets.UTF_8);
+            Gson gson = new GsonBuilder().create();
+            pcgLevel = gson.fromJson(jsonString, PCGLevelDto.class);
+            if (pcgLevel.getFps() > 20) {
+                this.fps = pcgLevel.getFps();
+            }
         }
 
         this.rewardEvents = new ArrayList<>();
         this.world = new MarioWorld(this.killEvents);
         this.world.visuals = visual;
-        this.minTimer = pcgLevel.getTimerMin();
-        this.maxTimer = pcgLevel.getTimerMax();
+        this.minTimer = pcgLevel == null ? 200 : pcgLevel.getTimerMin();
+        this.maxTimer = pcgLevel == null ? 201 : pcgLevel.getTimerMax();
         this.timer = rand.nextInt(this.minTimer, this.maxTimer);
         this.lastMilestone = 0;
         this.lastCoinCount = 0;
         this.stepCount = 0;
         String level;
-        String file = pcgLevel.getFile();
-        if (file == null) {
+
+        if(pcgLevel == null){
+            var payload = info.getPayload();
+            Gson gson = new GsonBuilder().create();
+            PlayLevel playLevel = gson.fromJson(payload, PlayLevel.class);
+            level = Helper.getFileFromLevel(playLevel.getFile());
+            this.fps = playLevel.getFps();
+            this.timer = 100;
+        } else{
             this.pcg = ProceduralContentGenerationLevel.parseLevel(pcgLevel);
             this.pcg.generate(false);
             level = this.pcg.getContent();
-        } else {
-            level = Helper.getFileFromLevel(file);
-            this.timer = 100;
         }
+
         this.world.initializeLevel(level, 1000 * this.timer);
         if (visual) {
             this.world.initializeVisuals(this.render.getGraphicsConfiguration());

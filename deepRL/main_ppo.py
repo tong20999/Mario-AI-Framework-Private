@@ -36,6 +36,11 @@ if __name__ == '__main__':
       'goal_mean_100_reward': 25000
   }
 
+  playLevel = '''{
+    "file": "./levels/evaluation/lvl-1.txt",
+    "fps": 50
+  }'''
+
   default_pcg = '''{
     "WidthMin": 20,
     "WidthMax": 21,
@@ -146,8 +151,8 @@ if __name__ == '__main__':
   ]
 
   #evaluation_levels = ["file=./levels/evaluation/lvl-1.txt"]
-  # agent.play(make_env_fn, policy_model_fn, "file=./levels/evaluation/lvl-1.txt,fps=50")
-  # agent.play(make_env_fn, policy_model_fn, "blocks=1,random_block_height=true,enemies=0,pits=0,pipes=0,width_min=15,width_max=20,fps=50")
+  # agent.play(make_env_fn, policy_model_fn, playLevel)
+  #agent.play(make_env_fn, policy_model_fn, "blocks=1,random_block_height=true,enemies=0,pits=0,pipes=0,width_min=15,width_max=20,fps=50")
   agent.train(make_envs_fn,
               make_env_fn,
               gamma,
