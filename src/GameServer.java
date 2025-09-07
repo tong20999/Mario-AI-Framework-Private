@@ -17,12 +17,12 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class GameServer {
     private final ExecutorService clientPool = Executors.newFixedThreadPool(16);
+
     public void start() throws Exception {
         System.setProperty("sun.java2d.uiScale", "1.2");
         // Start server thread
         System.out.println(MessageFormat.format("start server on port {0} with {1} thread(s)",
-                Config.getPort(), Config.getThreadPoolSize()
-        ));
+                Config.getPort(), Config.getThreadPoolSize()));
         Thread serverThread = new Thread(this::startSocketServer);
         serverThread.start();
         serverThread.join();
@@ -43,8 +43,7 @@ public class GameServer {
         MarioGameTraining clientGame = new MarioGameTraining();
         try (
                 InputStream input = socket.getInputStream();
-                OutputStream output = socket.getOutputStream()
-        ) {
+                OutputStream output = socket.getOutputStream()) {
             byte[] buffer = new byte[1024];
             int bytesRead;
 
@@ -56,7 +55,7 @@ public class GameServer {
                     byte[] payload;
                     switch (opCode) {
                         case "01": // reset
-                            //payload = Arrays.copyOfRange(buffer, 2, 11);
+                            // payload = Arrays.copyOfRange(buffer, 2, 11);
                             Info info = getEpisode(buffer);
                             var state = clientGame.reset(info);
                             sendResponse(output, "01", state);
@@ -107,6 +106,9 @@ public class GameServer {
         byte boolVisualByte = buffer.get();
         boolean visual = boolVisualByte != 0;
 
+        byte boolPlayModeByte = buffer.get();
+        boolean playMode = boolPlayModeByte != 0;
+
         // Read the length of the level string (int)
         int levelLength = buffer.getInt();
 
@@ -118,7 +120,7 @@ public class GameServer {
         // Convert the level bytes to a String using UTF-8 encoding
         String level = new String(levelBytes, StandardCharsets.UTF_8);
 
-        return new Info(episode, evaluation, visual, level);
+        return new Info(episode, evaluation, visual, playMode, level);
     }
 
     private boolean[] getActionFromPayload(byte[] payload) {

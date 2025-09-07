@@ -529,11 +529,11 @@ class PPO():
             
         self.working_dir = working_dir
 
-    def evaluate(self, evaluation_count, eval_model:CNNActor, eval_env, level:str, n_episodes=1, greedy=True, visual=True):
+    def evaluate(self, evaluation_count, eval_model:CNNActor, eval_env, level:str, n_episodes=1, greedy=True, visual=True, playMode=False):
         rs = []
         for _ in range(n_episodes):
             try:
-                info = {"episode" : evaluation_count, "evaluation" : True, "visual":visual, "level" : level}
+                info = {"episode" : evaluation_count, "evaluation" : True, "visual":visual,  "playMode" : playMode, "level" : level}
                 s, _  = eval_env.reset(options=info)
                 d = False
                 rs.append(0)
@@ -561,12 +561,14 @@ class PPO():
     def play(self, make_env_fn, policy_model_fn, level):
             env = make_env_fn()
             policy_model = policy_model_fn(env.observation_space, env.action_space.n)
-            policy_model_state = self.find_model_file_path('model.policy')
-            if policy_model_state is not None:
-                policy_model.load_state_dict(torch.load(policy_model_state, weights_only=True))
+            checkpoint_path = self.find_model_file_path('checkpoint_')
+            if checkpoint_path is not None:
+                checkpoint = torch.load(checkpoint_path)
+                logger.info("Loading model states from checkpoint.")
+                policy_model.load_state_dict(checkpoint['policy_model_state_dict'])
                 policy_model.eval()
                 
-            final_eval_score, score_std = self.evaluate(1, policy_model, env, level, n_episodes=10000, visual=True)
+            final_eval_score, score_std = self.evaluate(1, policy_model, env, level, n_episodes=10000, visual=True, playMode=True)
 
     def write_info(self, working_dir, filename, value):
         with open(os.path.join(working_dir, filename), "a") as file:
