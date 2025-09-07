@@ -321,9 +321,7 @@ public class ProceduralContentGenerationLevel {
             } else if (i == LAN_LEVEL - 3) {
                 if(needPlatform){
                     currentLevel.add(addIndex - 1, randomNormalBlockLeft ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
-                    currentLevel.add(addIndex, rand.nextInt(2) == 0 ?
-                            EnumBlockType.USED_BLOCK.getValue() :
-                            EnumBlockType.PYRAMID_BLOCK.getValue());
+                    currentLevel.add(addIndex, EnumBlockType.NORMAL_BLOCK.getValue());
                     currentLevel.add(addIndex + 1, randomNormalBlockRight ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
                 }
                 else {
@@ -361,9 +359,7 @@ public class ProceduralContentGenerationLevel {
                 } else if(i == LAN_LEVEL - 3){
                     if(needPlatform){
                         currentLevel.add(addIndex - 1, randomNormalBlockLeft ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
-                        currentLevel.add(addIndex, rand.nextInt(2) == 0 ?
-                                EnumBlockType.USED_BLOCK.getValue() :
-                                EnumBlockType.PYRAMID_BLOCK.getValue());
+                        currentLevel.add(addIndex, EnumBlockType.NORMAL_BLOCK.getValue());
                         currentLevel.add(addIndex + 1, randomNormalBlockRight ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
                     } else {
                         for (int j = -1; j < 2; j++) {

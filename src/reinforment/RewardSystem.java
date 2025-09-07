@@ -9,7 +9,7 @@ import engine.helper.SpriteType;
 import java.util.ArrayList;
 
 public class RewardSystem {
-    private final static float WIN_REWARD = 20.0f; // Reward for a 100% perfect run
+    private final static float WIN_REWARD = 10; // Reward for a 100% perfect run
     private final static float WIN_PENALTY = -5.0f; // Max penalty for a 0% objective run
     private final static float LOSE_PENALTY = -10.0f;
     private final static float TIMEOUT_PENALTY = -10.0f;
@@ -18,9 +18,10 @@ public class RewardSystem {
     private final static float COIN_REWARD = 2.0f;
     private static final float POWER_UP_REWARD = 2.0f;
     private static final float EXPLORATION_REWARD = 0.02f;
+    public static final float STEP_COST = -0.01f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
-        float reward = 0;
+        float reward = STEP_COST;
         for (MarioEvent e : miniStepEvents) {
             if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
                     e.getEventType() == EventType.FIRE_KILL.getValue() ||

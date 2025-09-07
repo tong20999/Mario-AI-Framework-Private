@@ -34,6 +34,8 @@ public class State {
         return ByteBuffer.allocate(4).putInt(value).array();
     }
 
+    private static float maxVelocity = 10f;
+
     private static ObservationGrid createObservationGrid(MarioForwardModel model) throws Exception {
         int size = 16;
         var sceneObservation = model.getMarioSceneObservation(1);
@@ -171,50 +173,50 @@ public class State {
         // byte[] gapAheadDistance = float2ByteArray(model.gapAheadDistance());
         // byte[] riskDensity = model.getRiskDensity();
 
-        // Velocity
-        // var velocity = model.getMarioFloatVelocity();
-        // float normalizedVelX = Math.max(-1.0f, Math.min(1.0f, velocity[0] /
-        // maxVelocity));
-        // if (Math.abs(normalizedVelX) < 0.001f) {
-        // normalizedVelX = 0.0f;
-        // }
-        // byte[] velocityX = float2ByteArray(normalizedVelX);
-        //
-        // float normalizedVelY = Math.max(-1.0f, Math.min(1.0f, velocity[1] /
-        // maxVelocity));
-        // if (Math.abs(normalizedVelY) < 0.001f) {
-        // normalizedVelY = 0.0f;
-        // }
-        // byte[] velocityY = float2ByteArray(normalizedVelY);
+         //Velocity
+         var velocity = model.getMarioFloatVelocity();
+         float normalizedVelX = Math.max(-1.0f, Math.min(1.0f, velocity[0] /maxVelocity));
+         if (Math.abs(normalizedVelX) < 0.001f) {
+         normalizedVelX = 0.0f;
+         }
+         byte[] velocityX = float2ByteArray(normalizedVelX);
+
+         float normalizedVelY = Math.max(-1.0f, Math.min(1.0f, velocity[1] /
+         maxVelocity));
+         if (Math.abs(normalizedVelY) < 0.001f) {
+         normalizedVelY = 0.0f;
+         }
+         byte[] velocityY = float2ByteArray(normalizedVelY);
 
         // Block
-        // var nearestBlock = model.getNearestBlockScreenPos();
-        // var dxNormalize = nearestBlock == null ? 0 : nearestBlock[0];
-        // var dyNormalize = nearestBlock == null ? 0 : nearestBlock[1];
-        // var distNormalize = nearestBlock == null ? 0 : nearestBlock[2];
-        // byte nearestBlockFound = (byte) (nearestBlock == null ? 0 : 1);
-        // byte[] nearestBlockDx = float2ByteArray(dxNormalize);
-        // byte[] nearestBlockDy = float2ByteArray(dyNormalize);
-        // byte[] nearestBlockDistance = float2ByteArray(distNormalize);
+         var nearestBlock = model.getNearestBlockScreenPos();
+         var dxNormalize = nearestBlock == null ? 0 : nearestBlock[0];
+         var dyNormalize = nearestBlock == null ? 0 : nearestBlock[1];
+         //var distNormalize = nearestBlock == null ? 0 : nearestBlock[2];
+         //System.out.println(nearestBlock + " " + dxNormalize + " " +  dyNormalize + " " + distNormalize);
+         byte nearestBlockFound = (byte) (nearestBlock == null ? 0 : 1);
+         byte[] nearestBlockDx = float2ByteArray(dxNormalize);
+         byte[] nearestBlockDy = float2ByteArray(dyNormalize);
+         //byte[] nearestBlockDistance = float2ByteArray(distNormalize);
         //
         // // Coin
-        // var nearestCoin = model.getNearestCoinScreenPos();
-        // dxNormalize = nearestCoin == null ? 0 : nearestCoin[0];
-        // dyNormalize = nearestCoin == null ? 0 : nearestCoin[1];
+         var nearestCoin = model.getNearestCoinScreenPos();
+         dxNormalize = nearestCoin == null ? 0 : nearestCoin[0];
+         dyNormalize = nearestCoin == null ? 0 : nearestCoin[1];
         // distNormalize = nearestCoin == null ? 0 : nearestCoin[2];
-        // byte nearestCoinFound = (byte) (nearestCoin == null ? 0 : 1);
-        // byte[] nearestCoinDx = float2ByteArray(dxNormalize);
-        // byte[] nearestCoinDy = float2ByteArray(dyNormalize);
+         byte nearestCoinFound = (byte) (nearestCoin == null ? 0 : 1);
+         byte[] nearestCoinDx = float2ByteArray(dxNormalize);
+         byte[] nearestCoinDy = float2ByteArray(dyNormalize);
         // byte[] nearestCoinDistance = float2ByteArray(distNormalize);
         //
         // //Enemy
-        // var nearestEnemy = model.getNearestAliveEnemyScreenPos();
-        // dxNormalize = nearestEnemy == null ? 0 : nearestEnemy[0];
-        // dyNormalize = nearestEnemy == null ? 0 : nearestEnemy[1];
+         var nearestEnemy = model.getNearestAliveEnemyScreenPos();
+         dxNormalize = nearestEnemy == null ? 0 : nearestEnemy[0];
+         dyNormalize = nearestEnemy == null ? 0 : nearestEnemy[1];
         // distNormalize = nearestEnemy == null ? 0 : nearestEnemy[2];
-        // byte nearestEnemyFound = (byte) (nearestEnemy == null ? 0 : 1);
-        // byte[] nearestEnemyDx = float2ByteArray(dxNormalize);
-        // byte[] nearestEnemyDy = float2ByteArray(dyNormalize);
+         byte nearestEnemyFound = (byte) (nearestEnemy == null ? 0 : 1);
+         byte[] nearestEnemyDx = float2ByteArray(dxNormalize);
+         byte[] nearestEnemyDy = float2ByteArray(dyNormalize);
         // byte[] nearestEnemyDistance = float2ByteArray(distNormalize);
 
         // Timer
@@ -272,7 +274,11 @@ public class State {
                         1 +
                         1 +
                         1 +
-                        // 8 + //Velocity
+                        velocityX.length +
+                        velocityY.length +
+                        1 + nearestBlockDx.length + nearestBlockDy.length +
+                        1 + nearestCoinDx.length + nearestCoinDy.length +
+                        1 + nearestEnemyDx.length + nearestEnemyDy.length +
                         // 13 + // Block
                         // 13 + // Coin
                         // 13 + // Enemy
@@ -308,22 +314,22 @@ public class State {
         // buffer.put(riskDensity);
 
         // float
-        // buffer.put(velocityX);
-        // buffer.put(velocityY);
+        buffer.put(velocityX);
+        buffer.put(velocityY);
 
-        // buffer.put(nearestBlockFound);
-        // buffer.put(nearestBlockDx);
-        // buffer.put(nearestBlockDy);
+        buffer.put(nearestBlockFound);
+        buffer.put(nearestBlockDx);
+        buffer.put(nearestBlockDy);
         // buffer.put(nearestBlockDistance);
         //
-        // buffer.put(nearestCoinFound);
-        // buffer.put(nearestCoinDx);
-        // buffer.put(nearestCoinDy);
+        buffer.put(nearestCoinFound);
+        buffer.put(nearestCoinDx);
+        buffer.put(nearestCoinDy);
         // buffer.put(nearestCoinDistance);
         //
-        // buffer.put(nearestEnemyFound);
-        // buffer.put(nearestEnemyDx);
-        // buffer.put(nearestEnemyDy);
+        buffer.put(nearestEnemyFound);
+        buffer.put(nearestEnemyDx);
+        buffer.put(nearestEnemyDy);
         // buffer.put(nearestEnemyDistance);
 
         buffer.put(payloadNormalizedTimer);

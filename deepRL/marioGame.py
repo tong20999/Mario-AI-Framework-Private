@@ -6,7 +6,7 @@ import numpy as np
 # Assuming socketEnv.py is in the same directory.
 from socketEnv import SocketEnv
 
-payload_size = 2048 + 512
+payload_size = 2048 + 1024
 
 all_possible_input:list[list[bool]] = [
     # [LEFT, RIGHT , DOWN, SPEED, JUMP]
@@ -31,8 +31,8 @@ class MarioGame(SocketEnv):
         self.grid_h = 16
         self.grid_w = 16
 
-        self.vector_transfer_byte_len = 37
-        self.vector_size = 16
+        self.vector_transfer_byte_len = 37 + 8 + 3 + 24
+        self.vector_size = 16 + 2 + 9
         self._init_spaces()
 
     def _init_spaces(self):
@@ -60,7 +60,7 @@ class MarioGame(SocketEnv):
 
             # Vector (matches State.java ByteBuffer order; big-endian)
             vector_bytes = payload[enemies_end:enemies_end + self.vector_transfer_byte_len]
-            format_string  = '>BBBBBBffBfBfBfff'
+            format_string  = '>BBBBBBffBffBffBffffBfBfBfff'
             unpacked_values = struct.unpack(format_string, vector_bytes)
             vector_part = np.array(unpacked_values, dtype=np.float32)
             

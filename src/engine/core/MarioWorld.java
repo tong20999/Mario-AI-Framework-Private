@@ -536,7 +536,8 @@ public class MarioWorld {
         // 1000/30 * 5 = 5 seconds (166 update if 30fps)
         if (idleCount > 166) {
             this.addEvent(EventType.IDLE, idleCount);
-            this.timeout();
+            idleCount = 0;
+            //this.timeout();
         }
     }
 

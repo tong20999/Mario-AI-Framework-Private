@@ -11,6 +11,7 @@ import javax.swing.JFrame;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import engine.helper.EventType;
 import reinforment.*;
 import engine.helper.GameStatus;
 import engine.helper.MarioActions;
@@ -89,6 +90,7 @@ public class MarioGameTraining {
     int minTimer = 20;
     int maxTimer = 30;
     ArrayList<MarioEvent> miniStepEvents = new ArrayList<>();
+    private int stepCount = 0;
 
     private int fps = 0;
     private ProceduralContentGenerationLevel pcg = null;
@@ -176,6 +178,7 @@ public class MarioGameTraining {
         this.timer = rand.nextInt(this.minTimer, this.maxTimer);
         this.lastMilestone = 0;
         this.lastCoinCount = 0;
+        this.stepCount = 0;
         String level;
         String file = pcgLevel.getFile();
         if (file == null) {
@@ -213,6 +216,7 @@ public class MarioGameTraining {
     }
 
     public byte[] step(boolean[] action) throws Exception {
+        stepCount++;
         miniStepEvents.clear();
         for (int i = 0; i < this.frameSkip; i++) {
             var events = miniStep(action);
@@ -233,7 +237,7 @@ public class MarioGameTraining {
         }
 
         if (this.world.gameStatus != GameStatus.RUNNING && this.evaluation && this.fps < 30) {
-
+            rewardEvents.add(new RewardEvent(stepCount * RewardSystem.STEP_COST, new MarioEvent(EventType.TOTAL_STEP)));
             Helper.logEvaluationResult(this.episode, this.world.gameStatus.toString(),
                     this.pcg, this.world, this.rewardEvents, this.evaluationReward, this.minTimer, this.maxTimer);
         }

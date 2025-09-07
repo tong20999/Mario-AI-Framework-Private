@@ -37,17 +37,17 @@ if __name__ == '__main__':
   }
 
   default_pcg = '''{
-    "WidthMin": 10,
-    "WidthMax": 15,
+    "WidthMin": 20,
+    "WidthMax": 21,
     "TimerMin": 10,
     "TimerMax": 15,
-    "Blocks": 0,
+    "Blocks": 1,
     "BlocksHeightOrigin": 10,
     "BlocksHeightBound": 9,
-    "Coins": 0,
+    "Coins": 1,
     "CoinsHeightOrigin": 10,
     "CoinsHeightBound": 9,
-    "Enemies": 0,
+    "Enemies": 1,
     "EnemiesHeightOrigin": 5,
     "EnemiesHeightBound": 14,
     "Pits": 0,
@@ -64,13 +64,15 @@ if __name__ == '__main__':
   "PolicyClipRange": 0.2,
   "ValueOptimizerLr": 0.0001,
   "ValueOptimizationEpochs": 3,
+  "ValueClipRange" : 0.2,
   "EwcLambda": 0,
   "MaxBufferEpisodes": 2,
   "MaxBufferEpisodeSteps": 70,
   "EntropyLossWeight": 0.01,
   "NWorkers": 2,
   "BatchSize": 1024,
-  "LoadOptimizer": true
+  "LoadOptimizer": true,
+  "PolicyStoppingKl" : 0.02
 }'''
 
   hyperParamsString = base64.b64decode(sys.argv[2]).decode("utf-8") if len(sys.argv) > 2 else default_hyper_params
