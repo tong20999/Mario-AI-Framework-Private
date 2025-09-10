@@ -62,18 +62,26 @@ public class RewardSystem {
     }
 
     private static float calculateWinReward(MarioWorld world) {
+        boolean hasObjectiveCoins = !world.level.getCoins().isEmpty();
+        boolean hasObjectiveBlocks = !world.level.getBumpableBlocks().isEmpty();
+        boolean hasObjectiveEnemies = !world.level.getEnemies().isEmpty();
+
+        if(!hasObjectiveCoins && !hasObjectiveBlocks && !hasObjectiveEnemies){
+            return 1f;
+        }
+
         float bonusCoin = 0;
-        if(!world.level.getCoins().isEmpty()){
+        if(hasObjectiveCoins){
             bonusCoin = (world.getCollectedCoinCount() * 1f/world.level.getCoins().size());
         }
 
         float bonusBlock = 0;
-        if(!world.level.getBumpableBlocks().isEmpty()){
+        if(hasObjectiveBlocks){
             bonusBlock = (world.getHitBlockCount() * 1f/world.level.getBumpableBlocks().size());
         }
 
         float bonusEnemies = 0;
-        if(!world.level.getEnemies().isEmpty()){
+        if(hasObjectiveEnemies){
             bonusEnemies = (world.getKillCount() * 1f/world.level.getEnemies().size());
         }
 
