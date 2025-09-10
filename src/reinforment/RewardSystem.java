@@ -9,15 +9,13 @@ import engine.helper.SpriteType;
 import java.util.ArrayList;
 
 public class RewardSystem {
-    private final static float WIN_REWARD = 10; // Reward for a 100% perfect run
-    private final static float WIN_PENALTY = -5.0f; // Max penalty for a 0% objective run
-    private final static float LOSE_PENALTY = -10.0f;
-    private final static float TIMEOUT_PENALTY = -10.0f;
-    private final static float KILL_REWARD = 2.0f;
-    private final static float BUMP_REWARD = 2.0f;
-    private final static float COIN_REWARD = 2.0f;
-    private static final float POWER_UP_REWARD = 2.0f;
-    private static final float EXPLORATION_REWARD = 0.02f;
+    private final static float WIN_REWARD = 0.0f;
+    private final static float LOSE_PENALTY = -1.0f;
+    private final static float TIMEOUT_PENALTY = -1.0f;
+    private final static float KILL_REWARD = 1.0f;
+    private final static float BUMP_REWARD = 1.0f;
+    private final static float COIN_REWARD = 1.0f;
+    private static final float POWER_UP_REWARD = 1.0f;
     public static final float STEP_COST = -0.01f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
@@ -47,45 +45,39 @@ public class RewardSystem {
                 reward += COIN_REWARD;
             }
 
-            if (e.getEventType() == EventType.EXPLORER.getValue()) {
-                // var tileY = (int)(e.getMarioY()/16f);
-                // var grade = tileY < 6 ? 2f : tileY < 10 ? 1.5f : 1f;
-                // reward += EXPLORATION_REWARD * grade;
-                reward += EXPLORATION_REWARD;
-            }
-
-            // if(e.getEventType() == EventType.IDLE.getValue()){
-            // reward += IDLE_PENALTY;
-            // }
-
             if (e.getEventType() == EventType.WIN.getValue()) {
-                reward += calculateScaledWinReward(world);
+                reward += calculateWinReward(world);
             }
 
             if (e.getEventType() == EventType.LOSE.getValue()) {
-                int totalObjectives = getTotalCoins(world) + getTotalEnemies(world) + getTotalBlocks(world);
-                reward += (LOSE_PENALTY - totalObjectives);
+                reward += LOSE_PENALTY;
             }
 
             if (e.getEventType() == EventType.TIME_OUT.getValue()) {
-                int totalObjectives = getTotalCoins(world) + getTotalEnemies(world) + getTotalBlocks(world);
-                reward += (TIMEOUT_PENALTY - totalObjectives);
+                reward += TIMEOUT_PENALTY;
             }
         }
 
         return reward;
     }
 
-    private static float getCoinReward(MarioWorld world) {
-        return COIN_REWARD/getTotalCoins(world);
-    }
+    private static float calculateWinReward(MarioWorld world) {
+        float bonusCoin = 0;
+        if(!world.level.getCoins().isEmpty()){
+            bonusCoin = (world.getCollectedCoinCount() * 1f/world.level.getCoins().size());
+        }
 
-    private static float getBlockReward(MarioWorld world) {
-        return BUMP_REWARD/getTotalBlocks(world);
-    }
+        float bonusBlock = 0;
+        if(!world.level.getBumpableBlocks().isEmpty()){
+            bonusBlock = (world.getHitBlockCount() * 1f/world.level.getBumpableBlocks().size());
+        }
 
-    private static float getKillReward(MarioWorld world) {
-        return KILL_REWARD/getTotalEnemies(world);
+        float bonusEnemies = 0;
+        if(!world.level.getEnemies().isEmpty()){
+            bonusEnemies = (world.getKillCount() * 1f/world.level.getEnemies().size());
+        }
+
+        return bonusCoin + bonusBlock + bonusEnemies;
     }
 
     public static ArrayList<RewardEvent> logRewardEvent(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
@@ -108,63 +100,17 @@ public class RewardSystem {
             } else if (e.getEventType() == EventType.COLLECT.getValue()
                     && e.getEventParam() == SpriteType.MUSHROOM.getValue()) {
                 rewardEvents.add(new RewardEvent(POWER_UP_REWARD, e));
-            } else if (e.getEventType() == EventType.EXPLORER.getValue()) {
-                rewardEvents.add(new RewardEvent(EXPLORATION_REWARD, e));
-             } else if (e.getEventType() == EventType.WIN.getValue()) {
-                float winReward = calculateScaledWinReward(world);
-                rewardEvents.add(new RewardEvent(winReward, e));
+            } else if (e.getEventType() == EventType.WIN.getValue()) {
+                rewardEvents.add(new RewardEvent(calculateWinReward(world), e));
             } else if (e.getEventType() == EventType.LOSE.getValue()) {
-                int totalObjectives = getTotalCoins(world) + getTotalEnemies(world) + getTotalBlocks(world);
-                float loseReward = LOSE_PENALTY - totalObjectives;
-                rewardEvents.add(new RewardEvent(loseReward, e));
+                rewardEvents.add(new RewardEvent(LOSE_PENALTY, e));
             } else if (e.getEventType() == EventType.TIME_OUT.getValue()) {
-                int totalObjectives = getTotalCoins(world) + getTotalEnemies(world) + getTotalBlocks(world);
-                float timeoutReward = TIMEOUT_PENALTY - totalObjectives;
-                rewardEvents.add(new RewardEvent(timeoutReward, e));
+                rewardEvents.add(new RewardEvent(TIMEOUT_PENALTY, e));
             } else {
                 rewardEvents.add(new RewardEvent(0, e));
             }
         }
 
         return rewardEvents;
-    }
-
-    private static float calculateScaledWinReward(MarioWorld world) {
-        int totalObjectives = getTotalCoins(world) + getTotalEnemies(world) + getTotalBlocks(world);
-
-        // Avoid division by zero on levels with no objectives
-        if (totalObjectives == 0) {
-            return WIN_REWARD; // No objectives to complete, so it's a perfect run
-        }
-
-        int result = getUnCollectCoin(world) + getUnbumpBlocks(world) + getAliveEnemies(world);
-        if (result == 0){
-            return WIN_REWARD + totalObjectives;
-        }
-        return WIN_PENALTY - (result);
-    }
-
-    private static int getAliveEnemies(MarioWorld world){
-        return world.getAliveEnemies().size();
-    }
-
-    private static int getUnbumpBlocks(MarioWorld world){
-        return world.getUnbumpBlocks().size();
-    }
-
-    private static int getUnCollectCoin(MarioWorld world){
-        return world.getUnCollectCoin().size();
-    }
-
-    private static int getTotalCoins(MarioWorld world){
-        return world.level.getCoins().size();
-    }
-
-    private static int getTotalEnemies(MarioWorld world){
-        return world.level.getEnemies().size();
-    }
-
-    private static int getTotalBlocks(MarioWorld world){
-        return world.level.getBumpableBlocks().size();
     }
 }

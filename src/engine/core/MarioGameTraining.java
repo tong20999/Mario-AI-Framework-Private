@@ -192,7 +192,7 @@ public class MarioGameTraining {
             this.timer = 100;
         } else{
             this.pcg = ProceduralContentGenerationLevel.parseLevel(pcgLevel);
-            this.pcg.generate(false);
+            this.pcg.generate();
             level = this.pcg.getContent();
         }
 

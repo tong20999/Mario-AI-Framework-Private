@@ -81,7 +81,7 @@ public class MarioForwardModel {
                     case MARIO:
                         return OBS_NONE;
                     default:
-                        sprite.getValue();
+                        return sprite.getValue();
                 }
             case (1):
                 switch (sprite) {
@@ -912,13 +912,5 @@ public class MarioForwardModel {
         if (mid > 3) mid = 3;
         if (far > 3) far = 3;
         return new byte[]{ (byte) near, (byte) mid, (byte) far };
-    }
-
-    public int[][] getMarioVisitHeat() {
-       return this.world.getVisitHeat(this.world.mario.x, this.world.mario.y);
-    }
-
-    public int getIdleCount() {
-        return this.world.getIdleCount();
     }
 }

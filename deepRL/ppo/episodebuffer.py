@@ -30,15 +30,24 @@ class EpisodeBuffer():
         self.progress_50 = False
         self.progress_75 = False
 
+        self.grid_keys = [
+            'gridSolid', 'gridBlocks', 'gridCoins', 'gridGoomba', 'gridGoombaWing',
+            'gridGreenKoompa', 'gridGreenKoompaWing', 'gridRedKoompa', 'gridRedKoompaWing',
+            'gridSpiky', 'gridSpikyWing', 'gridEnemyFlower', 'gridShell', 'gridBulletBill',
+            'gridMushroom', 'gridFirepower', 'gridLifeMushroom', 'gridBrick',
+            'gridSemiSolid', 'gridFlags', 'gridFireball'
+        ]
+        self.grid_mem = {}
+
     def clear(self, max_episodes, max_episode_steps):
-        scene_shape = self.state_space['gridScene'].shape
-        enemy_shape = self.state_space['gridEnemies'].shape
         vec_shape = self.state_space['vector'].shape
 
-        self.grid_scene_states_mem = np.empty(
-            shape=(max_episodes, max_episode_steps, *scene_shape), dtype=np.uint8)
-        self.grid_enemies_states_mem = np.empty(
-            shape=(max_episodes, max_episode_steps, *enemy_shape), dtype=np.uint8)
+        for key in self.grid_keys:
+            grid_shape = self.state_space[key].shape
+            self.grid_mem[key] = np.empty(
+                shape=(max_episodes, max_episode_steps, *grid_shape), dtype=np.uint8
+            )
+
         self.vector_states_mem = np.empty(
             shape=(max_episodes, max_episode_steps, *vec_shape), dtype=np.float32)
 
@@ -86,8 +95,9 @@ class EpisodeBuffer():
             next_states, rewards, terminals, truncateds, _ = envs.step(actions)
             
             self.values_mem[self.current_ep_idxs, worker_steps] = values.cpu().numpy()
-            self.grid_scene_states_mem[self.current_ep_idxs, worker_steps] = states['gridScene']
-            self.grid_enemies_states_mem[self.current_ep_idxs, worker_steps] = states['gridEnemies']
+            for key in self.grid_keys:
+                self.grid_mem[key][self.current_ep_idxs, worker_steps] = states[key]
+            
             self.vector_states_mem[self.current_ep_idxs, worker_steps] = states['vector']
             self.actions_mem[self.current_ep_idxs, worker_steps] = actions
             self.logpas_mem[self.current_ep_idxs, worker_steps] = logpas
@@ -167,11 +177,9 @@ class EpisodeBuffer():
         ep_idxs = self.episode_steps > 0
         ep_t = self.episode_steps[ep_idxs]
 
-        scene_mem = [row[:ep_t[i]] for i, row in enumerate(self.grid_scene_states_mem[ep_idxs])]
-        self.grid_scene_states_mem = np.concatenate(scene_mem)
-
-        enemy_mem = [row[:ep_t[i]] for i, row in enumerate(self.grid_enemies_states_mem[ep_idxs])]
-        self.grid_enemies_states_mem = np.concatenate(enemy_mem)
+        for key in self.grid_keys:
+            mem = [row[:ep_t[i]] for i, row in enumerate(self.grid_mem[key][ep_idxs])]
+            self.grid_mem[key] = np.concatenate(mem)
 
         vector_mem = [row[:ep_t[i]] for i, row in enumerate(self.vector_states_mem[ep_idxs])]
         self.vector_states_mem = np.concatenate(vector_mem)
@@ -188,15 +196,15 @@ class EpisodeBuffer():
         return ep_t, ep_r, ep_x, ep_s
 
     def get_data(self):
-        return (
-           self.grid_scene_states_mem,
-           self.grid_enemies_states_mem,
+        data_tuple = tuple(self.grid_mem[key] for key in self.grid_keys)
+        data_tuple += (
            self.vector_states_mem,
            self.actions_mem,
            self.returns_mem,
            self.gaes_mem,
            self.logpas_mem,
-       )
+        )
+        return data_tuple
 
     def __len__(self):
         return self.episode_steps[self.episode_steps > 0].sum()

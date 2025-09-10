@@ -5,26 +5,30 @@ import numpy as np
 from gymnasium.spaces import Dict
 
 class CNNBase(nn.Module):
-    def __init__(self, observation_space: Dict, hidden_dims=(256, 256)):
+    def __init__(self, observation_space: Dict, num_stack: int, hidden_dims=(256, 256)):
         super(CNNBase, self).__init__()
-        scene_channels = observation_space['gridScene'].shape[0]
-        enemy_channels = observation_space['gridEnemies'].shape[0]
-        self.scene_stream = nn.Sequential(
-            nn.Conv2d(scene_channels, 32, kernel_size=3, stride=1, padding=1),
+
+        self.grid_keys = [
+            'gridSolid', 'gridBlocks', 'gridCoins', 'gridGoomba', 'gridGoombaWing',
+            'gridGreenKoompa', 'gridGreenKoompaWing', 'gridRedKoompa', 'gridRedKoompaWing',
+            'gridSpiky', 'gridSpikyWing', 'gridEnemyFlower', 'gridShell', 'gridBulletBill',
+            'gridMushroom', 'gridFirepower', 'gridLifeMushroom', 'gridBrick',
+            'gridSemiSolid', 'gridFlags', 'gridFireball'
+        ]
+        
+        total_grid_channels = len(self.grid_keys) * num_stack
+        self.cnn = nn.Sequential(
+            nn.Conv2d(total_grid_channels, 32, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-        )
-        self.enemy_stream = nn.Sequential(
-            nn.Conv2d(enemy_channels, 32, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-        )
-        self.shared_cnn = nn.Sequential(
+            nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Flatten(),
         )
-        cnn_feature_size = 64 * 16 * 16
+        cnn_feature_size = 64 * 4 * 4
         vector_shape = observation_space['vector'].shape
         self.mlp = nn.Sequential(
             nn.Linear(vector_shape[0], 64),
@@ -39,20 +43,16 @@ class CNNBase(nn.Module):
         self.feature_dim = hidden_dims[1]
 
     def forward(self, states: dict):
-        scene_grid = states['gridScene'].float()
-        enemy_grid = states['gridEnemies'].float()
-        s = self.scene_stream(scene_grid)
-        e = self.enemy_stream(enemy_grid)
-        fused = torch.cat([s, e], dim=1)
-        cnn_out = self.shared_cnn(fused)
+        combined_grid = torch.cat([states[key].float() for key in self.grid_keys], dim=1)
+        cnn_out = self.cnn(combined_grid)
         mlp_out = self.mlp(states['vector'])
         combined_features = torch.cat([cnn_out, mlp_out], dim=1)
         final_features = self.combined_mlp(combined_features)
         return final_features
 
 class CNNActor(CNNBase):
-    def __init__(self, observation_space, output_dim, hidden_dims=(256, 256)):
-        super(CNNActor, self).__init__(observation_space, hidden_dims)
+    def __init__(self, observation_space, output_dim, num_stack, hidden_dims=(256, 256)):
+        super(CNNActor, self).__init__(observation_space, num_stack, hidden_dims)
         self.actor_head = nn.Linear(self.feature_dim, output_dim)
         device = "cpu"
         if torch.cuda.is_available():
@@ -62,22 +62,20 @@ class CNNActor(CNNBase):
 
     def _format_obs(self, obs: dict):
         return {
-            'gridScene': torch.tensor(obs['gridScene'], dtype=torch.float32, device=self.device),
-            'gridEnemies': torch.tensor(obs['gridEnemies'], dtype=torch.float32, device=self.device),
-            'vector': torch.tensor(obs['vector'], dtype=torch.float32, device=self.device)
+            key: torch.tensor(val, dtype=torch.float32, device=self.device)
+            for key, val in obs.items()
         }
 
     def _format_single_obs(self, obs: dict):
         return {
-            'gridScene': torch.tensor(obs['gridScene'], dtype=torch.float32, device=self.device).unsqueeze(0),
-            'gridEnemies': torch.tensor(obs['gridEnemies'], dtype=torch.float32, device=self.device).unsqueeze(0),
-            'vector': torch.tensor(obs['vector'], dtype=torch.float32, device=self.device).unsqueeze(0)
+            key: torch.tensor(val, dtype=torch.float32, device=self.device).unsqueeze(0)
+            for key, val in obs.items()
         }
 
     def forward(self, states, is_batched=False):
         if not is_batched:
             states = self._format_single_obs(states)
-        elif not isinstance(states['gridScene'], torch.Tensor):
+        elif not isinstance(states['gridSolid'], torch.Tensor):
             states = self._format_obs(states)
         features = super().forward(states)
         logits = self.actor_head(features)
@@ -115,8 +113,8 @@ class CNNActor(CNNBase):
         return action
 
 class CNNCritic(CNNBase):
-    def __init__(self, observation_space, hidden_dims=(256, 256)):
-        super(CNNCritic, self).__init__(observation_space, hidden_dims)
+    def __init__(self, observation_space, num_stack, hidden_dims=(256, 256)):
+        super(CNNCritic, self).__init__(observation_space, num_stack, hidden_dims)
         self.critic_head = nn.Linear(self.feature_dim, 1)
         device = "cpu"
         if torch.cuda.is_available():
@@ -125,11 +123,10 @@ class CNNCritic(CNNBase):
         self.to(self.device)
 
     def forward(self, states):
-        if not isinstance(states['gridScene'], torch.Tensor):
+        if not isinstance(states['gridSolid'], torch.Tensor):
             states = {
-                'gridScene': torch.tensor(states['gridScene'], dtype=torch.float32, device=self.device),
-                'gridEnemies': torch.tensor(states['gridEnemies'], dtype=torch.float32, device=self.device),
-                'vector': torch.tensor(states['vector'], dtype=torch.float32, device=self.device)
+                key: torch.tensor(val, dtype=torch.float32, device=self.device)
+                for key, val in states.items()
             }
         features = super().forward(states)
         values = self.critic_head(features)

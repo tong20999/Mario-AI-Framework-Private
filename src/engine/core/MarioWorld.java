@@ -44,7 +44,6 @@ public class MarioWorld {
     private ArrayList<MarioSprite> aliveEnemy = new ArrayList<>();
     private ArrayList<Point> unbumpBlocks = new ArrayList<>();
     private ArrayList<Point> unCollectCoin = new ArrayList<>();
-    private int idleCount = 0;
 
     public MarioWorld(MarioEvent[] killEvents) {
         this.pauseTimer = 0;
@@ -122,7 +121,6 @@ public class MarioWorld {
         world.visuals = false;
         world.cameraX = this.cameraX;
         world.cameraY = this.cameraY;
-        world.idleCount = this.idleCount;
         world.fireballsOnScreen = this.fireballsOnScreen;
         world.gameStatus = this.gameStatus;
         world.pauseTimer = this.pauseTimer;
@@ -212,10 +210,6 @@ public class MarioWorld {
         this.addEvent(killEvent, sprite.type.getValue(), sprite.initialCode);
         aliveEnemy.removeIf(a -> Objects.equals(sprite.initialCode,
                 MessageFormat.format("{0}_{1}_{2}", a.x, a.y, a.type.getValue())));
-
-        if (aliveEnemy.isEmpty() && !level.getEnemies().isEmpty()) {
-            this.addEvent(EventType.OBJECTIVE_KILL_CLEAR, 0);
-        }
     }
 
     public void removeSprite(MarioSprite sprite) {
@@ -364,7 +358,6 @@ public class MarioWorld {
 
     public void update(boolean[] actions) {
         this.lastFrameEvents.clear();
-        int beforePositionX = (int) (this.mario.x / 16);
         if (this.gameStatus != GameStatus.RUNNING) {
             return;
         }
@@ -505,18 +498,6 @@ public class MarioWorld {
         addedSprites.clear();
         removedSprites.clear();
 
-        var marioTileX = this.mario.getMapX();
-        var marioTileY = this.mario.getMapY();
-        if (marioTileY > 15) {
-            marioTileY = 15;
-        }
-
-        int countBefore = level.getVisitHeat(marioTileX, marioTileY);
-        if (countBefore == 0) {
-            this.addEvent(EventType.EXPLORER, 0);
-        }
-        this.level.updateVisitHeat(marioTileX, marioTileY);
-
         // punishing forward model
         if (this.killEvents != null) {
             for (MarioEvent k : this.killEvents) {
@@ -524,20 +505,6 @@ public class MarioWorld {
                     this.lose();
                 }
             }
-        }
-
-        int afterPositionX = (int) (this.mario.x / 16);
-        if (beforePositionX == afterPositionX) {
-            idleCount++;
-        } else {
-            idleCount = 0;
-        }
-
-        // 1000/30 * 5 = 5 seconds (166 update if 30fps)
-        if (idleCount > 166) {
-            this.addEvent(EventType.IDLE, idleCount);
-            idleCount = 0;
-            //this.timeout();
         }
     }
 
@@ -547,9 +514,6 @@ public class MarioWorld {
 
         if (features.contains(TileFeature.BUMPABLE)) {
             unbumpBlocks.removeIf(b -> b.getX() == xTile && b.getY() == yTile);
-            if (unbumpBlocks.isEmpty() && !level.getBumpableBlocks().isEmpty()) {
-                this.addEvent(EventType.OBJECTIVE_BLOCK_CLEAR, 0);
-            }
             bumpInto(xTile, yTile - 1);
             this.addEvent(EventType.BUMP, MarioForwardModel.OBS_QUESTION_BLOCK);
             level.setBlock(xTile, yTile, 14);
@@ -642,10 +606,6 @@ public class MarioWorld {
         }
     }
 
-    public int getIdleCount() {
-        return idleCount;
-    }
-
     public Boolean isSubGoalEnemyMet() {
         return aliveEnemy.isEmpty();
     }
@@ -680,34 +640,5 @@ public class MarioWorld {
 
     public int getCollectedCoinCount() {
         return this.level.getCoins().size() - this.getUnCollectCoin().size();
-    }
-
-    public int[][] getVisitHeat(float centerX, float centerY) {
-        int[][] ret = new int[MarioGame.tileWidth][MarioGame.tileHeight];
-        int centerXInMap = (int) centerX / 16;
-        int centerYInMap = (int) centerY / 16;
-
-        for (int y = centerYInMap - MarioGame.tileHeight / 2,
-                obsY = 0; y < centerYInMap + MarioGame.tileHeight / 2; y++, obsY++) {
-            for (int x = centerXInMap - MarioGame.tileWidth / 2,
-                    obsX = 0; x < centerXInMap + MarioGame.tileWidth / 2; x++, obsX++) {
-                int currentX = x;
-                if (currentX < 0) {
-                    currentX = 0;
-                }
-                if (currentX > level.tileWidth - 1) {
-                    currentX = level.tileWidth - 1;
-                }
-                int currentY = y;
-                if (currentY < 0) {
-                    currentY = 0;
-                }
-                if (currentY > level.tileHeight - 1) {
-                    currentY = level.tileHeight - 1;
-                }
-                ret[obsX][obsY] = this.level.getVisitHeat(currentX, currentY);
-            }
-        }
-        return ret;
     }
 }

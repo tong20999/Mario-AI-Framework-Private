@@ -119,6 +119,14 @@ class PPO():
         self.load_optimizer = load_optimizer
         self.visual_train:bool = False
 
+        self.grid_keys = [
+            'gridSolid', 'gridBlocks', 'gridCoins', 'gridGoomba', 'gridGoombaWing',
+            'gridGreenKoompa', 'gridGreenKoompaWing', 'gridRedKoompa', 'gridRedKoompaWing',
+            'gridSpiky', 'gridSpikyWing', 'gridEnemyFlower', 'gridShell', 'gridBulletBill',
+            'gridMushroom', 'gridFirepower', 'gridLifeMushroom', 'gridBrick',
+            'gridSemiSolid', 'gridFlags', 'gridFireball'
+        ]
+
         logger.info(f'policy_optimizer_lr {self.policy_optimizer_lr}')
         logger.info(f'policy_sample_ratio {self.policy_sample_ratio}')
         logger.info(f'policy_clip_range {self.policy_clip_range}')
@@ -137,9 +145,13 @@ class PPO():
         logger.info(f'load_optimizer {self.load_optimizer}')
 
     def optimize_model(self):
-        # 1. Get data from the buffer (as NumPy arrays on the CPU)
-        grid_scene_states_np, grid_enemies_states_np, vector_states_np, actions_np, \
-        returns_np, gaes_np, logpas_np = self.episode_buffer.get_data()
+        all_data = self.episode_buffer.get_data()
+        
+        grid_data_np = all_data[:len(self.grid_keys)]
+        vector_states_np, actions_np, returns_np, gaes_np, logpas_np = all_data[len(self.grid_keys):]
+        
+        grid_data_dict = {key: data for key, data in zip(self.grid_keys, grid_data_np)}
+
         device = self.device
         n_samples = len(actions_np)
 
@@ -147,11 +159,9 @@ class PPO():
         returns_std = np.std(returns_np)
         returns_np = (returns_np - returns_mean) / (returns_std + EPS)
 
-        # --- METRIC TRACKING ---
         policy_losses, value_losses, entropy_losses = [], [], []
         entropies, values_, kls = [], [], []
 
-        # 2. Normalize GAE on the CPU once
         gaes_mean = np.mean(gaes_np)
         gaes_std = np.std(gaes_np)
         gaes_np = (gaes_np - gaes_mean) / (gaes_std + EPS)
@@ -166,22 +176,17 @@ class PPO():
         policy_start_time = time.time()
         for _ in range(self.policy_optimization_epochs):
             early_stop = False
-            # Generate indices on CPU
             indices = np.random.permutation(n_samples)
             for i in range(0, n_samples, self.batch_size):
                 batch_idxs = indices[i : i + self.batch_size]
 
-                # 3. Move ONLY the current batch to the GPU
-                states_batch = {
-                    'gridScene': torch.from_numpy(grid_scene_states_np[batch_idxs]).to(dtype=torch.float32).to(device),
-                    'gridEnemies': torch.from_numpy(grid_enemies_states_np[batch_idxs]).to(dtype=torch.float32).to(device),
-                    'vector': torch.from_numpy(vector_states_np[batch_idxs]).to(dtype=torch.float32).to(device),
-                }
+                states_batch = {key: data[batch_idxs] for key, data in grid_data_dict.items()}
+                states_batch['vector'] = vector_states_np[batch_idxs]
+                
                 actions_batch = torch.from_numpy(actions_np[batch_idxs]).to(device)
                 gaes_batch = torch.from_numpy(gaes_np[batch_idxs]).to(device)
                 logpas_batch = torch.from_numpy(logpas_np[batch_idxs]).to(device)
 
-                # --- Forward pass and Loss Calculation ---
                 logpas_pred, entropies_pred = self.policy_model.get_predictions(states_batch, actions_batch)
                 ratios = (logpas_pred - logpas_batch).exp()
 
@@ -193,19 +198,16 @@ class PPO():
                 policy_loss = -torch.min(pi_obj, pi_obj_clipped).mean()
                 entropy_loss = -entropies_pred.mean() * self.entropy_loss_weight
                 
-                # --- Backward Pass and Optimization Step ---
                 self.policy_optimizer.zero_grad()
-                total_policy_loss = policy_loss + entropy_loss # + ewc_penalty
+                total_policy_loss = policy_loss + entropy_loss
                 total_policy_loss.backward()
                 torch.nn.utils.clip_grad_norm_(self.policy_model.parameters(), self.policy_model_max_grad_norm)
                 self.policy_optimizer.step()
 
-                # --- Metrics and Early Stopping ---
                 policy_losses.append(policy_loss.item())
                 entropy_losses.append(entropy_loss.item())
                 entropies.append(entropies_pred.mean().item())
 
-                # 4. CRITICAL: Detach KL from graph before check
                 with torch.no_grad():
                     kl_div = (logpas_batch - logpas_pred).mean().item()
                 kls.append(kl_div)
@@ -226,23 +228,18 @@ class PPO():
         value_start_time = time.time()
         for _ in range(self.value_optimization_epochs):
             early_stop = False
-            indices = np.random.permutation(n_samples) # Re-shuffle for value function
+            indices = np.random.permutation(n_samples)
 
             for i in range(0, n_samples, self.batch_size):
                 batch_idxs = indices[i : i + self.batch_size]
 
-                # Move ONLY the current batch to the GPU
-                states_batch = {
-                    'gridScene': torch.from_numpy(grid_scene_states_np[batch_idxs]).to(dtype=torch.float32).to(device),
-                    'gridEnemies': torch.from_numpy(grid_enemies_states_np[batch_idxs]).to(dtype=torch.float32).to(device),
-                    'vector': torch.from_numpy(vector_states_np[batch_idxs]).to(dtype=torch.float32).to(device),
-                }
+                states_batch = {key: data[batch_idxs] for key, data in grid_data_dict.items()}
+                states_batch['vector'] = vector_states_np[batch_idxs]
+
                 returns_batch = torch.from_numpy(returns_np[batch_idxs]).to(device)
-                # We need old values for clipping, get them from a forward pass
                 with torch.no_grad():
                     values_batch = self.value_model(states_batch)
 
-                # --- Forward pass and Loss Calculation ---
                 values_pred:torch.Tensor = self.value_model(states_batch)
                 
                 values_pred_clipped = values_batch + (values_pred - values_batch).clamp(
@@ -252,17 +249,14 @@ class PPO():
                 v_loss_clipped = (returns_batch - values_pred_clipped).pow(2)
                 value_loss = torch.max(v_loss, v_loss_clipped).mul(0.5).mean()
 
-                # --- Backward Pass and Optimization Step ---
                 self.value_optimizer.zero_grad()
                 value_loss.backward()
                 torch.nn.utils.clip_grad_norm_(self.value_model.parameters(), self.value_model_max_grad_norm)
                 self.value_optimizer.step()
 
-                # --- Metrics and Early Stopping ---
                 value_losses.append(value_loss.item())
                 values_.append(values_pred.mean().item())
                 
-                # 4. CRITICAL: Detach MSE from graph before check
                 with torch.no_grad():
                     mse = (returns_batch - values_pred).pow(2).mul(0.5).mean().item()
 
@@ -277,7 +271,6 @@ class PPO():
         logger.info(f'Value optimization finished in {time.time() - value_start_time:.2f} seconds')
         logger.info(f'Total optimization finished in {time.time() - start_optimize_time:.2f} seconds')
         
-        # Return mean of collected metrics
         return (np.mean(policy_losses), np.mean(value_losses), np.mean(entropy_losses), 
                 np.mean(entropies), np.mean(values_), np.mean(kls), gaes_mean)
 
@@ -305,13 +298,14 @@ class PPO():
     
         self.nS, nA = env.observation_space, env.action_space.n
 
-        self.policy_model = self.policy_model_fn(self.nS, nA)
-        self.policy_optimizer = self.policy_optimizer_fn(self.policy_model, self.policy_optimizer_lr)
-        total_iterations=self.max_buffer_episodes * self.n_workers
+        total_iterations=500 + (self.max_buffer_episodes * self.n_workers)
         start_factor=1.0
         end_factor=0.05
-
         logger.info(f'scheduler lr total iteration {total_iterations} start factor {start_factor} end factor {end_factor}')
+
+        self.policy_model = self.policy_model_fn(self.nS, nA)
+        self.policy_optimizer = self.policy_optimizer_fn(self.policy_model, self.policy_optimizer_lr)
+
         
         self.policy_scheduler = LinearLR(
             self.policy_optimizer,
@@ -483,23 +477,22 @@ class PPO():
         except Exception as e:
             logger.error(f"Error handling client {addr}: {e}")
         finally:
-            conn.close() # Ensure the client socket is closed
+            conn.close()
             logger.info(f"Connection handler for {addr} closed.")
 
     def socket_server(self,host, port):
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # Allow re-use of address
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             server_socket.bind((host, port))
-            server_socket.listen(5) # Max 5 queued connections
+            server_socket.listen(5)
             logger.info(f"Socket server listening on {host}:{port}")
 
             while True:
-                conn, addr = server_socket.accept() # This blocks until a new client connects
+                conn, addr = server_socket.accept()
                 logger.info(f"Accepted connection from {addr}")
-                # Start a new thread to handle this client
                 client_handler_thread = threading.Thread(target=self.handle_client, args=(conn, addr))
-                client_handler_thread.daemon = True # Allows main program to exit even if client threads are running
+                client_handler_thread.daemon = True
                 client_handler_thread.start()
 
         except Exception as e:
