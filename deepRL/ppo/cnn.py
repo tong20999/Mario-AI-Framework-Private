@@ -106,13 +106,15 @@ class CNNActor(CNNBase):
         
         return np_actions, np_logpas, is_exploratory
 
-    def select_action(self, obs: dict, greedy=False):
+    def select_action(self, obs: dict):
         logits = self.forward(obs, is_batched=False)
-        if greedy:
-            action = torch.argmax(logits, dim=-1)
-        else:
-            dist = torch.distributions.Categorical(logits=logits)
-            action = dist.sample()
+        dist = torch.distributions.Categorical(logits=logits)
+        action = dist.sample()
+        return action.item()
+
+    def select_greedy_action(self, obs: dict):
+        logits = self.forward(obs, is_batched=False)
+        action = torch.argmax(logits, dim=-1)
         return action.item()
 
     def get_predictions(self, states, actions):
