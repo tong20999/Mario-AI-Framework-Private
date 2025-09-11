@@ -359,7 +359,7 @@ public class MarioWorld {
     }
 
     public void update(boolean[] actions) {
-        float progressBefore = this.mario.x / (this.level.exitTileX * 16);
+        float progressBefore = this.mario.x;
         this.lastFrameEvents.clear();
         if (this.gameStatus != GameStatus.RUNNING) {
             return;
@@ -501,7 +501,7 @@ public class MarioWorld {
         addedSprites.clear();
         removedSprites.clear();
 
-        float progressAfter = this.mario.x / (this.level.exitTileX * 16);
+        float progressAfter = this.mario.x;
         if(progressAfter > progressBefore && progressAfter > this.currentProgress) {
             this.currentProgress = progressAfter;
             this.addEvent(EventType.PROGRESS, 0);
