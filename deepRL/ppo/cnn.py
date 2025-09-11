@@ -93,6 +93,20 @@ class CNNActor(CNNBase):
         logits = self.actor_head(features)
         return logits
 
+    def np_pass(self, states):
+        logits = self.forward(states, is_batched=True)
+        dist = torch.distributions.Categorical(logits=logits)
+        actions = dist.sample()
+        logpas = dist.log_prob(actions)
+        
+        np_actions = actions.detach().cpu().numpy()
+        np_logpas = logpas.detach().cpu().numpy()
+        np_logits = logits.detach().cpu().numpy()
+        
+        is_exploratory = np_actions != np.argmax(np_logits, axis=1)
+        
+        return np_actions, np_logpas, is_exploratory
+
     def select_action(self, obs: dict, greedy=False):
         logits = self.forward(obs, is_batched=False)
         if greedy:
