@@ -18,21 +18,20 @@ class CNNBase(nn.Module):
             nn.ReLU(),
             nn.Flatten()
         )
-        
         vector_shape = observation_space['vector'].shape
         self.vector_mlp = nn.Sequential(
-            nn.Linear(vector_shape[0], 256), # Vector MLP size set to 256
+            nn.Linear(vector_shape[0], 256),
             nn.ReLU()
         )
 
         # --- Combined MLP Head ---
         cnn_feature_size = 128 * 16 * 16
-        combined_input_size = cnn_feature_size + 256  # CNN output + Vector MLP output
+        combined_input_size = cnn_feature_size + 256
 
         self.final_mlp = nn.Sequential(
-            nn.Linear(combined_input_size, hidden_dims[0]), # Hidden unit size 512
+            nn.Linear(combined_input_size, hidden_dims[0]),
             nn.ReLU(),
-            nn.Linear(hidden_dims[0], hidden_dims[1]),     # Hidden unit size 512
+            nn.Linear(hidden_dims[0], hidden_dims[1]),
             nn.ReLU(),
         )
 
@@ -41,8 +40,8 @@ class CNNBase(nn.Module):
     def forward(self, states: dict):
         # 1. Process the grid
         grid_ids = states['grid'].long()
+        grid_ids = grid_ids.squeeze(2)    
         embedded_grid = self.grid_embedding(grid_ids)
-        
         batch_size, num_stack, height, width, emb_dim = embedded_grid.shape
         cnn_input = embedded_grid.permute(0, 1, 4, 2, 3).reshape(batch_size, num_stack * emb_dim, height, width)
         
