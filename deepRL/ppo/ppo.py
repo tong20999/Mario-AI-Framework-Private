@@ -147,11 +147,7 @@ class PPO():
     def optimize_model(self):
         all_data = self.episode_buffer.get_data()
         
-        grid_data_np = all_data[:len(self.grid_keys)]
-        vector_states_np, actions_np, returns_np, gaes_np, logpas_np = all_data[len(self.grid_keys):]
-        
-        grid_data_dict = {key: data for key, data in zip(self.grid_keys, grid_data_np)}
-
+        grid_states_np, vector_states_np, actions_np, returns_np, gaes_np, logpas_np = all_data
         device = self.device
         n_samples = len(actions_np)
 
@@ -159,13 +155,12 @@ class PPO():
         returns_std = np.std(returns_np)
         returns_np = (returns_np - returns_mean) / (returns_std + EPS)
 
-        policy_losses, value_losses, entropy_losses = [], [], []
-        entropies, values_, kls = [], [], []
-
         gaes_mean = np.mean(gaes_np)
         gaes_std = np.std(gaes_np)
         gaes_np = (gaes_np - gaes_mean) / (gaes_std + EPS)
 
+        policy_losses, value_losses, entropy_losses = [], [], []
+        entropies, values_, kls = [], [], []
 
         logger.info(f'Starting model optimization with {n_samples} samples...')
         start_optimize_time = time.time()
@@ -180,8 +175,10 @@ class PPO():
             for i in range(0, n_samples, self.batch_size):
                 batch_idxs = indices[i : i + self.batch_size]
 
-                states_batch = {key: data[batch_idxs] for key, data in grid_data_dict.items()}
-                states_batch['vector'] = vector_states_np[batch_idxs]
+                states_batch = {
+                    'grid': grid_states_np[batch_idxs],
+                    'vector': vector_states_np[batch_idxs]
+                }
                 
                 actions_batch = torch.from_numpy(actions_np[batch_idxs]).to(device)
                 gaes_batch = torch.from_numpy(gaes_np[batch_idxs]).to(device)
@@ -233,8 +230,10 @@ class PPO():
             for i in range(0, n_samples, self.batch_size):
                 batch_idxs = indices[i : i + self.batch_size]
 
-                states_batch = {key: data[batch_idxs] for key, data in grid_data_dict.items()}
-                states_batch['vector'] = vector_states_np[batch_idxs]
+                states_batch = {
+                    'grid': grid_states_np[batch_idxs],
+                    'vector': vector_states_np[batch_idxs]
+                }
 
                 returns_batch = torch.from_numpy(returns_np[batch_idxs]).to(device)
                 with torch.no_grad():

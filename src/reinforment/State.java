@@ -23,18 +23,23 @@ public class State {
         return ByteBuffer.allocate(4).putFloat(value).array();
     }
 
-    public static byte[] int2ByteArray(int value) {
-        return ByteBuffer.allocate(4).putInt(value).array();
-    }
-
     private static float maxVelocity = 10f;
 
-    private static ObservationGrid createObservationGrid(MarioForwardModel model) throws Exception {
+    private static byte[] intArrayToBytes(int[] input) throws Exception {
+        byte[] byteArray = new byte[input.length];
+        for (int i = 0; i < input.length; i++) {
+            byteArray[i] = (byte) input[i];
+        }
+        return byteArray;
+    }
+
+
+    private static byte[] createObservationGrid(MarioForwardModel model) throws Exception {
         int size = 16;
-        ObservationGrid state = new ObservationGrid();
         var sceneObservation = model.getMarioSceneObservation(1);
         var flagObservation = model.getMarioSceneObservation(0);
         var enemyObservation = model.getMarioEnemiesObservation(0);
+        var grid = new int[size][size];
 
         for (int col = 0; col < size; col++) {
             for (int row = 0; row < size; row++) {
@@ -43,7 +48,7 @@ public class State {
                 int flag = flagObservation[col][row];
 
                 if (flag == 40 + 16 || flag == 39 + 16) {
-                    state.getFlags()[col][row] = 1;
+                    grid[col][row] = 8;
                 }
 
                 if (scene == MarioForwardModel.OBS_SOLID
@@ -51,56 +56,52 @@ public class State {
                         || scene == MarioForwardModel.OBS_PIPE
                         || scene == MarioForwardModel.OBS_PLATFORM
                 ) {
-                    state.getSolid()[col][row] = 1;
-                }
-
-                if (scene == MarioForwardModel.OBS_QUESTION_BLOCK) {
-                    state.getBlocks()[col][row] = 1;
+                    grid[col][row] = 1;
+                } else if (scene == MarioForwardModel.OBS_QUESTION_BLOCK) {
+                    grid[col][row] = 3;
                 } else if(scene == MarioForwardModel.OBS_BRICK){
-                    state.getBrick()[col][row] = 1;
-                }
-
-                if (scene == MarioForwardModel.OBS_COIN) {
-                    state.getCoins()[col][row] = 1;
+                    grid[col][row] = 2;
+                } else if (scene == MarioForwardModel.OBS_COIN) {
+                    grid[col][row] = 4;
                 }
 
                 if (enemy == MarioForwardModel.OBS_MUSHROOM) {
-                    state.getMushroom()[col][row] = 1;
+                    grid[col][row] = 5;
                 } else if(enemy == MarioForwardModel.OBS_LIFE_MUSHROOM){
-                    state.getLifeMushroom()[col][row] = 1;
+                    grid[col][row] = 6;
                 } else if(enemy == MarioForwardModel.OBS_FIRE_FLOWER){
-                    state.getFirepower()[col][row] = 1;
-                }
-
-                if (enemy == MarioForwardModel.OBS_GOOMBA) {
-                    state.getGoomba()[col][row] = 1;
+                    grid[col][row] = 7;
+                } else if (enemy == MarioForwardModel.OBS_GOOMBA) {
+                    grid[col][row] = 8;
                 } else if(enemy == MarioForwardModel.OBS_GOOMBA_WINGED){
-                    state.getGoombaWing()[col][row] = 1;
+                    grid[col][row] = 9;
                 } else if(enemy == MarioForwardModel.OBS_GREEN_KOOPA){
-                    state.getGreenKoompa()[col][row] = 1;
+                    grid[col][row] = 10;
                 } else if(enemy == MarioForwardModel.OBS_GREEN_KOOPA_WINGED){
-                    state.getGreenKoompaWing()[col][row] = 1;
+                    grid[col][row] = 11;
                 } else if(enemy == MarioForwardModel.OBS_RED_KOOPA){
-                    state.getRedKoompa()[col][row] = 1;
+                    grid[col][row] = 12;
                 } else if(enemy == MarioForwardModel.OBS_RED_KOOPA_WINGED){
-                    state.getRedKoompaWing()[col][row] = 1;
+                    grid[col][row] = 13;
                 } else if(enemy == MarioForwardModel.OBS_SPIKY){
-                    state.getSpiky()[col][row] = 1;
+                    grid[col][row] = 14;
                 } else if(enemy == MarioForwardModel.OBS_SPIKY_WINGED){
-                    state.getSpikyWing()[col][row] = 1;
+                    grid[col][row] = 15;
                 } else if(enemy == MarioForwardModel.OBS_ENEMY_FLOWER){
-                    state.getEnemyFlower()[col][row] = 1;
+                    grid[col][row] = 16;
                 } else if(enemy == MarioForwardModel.OBS_SHELL){
-                    state.getShell()[col][row] = 1;
+                    grid[col][row] = 17;
                 } else if(enemy == MarioForwardModel.OBS_BULLET_BILL){
-                    state.getBulletBill()[col][row] = 1;
+                    grid[col][row] = 18;
                 } else if(enemy == MarioForwardModel.OBS_FIREBALL) {
-                    state.getFireball()[col][row] = 1;
+                    grid[col][row] = 19;
                 }
             }
         }
 
-        return state;
+        var flatGrid = Arrays.stream(grid).flatMapToInt(Arrays::stream).toArray();
+
+        return intArrayToBytes(flatGrid);
     }
 
     private static byte[] getMode(MarioForwardModel model) {
@@ -116,7 +117,7 @@ public class State {
 
 
         // Observation grid
-        var observationGrid = createObservationGrid(model);
+        var observationGridPayload = createObservationGrid(model);
 
         // Mario state
         byte[] marioMode = getMode(model);
@@ -181,7 +182,7 @@ public class State {
 
         // Write all features to the output stream
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        outputStream.write(observationGrid.getPayload());
+        outputStream.write(observationGridPayload); // 256
         outputStream.write(marioMode);
         outputStream.write((byte) (model.isMarioOnGround() ? 1 : 0));
         outputStream.write((byte) (model.getMarioCanJumpHigher() ? 1 : 0));
