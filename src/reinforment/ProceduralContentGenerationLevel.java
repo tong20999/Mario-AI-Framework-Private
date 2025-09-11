@@ -41,9 +41,9 @@ public class ProceduralContentGenerationLevel {
         try{
             ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel.randomWidth(pcgLevelDto.getWidthMin(), pcgLevelDto.getWidthMax());
             pcgLevel.pcgLevelDto = pcgLevelDto;
-            pcgLevel.addRamp(8,2, pcgLevelDto);
-            pcgLevel.addPit(8,2, pcgLevelDto);
-            pcgLevel.addPipe(8, 2, pcgLevelDto);
+            pcgLevel.addRamp(10,2, pcgLevelDto);
+            pcgLevel.addPit(10,2, pcgLevelDto);
+            pcgLevel.addPipe(10, 2, pcgLevelDto);
             pcgLevel.addEnemy(8,2, pcgLevelDto);
             pcgLevel.addBlock(8, 2, pcgLevelDto);
             pcgLevel.addCoin(8,2, pcgLevelDto);
@@ -68,7 +68,7 @@ public class ProceduralContentGenerationLevel {
         ArrayList<Character> lanLevel = levels.get(LAN_LEVEL);
         int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - 2;
         var mapWidth = lanLevel.size() / 2;
-        int spawnMario = rand.nextInt(3 ,4);
+        int spawnMario = rand.nextInt(3 ,mapWidth - 1);
         lanLevel.set(spawnMario, 'M');
         levels.replace(LAN_LEVEL, lanLevel);
         StringBuilder contentBuilder = new StringBuilder();

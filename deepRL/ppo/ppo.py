@@ -300,7 +300,7 @@ class PPO():
 
         total_iterations=500 + (self.max_buffer_episodes * self.n_workers)
         start_factor=1.0
-        end_factor=0.05
+        end_factor=0.2
         logger.info(f'scheduler lr total iteration {total_iterations} start factor {start_factor} end factor {end_factor}')
 
         self.policy_model = self.policy_model_fn(self.nS, nA)

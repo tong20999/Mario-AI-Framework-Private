@@ -90,32 +90,33 @@ public class RewardSystem {
 
     public static ArrayList<RewardEvent> logRewardEvent(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         ArrayList<RewardEvent> rewardEvents = new ArrayList<>();
+        String timer = (world.currentTimer == -1 ? "Inf" : (int) Math.ceil(world.currentTimer / 1000f)).toString();
         for (MarioEvent e : miniStepEvents) {
             if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
                     e.getEventType() == EventType.FIRE_KILL.getValue() ||
                     e.getEventType() == EventType.SHELL_KILL.getValue() ||
                     e.getEventType() == EventType.BUMP_KILL.getValue() ||
                     e.getEventType() == EventType.FALL_KILL.getValue()) {
-                rewardEvents.add(new RewardEvent(KILL_REWARD, e));
+                rewardEvents.add(new RewardEvent(KILL_REWARD, e, timer));
             } else if (e.getEventType() == EventType.BUMP.getValue()
                     && e.getEventParam() == MarioForwardModel.OBS_QUESTION_BLOCK) {
-                rewardEvents.add(new RewardEvent(BUMP_REWARD, e));
+                rewardEvents.add(new RewardEvent(BUMP_REWARD, e, timer));
             } else if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == 15) {
-                rewardEvents.add(new RewardEvent(COIN_REWARD, e));
+                rewardEvents.add(new RewardEvent(COIN_REWARD, e, timer));
             } else if (e.getEventType() == EventType.COLLECT.getValue()
                     && e.getEventParam() == SpriteType.FIRE_FLOWER.getValue()) {
-                rewardEvents.add(new RewardEvent(POWER_UP_REWARD, e));
+                rewardEvents.add(new RewardEvent(POWER_UP_REWARD, e, timer));
             } else if (e.getEventType() == EventType.COLLECT.getValue()
                     && e.getEventParam() == SpriteType.MUSHROOM.getValue()) {
-                rewardEvents.add(new RewardEvent(POWER_UP_REWARD, e));
+                rewardEvents.add(new RewardEvent(POWER_UP_REWARD, e, timer));
             } else if (e.getEventType() == EventType.WIN.getValue()) {
-                rewardEvents.add(new RewardEvent(calculateWinReward(world), e));
+                rewardEvents.add(new RewardEvent(calculateWinReward(world), e, timer));
             } else if (e.getEventType() == EventType.LOSE.getValue()) {
-                rewardEvents.add(new RewardEvent(LOSE_PENALTY, e));
+                rewardEvents.add(new RewardEvent(LOSE_PENALTY, e, timer));
             } else if (e.getEventType() == EventType.TIME_OUT.getValue()) {
-                rewardEvents.add(new RewardEvent(TIMEOUT_PENALTY, e));
+                rewardEvents.add(new RewardEvent(TIMEOUT_PENALTY, e, timer));
             } else {
-                rewardEvents.add(new RewardEvent(0, e));
+                rewardEvents.add(new RewardEvent(0, e, timer));
             }
         }
 
