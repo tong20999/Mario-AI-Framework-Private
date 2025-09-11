@@ -45,6 +45,8 @@ public class MarioWorld {
     private ArrayList<Point> unbumpBlocks = new ArrayList<>();
     private ArrayList<Point> unCollectCoin = new ArrayList<>();
 
+    private float currentProgress = 0f;
+
     public MarioWorld(MarioEvent[] killEvents) {
         this.pauseTimer = 0;
         this.gameStatus = GameStatus.RUNNING;
@@ -357,6 +359,7 @@ public class MarioWorld {
     }
 
     public void update(boolean[] actions) {
+        float progressBefore = this.mario.x / (this.level.exitTileX * 16);
         this.lastFrameEvents.clear();
         if (this.gameStatus != GameStatus.RUNNING) {
             return;
@@ -497,6 +500,12 @@ public class MarioWorld {
         sprites.removeAll(removedSprites);
         addedSprites.clear();
         removedSprites.clear();
+
+        float progressAfter = this.mario.x / (this.level.exitTileX * 16);
+        if(progressAfter > progressBefore && progressAfter > this.currentProgress) {
+            this.currentProgress = progressAfter;
+            this.addEvent(EventType.PROGRESS, 0);
+        }
 
         // punishing forward model
         if (this.killEvents != null) {

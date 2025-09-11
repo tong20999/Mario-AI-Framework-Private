@@ -18,6 +18,7 @@ public class RewardSystem {
     private final static float COIN_REWARD = 0.1f;
     private static final float POWER_UP_REWARD = 1.0f;
     public static final float STEP_COST = -0.001f;
+    public static final float PROGRESS_REWARD = 0.01f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = STEP_COST;
@@ -56,6 +57,10 @@ public class RewardSystem {
 
             if (e.getEventType() == EventType.TIME_OUT.getValue()) {
                 reward += TIMEOUT_PENALTY;
+            }
+
+            if (e.getEventType() == EventType.PROGRESS.getValue()) {
+                reward += PROGRESS_REWARD;
             }
         }
 
@@ -109,6 +114,8 @@ public class RewardSystem {
                 rewardEvents.add(new RewardEvent(LOSE_PENALTY, e, timer));
             } else if (e.getEventType() == EventType.TIME_OUT.getValue()) {
                 rewardEvents.add(new RewardEvent(TIMEOUT_PENALTY, e, timer));
+            } else if (e.getEventType() == EventType.PROGRESS.getValue()) {
+                rewardEvents.add(new RewardEvent(PROGRESS_REWARD, e, timer));
             } else {
                 rewardEvents.add(new RewardEvent(0, e, timer));
             }
