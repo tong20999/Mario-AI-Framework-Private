@@ -14,7 +14,7 @@ class MultiGridStack(gym.Wrapper):
         
         grid_space = new_obs_spaces[self.grid_key]
 
-        new_shape = (num_stack, *grid_space.shape[1:]) # Assumes grid shape is (C, H, W)
+        new_shape = (num_stack, *grid_space.shape) # Assumes grid shape is (C, H, W)
         
         new_obs_spaces[self.grid_key] = gym.spaces.Box(
             low=0,
