@@ -58,13 +58,13 @@ class EpisodeBuffer():
         gc.collect()
 
     def fill(self, envs:MultiprocessEnv, policy_model:CNNActor, value_model:CNNCritic, episodeStart:int,
-             pcgBase64: str,
+             levelBase64: str,
              max_episodes:int, 
              max_episode_steps:int,
              visual: bool = True):
             
         self.clear(max_episodes, max_episode_steps)
-        levels_to_assign = [pcgBase64 for _ in range(self.n_workers)] 
+        levels_to_assign = [levelBase64 for _ in range(self.n_workers)] 
 
         random.shuffle(levels_to_assign)
         states = envs.reset(episodeStart, ranks=None, visual=visual, levels=levels_to_assign)
@@ -122,7 +122,7 @@ class EpisodeBuffer():
                         next_values[idx_truncated] = value_model(truncated_states).cpu().numpy()
 
                 idx_dones = np.flatnonzero(dones)
-                reset_levels = [pcgBase64 for _ in idx_dones]
+                reset_levels = [levelBase64 for _ in idx_dones]
                 episodeStart += dones.sum()
                 new_states = envs.reset(episodeStart, ranks=idx_dones, levels=reset_levels, visual=visual)
                 

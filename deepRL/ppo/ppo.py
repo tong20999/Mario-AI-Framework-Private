@@ -275,7 +275,7 @@ class PPO():
 
     def train(self, make_envs_fn:Callable, make_env_fn:Callable, gamma, 
               max_minutes, max_episodes, goal_mean_100_reward, 
-              pcgBase64:str, hyper_params:str, rehearsal_level_tasks:list[list]):
+              levelBase64:str, hyper_params:str, rehearsal_level_tasks:list[list]):
         training_start, last_debug_time = time.time(), float('-inf')
         self.make_envs_fn = make_envs_fn
         self.make_env_fn = make_env_fn
@@ -342,7 +342,7 @@ class PPO():
         statistics.write_hyperparameters(
                         self.working_dir,
                         hyper_params,
-                        pcgBase64,
+                        levelBase64,
                     )
 
         self.episode_buffer:EpisodeBuffer = self.episode_buffer_fn(self.nS, self.gamma, self.tau,
@@ -361,7 +361,7 @@ class PPO():
                     episode_timestep, episode_reward, episode_exploration, \
                     episode_seconds = self.episode_buffer.fill(
                         envs, self.policy_model, self.value_model, episode, 
-                        pcgBase64, 
+                        levelBase64, 
                         self.max_buffer_episodes,
                         self.max_buffer_episode_steps,
                         visual=self.visual_train)
@@ -383,7 +383,7 @@ class PPO():
 
                 # stats
                 evaluation_count +=1
-                evaluation_score, _ = self.evaluate(evaluation_count, self.policy_model, env, pcgBase64)
+                evaluation_score, _ = self.evaluate(evaluation_count, self.policy_model, env, levelBase64)
                 logger.info('evaluation {} score {} value losses {}'.format(evaluation_count, np.round(evaluation_score, 2), np.round(value_losses, 3)))
 
                 training_time += episode_seconds.sum()
@@ -525,7 +525,7 @@ class PPO():
         rs = []
         for _ in range(n_episodes):
             try:
-                info = {"episode" : evaluation_count, "evaluation" : True, "visual":visual,  "playMode" : playMode, "level" : level}
+                info = {"episode" : evaluation_count, "evaluation" : True, "visual":visual, "level" : level}
                 s, _  = eval_env.reset(options=info)
                 d = False
                 rs.append(0)

@@ -159,18 +159,11 @@ public class MarioGameTraining {
             setupWindow(info.getEpisode());
         }
 
-        var playMode = info.isPlayMode();
-        PCGLevelDto pcgLevel = null;
-        if(!playMode){
-            var b64Level = info.getPayload();
-            byte[] decodedBytes = Base64.getDecoder().decode(b64Level);
-            String jsonString = new String(decodedBytes, StandardCharsets.UTF_8);
-            Gson gson = new GsonBuilder().create();
-            pcgLevel = gson.fromJson(jsonString, PCGLevelDto.class);
-            if (pcgLevel.getFps() > 20) {
-                this.fps = pcgLevel.getFps();
-            }
-        }
+        var b64Level = info.getPayload();
+        byte[] decodedBytes = Base64.getDecoder().decode(b64Level);
+        String jsonString = new String(decodedBytes, StandardCharsets.UTF_8);
+        Gson gson = new GsonBuilder().create();
+        PCGLevelDto pcgLevel = gson.fromJson(jsonString, PCGLevelDto.class);
 
         this.rewardEvents = new ArrayList<>();
         this.world = new MarioWorld(this.killEvents);
@@ -183,16 +176,14 @@ public class MarioGameTraining {
         this.stepCount = 0;
         String level;
 
-        if(pcgLevel == null){
-            var payload = info.getPayload();
-            Gson gson = new GsonBuilder().create();
-            PlayLevel playLevel = gson.fromJson(payload, PlayLevel.class);
-            level = Helper.getFileFromLevel(playLevel.getFile());
-            this.fps = playLevel.getFps();
-            this.timer = 100;
+        if(pcgLevel.getFile() != null){
+            level = Helper.getFileFromLevel(pcgLevel.getFile());
+            this.fps = pcgLevel.getFps();
         } else{
             this.pcg = ProceduralContentGenerationLevel.parseLevel(pcgLevel);
-            this.pcg.generate();
+            if(!pcgLevel.isTrainFailedLevel()){
+                this.pcg.generate();
+            }
             level = this.pcg.getContent();
         }
 

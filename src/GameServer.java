@@ -106,9 +106,6 @@ public class GameServer {
         byte boolVisualByte = buffer.get();
         boolean visual = boolVisualByte != 0;
 
-        byte boolPlayModeByte = buffer.get();
-        boolean playMode = boolPlayModeByte != 0;
-
         // Read the length of the level string (int)
         int levelLength = buffer.getInt();
 
@@ -120,7 +117,7 @@ public class GameServer {
         // Convert the level bytes to a String using UTF-8 encoding
         String level = new String(levelBytes, StandardCharsets.UTF_8);
 
-        return new Info(episode, evaluation, visual, playMode, level);
+        return new Info(episode, evaluation, visual, level);
     }
 
     private boolean[] getActionFromPayload(byte[] payload) {

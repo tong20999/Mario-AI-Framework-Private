@@ -17,8 +17,8 @@ public class RewardSystem {
     private final static float BUMP_REWARD = 0.1f;
     private final static float COIN_REWARD = 0.1f;
     private static final float POWER_UP_REWARD = 1.0f;
-    public static final float STEP_COST = -0.001f;
-    public static final float PROGRESS_REWARD = 0.01f;
+    public static final float STEP_COST = -0.01f;
+    public static final float PROGRESS_REWARD = 0.02f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = STEP_COST;

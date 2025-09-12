@@ -62,7 +62,7 @@ if __name__ == '__main__':
     "Pipes": 0,
     "Ramp": 0
 }'''
-  pcgBase64_string = sys.argv[1] if len(sys.argv) > 1 else base64.b64encode(default_pcg.encode('utf-8')).decode('utf-8')
+  levelBase64 = sys.argv[1] if len(sys.argv) > 1 else base64.b64encode(default_pcg.encode('utf-8')).decode('utf-8')
 
   default_hyper_params = '''{
   "PolicyOptimizerLr": 0.0001,
@@ -160,7 +160,7 @@ if __name__ == '__main__':
               max_minutes,
               max_episodes,
               goal_mean_100_reward,
-              pcgBase64_string,
+              levelBase64,
               hyperParamsString,
               rehearsal_level_tasks)
 

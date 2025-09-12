@@ -66,7 +66,7 @@ class MultiprocessEnv(object):
         for i, rank in enumerate(ranks):
             episode = episodeStart + rank
             level_name = levels[i]
-            info = {"episode" : episode, "evaluation" : False, "visual" : visual, "playMode" : playMode, "level" :  level_name}
+            info = {"episode" : episode, "evaluation" : False, "visual" : visual, "level" :  level_name}
             kwargs['options'] = info
             self.parent_pipes[rank].send(('reset', kwargs))
         

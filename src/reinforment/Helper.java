@@ -110,7 +110,7 @@ public class Helper {
         return params;
     }
 
-    public static Optional<File> getWorkingDir() throws IOException {
+    public static Optional<File> getWorkingDir(boolean returnSecondLatest) throws IOException {
         File directory = new File("C:/thesis_data/training");
 
         // Crucial check: Ensure the path is a valid directory.
@@ -135,17 +135,15 @@ public class Helper {
             }
         }).reversed());
 
-        // Find and return the first valid numeric folder.
-        for (File folder : folders) {
-            try {
-                Integer.parseInt(folder.getName());
-                return Optional.of(folder);
-            } catch (NumberFormatException e) {
-                // Ignore non-numeric folders and continue.
+        // If we need to return the second-to-last folder
+        if (returnSecondLatest) {
+            if (folders.length >= 2) {
+                return Optional.of(folders[1]);  // Return the second-to-last folder.
             }
         }
 
-        return Optional.empty();
+        // Otherwise, return the latest folder
+        return Optional.of(folders[0]);  // Return the most recent folder (first in sorted array)
     }
 
     public static void writeToFile(String path, String value){
@@ -174,7 +172,7 @@ public class Helper {
 
 
     public static void logEvaluationResult(int evaluationEpisode, String gameStatus, ProceduralContentGenerationLevel pcg, MarioWorld world, ArrayList<RewardEvent> rewardEvents, float evaluationReward, int minTimer, int maxTimer) throws IOException {
-        Optional<File> optional = getWorkingDir();
+        Optional<File> optional = getWorkingDir(false);
         var workingDir = optional.get().getAbsolutePath();
 
         boolean blockClear = world.getHitBlockCount() == world.level.getBumpableBlocks().size();
@@ -205,7 +203,7 @@ public class Helper {
         data.put("killClear", killClear);
         data.put("coinClear", coinClear);
         data.put("gameStatus", status);
-        data.put("pcg",pcg.content);
+        data.put("pcg",pcg.getContent());
         data.put("timer", world.initTimer);
         data.put("min_timer", minTimer);
         data.put("max_timer", maxTimer);

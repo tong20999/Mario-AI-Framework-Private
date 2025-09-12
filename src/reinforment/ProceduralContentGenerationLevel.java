@@ -1,5 +1,11 @@
 package reinforment;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -10,6 +16,10 @@ public class ProceduralContentGenerationLevel {
     private static final int GROUND_2_LEVEL = 15;
     private static final int FLAG_LEVEL = 12;
     private final Map<Integer, ArrayList<Character>> levels = new HashMap<>();
+
+    private ProceduralContentGenerationLevel(PCGLevelDto dto){
+        this.pcgLevelDto = dto;
+    }
 
     private String pcgName = null;
     private EnumBlockType[] blocks = {
@@ -26,29 +36,90 @@ public class ProceduralContentGenerationLevel {
         return width;
     }
 
-    public String content = null;
+    private String content = null;
 
     public String getPcgName() {
         return pcgName;
     }
 
-    public static ProceduralContentGenerationLevel parseLevel(PCGLevelDto pcgLevelDto) {
+    private ArrayList<String> failedLevels = new ArrayList<>();
+
+    public static ProceduralContentGenerationLevel parseLevel(PCGLevelDto pcgLevelDto) throws IOException {
+        if(pcgLevelDto.isTrainFailedLevel()){
+            ProceduralContentGenerationLevel pcg = new ProceduralContentGenerationLevel(pcgLevelDto);
+            pcg.failedLevels = createFailedLevels();
+            return pcg;
+        }
         return doParseLevel(pcgLevelDto);
     }
 
+    private static ArrayList<String> createFailedLevels() throws IOException {
+        // Get the working directory
+        Optional<File> optional = Helper.getWorkingDir(true);
+        String workingDir = optional.get().getAbsolutePath();
+
+        // Paths to the two folders containing JSON files
+        String losePath = workingDir + "\\results\\LOSE";
+        String timeOutPath = workingDir + "\\results\\TIME_OUT";
+        String partialPath = workingDir + "\\results\\PARTIAL_WIN";
+
+        // Create a list to store the pcg strings
+        ArrayList<String> pcgStrings = new ArrayList<>();
+
+        // Parse both folders
+        parseFolder(losePath, pcgStrings);
+        parseFolder(timeOutPath, pcgStrings);
+        parseFolder(partialPath, pcgStrings);
+
+        // Return the list of extracted pcg strings
+        return pcgStrings;
+    }
+
+    // Helper method to parse a given folder
+    private static void parseFolder(String folderPath, ArrayList<String> pcgStrings) throws IOException {
+        // Get all the files in the folder
+        File folder = new File(folderPath);
+        if (folder.exists() && folder.isDirectory()) {
+            // List all the files in the directory
+            File[] files = folder.listFiles((dir, name) -> name.endsWith(".json"));
+            if (files != null) {
+                // Loop through each file in the folder
+                for (File file : files) {
+                    // Parse each JSON file
+                    try (FileReader fileReader = new FileReader(file)) {
+                        // Parse the file using Gson
+                        JsonObject jsonObject = JsonParser.parseReader(fileReader).getAsJsonObject();
+
+                        // Extract the "pcg" field from the JSON
+                        String pcg = jsonObject.has("pcg") ? jsonObject.get("pcg").getAsString() : "";
+
+                        // Add to the result list if it's not empty
+                        if (!pcg.isEmpty()) {
+                            pcgStrings.add(pcg);
+                        }
+                    } catch (IOException e) {
+                        // Handle any issues reading/parsing the file
+                        System.out.println("Error reading file " + file.getName() + ": " + e.getMessage());
+                    }
+                }
+            }
+        }
+    }
+
     private static ProceduralContentGenerationLevel doParseLevel(PCGLevelDto pcgLevelDto){
+        ProceduralContentGenerationLevel pcg = new ProceduralContentGenerationLevel(pcgLevelDto);
+        int width = rand.nextInt(pcgLevelDto.getWidthMin(), pcgLevelDto.getWidthMax());
+        pcg.createEmptyLevel(width);
 
         try{
-            ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel.randomWidth(pcgLevelDto.getWidthMin(), pcgLevelDto.getWidthMax());
-            pcgLevel.pcgLevelDto = pcgLevelDto;
-            pcgLevel.addRamp(8,2, pcgLevelDto);
-            pcgLevel.addPit(8,2, pcgLevelDto);
-            pcgLevel.addPipe(8, 2, pcgLevelDto);
-            pcgLevel.addEnemy(8,2, pcgLevelDto);
-            pcgLevel.addBlock(8, 2, pcgLevelDto);
-            pcgLevel.addCoin(8,2, pcgLevelDto);
+            pcg.addRamp(8,2, pcgLevelDto);
+            pcg.addPit(8,2, pcgLevelDto);
+            pcg.addPipe(8, 2, pcgLevelDto);
+            pcg.addEnemy(8,2, pcgLevelDto);
+            pcg.addBlock(8, 2, pcgLevelDto);
+            pcg.addCoin(8,2, pcgLevelDto);
 
-            return pcgLevel;
+            return pcg;
         }
         catch (IllegalArgumentException ex){
             System.out.println(ex.getMessage());
@@ -57,19 +128,12 @@ public class ProceduralContentGenerationLevel {
         }
     }
 
-    public static ProceduralContentGenerationLevel randomWidth(int min, int max) {
-        int width = rand.nextInt(min, max + 1);
-        ProceduralContentGenerationLevel pcg = new ProceduralContentGenerationLevel(width);
-        pcg.width = width;
-        return pcg;
-    }
-
     public void generate(){
         ArrayList<Character> lanLevel = levels.get(LAN_LEVEL);
         int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - 2;
         var mapWidth = lanLevel.size() / 2;
-        //int spawnMario = rand.nextInt(3 ,maxIndex - 2);
-        int spawnMario = rand.nextInt(3 ,4);
+        int spawnMario = rand.nextInt(3 ,maxIndex - 2);
+        //int spawnMario = rand.nextInt(3 ,4);
         lanLevel.set(spawnMario, 'M');
         levels.replace(LAN_LEVEL, lanLevel);
         StringBuilder contentBuilder = new StringBuilder();
@@ -90,11 +154,11 @@ public class ProceduralContentGenerationLevel {
     }
 
     public String getContent(){
+        if(pcgLevelDto.isTrainFailedLevel()){
+            int level = rand.nextInt(failedLevels.size());
+            return failedLevels.get(level);
+        }
         return content;
-    }
-
-    private ProceduralContentGenerationLevel(int width){
-        createEmptyLevel(width);
     }
 
     private void createEmptyLevel(int width){
@@ -388,20 +452,23 @@ public class ProceduralContentGenerationLevel {
                 }
                 addIndex = rand.nextInt(offsetFromStart, maxIndex);
             }
-            boolean randomPattern = rand.nextInt(2) == 0;
+            boolean secondPyramid = rand.nextInt(2) == 0;
             boolean randomPit = rand.nextInt(2) == 0;
+            int maxHeight = rand.nextInt(1,5);
+            boolean randomTunnel = rand.nextInt(2) == 0;
+            if(maxHeight == 1){
+                randomTunnel = false;
+            }
             for (int height = 0; height < levels.size(); height++) {
                 // Get the current level's list once and reuse it
                 ArrayList<Character> currentLevel = levels.get(height);
                 if(height == GROUND_1_LEVEL || height == GROUND_2_LEVEL) {
-                    if(randomPattern){
-                        currentLevel.add(addIndex - 4,'X');
-                    }
+                    currentLevel.add(addIndex - 4,'X');
                     currentLevel.add(addIndex - 3,'X');
                     currentLevel.add(addIndex - 2,'X');
                     currentLevel.add(addIndex - 1,'X');
                     currentLevel.add(addIndex, 'X');
-                    if(randomPattern){
+                    if(secondPyramid){
                         currentLevel.add(addIndex + 1,randomPit ? '-' : 'X');
                         currentLevel.add(addIndex + 2,randomPit ? '-' : 'X');
                         currentLevel.add(addIndex + 3,'X');
@@ -409,15 +476,13 @@ public class ProceduralContentGenerationLevel {
                         currentLevel.add(addIndex + 5,'X');
                         currentLevel.add(addIndex + 6,'X');
                     }
-                } else if (height == LAN_LEVEL - 3) {
-                    if(randomPattern){
-                        currentLevel.add(addIndex - 4,'-');
-                    }
+                } else if (height == LAN_LEVEL - 3 && maxHeight > 3) {
+                    currentLevel.add(addIndex - 4,'-');
                     currentLevel.add(addIndex - 3,'-');
                     currentLevel.add(addIndex - 2,'-');
                     currentLevel.add(addIndex - 1,'#');
                     currentLevel.add(addIndex,'#');
-                    if(randomPattern){
+                    if(secondPyramid){
                         currentLevel.add(addIndex + 1,'-');
                         currentLevel.add(addIndex + 2,'-');
                         currentLevel.add(addIndex + 3,'#');
@@ -426,15 +491,13 @@ public class ProceduralContentGenerationLevel {
                         currentLevel.add(addIndex + 6,'-');
                     }
 
-                } else if (height == LAN_LEVEL - 2) {
-                    if(randomPattern){
-                        currentLevel.add(addIndex - 4,'-');
-                    }
+                } else if (height == LAN_LEVEL - 2 && maxHeight > 2) {
+                    currentLevel.add(addIndex - 4,'-');
                     currentLevel.add(addIndex - 3,'-');
                     currentLevel.add(addIndex - 2,'#');
                     currentLevel.add(addIndex - 1,'#');
                     currentLevel.add(addIndex,'#');
-                    if(randomPattern){
+                    if(secondPyramid){
                         currentLevel.add(addIndex + 1,'-');
                         currentLevel.add(addIndex + 2,'-');
                         currentLevel.add(addIndex + 3,'#');
@@ -442,15 +505,13 @@ public class ProceduralContentGenerationLevel {
                         currentLevel.add(addIndex + 5,'-');
                         currentLevel.add(addIndex + 6,'-');
                     }
-                } else if (height == LAN_LEVEL - 1) {
-                    if(randomPattern){
-                        currentLevel.add(addIndex - 4,'-');
-                    }
+                } else if (height == LAN_LEVEL - 1 && maxHeight > 1) {
+                    currentLevel.add(addIndex - 4,'-');
                     currentLevel.add(addIndex - 3,'#');
                     currentLevel.add(addIndex - 2,'#');
                     currentLevel.add(addIndex - 1,'#');
                     currentLevel.add(addIndex,'#');
-                    if(randomPattern){
+                    if(secondPyramid){
                         currentLevel.add(addIndex + 1,'-');
                         currentLevel.add(addIndex + 2,'-');
                         currentLevel.add(addIndex + 3,'#');
@@ -458,15 +519,22 @@ public class ProceduralContentGenerationLevel {
                         currentLevel.add(addIndex + 5,'#');
                         currentLevel.add(addIndex + 6,'-');
                     }
-                } else if (height == LAN_LEVEL) {
-                    if(randomPattern){
+                } else if (height == LAN_LEVEL && maxHeight > 0) {
+                    if(randomTunnel){
+                        currentLevel.add(addIndex - 4,'-');
+                        currentLevel.add(addIndex - 3,'-');
+                        currentLevel.add(addIndex - 2,'-');
+                        currentLevel.add(addIndex - 1,'-');
+                        currentLevel.add(addIndex,'-');
+                    } else {
                         currentLevel.add(addIndex - 4,'#');
+                        currentLevel.add(addIndex - 3,'#');
+                        currentLevel.add(addIndex - 2,'#');
+                        currentLevel.add(addIndex - 1,'#');
+                        currentLevel.add(addIndex,'#');
                     }
-                    currentLevel.add(addIndex - 3,'#');
-                    currentLevel.add(addIndex - 2,'#');
-                    currentLevel.add(addIndex - 1,'#');
-                    currentLevel.add(addIndex,'#');
-                    if(randomPattern){
+
+                    if(secondPyramid){
                         currentLevel.add(addIndex + 1,'-');
                         currentLevel.add(addIndex + 2,'-');
                         currentLevel.add(addIndex + 3,'#');
@@ -475,14 +543,12 @@ public class ProceduralContentGenerationLevel {
                         currentLevel.add(addIndex + 6,'#');
                     }
                 } else{
-                    if(randomPattern){
-                        currentLevel.add(addIndex - 4,'-');
-                    }
+                    currentLevel.add(addIndex - 4,'-');
                     currentLevel.add(addIndex - 3,'-');
                     currentLevel.add(addIndex - 2,'-');
                     currentLevel.add(addIndex - 1,'-');
                     currentLevel.add(addIndex,'-');
-                    if(randomPattern){
+                    if(secondPyramid){
                         currentLevel.add(addIndex + 1,'-');
                         currentLevel.add(addIndex + 2,'-');
                         currentLevel.add(addIndex + 3,'-');

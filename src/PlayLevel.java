@@ -41,16 +41,13 @@ public class PlayLevel {
         //testPcg(levelFileName);
 
         while (true){
-//            ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel
-//                    .parseLevel(levelFileName);
-//            //pcgLevel.addPit(4,2, 2, 5, 1);
-//            //pcgLevel.addPipe(1,2,1);
-//            //pcgLevel.addBlock(1,2,1);
-//            //pcgLevel.addEnemy(1,2, 2, EnumEnemy.GOOMBA);
-//            //pcgLevel.addBlock(2, 2, 1);
-//            pcgLevel.generate(false);
-//            String mod = pcgLevel.getContent();
-            printResults(game.runGame(new agents.human.Agent(), original, 1000, 0, true));
+            ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel
+                    .parseLevel(new PCGLevelDto(20, 25, 100,101, 0,0,0,
+                    false,false,false, 0 ,0 ,0 ,0
+                    , 0 ,0 , 0, 0 ,0 ,0 ,0, 0, 1
+                    ,30, null, true));
+            //pcgLevel.generate();
+            printResults(game.runGame(new agents.human.Agent(), pcgLevel.getContent(), 1000, 0, true));
         }
 
     }

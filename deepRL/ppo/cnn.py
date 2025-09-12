@@ -4,7 +4,8 @@ import numpy as np
 from gymnasium.spaces import Dict
 
 class CNNBase(nn.Module):
-    def __init__(self, observation_space: Dict, num_stack: int, num_object_types: int = 20, embedding_dim: int = 4, hidden_dims=(512, 512)):
+    def __init__(self, observation_space: Dict, num_stack: int, num_object_types: int = 20, 
+                 embedding_dim: int = 4, hidden_dims=(512, 512)):
         super(CNNBase, self).__init__()
 
         self.grid_embedding = nn.Embedding(num_object_types, embedding_dim)

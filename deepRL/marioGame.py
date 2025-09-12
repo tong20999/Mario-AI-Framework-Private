@@ -109,13 +109,12 @@ class MarioGame(SocketEnv):
         episode = options.get("episode") if options else 0
         evaluation = options.get("evaluation") if options else False
         visual = options.get("visual") if options else False
-        playMode = options.get("playMode") if options else False
         level = options.get("level") if options else ""
 
         level_bytes = level.encode('utf-8')
         level_length = len(level_bytes)
 
-        payload = struct.pack(f'>i???I{level_length}s', episode, evaluation, visual, playMode, level_length, level_bytes)
+        payload = struct.pack(f'>i??I{level_length}s', episode, evaluation, visual, level_length, level_bytes)
         self._send_operation('01', payload)
         observation = self._receive_reset()
         return observation, {}
