@@ -9,6 +9,8 @@ class CNNBase(nn.Module):
         super(CNNBase, self).__init__()
 
         cnn_input_channels = num_object_types * num_stack
+        
+        # --- Path 1: CNN for Grid Processing ---
         self.cnn = nn.Sequential(
             nn.Conv2d(cnn_input_channels, 64, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
@@ -18,34 +20,51 @@ class CNNBase(nn.Module):
             nn.ReLU(),
             nn.Flatten()
         )
-        vector_shape = observation_space['vector'].shape
-        self.vector_mlp = nn.Sequential(
-            nn.Linear(vector_shape[0], 256),
+        
+        # This MLP processes the CNN's output
+        cnn_feature_size = 128 * 16 * 16
+        self.grid_mlp = nn.Sequential(
+            nn.Linear(cnn_feature_size, hidden_dims[0]),
             nn.ReLU()
         )
 
-        # --- Combined MLP Head ---
-        cnn_feature_size = 128 * 16 * 16
-        combined_input_size = cnn_feature_size + 256
+        # --- Path 2: MLP for Vector Processing ---
+        vector_shape = observation_space['vector'].shape
+        self.vector_mlp = nn.Sequential(
+            nn.Linear(vector_shape[0], 256),
+            nn.ReLU(),
+            # Added a second layer to make the vector path deeper
+            nn.Linear(256, hidden_dims[0]),
+            nn.ReLU()
+        )
+
+        # --- Late Fusion Head ---
+        # Combine the outputs of the two deep paths
+        combined_input_size = hidden_dims[0] + hidden_dims[0] # From grid_mlp and vector_mlp
 
         self.final_mlp = nn.Sequential(
-            nn.Linear(combined_input_size, hidden_dims[0]),
-            nn.ReLU(),
-            nn.Linear(hidden_dims[0], hidden_dims[1]),
+            nn.Linear(combined_input_size, hidden_dims[1]),
             nn.ReLU(),
         )
 
         self.feature_dim = hidden_dims[1]
 
     def forward(self, states: dict):
-        # 1. Process the grid
+        # --- Process Grid and Vector in Separate, Deeper Streams ---
+        
+        # 1. Grid Path
         grid_obs = states['grid']
         batch_size, num_stack, num_planes, height, width = grid_obs.shape
         cnn_input = grid_obs.view(batch_size, num_stack * num_planes, height, width)
+        grid_features_raw = self.cnn(cnn_input)
+        grid_summary = self.grid_mlp(grid_features_raw)
         
-        grid_features = self.cnn(cnn_input)
-        vector_features = self.vector_mlp(states['vector'])
-        combined_features = torch.cat([grid_features, vector_features], dim=1)
+        # 2. Vector Path
+        vector_summary = self.vector_mlp(states['vector'])
+        
+        # --- Fuse the high-level summaries LATE in the process ---
+        combined_features = torch.cat([grid_summary, vector_summary], dim=1)
+        
         final_output = self.final_mlp(combined_features)
         
         return final_output
