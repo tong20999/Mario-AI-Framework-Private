@@ -12,17 +12,12 @@ class CNNBase(nn.Module):
         
         # --- Path 1: CNN for Grid Processing ---
         self.cnn = nn.Sequential(
-            nn.Conv2d(cnn_input_channels, 64, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
+            nn.Conv2d(cnn_input_channels, cnn_input_channels, kernel_size=1, stride=1, padding=0),
             nn.Flatten()
         )
         
         # This MLP processes the CNN's output
-        cnn_feature_size = 128 * 16 * 16
+        cnn_feature_size = cnn_input_channels * 16 * 16
         self.grid_mlp = nn.Sequential(
             nn.Linear(cnn_feature_size, hidden_dims[0]),
             nn.ReLU()
