@@ -23,24 +23,20 @@ class EpisodeBuffer():
         assert max_episodes >= n_workers
 
         self.state_space = state_dim
+        self.state_keys = list(self.state_space.spaces.keys())
+        self.state_mem = {}
         self.gamma = gamma
         self.tau = tau
         self.n_workers = n_workers
         self.progress_25 = False
         self.progress_50 = False
         self.progress_75 = False
-        self.grid_mem = None
 
     def clear(self, max_episodes, max_episode_steps):
-        vec_shape = self.state_space['vector'].shape
-        grid_shape = self.state_space['grid'].shape
-        self.grid_mem = np.empty(
-            shape=(max_episodes, max_episode_steps, *grid_shape), dtype=np.uint8
-        )
-
-        self.vector_states_mem = np.empty(
-            shape=(max_episodes, max_episode_steps, *vec_shape), dtype=np.float32)
-
+        for key in self.state_keys:
+            space = self.state_space[key]
+            self.state_mem[key] = np.empty(
+        shape=(max_episodes, max_episode_steps, *space.shape), dtype=space.dtype)
         self.actions_mem = np.empty(shape=(max_episodes, max_episode_steps), dtype=np.uint8)
         self.values_mem = np.empty(shape=(max_episodes, max_episode_steps), dtype=np.float32)
         self.returns_mem = np.empty(shape=(max_episodes, max_episode_steps), dtype=np.float32)
@@ -85,9 +81,9 @@ class EpisodeBuffer():
             next_states, rewards, terminals, truncateds, _ = envs.step(actions)
             
             self.values_mem[self.current_ep_idxs, worker_steps] = values.cpu().numpy()
-            self.grid_mem[self.current_ep_idxs, worker_steps] = states['grid']
+            for key in self.state_keys:
+                self.state_mem[key][self.current_ep_idxs, worker_steps] = states[key]
             
-            self.vector_states_mem[self.current_ep_idxs, worker_steps] = states['vector']
             self.actions_mem[self.current_ep_idxs, worker_steps] = actions
             self.logpas_mem[self.current_ep_idxs, worker_steps] = logpas
             worker_exploratory[np.arange(self.n_workers), worker_steps] = are_exploratory
@@ -166,11 +162,11 @@ class EpisodeBuffer():
         ep_idxs = self.episode_steps > 0
         ep_t = self.episode_steps[ep_idxs]
 
-        grid_mem = [row[:ep_t[i]] for i, row in enumerate(self.grid_mem[ep_idxs])]
-        self.grid_mem = np.concatenate(grid_mem)
-
-        vector_mem = [row[:ep_t[i]] for i, row in enumerate(self.vector_states_mem[ep_idxs])]
-        self.vector_states_mem = np.concatenate(vector_mem)
+        self.cat_mem = {}
+        for key in self.state_keys:
+            buffer = self.state_mem[key]
+            trimmed_episodes = [row[:ep_t[i]] for i, row in enumerate(buffer[ep_idxs])]
+            self.cat_mem[key] = np.concatenate(trimmed_episodes)
         
         self.actions_mem = np.concatenate([row[:ep_t[i]] for i, row in enumerate(self.actions_mem[ep_idxs])])
         self.returns_mem = np.concatenate([row[:ep_t[i]] for i, row in enumerate(self.returns_mem[ep_idxs])])
@@ -179,19 +175,19 @@ class EpisodeBuffer():
 
         ep_r = self.episode_reward[ep_idxs]
         ep_x = self.episode_exploration[ep_idxs]
-        ep_s = self.episode_seconds[ep_idxs]
+        ep_s = a=self.episode_seconds[ep_idxs]
         logger.info(f'filling 100%')
         return ep_t, ep_r, ep_x, ep_s
 
     def get_data(self):
-        return (
-           self.grid_mem,
-           self.vector_states_mem,
+        state_data = tuple(self.cat_mem[key] for key in self.state_keys)
+        other_data = (
            self.actions_mem,
            self.returns_mem,
            self.gaes_mem,
            self.logpas_mem,
         )
+        return state_data + other_data
 
     def __len__(self):
         return self.episode_steps[self.episode_steps > 0].sum()

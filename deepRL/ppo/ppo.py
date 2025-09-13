@@ -146,8 +146,11 @@ class PPO():
 
     def optimize_model(self):
         all_data = self.episode_buffer.get_data()
+        state_keys = self.episode_buffer.state_keys
+        num_state_keys = len(state_keys)
+        state_data_np = {state_keys[i]: all_data[i] for i in range(num_state_keys)}
+        actions_np, returns_np, gaes_np, logpas_np = all_data[num_state_keys:]
         
-        grid_states_np, vector_states_np, actions_np, returns_np, gaes_np, logpas_np = all_data
         device = self.device
         n_samples = len(actions_np)
 
@@ -174,11 +177,7 @@ class PPO():
             indices = np.random.permutation(n_samples)
             for i in range(0, n_samples, self.batch_size):
                 batch_idxs = indices[i : i + self.batch_size]
-
-                states_batch = {
-                    'grid': grid_states_np[batch_idxs],
-                    'vector': vector_states_np[batch_idxs]
-                }
+                states_batch = {key: data[batch_idxs] for key, data in state_data_np.items()}
                 
                 actions_batch = torch.from_numpy(actions_np[batch_idxs]).to(device)
                 gaes_batch = torch.from_numpy(gaes_np[batch_idxs]).to(device)
@@ -229,11 +228,7 @@ class PPO():
 
             for i in range(0, n_samples, self.batch_size):
                 batch_idxs = indices[i : i + self.batch_size]
-
-                states_batch = {
-                    'grid': grid_states_np[batch_idxs],
-                    'vector': vector_states_np[batch_idxs]
-                }
+                states_batch = {key: data[batch_idxs] for key, data in state_data_np.items()}
 
                 returns_batch = torch.from_numpy(returns_np[batch_idxs]).to(device)
                 with torch.no_grad():

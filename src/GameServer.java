@@ -19,7 +19,7 @@ public class GameServer {
     private final ExecutorService clientPool = Executors.newFixedThreadPool(16);
 
     public void start() throws Exception {
-        System.setProperty("sun.java2d.uiScale", "1.2");
+        //System.setProperty("sun.java2d.uiScale", "1.2");
         // Start server thread
         System.out.println(MessageFormat.format("start server on port {0} with {1} thread(s)",
                 Config.getPort(), Config.getThreadPoolSize()));

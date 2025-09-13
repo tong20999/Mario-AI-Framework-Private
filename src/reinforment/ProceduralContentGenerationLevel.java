@@ -112,9 +112,9 @@ public class ProceduralContentGenerationLevel {
         pcg.createEmptyLevel(width);
 
         try{
-            pcg.addRamp(8,2, pcgLevelDto);
-            pcg.addPit(8,2, pcgLevelDto);
-            pcg.addPipe(8, 2, pcgLevelDto);
+            pcg.addRamp(9,2, pcgLevelDto);
+            pcg.addPit(9,2, pcgLevelDto);
+            pcg.addPipe(9, 2, pcgLevelDto);
             pcg.addEnemy(8,2, pcgLevelDto);
             pcg.addBlock(8, 2, pcgLevelDto);
             pcg.addCoin(8,2, pcgLevelDto);
@@ -132,7 +132,7 @@ public class ProceduralContentGenerationLevel {
         ArrayList<Character> lanLevel = levels.get(LAN_LEVEL);
         int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - 2;
         var mapWidth = lanLevel.size() / 2;
-        int spawnMario = rand.nextInt(3 ,maxIndex - 2);
+        int spawnMario = rand.nextInt(3 ,maxIndex);
         //int spawnMario = rand.nextInt(3 ,4);
         lanLevel.set(spawnMario, 'M');
         levels.replace(LAN_LEVEL, lanLevel);
@@ -327,20 +327,33 @@ public class ProceduralContentGenerationLevel {
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
             int height = rand.nextInt(pcgLevelDto.getEnemiesHeightOrigin(), pcgLevelDto.getEnemiesHeightBound());
+            boolean randomBrickL = rand.nextInt(2) == 0;
+            boolean randomBrickC = rand.nextInt(2) == 0;
+            boolean randomBrickR = rand.nextInt(2) == 0;
             for (int i = 0; i < levels.size(); i++) {
                 // Get the current level's list once and reuse it
                 ArrayList<Character> currentLevel = levels.get(i);
                 // Add the characters based on the conditions
                 if (i == GROUND_1_LEVEL || i == GROUND_2_LEVEL) {
-                    // Add 'X' at index and index + 1
+                    currentLevel.add(addIndex - 1, 'X');
+                    currentLevel.add(addIndex + 1, 'X');
                     currentLevel.add(addIndex, 'X');
                 } else if (i == height) {
                     // Add 't' at index and index + 1
                     var enemy = k % 2 == 0 && k != 0 ? EnumEnemy.GREEN_KOOPA : EnumEnemy.GOOMBA;
                     currentLevel.add(addIndex, enemy.getValue());
-                } else {
+                    currentLevel.add(addIndex - 1, '-');
+                    currentLevel.add(addIndex + 1, '-');
+                } else if (i == LAN_LEVEL - 3){
+                    currentLevel.add(addIndex, randomBrickC ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
+                    currentLevel.add(addIndex - 1, randomBrickL ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
+                    currentLevel.add(addIndex + 1, randomBrickR ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
+                }
+                else {
                     // Add '-' at index and index + 1
                     currentLevel.add(addIndex, '-');
+                    currentLevel.add(addIndex - 1, '-');
+                    currentLevel.add(addIndex + 1, '-');
                 }
             }
         }

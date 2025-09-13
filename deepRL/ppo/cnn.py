@@ -5,11 +5,10 @@ from gymnasium.spaces import Dict
 
 class CNNBase(nn.Module):
     def __init__(self, observation_space: Dict, num_stack: int, num_object_types: int = 20, 
-                 embedding_dim: int = 4, hidden_dims=(512, 512)):
+                 hidden_dims=(512, 512)):
         super(CNNBase, self).__init__()
 
-        self.grid_embedding = nn.Embedding(num_object_types, embedding_dim)
-        cnn_input_channels = embedding_dim * num_stack
+        cnn_input_channels = num_object_types * num_stack
         self.cnn = nn.Sequential(
             nn.Conv2d(cnn_input_channels, 64, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
@@ -40,21 +39,13 @@ class CNNBase(nn.Module):
 
     def forward(self, states: dict):
         # 1. Process the grid
-        grid_ids = states['grid'].long()
-        grid_ids = grid_ids.squeeze(2)    
-        embedded_grid = self.grid_embedding(grid_ids)
-        batch_size, num_stack, height, width, emb_dim = embedded_grid.shape
-        cnn_input = embedded_grid.permute(0, 1, 4, 2, 3).reshape(batch_size, num_stack * emb_dim, height, width)
+        grid_obs = states['grid']
+        batch_size, num_stack, num_planes, height, width = grid_obs.shape
+        cnn_input = grid_obs.view(batch_size, num_stack * num_planes, height, width)
         
         grid_features = self.cnn(cnn_input)
-
-        # 2. Process the vector
         vector_features = self.vector_mlp(states['vector'])
-
-        # 3. Concatenate the features from both streams
         combined_features = torch.cat([grid_features, vector_features], dim=1)
-
-        # 4. Pass the result to the final MLP head
         final_output = self.final_mlp(combined_features)
         
         return final_output
@@ -73,13 +64,13 @@ class CNNActor(CNNBase):
 
     def _format_obs(self, obs: dict):
         return {
-            'grid': torch.tensor(obs['grid'], dtype=torch.long, device=self.device),
+            'grid': torch.tensor(obs['grid'], dtype=torch.float32, device=self.device),
             'vector': torch.tensor(obs['vector'], dtype=torch.float32, device=self.device)
         }
 
     def _format_single_obs(self, obs: dict):
         return {
-            'grid': torch.tensor(obs['grid'], dtype=torch.long, device=self.device).unsqueeze(0),
+            'grid': torch.tensor(obs['grid'], dtype=torch.float32, device=self.device).unsqueeze(0),
             'vector': torch.tensor(obs['vector'], dtype=torch.float32, device=self.device).unsqueeze(0)
         }
 
@@ -142,7 +133,7 @@ class CNNCritic(CNNBase):
 
     def _format_obs(self, obs: dict):
         return {
-            'grid': torch.tensor(obs['grid'], dtype=torch.long, device=self.device),
+            'grid': torch.tensor(obs['grid'], dtype=torch.float32, device=self.device),
             'vector': torch.tensor(obs['vector'], dtype=torch.float32, device=self.device)
         }
 
