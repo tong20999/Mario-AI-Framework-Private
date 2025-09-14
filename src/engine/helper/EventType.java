@@ -21,7 +21,8 @@ public enum EventType {
     BONK(19),
     TIME_OUT(20),
     TOTAL_STEP(25),
-    PROGRESS(26);
+    PROGRESS(26),
+    IDLE(27);
 
     private final int value;
 

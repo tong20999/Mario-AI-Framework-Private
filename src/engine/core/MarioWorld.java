@@ -46,6 +46,7 @@ public class MarioWorld {
     private ArrayList<Point> unCollectCoin = new ArrayList<>();
 
     private float currentProgress = 0f;
+    private int idleCounter;
 
     public MarioWorld(MarioEvent[] killEvents) {
         this.pauseTimer = 0;
@@ -130,6 +131,8 @@ public class MarioWorld {
         world.initTimer = this.initTimer;
         world.currentTick = this.currentTick;
         world.level = this.level.clone();
+        world.currentProgress = this.currentProgress;
+        world.idleCounter = this.idleCounter;
 
         // Clone sprites
         for (MarioSprite sprite : this.sprites) {
@@ -359,7 +362,7 @@ public class MarioWorld {
     }
 
     public void update(boolean[] actions) {
-        float progressBefore = this.mario.x;
+        int progressBefore = (int)(this.mario.x/16);
         this.lastFrameEvents.clear();
         if (this.gameStatus != GameStatus.RUNNING) {
             return;
@@ -501,10 +504,21 @@ public class MarioWorld {
         addedSprites.clear();
         removedSprites.clear();
 
-        float progressAfter = this.mario.x;
+        float progressAfter =  (int)(this.mario.x/16);;
         if(progressAfter > progressBefore && progressAfter > this.currentProgress) {
             this.currentProgress = progressAfter;
             this.addEvent(EventType.PROGRESS, 0);
+        }
+
+        if(progressAfter == progressBefore){
+            idleCounter++;
+        } else {
+            idleCounter = 0;
+        }
+
+        if(idleCounter > 100){
+            idleCounter = 0;
+            this.addEvent(EventType.IDLE,0);
         }
 
         // punishing forward model
@@ -649,5 +663,9 @@ public class MarioWorld {
 
     public int getCollectedCoinCount() {
         return this.level.getCoins().size() - this.getUnCollectCoin().size();
+    }
+
+    public int getIdleCounter() {
+        return idleCounter;
     }
 }

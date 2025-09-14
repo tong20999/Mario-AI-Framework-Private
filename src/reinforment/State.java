@@ -180,6 +180,8 @@ public class State {
         // Completion percentage
         float completionPercentage = model.getCompletionPercentage();
 
+        float idleCounterPayload = model.getIdleCounter()/100f;
+
         // Write all features to the output stream
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         outputStream.write(observationGridPayload); // 256
@@ -214,6 +216,7 @@ public class State {
         outputStream.write(goalBlockReach); // 68
 
         outputStream.write(float2ByteArray(completionPercentage)); //72
+        outputStream.write(float2ByteArray(idleCounterPayload)); //76
         return outputStream.toByteArray();
     }
 }

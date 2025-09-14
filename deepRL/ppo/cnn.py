@@ -19,7 +19,9 @@ class CNNBase(nn.Module):
         # This MLP processes the CNN's output
         cnn_feature_size = cnn_input_channels * 16 * 16
         self.grid_mlp = nn.Sequential(
-            nn.Linear(cnn_feature_size, hidden_dims[0]),
+            nn.Linear(cnn_feature_size, 1024),
+            nn.ReLU(),
+            nn.Linear(1024, hidden_dims[0]),
             nn.ReLU()
         )
 

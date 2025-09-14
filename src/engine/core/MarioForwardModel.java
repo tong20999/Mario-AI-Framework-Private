@@ -913,4 +913,8 @@ public class MarioForwardModel {
         if (far > 3) far = 3;
         return new byte[]{ (byte) near, (byte) mid, (byte) far };
     }
+
+    public int getIdleCounter(){
+        return world.getIdleCounter();
+    }
 }

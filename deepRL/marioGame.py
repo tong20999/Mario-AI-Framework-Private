@@ -32,8 +32,8 @@ class MarioGame(SocketEnv):
         self.grid_w = 16
         
         # Vector
-        self.vector_transfer_byte_len = 72
-        self.vector_size = 27
+        self.vector_transfer_byte_len = 76
+        self.vector_size = 28
         
         self._init_spaces()
 
@@ -62,7 +62,7 @@ class MarioGame(SocketEnv):
             one_hot_grid[obj_id] = (grid == obj_id).astype(np.uint8)
 
         vector_bytes = payload[grid_size : grid_size + self.vector_transfer_byte_len]
-        format_string = '>BBBBBBffffBffBffBffffBfBfBf'
+        format_string = '>BBBBBBffffBffBffBffffBfBfBff'
         unpacked_values = struct.unpack(format_string, vector_bytes)
         vector_part = np.array(unpacked_values, dtype=np.float32)
 

@@ -132,8 +132,8 @@ public class ProceduralContentGenerationLevel {
         ArrayList<Character> lanLevel = levels.get(LAN_LEVEL);
         int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - 2;
         var mapWidth = lanLevel.size() / 2;
-        int spawnMario = rand.nextInt(3 ,maxIndex);
-        //int spawnMario = rand.nextInt(3 ,4);
+        //int spawnMario = rand.nextInt(3 ,maxIndex);
+        int spawnMario = rand.nextInt(3 ,4);
         lanLevel.set(spawnMario, 'M');
         levels.replace(LAN_LEVEL, lanLevel);
         StringBuilder contentBuilder = new StringBuilder();
