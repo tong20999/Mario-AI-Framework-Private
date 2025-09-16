@@ -9,17 +9,23 @@ import engine.helper.SpriteType;
 import java.util.ArrayList;
 
 public class RewardSystem {
-    private final static float WIN_REWARD = 100.0f;
-    private static final float PARTIAL_WIN_PENALTY = -5.0f;
-    private final static float LOSE_PENALTY = -50.0f;
-    private final static float TIMEOUT_PENALTY = -50.0f;
-    private final static float KILL_REWARD = 5f;
-    private final static float BUMP_REWARD = 1f;
-    private final static float COIN_REWARD = 1f;
-    private static final float POWER_UP_REWARD = 5.0f;
+    // Per-objective shaping (dense)
+    private static final float KILL_REWARD = 2f;
+    private static final float BUMP_REWARD = 1f;
+    private static final float COIN_REWARD = 1f;
+    private static final float POWER_UP_REWARD = 5f;
+
+    // Step & behavior costs
     public static final float STEP_COST = -0.01f;
-    public static final float PROGRESS_REWARD = 0.02f;
     private static final float IDLE_PENALTY = -1f;
+
+    // Win structure (small base + modest perfect bonus)
+    private static final float BASE_WIN_REWARD = 10f;
+    private static final float PERFECT_BONUS = 20f;
+
+    // Dynamic failure penalty parameters
+    private static final float FAILURE_BASE = -50f;          // Worst-case (0% completion)
+    private static final float FAILURE_PROGRESS_DELTA = 40f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = STEP_COST;
@@ -53,15 +59,11 @@ public class RewardSystem {
             }
 
             if (e.getEventType() == EventType.LOSE.getValue()) {
-                reward += LOSE_PENALTY;
+                reward += dynamicFailurePenalty(world);
             }
 
             if (e.getEventType() == EventType.TIME_OUT.getValue()) {
-                reward += TIMEOUT_PENALTY;
-            }
-
-            if (e.getEventType() == EventType.PROGRESS.getValue()) {
-                reward += PROGRESS_REWARD;
+                reward += dynamicFailurePenalty(world);
             }
 
             if(e.getEventType() == EventType.IDLE.getValue()){
@@ -73,70 +75,67 @@ public class RewardSystem {
     }
 
     private static float calculateWinReward(MarioWorld world) {
-        // A smaller base reward for just finishing the level.
-        float baseWinReward = 20.0f;
-
-        // A large pool of bonus points for being perfect.
-        float perfectionBonus = 80.0f;
-
-        float totalObjectives = world.level.getCoins().size() +
-                world.level.getBumpableBlocks().size() +
-                world.level.getEnemies().size();
-
-        if (totalObjectives == 0) {
-            return WIN_REWARD; // Keep original reward for empty levels
+        float ratio = completionRatio(world);
+        if (ratio >= 1f) {
+            // Perfect: base + bonus (objective rewards were already granted during play)
+            return BASE_WIN_REWARD + PERFECT_BONUS;
         }
+        // Non-perfect finish: only base; no extra partial bonus to avoid double counting
+        return BASE_WIN_REWARD;
+    }
 
-        float completedObjectives = (world.level.getEnemies().size() - world.getAliveEnemies().size()) +
-                (world.level.getBumpableBlocks().size() - world.getUnbumpBlocks().size()) +
-                (world.level.getCoins().size() - world.getUnCollectCoin().size());
+    private static float completionRatio(MarioWorld world) {
+        float total = world.level.getCoins().size()
+                + world.level.getBumpableBlocks().size()
+                + world.level.getEnemies().size();
+        if (total <= 0f) return 0f;
 
-        // Calculate the completion percentage.
-        float completionRatio = completedObjectives / totalObjectives;
+        float completed = (world.level.getEnemies().size() - world.getAliveEnemies().size())
+                + (world.level.getBumpableBlocks().size() - world.getUnbumpBlocks().size())
+                + (world.level.getCoins().size() - world.getUnCollectCoin().size());
+        return completed / total;
+    }
 
-        if (completionRatio >= 1){
-            return  WIN_REWARD;
-        }
-
-        // The final reward is the base for winning plus a proportional share of the bonus.
-        return baseWinReward + (20 * completionRatio);
+    private static float dynamicFailurePenalty(MarioWorld world) {
+        float ratio = completionRatio(world);
+        return FAILURE_BASE + (FAILURE_PROGRESS_DELTA * ratio); // [-50, -10]
     }
 
     public static ArrayList<RewardEvent> logRewardEvent(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         ArrayList<RewardEvent> rewardEvents = new ArrayList<>();
         String timer = (world.currentTimer == -1 ? "Inf" : (int) Math.ceil(world.currentTimer / 1000f)).toString();
+        float value;
         for (MarioEvent e : miniStepEvents) {
             if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
                     e.getEventType() == EventType.FIRE_KILL.getValue() ||
                     e.getEventType() == EventType.SHELL_KILL.getValue() ||
                     e.getEventType() == EventType.BUMP_KILL.getValue() ||
                     e.getEventType() == EventType.FALL_KILL.getValue()) {
-                rewardEvents.add(new RewardEvent(KILL_REWARD, e, timer));
+                value = KILL_REWARD;
             } else if (e.getEventType() == EventType.BUMP.getValue()
                     && e.getEventParam() == MarioForwardModel.OBS_QUESTION_BLOCK) {
-                rewardEvents.add(new RewardEvent(BUMP_REWARD, e, timer));
+                value = BUMP_REWARD;
             } else if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == 15) {
-                rewardEvents.add(new RewardEvent(COIN_REWARD, e, timer));
+                value = COIN_REWARD;
             } else if (e.getEventType() == EventType.COLLECT.getValue()
                     && e.getEventParam() == SpriteType.FIRE_FLOWER.getValue()) {
-                rewardEvents.add(new RewardEvent(POWER_UP_REWARD, e, timer));
+                value = POWER_UP_REWARD;
             } else if (e.getEventType() == EventType.COLLECT.getValue()
                     && e.getEventParam() == SpriteType.MUSHROOM.getValue()) {
-                rewardEvents.add(new RewardEvent(POWER_UP_REWARD, e, timer));
+                value = POWER_UP_REWARD;
             } else if (e.getEventType() == EventType.WIN.getValue()) {
-                rewardEvents.add(new RewardEvent(calculateWinReward(world), e, timer));
+                value = calculateWinReward(world);
             } else if (e.getEventType() == EventType.LOSE.getValue()) {
-                rewardEvents.add(new RewardEvent(LOSE_PENALTY, e, timer));
+                value = dynamicFailurePenalty(world);
             } else if (e.getEventType() == EventType.TIME_OUT.getValue()) {
-                rewardEvents.add(new RewardEvent(TIMEOUT_PENALTY, e, timer));
-            } else if (e.getEventType() == EventType.PROGRESS.getValue()) {
-                rewardEvents.add(new RewardEvent(PROGRESS_REWARD, e, timer));
+                value = dynamicFailurePenalty(world);
             } else if(e.getEventType() == EventType.IDLE.getValue()){
-                rewardEvents.add(new RewardEvent(IDLE_PENALTY, e, timer));
+                value = IDLE_PENALTY;
             }
             else {
-                rewardEvents.add(new RewardEvent(0, e, timer));
+                value = 0f;
             }
+            rewardEvents.add(new RewardEvent(0, e, timer));
         }
 
         return rewardEvents;

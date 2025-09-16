@@ -246,17 +246,6 @@ public class MarioGameTraining {
                 false);
     }
 
-    // private float getTimeoutReward() {
-    // float reward = 0;
-    // var debt = world.getUnbumpBlocks().size() +
-    // world.getUnCollectCoin().size() +
-    // world.getAliveEnemies().size();
-    // float penalty = Math.min(RewardSystem.TIMEOUT_PENALTY,
-    // RewardSystem.DEBT_PENALTY_FACTOR * debt);
-    // reward += penalty;
-    // return reward;
-    // }
-
     public ArrayList<MarioEvent> miniStep(boolean[] action) throws Exception {
         long currentTime = System.currentTimeMillis();
         this.world.update(action);
