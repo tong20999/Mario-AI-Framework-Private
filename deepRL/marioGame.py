@@ -41,7 +41,7 @@ class MarioGame(SocketEnv):
         self.observation_space = gym.spaces.Dict({
             'grid': gym.spaces.Box(
                 low=0, high=1,
-                shape=(20, self.grid_h, self.grid_w),  # 20 binary channels
+                shape=(14, self.grid_h, self.grid_w),  # 20 binary channels
                 dtype=np.uint8
             ),
             'vector': gym.spaces.Box(
@@ -57,8 +57,8 @@ class MarioGame(SocketEnv):
         grid = grid_flat.reshape(self.grid_h, self.grid_w)  # shape (16,16)
 
         # --- One-hot encode into 20 binary planes ---
-        one_hot_grid = np.zeros((20, self.grid_h, self.grid_w), dtype=np.uint8)
-        for obj_id in range(20):
+        one_hot_grid = np.zeros((14, self.grid_h, self.grid_w), dtype=np.uint8)
+        for obj_id in range(14):
             one_hot_grid[obj_id] = (grid == obj_id).astype(np.uint8)
 
         vector_bytes = payload[grid_size : grid_size + self.vector_transfer_byte_len]

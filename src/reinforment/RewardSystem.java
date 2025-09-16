@@ -11,15 +11,15 @@ import java.util.ArrayList;
 public class RewardSystem {
     private final static float WIN_REWARD = 100.0f;
     private static final float PARTIAL_WIN_PENALTY = -5.0f;
-    private final static float LOSE_PENALTY = -10.0f;
-    private final static float TIMEOUT_PENALTY = -10.0f;
-    private final static float KILL_REWARD = 0.2f;
-    private final static float BUMP_REWARD = 0.1f;
-    private final static float COIN_REWARD = 0.1f;
-    private static final float POWER_UP_REWARD = 1.0f;
+    private final static float LOSE_PENALTY = -50.0f;
+    private final static float TIMEOUT_PENALTY = -50.0f;
+    private final static float KILL_REWARD = 5f;
+    private final static float BUMP_REWARD = 1f;
+    private final static float COIN_REWARD = 1f;
+    private static final float POWER_UP_REWARD = 5.0f;
     public static final float STEP_COST = -0.01f;
     public static final float PROGRESS_REWARD = 0.02f;
-    private static final float IDLE_PENALTY = -10f;
+    private static final float IDLE_PENALTY = -1f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = STEP_COST;
@@ -73,23 +73,33 @@ public class RewardSystem {
     }
 
     private static float calculateWinReward(MarioWorld world) {
-        int totalCoins = world.level.getCoins().size();
-        int totalBlocks = world.level.getBumpableBlocks().size();
-        int totalEnemies = world.level.getEnemies().size();
+        // A smaller base reward for just finishing the level.
+        float baseWinReward = 20.0f;
 
-        // Handle empty levels
-        if (totalCoins + totalBlocks + totalEnemies == 0) {
-            return WIN_REWARD;
+        // A large pool of bonus points for being perfect.
+        float perfectionBonus = 80.0f;
+
+        float totalObjectives = world.level.getCoins().size() +
+                world.level.getBumpableBlocks().size() +
+                world.level.getEnemies().size();
+
+        if (totalObjectives == 0) {
+            return WIN_REWARD; // Keep original reward for empty levels
         }
 
-        int aliveEnemies = world.getAliveEnemies().size();
-        int unHitBlocks = world.getUnbumpBlocks().size();
-        int uncollectedCoins = world.getUnCollectCoin().size();
+        float completedObjectives = (world.level.getEnemies().size() - world.getAliveEnemies().size()) +
+                (world.level.getBumpableBlocks().size() - world.getUnbumpBlocks().size()) +
+                (world.level.getCoins().size() - world.getUnCollectCoin().size());
 
-        boolean isPerfectRun = uncollectedCoins == 0 && unHitBlocks == 0 && aliveEnemies == 0;
+        // Calculate the completion percentage.
+        float completionRatio = completedObjectives / totalObjectives;
 
-        // Return WIN_REWARD if the run is perfect, otherwise return the penalty.
-        return isPerfectRun ? WIN_REWARD : PARTIAL_WIN_PENALTY;
+        if (completionRatio >= 1){
+            return  WIN_REWARD;
+        }
+
+        // The final reward is the base for winning plus a proportional share of the bonus.
+        return baseWinReward + (20 * completionRatio);
     }
 
     public static ArrayList<RewardEvent> logRewardEvent(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {

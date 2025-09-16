@@ -48,7 +48,7 @@ public class State {
                 int flag = flagObservation[col][row];
 
                 if (flag == 40 + 16 || flag == 39 + 16) {
-                    grid[col][row] = 8;
+                    grid[col][row] = 13;
                 }
 
                 if (scene == MarioForwardModel.OBS_SOLID
@@ -68,33 +68,31 @@ public class State {
                 if (enemy == MarioForwardModel.OBS_MUSHROOM) {
                     grid[col][row] = 5;
                 } else if(enemy == MarioForwardModel.OBS_LIFE_MUSHROOM){
-                    grid[col][row] = 6;
+                    grid[col][row] = 5;
                 } else if(enemy == MarioForwardModel.OBS_FIRE_FLOWER){
-                    grid[col][row] = 7;
+                    grid[col][row] = 5;
                 } else if (enemy == MarioForwardModel.OBS_GOOMBA) {
-                    grid[col][row] = 8;
+                    grid[col][row] = 6;
                 } else if(enemy == MarioForwardModel.OBS_GOOMBA_WINGED){
-                    grid[col][row] = 9;
+                    grid[col][row] = 7;
                 } else if(enemy == MarioForwardModel.OBS_GREEN_KOOPA){
-                    grid[col][row] = 10;
+                    grid[col][row] = 8;
                 } else if(enemy == MarioForwardModel.OBS_GREEN_KOOPA_WINGED){
-                    grid[col][row] = 11;
+                    grid[col][row] = 9;
                 } else if(enemy == MarioForwardModel.OBS_RED_KOOPA){
-                    grid[col][row] = 12;
+                    grid[col][row] = 8;
                 } else if(enemy == MarioForwardModel.OBS_RED_KOOPA_WINGED){
-                    grid[col][row] = 13;
+                    grid[col][row] = 9;
                 } else if(enemy == MarioForwardModel.OBS_SPIKY){
-                    grid[col][row] = 14;
+                    grid[col][row] = 10;
                 } else if(enemy == MarioForwardModel.OBS_SPIKY_WINGED){
-                    grid[col][row] = 15;
+                    grid[col][row] = 10;
                 } else if(enemy == MarioForwardModel.OBS_ENEMY_FLOWER){
-                    grid[col][row] = 16;
+                    grid[col][row] = 10;
                 } else if(enemy == MarioForwardModel.OBS_SHELL){
-                    grid[col][row] = 17;
+                    grid[col][row] = 11;
                 } else if(enemy == MarioForwardModel.OBS_BULLET_BILL){
-                    grid[col][row] = 18;
-                } else if(enemy == MarioForwardModel.OBS_FIREBALL) {
-                    grid[col][row] = 19;
+                    grid[col][row] = 12;
                 }
             }
         }
@@ -185,7 +183,7 @@ public class State {
         // Write all features to the output stream
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         outputStream.write(observationGridPayload); // 256
-        outputStream.write(marioMode);
+        outputStream.write(marioMode); // one hot small, large, fire
         outputStream.write((byte) (model.isMarioOnGround() ? 1 : 0));
         outputStream.write((byte) (model.getMarioCanJumpHigher() ? 1 : 0));
         outputStream.write((byte) (model.getMarioFacing() == 1 ? 1 : 0)); // 6

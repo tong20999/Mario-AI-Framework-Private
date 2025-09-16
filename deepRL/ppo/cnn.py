@@ -4,40 +4,41 @@ import numpy as np
 from gymnasium.spaces import Dict
 
 class CNNBase(nn.Module):
-    def __init__(self, observation_space: Dict, num_stack: int, num_object_types: int = 20, 
+    def __init__(self, observation_space: Dict, num_stack: int, num_object_types: int = 14, 
                  hidden_dims=(512, 512)):
         super(CNNBase, self).__init__()
 
         cnn_input_channels = num_object_types * num_stack
-        
+
         # --- Path 1: CNN for Grid Processing ---
+        cnn_output_channels = 64
+
         self.cnn = nn.Sequential(
-            nn.Conv2d(cnn_input_channels, cnn_input_channels, kernel_size=1, stride=1, padding=0),
+            nn.Conv2d(cnn_input_channels, cnn_output_channels, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
             nn.Flatten()
         )
         
         # This MLP processes the CNN's output
-        cnn_feature_size = cnn_input_channels * 16 * 16
+        cnn_feature_size = cnn_output_channels * 16 * 16
         self.grid_mlp = nn.Sequential(
-            nn.Linear(cnn_feature_size, 1024),
+            nn.Linear(cnn_feature_size, 512),
             nn.ReLU(),
-            nn.Linear(1024, hidden_dims[0]),
+            nn.Linear(512, hidden_dims[0]),
             nn.ReLU()
         )
 
         # --- Path 2: MLP for Vector Processing ---
         vector_shape = observation_space['vector'].shape
         self.vector_mlp = nn.Sequential(
-            nn.Linear(vector_shape[0], 256),
+            nn.Linear(vector_shape[0], 128),
             nn.ReLU(),
-            # Added a second layer to make the vector path deeper
-            nn.Linear(256, hidden_dims[0]),
+            nn.Linear(128, hidden_dims[0]),
             nn.ReLU()
         )
 
         # --- Late Fusion Head ---
-        # Combine the outputs of the two deep paths
-        combined_input_size = hidden_dims[0] + hidden_dims[0] # From grid_mlp and vector_mlp
+        combined_input_size = hidden_dims[0] + hidden_dims[0]
 
         self.final_mlp = nn.Sequential(
             nn.Linear(combined_input_size, hidden_dims[1]),
@@ -71,7 +72,7 @@ class CNNActor(CNNBase):
     The Actor network. Inherits the updated CNNBase.
     """
     def __init__(self, observation_space, output_dim, num_stack, **kwargs):
-        super().__init__(observation_space, num_stack, hidden_dims=(512, 512), **kwargs)
+        super().__init__(observation_space, num_stack, **kwargs)
         self.actor_head = nn.Linear(self.feature_dim, output_dim)
         
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -90,18 +91,15 @@ class CNNActor(CNNBase):
             'vector': torch.tensor(obs['vector'], dtype=torch.float32, device=self.device).unsqueeze(0)
         }
 
-    def forward(self, states, is_batched=False):
-        if not is_batched:
-            states = self._format_single_obs(states)
-        elif not isinstance(states['grid'], torch.Tensor):
-            states = self._format_obs(states)
-            
+    def forward(self, states: dict):
         features = super().forward(states)
         logits = self.actor_head(features)
         return logits
 
     def np_pass(self, states):
-        logits = self.forward(states, is_batched=True)
+        formatted_states = self._format_obs(states)
+        logits = self.forward(formatted_states)
+        
         dist = torch.distributions.Categorical(logits=logits)
         actions = dist.sample()
         logpas = dist.log_prob(actions)
@@ -115,32 +113,34 @@ class CNNActor(CNNBase):
         return np_actions, np_logpas, is_exploratory
 
     def select_action(self, obs: dict):
-        logits = self.forward(obs, is_batched=False)
+        states = self._format_single_obs(obs)
+        logits = self.forward(states)
         dist = torch.distributions.Categorical(logits=logits)
         action = dist.sample()
         return action.item()
 
     def select_greedy_action(self, obs: dict):
-        logits = self.forward(obs, is_batched=False)
+        states = self._format_single_obs(obs)
+        logits = self.forward(states)
         action = torch.argmax(logits, dim=-1)
         return action.item()
 
     def get_predictions(self, states, actions):
+        if not isinstance(states['grid'], torch.Tensor):
+            states = self._format_obs(states)
+        
         if not isinstance(actions, torch.Tensor):
             actions = torch.tensor(actions, device=self.device)
+        logits = self.forward(states)
         
-        logits = self.forward(states, is_batched=True)
         dist = torch.distributions.Categorical(logits=logits)
         logpas = dist.log_prob(actions.squeeze())
         entropies = dist.entropy()
         return logpas, entropies
 
 class CNNCritic(CNNBase):
-    """
-    The Critic network. Inherits the updated CNNBase.
-    """
     def __init__(self, observation_space, num_stack, **kwargs):
-        super().__init__(observation_space, num_stack, hidden_dims=(512, 512), **kwargs)
+        super().__init__(observation_space, num_stack, **kwargs)
         self.critic_head = nn.Linear(self.feature_dim, 1)
         
         device = "cuda:0" if torch.cuda.is_available() else "cpu"

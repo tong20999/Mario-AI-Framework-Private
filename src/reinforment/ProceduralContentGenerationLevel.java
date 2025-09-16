@@ -468,7 +468,9 @@ public class ProceduralContentGenerationLevel {
             boolean secondPyramid = rand.nextInt(2) == 0;
             boolean randomPit = rand.nextInt(2) == 0;
             int maxHeight = rand.nextInt(1,5);
-            boolean randomTunnel = rand.nextInt(2) == 0;
+            //boolean randomTunnel = rand.nextInt(2) == 0;
+            boolean randomTunnel = false;
+            maxHeight =4;
             if(maxHeight == 1){
                 randomTunnel = false;
             }
