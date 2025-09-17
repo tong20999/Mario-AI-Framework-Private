@@ -48,7 +48,7 @@ public class State {
                 int flag = flagObservation[col][row];
 
                 if (flag == 40 + 16 || flag == 39 + 16) {
-                    grid[col][row] = 13;
+                    grid[col][row] = 9;
                 }
 
                 if (scene == MarioForwardModel.OBS_SOLID
@@ -66,33 +66,33 @@ public class State {
                 }
 
                 if (enemy == MarioForwardModel.OBS_MUSHROOM) {
-                    grid[col][row] = 5;
-                } else if(enemy == MarioForwardModel.OBS_LIFE_MUSHROOM){
-                    grid[col][row] = 5;
-                } else if(enemy == MarioForwardModel.OBS_FIRE_FLOWER){
-                    grid[col][row] = 5;
-                } else if (enemy == MarioForwardModel.OBS_GOOMBA) {
-                    grid[col][row] = 6;
-                } else if(enemy == MarioForwardModel.OBS_GOOMBA_WINGED){
                     grid[col][row] = 7;
+                } else if(enemy == MarioForwardModel.OBS_LIFE_MUSHROOM){
+                    grid[col][row] = 7;
+                } else if(enemy == MarioForwardModel.OBS_FIRE_FLOWER){
+                    grid[col][row] = 7;
+                } else if (enemy == MarioForwardModel.OBS_GOOMBA) {
+                    grid[col][row] = 5;
+                } else if(enemy == MarioForwardModel.OBS_GOOMBA_WINGED){
+                    grid[col][row] = 5;
                 } else if(enemy == MarioForwardModel.OBS_GREEN_KOOPA){
-                    grid[col][row] = 8;
+                    grid[col][row] = 5;
                 } else if(enemy == MarioForwardModel.OBS_GREEN_KOOPA_WINGED){
-                    grid[col][row] = 9;
+                    grid[col][row] = 5;
                 } else if(enemy == MarioForwardModel.OBS_RED_KOOPA){
-                    grid[col][row] = 8;
+                    grid[col][row] = 5;
                 } else if(enemy == MarioForwardModel.OBS_RED_KOOPA_WINGED){
-                    grid[col][row] = 9;
+                    grid[col][row] = 5;
                 } else if(enemy == MarioForwardModel.OBS_SPIKY){
-                    grid[col][row] = 10;
+                    grid[col][row] = 6;
                 } else if(enemy == MarioForwardModel.OBS_SPIKY_WINGED){
-                    grid[col][row] = 10;
+                    grid[col][row] = 6;
                 } else if(enemy == MarioForwardModel.OBS_ENEMY_FLOWER){
-                    grid[col][row] = 10;
+                    grid[col][row] = 6;
                 } else if(enemy == MarioForwardModel.OBS_SHELL){
-                    grid[col][row] = 11;
+                    grid[col][row] = 8;
                 } else if(enemy == MarioForwardModel.OBS_BULLET_BILL){
-                    grid[col][row] = 12;
+                    grid[col][row] = 8;
                 }
             }
         }
@@ -196,26 +196,26 @@ public class State {
         outputStream.write(float2ByteArray(subTileX));
         outputStream.write(float2ByteArray(subTileY)); // 22
 
-        outputStream.write(nearestBlockFound);
-        outputStream.write(float2ByteArray(nearestBlockDx));
-        outputStream.write(float2ByteArray(nearestBlockDy));
-
-        outputStream.write(nearestCoinFound);
-        outputStream.write(float2ByteArray(nearestCoinDx));
-        outputStream.write(float2ByteArray(nearestCoinDy));
-
-        outputStream.write(nearestEnemyFound);
-        outputStream.write(float2ByteArray(nearestEnemyDx));
-        outputStream.write(float2ByteArray(nearestEnemyDy)); // 49
+//        outputStream.write(nearestBlockFound);
+//        outputStream.write(float2ByteArray(nearestBlockDx));
+//        outputStream.write(float2ByteArray(nearestBlockDy));
+//
+//        outputStream.write(nearestCoinFound);
+//        outputStream.write(float2ByteArray(nearestCoinDx));
+//        outputStream.write(float2ByteArray(nearestCoinDy));
+//
+//        outputStream.write(nearestEnemyFound);
+//        outputStream.write(float2ByteArray(nearestEnemyDx));
+//        outputStream.write(float2ByteArray(nearestEnemyDy)); // 49
 
         outputStream.write(float2ByteArray(normalizedTimer)); // 53
 
-        outputStream.write(goalCoinReach);
-        outputStream.write(goalEnemyReach);
-        outputStream.write(goalBlockReach); // 56
+        //outputStream.write(goalCoinReach);
+        //outputStream.write(goalEnemyReach);
+        //outputStream.write(goalBlockReach); // 56
 
-        outputStream.write(float2ByteArray(completionPercentage)); // 60
-        outputStream.write(float2ByteArray(idleCounterPayload)); // 64
+        //outputStream.write(float2ByteArray(completionPercentage)); // 60
+        //outputStream.write(float2ByteArray(idleCounterPayload)); // 64
 
         outputStream.write(intArrayToBytes(coinsObjective)); // 114
         outputStream.write(intArrayToBytes(blocksObjective)); // 164

@@ -62,7 +62,7 @@ class MarioGame(SocketEnv):
             one_hot_grid[obj_id] = (grid == obj_id).astype(np.uint8)
 
         vector_bytes = payload[grid_size : grid_size + self.vector_transfer_byte_len]
-        format_string = '>BBBBBBffffBffBffBfffBBBff50B50B50B'
+        format_string = '>6B4fBffBffBfff3Bff50B50B50B'
         unpacked_values = struct.unpack(format_string, vector_bytes)
         vector_part = np.array(unpacked_values, dtype=np.float32)
 

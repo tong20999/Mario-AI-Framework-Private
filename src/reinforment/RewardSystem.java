@@ -21,7 +21,7 @@ public class RewardSystem {
 
     // Win structure (small base + modest perfect bonus)
     private static final float BASE_WIN_REWARD = 10f;
-    private static final float PERFECT_BONUS = 20f;
+    private static final float PERFECT_BONUS = 100f;
 
     // Dynamic failure penalty parameters
     private static final float FAILURE_BASE = -50f;          // Worst-case (0% completion)

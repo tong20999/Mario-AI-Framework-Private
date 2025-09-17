@@ -4,19 +4,17 @@ import numpy as np
 from gymnasium.spaces import Dict
 
 class CNNBase(nn.Module):
-    def __init__(self, observation_space: Dict, num_stack: int, num_object_types: int = 14, 
-                 hidden_dims=(512, 512)):
+    def __init__(self, observation_space: Dict, num_stack: int, num_object_types: int = 10, 
+                 hidden_dims=(128, 128)):
         super(CNNBase, self).__init__()
 
         cnn_input_channels = num_object_types * num_stack
 
         # --- Path 1: CNN for Grid Processing ---
-        cnn_output_channels = 64
+        cnn_output_channels = 32
 
         self.cnn = nn.Sequential(
-            nn.Conv2d(cnn_input_channels, cnn_input_channels, kernel_size=1, stride=1, padding=0),
-            nn.ReLU(),
-            nn.Conv2d(cnn_input_channels, cnn_output_channels, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(cnn_input_channels, cnn_output_channels, kernel_size=1, stride=1, padding=0),
             nn.ReLU(),
             nn.Flatten()
         )
@@ -24,18 +22,14 @@ class CNNBase(nn.Module):
         # This MLP processes the CNN's output
         cnn_feature_size = cnn_output_channels * 16 * 16
         self.grid_mlp = nn.Sequential(
-            nn.Linear(cnn_feature_size, 512),
+            nn.Linear(cnn_feature_size, hidden_dims[0]),
             nn.ReLU(),
-            nn.Linear(512, hidden_dims[0]),
-            nn.ReLU()
         )
 
         # --- Path 2: MLP for Vector Processing ---
         vector_shape = observation_space['vector'].shape
         self.vector_mlp = nn.Sequential(
-            nn.Linear(vector_shape[0], 256),
-            nn.ReLU(),
-            nn.Linear(256, hidden_dims[0]),
+            nn.Linear(vector_shape[0], hidden_dims[0]),
             nn.ReLU()
         )
 

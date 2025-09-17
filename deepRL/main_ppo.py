@@ -12,7 +12,7 @@ from ppo.ppo import PPO
 from logger import setup_logging
 
 logger = logging.getLogger('Agent:Main')
-num_stack = 4
+num_stack = 3
 
 def make_env_fn():
   # Wrap the base environment with our new frame stacker
@@ -42,13 +42,13 @@ if __name__ == '__main__':
     "WidthMax": 21,
     "TimerMin": 100,
     "TimerMax": 101,
-    "Blocks": 0,
+    "Blocks": 3,
     "BlocksHeightOrigin": 10,
     "BlocksHeightBound": 9,
-    "Coins": 0,
+    "Coins": 4,
     "CoinsHeightOrigin": 10,
     "CoinsHeightBound": 9,
-    "Enemies": 0,
+    "Enemies": 2,
     "EnemiesHeightOrigin": 5,
     "EnemiesHeightBound": 14,
     "Pits": 0,
