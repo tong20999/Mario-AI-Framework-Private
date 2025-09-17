@@ -13,7 +13,7 @@ public class RewardSystem {
     private static final float KILL_REWARD = 2f;
     private static final float BUMP_REWARD = 1f;
     private static final float COIN_REWARD = 1f;
-    private static final float POWER_UP_REWARD = 5f;
+    private static final float POWER_UP_REWARD = 2f;
 
     // Step & behavior costs
     public static final float STEP_COST = -0.01f;
@@ -135,7 +135,7 @@ public class RewardSystem {
             else {
                 value = 0f;
             }
-            rewardEvents.add(new RewardEvent(0, e, timer));
+            rewardEvents.add(new RewardEvent(value, e, timer));
         }
 
         return rewardEvents;
