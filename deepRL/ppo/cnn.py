@@ -14,6 +14,8 @@ class CNNBase(nn.Module):
         cnn_output_channels = 64
 
         self.cnn = nn.Sequential(
+            nn.Conv2d(cnn_input_channels, cnn_input_channels, kernel_size=1, stride=1, padding=0),
+            nn.ReLU(),
             nn.Conv2d(cnn_input_channels, cnn_output_channels, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.Flatten()
