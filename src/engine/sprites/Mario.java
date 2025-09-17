@@ -164,10 +164,8 @@ public class Mario extends MarioSprite {
         int block = world.level.getBlock(xTile, yTile);
 
         if (TileFeature.getTileType(block).contains(TileFeature.PICKABLE)) {
-            this.world.addEvent(EventType.COLLECT, block);
-            this.world.collectCoin++;
+            this.world.collectCoin(block, xTile, yTile);
             this.collectCoin();
-            this.world.getUnCollectCoin().removeIf(c -> c.getX() == xTile && c.getY() == yTile);
             world.level.setBlock(xTile, yTile, 0);
         }
         if (blocking && ya < 0) {

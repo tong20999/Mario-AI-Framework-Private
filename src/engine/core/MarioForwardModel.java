@@ -917,4 +917,16 @@ public class MarioForwardModel {
     public int getIdleCounter(){
         return world.getIdleCounter();
     }
+
+    public int[] getCoinsObjective(){
+        return world.getCoinsObjective();
+    }
+
+    public int[] getBlocksObjective(){
+        return world.getBlocksObjective();
+    }
+
+    public int[] getEnemiesObjective(){
+        return world.getEnemiesObjective();
+    }
 }

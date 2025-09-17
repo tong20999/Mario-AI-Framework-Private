@@ -180,6 +180,10 @@ public class State {
 
         float idleCounterPayload = model.getIdleCounter()/100f;
 
+        int[] coinsObjective = model.getCoinsObjective();
+        int[] blocksObjective = model.getBlocksObjective();
+        int[] enemiesObjective = model.getEnemiesObjective();
+
         // Write all features to the output stream
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         outputStream.write(observationGridPayload); // 256
@@ -206,15 +210,16 @@ public class State {
 
         outputStream.write(float2ByteArray(normalizedTimer)); // 53
 
-        outputStream.write(float2ByteArray(normalizedCoinsLeft));
         outputStream.write(goalCoinReach);
-        outputStream.write(float2ByteArray(normalizedEnemiesLeft));
         outputStream.write(goalEnemyReach);
-        outputStream.write(float2ByteArray(normalizedBlocksLeft));
-        outputStream.write(goalBlockReach); // 68
+        outputStream.write(goalBlockReach); // 56
 
-        outputStream.write(float2ByteArray(completionPercentage)); //72
-        outputStream.write(float2ByteArray(idleCounterPayload)); //76
+        outputStream.write(float2ByteArray(completionPercentage)); // 60
+        outputStream.write(float2ByteArray(idleCounterPayload)); // 64
+
+        outputStream.write(intArrayToBytes(coinsObjective)); // 114
+        outputStream.write(intArrayToBytes(blocksObjective)); // 164
+        outputStream.write(intArrayToBytes(enemiesObjective)); // 214
         return outputStream.toByteArray();
     }
 }

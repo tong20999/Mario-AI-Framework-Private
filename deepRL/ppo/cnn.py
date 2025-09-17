@@ -33,9 +33,9 @@ class CNNBase(nn.Module):
         # --- Path 2: MLP for Vector Processing ---
         vector_shape = observation_space['vector'].shape
         self.vector_mlp = nn.Sequential(
-            nn.Linear(vector_shape[0], 128),
+            nn.Linear(vector_shape[0], 256),
             nn.ReLU(),
-            nn.Linear(128, hidden_dims[0]),
+            nn.Linear(256, hidden_dims[0]),
             nn.ReLU()
         )
 

@@ -131,8 +131,7 @@ public class RewardSystem {
                 value = dynamicFailurePenalty(world);
             } else if(e.getEventType() == EventType.IDLE.getValue()){
                 value = IDLE_PENALTY;
-            }
-            else {
+            } else {
                 value = 0f;
             }
             rewardEvents.add(new RewardEvent(value, e, timer));
