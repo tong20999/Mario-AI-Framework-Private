@@ -196,26 +196,26 @@ public class State {
         outputStream.write(float2ByteArray(subTileX));
         outputStream.write(float2ByteArray(subTileY)); // 22
 
-//        outputStream.write(nearestBlockFound);
-//        outputStream.write(float2ByteArray(nearestBlockDx));
-//        outputStream.write(float2ByteArray(nearestBlockDy));
-//
-//        outputStream.write(nearestCoinFound);
-//        outputStream.write(float2ByteArray(nearestCoinDx));
-//        outputStream.write(float2ByteArray(nearestCoinDy));
-//
-//        outputStream.write(nearestEnemyFound);
-//        outputStream.write(float2ByteArray(nearestEnemyDx));
-//        outputStream.write(float2ByteArray(nearestEnemyDy)); // 49
+        outputStream.write(nearestBlockFound);
+        outputStream.write(float2ByteArray(nearestBlockDx));
+        outputStream.write(float2ByteArray(nearestBlockDy));
+
+        outputStream.write(nearestCoinFound);
+        outputStream.write(float2ByteArray(nearestCoinDx));
+        outputStream.write(float2ByteArray(nearestCoinDy));
+
+        outputStream.write(nearestEnemyFound);
+        outputStream.write(float2ByteArray(nearestEnemyDx));
+        outputStream.write(float2ByteArray(nearestEnemyDy)); // 49
 
         outputStream.write(float2ByteArray(normalizedTimer)); // 53
 
-        //outputStream.write(goalCoinReach);
-        //outputStream.write(goalEnemyReach);
-        //outputStream.write(goalBlockReach); // 56
+        outputStream.write(goalCoinReach);
+        outputStream.write(goalEnemyReach);
+        outputStream.write(goalBlockReach); // 56
 
-        //outputStream.write(float2ByteArray(completionPercentage)); // 60
-        //outputStream.write(float2ByteArray(idleCounterPayload)); // 64
+        outputStream.write(float2ByteArray(completionPercentage)); // 60
+        outputStream.write(float2ByteArray(idleCounterPayload)); // 64
 
         outputStream.write(intArrayToBytes(coinsObjective)); // 114
         outputStream.write(intArrayToBytes(blocksObjective)); // 164

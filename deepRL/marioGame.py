@@ -10,7 +10,7 @@ payload_size = 512
 
 all_possible_input:list[list[bool]] = [
     # [LEFT, RIGHT , DOWN, SPEED, JUMP]
-    [False, False, False, False, False], # Do nothing
+    
     [False, True, False, False, False],  # move right
     [False, True, False, False, True], # move right and jump
     [False, True, False, True, False], # move right and speed
@@ -20,6 +20,7 @@ all_possible_input:list[list[bool]] = [
     [True, False, False, False, True], # move left and jump
     [True, False, False, True, False],  # move left and speed
     [True, False, False, True, True],  # move left and speed and jump
+    [False, False, False, False, False], # Do nothing
 ]
 
 class MarioGame(SocketEnv):
@@ -41,7 +42,7 @@ class MarioGame(SocketEnv):
         self.observation_space = gym.spaces.Dict({
             'grid': gym.spaces.Box(
                 low=0, high=1,
-                shape=(14, self.grid_h, self.grid_w),  # 20 binary channels
+                shape=(10, self.grid_h, self.grid_w),  # 20 binary channels
                 dtype=np.uint8
             ),
             'vector': gym.spaces.Box(
@@ -57,8 +58,8 @@ class MarioGame(SocketEnv):
         grid = grid_flat.reshape(self.grid_h, self.grid_w)  # shape (16,16)
 
         # --- One-hot encode into 20 binary planes ---
-        one_hot_grid = np.zeros((14, self.grid_h, self.grid_w), dtype=np.uint8)
-        for obj_id in range(14):
+        one_hot_grid = np.zeros((10, self.grid_h, self.grid_w), dtype=np.uint8)
+        for obj_id in range(10):
             one_hot_grid[obj_id] = (grid == obj_id).astype(np.uint8)
 
         vector_bytes = payload[grid_size : grid_size + self.vector_transfer_byte_len]
