@@ -4,62 +4,85 @@ import numpy as np
 from gymnasium.spaces import Dict
 
 
+class ResidualBlock(nn.Module):
+    """
+    A simple residual block with two convolutional layers.
+    The input to the block is added to its output, creating a skip connection.
+    """
+    def __init__(self, channels):
+        super(ResidualBlock, self).__init__()
+        self.conv0 = nn.Conv2d(in_channels=channels, out_channels=channels, kernel_size=3, padding=1)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv1 = nn.Conv2d(in_channels=channels, out_channels=channels, kernel_size=3, padding=1)
+
+    def forward(self, x):
+        identity = x  # Save the input for the skip connection
+        out = self.relu(self.conv0(x))
+        out = self.conv1(out)
+        # Add the original input (identity) to the output of the convolutions
+        out = self.relu(out + identity)
+        return out
+
+
 class CNNBase(nn.Module):
+    """
+    Base network with a late-fusion architecture and a deeper CNN using Residual Blocks.
+    """
     def __init__(self, observation_space: Dict, num_stack: int = 3, num_object_types: int = 24,
                  embedding_dim: int = 6, hidden_sizes=(256, 128)):
         super().__init__()
 
-        # Embedding for discrete object id grid (not raw pixels)
+        # --- 1. Grid (Vision) Processing Stream ---
         self.embedding = nn.Embedding(num_embeddings=num_object_types, embedding_dim=embedding_dim)
-
-        # Strided conv stack to reduce 16x16 -> 4x4 -> 2x2 then Global Average Pool -> 1x1
         cnn_input_channels = embedding_dim * num_stack
+        
+        # Define a deeper CNN using Residual Blocks
         self.cnn = nn.Sequential(
-            nn.Conv2d(cnn_input_channels, 32, kernel_size=3, stride=1, padding=1),  # 16x16
+            nn.Conv2d(cnn_input_channels, 32, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1),  # 8x8
+            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1), # 16x16 -> 8x8
             nn.ReLU(),
-            nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1),  # 4x4
+            ResidualBlock(64),  # <-- First residual block
+            nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1), # 8x8 -> 4x4
             nn.ReLU(),
-            nn.AdaptiveAvgPool2d(1)  # 64x1x1
+            ResidualBlock(64),  # <-- Second residual block
+            nn.AdaptiveAvgPool2d(1) # Global average pooling
         )
+        cnn_feature_size = 64  # Output size from the CNN stream
 
-        cnn_feature_size = 64  # After GAP
-
-        # Vector input size
+        # --- 2. Vector (State Info) Processing Stream ---
         vector_shape = observation_space['vector'].shape
         vector_size = vector_shape[0]
-
-        combined_input_size = cnn_feature_size + vector_size
-        self.mlp = nn.Sequential(
-            nn.Linear(combined_input_size, hidden_sizes[0]),
+        self.vector_mlp = nn.Sequential(
+            nn.Linear(vector_size, hidden_sizes[0]),
             nn.ReLU(),
             nn.Linear(hidden_sizes[0], hidden_sizes[1]),
             nn.ReLU()
         )
+        vector_feature_size = hidden_sizes[1]
 
-        self.feature_dim = hidden_sizes[1]
+        # The final feature dimension is the sum of the two streams after concatenation
+        self.feature_dim = cnn_feature_size + vector_feature_size
 
     def forward(self, states: dict):
-        # Grid path: expects a tensor of integer IDs
+        # --- Grid Path ---
         grid_obs = states['grid']
         batch_size, num_stack, height, width = grid_obs.shape
-
-        # Apply embedding layer and reshape for the CNN
         embedded_grid = self.embedding(grid_obs.long())
         embedded_grid = embedded_grid.view(batch_size, num_stack, height, width, -1)
         embedded_grid = embedded_grid.permute(0, 1, 4, 2, 3)
         cnn_input = embedded_grid.reshape(batch_size, num_stack * self.embedding.embedding_dim, height, width)
         grid_features = self.cnn(cnn_input).view(batch_size, -1)
 
-        # Vector path
-        vector_features = states['vector']
+        # --- Vector Path ---
+        vector_input = states['vector']
+        vector_features = self.vector_mlp(vector_input)
 
-        # Concatenate and pass through MLP
-        combined = torch.cat([grid_features, vector_features], dim=1)
-        features = self.mlp(combined)
-        return features
-    
+        # --- 3. Late Fusion ---
+        final_features = torch.cat([grid_features, vector_features], dim=1)
+
+        return final_features
+
 
 class CNNActor(CNNBase):
     """Actor network for PPO."""

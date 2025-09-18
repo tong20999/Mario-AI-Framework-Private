@@ -15,12 +15,13 @@ class MultiGridStack(gym.Wrapper):
         new_obs_spaces = self.env.observation_space.spaces.copy()
         grid_space = new_obs_spaces[self.grid_key]
         
-        # Correctly creates the new shape e.g., (4, 20, 16, 16)
-        new_shape = (num_stack, *grid_space.shape) 
-        
+        # New stacked shape: (num_stack, H, W) with integer object IDs preserved.
+        new_shape = (num_stack, *grid_space.shape)
+
+        # Preserve the original value range (0..N_objects-1) instead of forcing binary 0/1.
         new_obs_spaces[self.grid_key] = gym.spaces.Box(
-            low=0,
-            high=1, # The one-hot grid only contains 0s and 1s.
+            low=grid_space.low.min(),
+            high=grid_space.high.max(),
             shape=new_shape,
             dtype=grid_space.dtype
         )

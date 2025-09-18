@@ -20,12 +20,13 @@ public class RewardSystem {
     private static final float IDLE_PENALTY = -1f;
 
     // Win structure (small base + modest perfect bonus)
-    private static final float BASE_WIN_REWARD = 10f;
-    private static final float PERFECT_BONUS = 100f;
+    private static final float BASE_WIN_REWARD = 5f;
+    private static final float PERFECT_BONUS = 150f;
 
     // Dynamic failure penalty parameters
-    private static final float FAILURE_BASE = -50f;          // Worst-case (0% completion)
-    private static final float FAILURE_PROGRESS_DELTA = 40f;
+    private static final float FAILURE_BASE = -60f;          // Worst-case (0% completion)
+    private static final float FAILURE_PROGRESS_DELTA = 20f;
+    private static final float FAILURE_80_PERCENT = -20f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = STEP_COST;
@@ -77,11 +78,10 @@ public class RewardSystem {
     private static float calculateWinReward(MarioWorld world) {
         float ratio = completionRatio(world);
         if (ratio >= 1f) {
-            // Perfect: base + bonus (objective rewards were already granted during play)
             return BASE_WIN_REWARD + PERFECT_BONUS;
         }
-        // Non-perfect finish: only base; no extra partial bonus to avoid double counting
-        return BASE_WIN_REWARD;
+
+        return BASE_WIN_REWARD * ratio;
     }
 
     private static float completionRatio(MarioWorld world) {
@@ -98,7 +98,10 @@ public class RewardSystem {
 
     private static float dynamicFailurePenalty(MarioWorld world) {
         float ratio = completionRatio(world);
-        return FAILURE_BASE + (FAILURE_PROGRESS_DELTA * ratio); // [-50, -10]
+        if(ratio > 0.8f){
+            return FAILURE_80_PERCENT;
+        }
+        return FAILURE_BASE + (FAILURE_PROGRESS_DELTA * ratio); // [-60, -40]
     }
 
     public static ArrayList<RewardEvent> logRewardEvent(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
