@@ -26,7 +26,7 @@ class ResidualBlock(nn.Module):
 
 class CNNBase(nn.Module):
     def __init__(self, observation_space: Dict, num_stack: int = 3, num_object_types: int = 24,
-                 embedding_dim: int = 6, hidden_sizes=(1024, 512)): # Wider MLP defaults
+                 embedding_dim: int = 6, hidden_sizes=(512, 256)): # Wider MLP defaults
         super().__init__()
 
         # --- 1. Wider and Deeper Grid (Vision) Processing Stream ---
@@ -34,17 +34,17 @@ class CNNBase(nn.Module):
         cnn_input_channels = embedding_dim * num_stack
         
         self.cnn = nn.Sequential(
-            nn.Conv2d(cnn_input_channels, 256, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(cnn_input_channels, 128, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.Conv2d(256, 512, kernel_size=3, stride=2, padding=1), # 16x16 -> 8x8
+            nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1), # 16x16 -> 8x8
             nn.ReLU(),
-            ResidualBlock(512),
-            nn.Conv2d(512, 512, kernel_size=3, stride=2, padding=1), # 8x8 -> 4x4
+            ResidualBlock(256),
+            nn.Conv2d(256, 256, kernel_size=3, stride=2, padding=1), # 8x8 -> 4x4
             nn.ReLU(),
-            ResidualBlock(512),
+            ResidualBlock(256),
             nn.AdaptiveAvgPool2d(1)
         )
-        cnn_feature_size = 512
+        cnn_feature_size = 256
 
         # --- 2. Wider Vector (State Info) Processing Stream ---
         vector_shape = observation_space['vector'].shape

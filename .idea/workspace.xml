@@ -9,12 +9,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="add exploration">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/marioGame.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/marioGame.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/ppo/cnn.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ppo/cnn.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/reinforment/State.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/reinforment/State.java" afterDir="false" />
-    </list>
+    <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="add exploration" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -72,7 +67,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "ppo__binary__channels__late__fusion__vector__objective",
+    "git-widget-placeholder": "ppo__embedding__1",
     "ignore.virus.scanning.warn.message": "true",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/Users/WARDESKTOP/source/repos/Mario-AI-Framework-Private/levels/evaluation",
