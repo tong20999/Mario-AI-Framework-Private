@@ -41,8 +41,8 @@ class MarioGame(SocketEnv):
     def _init_spaces(self):
         self.observation_space = gym.spaces.Dict({
             'grid': gym.spaces.Box(
-                low=0, high=1,
-                shape=(10, self.grid_h, self.grid_w),  # 20 binary channels
+                low=0, high=23,  # support up to 24 object types (0-23)
+                shape=(self.grid_h, self.grid_w),
                 dtype=np.uint8
             ),
             'vector': gym.spaces.Box(
@@ -55,20 +55,14 @@ class MarioGame(SocketEnv):
     def _parse_observation(self, payload: bytes) -> dict:
         grid_size = self.grid_h * self.grid_w
         grid_flat = np.frombuffer(payload[:grid_size], dtype=np.uint8, count=grid_size)
-        grid = grid_flat.reshape(self.grid_h, self.grid_w)  # shape (16,16)
-
-        # --- One-hot encode into 20 binary planes ---
-        one_hot_grid = np.zeros((10, self.grid_h, self.grid_w), dtype=np.uint8)
-        for obj_id in range(10):
-            one_hot_grid[obj_id] = (grid == obj_id).astype(np.uint8)
-
-        vector_bytes = payload[grid_size : grid_size + self.vector_transfer_byte_len]
-        format_string = '>6B4fBffBffBfff3Bff50B50B50B'
+        grid = grid_flat.reshape(self.grid_h, self.grid_w)
+        vector_bytes = payload[grid_size: grid_size + self.vector_transfer_byte_len]
+        format_string = '>6B4fBffBffBfff3Bff50b50b50b'
         unpacked_values = struct.unpack(format_string, vector_bytes)
         vector_part = np.array(unpacked_values, dtype=np.float32)
 
         return {
-            'grid': one_hot_grid,
+            'grid': grid,
             'vector': vector_part
         }
 

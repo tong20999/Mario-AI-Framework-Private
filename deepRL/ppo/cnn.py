@@ -5,8 +5,7 @@ from gymnasium.spaces import Dict
 
 
 class CNNBase(nn.Module):
-    """Base network: CNN for grid + vector input -> 2 hidden layers -> feature output."""
-    def __init__(self, observation_space: Dict, num_stack: int, num_object_types: int = 20,
+    def __init__(self, observation_space: Dict, num_stack: int = 3, num_object_types: int = 24,
                  embedding_dim: int = 8, hidden_sizes=(512, 256)):
         super().__init__()
 
@@ -14,15 +13,15 @@ class CNNBase(nn.Module):
         self.embedding = nn.Embedding(num_embeddings=num_object_types, embedding_dim=embedding_dim)
 
         cnn_input_channels = embedding_dim * num_stack
-        cnn_output_channels = 32
-
-        # --- CNN Path ---
         self.cnn = nn.Sequential(
-            nn.Conv2d(cnn_input_channels, cnn_output_channels, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(cnn_input_channels, 32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.Flatten()
         )
 
+        cnn_output_channels = 64
         cnn_feature_size = cnn_output_channels * 16 * 16
 
         # Vector input size
@@ -59,17 +58,12 @@ class CNNBase(nn.Module):
         combined = torch.cat([grid_features, vector_features], dim=1)
         features = self.mlp(combined)
         return features
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-# Helper classes for PPO (Actor and Critic)
-# ----------------------------------------------------------------------------------------------------------------------
-
+    
 
 class CNNActor(CNNBase):
     """Actor network for PPO."""
-    def __init__(self, observation_space, output_dim, num_stack, **kwargs):
-        super().__init__(observation_space, num_stack, **kwargs)
+    def __init__(self, observation_space, output_dim, **kwargs):
+        super().__init__(observation_space, **kwargs)
         self.actor_head = nn.Linear(self.feature_dim, output_dim)
 
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -78,13 +72,13 @@ class CNNActor(CNNBase):
 
     def _format_obs(self, obs: dict):
         return {
-            'grid': torch.tensor(obs['grid'], dtype=torch.float32, device=self.device),
+            'grid': torch.tensor(obs['grid'], dtype=torch.long, device=self.device),
             'vector': torch.tensor(obs['vector'], dtype=torch.float32, device=self.device)
         }
 
     def _format_single_obs(self, obs: dict):
         return {
-            'grid': torch.tensor(obs['grid'], dtype=torch.float32, device=self.device).unsqueeze(0),
+            'grid': torch.tensor(obs['grid'], dtype=torch.long, device=self.device).unsqueeze(0),
             'vector': torch.tensor(obs['vector'], dtype=torch.float32, device=self.device).unsqueeze(0)
         }
 
@@ -133,8 +127,8 @@ class CNNActor(CNNBase):
 
 class CNNCritic(CNNBase):
     """Critic network for PPO."""
-    def __init__(self, observation_space, num_stack, **kwargs):
-        super().__init__(observation_space, num_stack, **kwargs)
+    def __init__(self, observation_space, **kwargs):
+        super().__init__(observation_space, **kwargs)
         self.critic_head = nn.Linear(self.feature_dim, 1)
 
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -143,7 +137,7 @@ class CNNCritic(CNNBase):
 
     def _format_obs(self, obs: dict):
         return {
-            'grid': torch.tensor(obs['grid'], dtype=torch.float32, device=self.device),
+            'grid': torch.tensor(obs['grid'], dtype=torch.long, device=self.device),
             'vector': torch.tensor(obs['vector'], dtype=torch.float32, device=self.device)
         }
 

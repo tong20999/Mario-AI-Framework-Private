@@ -48,51 +48,54 @@ public class State {
                 int flag = flagObservation[col][row];
 
                 if (flag == 40 + 16 || flag == 39 + 16) {
-                    grid[col][row] = 9;
+                    grid[col][row] = 1;
                 }
 
-                if (scene == MarioForwardModel.OBS_SOLID
-                        || scene == MarioForwardModel.OBS_CANNON
-                        || scene == MarioForwardModel.OBS_PIPE
-                        || scene == MarioForwardModel.OBS_PLATFORM
-                ) {
-                    grid[col][row] = 1;
-                } else if (scene == MarioForwardModel.OBS_QUESTION_BLOCK) {
-                    grid[col][row] = 3;
-                } else if(scene == MarioForwardModel.OBS_BRICK){
+                if (scene == MarioForwardModel.OBS_SOLID) {
                     grid[col][row] = 2;
-                } else if (scene == MarioForwardModel.OBS_COIN) {
+                } else if(scene == MarioForwardModel.OBS_CANNON){
+                    grid[col][row] = 3;
+                } else if(scene == MarioForwardModel.OBS_PLATFORM){
                     grid[col][row] = 4;
+                }
+                else if(scene == MarioForwardModel.OBS_PIPE){
+                    grid[col][row] = 5;
+                } else if(scene == MarioForwardModel.OBS_BRICK){
+                    grid[col][row] = 6;
+                } else if (scene == MarioForwardModel.OBS_QUESTION_BLOCK) {
+                    grid[col][row] = 7;
+                } else if (scene == MarioForwardModel.OBS_COIN) {
+                    grid[col][row] = 8;
                 }
 
                 if (enemy == MarioForwardModel.OBS_MUSHROOM) {
-                    grid[col][row] = 7;
+                    grid[col][row] = 9;
                 } else if(enemy == MarioForwardModel.OBS_LIFE_MUSHROOM){
-                    grid[col][row] = 7;
+                    grid[col][row] = 10;
                 } else if(enemy == MarioForwardModel.OBS_FIRE_FLOWER){
-                    grid[col][row] = 7;
+                    grid[col][row] = 11;
                 } else if (enemy == MarioForwardModel.OBS_GOOMBA) {
-                    grid[col][row] = 5;
+                    grid[col][row] = 12;
                 } else if(enemy == MarioForwardModel.OBS_GOOMBA_WINGED){
-                    grid[col][row] = 5;
+                    grid[col][row] = 13;
                 } else if(enemy == MarioForwardModel.OBS_GREEN_KOOPA){
-                    grid[col][row] = 5;
+                    grid[col][row] = 14;
                 } else if(enemy == MarioForwardModel.OBS_GREEN_KOOPA_WINGED){
-                    grid[col][row] = 5;
+                    grid[col][row] = 15;
                 } else if(enemy == MarioForwardModel.OBS_RED_KOOPA){
-                    grid[col][row] = 5;
+                    grid[col][row] = 16;
                 } else if(enemy == MarioForwardModel.OBS_RED_KOOPA_WINGED){
-                    grid[col][row] = 5;
+                    grid[col][row] = 17;
                 } else if(enemy == MarioForwardModel.OBS_SPIKY){
-                    grid[col][row] = 6;
+                    grid[col][row] = 18;
                 } else if(enemy == MarioForwardModel.OBS_SPIKY_WINGED){
-                    grid[col][row] = 6;
+                    grid[col][row] = 19;
                 } else if(enemy == MarioForwardModel.OBS_ENEMY_FLOWER){
-                    grid[col][row] = 6;
+                    grid[col][row] = 20;
                 } else if(enemy == MarioForwardModel.OBS_SHELL){
-                    grid[col][row] = 8;
+                    grid[col][row] = 21;
                 } else if(enemy == MarioForwardModel.OBS_BULLET_BILL){
-                    grid[col][row] = 8;
+                    grid[col][row] = 22;
                 }
             }
         }
