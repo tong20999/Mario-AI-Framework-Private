@@ -25,32 +25,28 @@ class ResidualBlock(nn.Module):
 
 
 class CNNBase(nn.Module):
-    """
-    Base network with a late-fusion architecture and a deeper CNN using Residual Blocks.
-    """
     def __init__(self, observation_space: Dict, num_stack: int = 3, num_object_types: int = 24,
-                 embedding_dim: int = 6, hidden_sizes=(256, 128)):
+                 embedding_dim: int = 6, hidden_sizes=(512, 256)): # Wider MLP defaults
         super().__init__()
 
-        # --- 1. Grid (Vision) Processing Stream ---
+        # --- 1. Wider and Deeper Grid (Vision) Processing Stream ---
         self.embedding = nn.Embedding(num_embeddings=num_object_types, embedding_dim=embedding_dim)
         cnn_input_channels = embedding_dim * num_stack
         
-        # Define a deeper CNN using Residual Blocks
         self.cnn = nn.Sequential(
-            nn.Conv2d(cnn_input_channels, 32, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(cnn_input_channels, 64, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1), # 16x16 -> 8x8
+            nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1), # 16x16 -> 8x8
             nn.ReLU(),
-            ResidualBlock(64),  # <-- First residual block
-            nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1), # 8x8 -> 4x4
+            ResidualBlock(128),
+            nn.Conv2d(128, 128, kernel_size=3, stride=2, padding=1), # 8x8 -> 4x4
             nn.ReLU(),
-            ResidualBlock(64),  # <-- Second residual block
-            nn.AdaptiveAvgPool2d(1) # Global average pooling
+            ResidualBlock(128),
+            nn.AdaptiveAvgPool2d(1)
         )
-        cnn_feature_size = 64  # Output size from the CNN stream
+        cnn_feature_size = 128
 
-        # --- 2. Vector (State Info) Processing Stream ---
+        # --- 2. Wider Vector (State Info) Processing Stream ---
         vector_shape = observation_space['vector'].shape
         vector_size = vector_shape[0]
         self.vector_mlp = nn.Sequential(
@@ -61,7 +57,6 @@ class CNNBase(nn.Module):
         )
         vector_feature_size = hidden_sizes[1]
 
-        # The final feature dimension is the sum of the two streams after concatenation
         self.feature_dim = cnn_feature_size + vector_feature_size
 
     def forward(self, states: dict):
