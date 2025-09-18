@@ -6,3 +6,4 @@ out/
 deepRL/model.*
 deepRL/checkpoint_*
 .idea/workspace.xml
+.idea/workspace.xml
