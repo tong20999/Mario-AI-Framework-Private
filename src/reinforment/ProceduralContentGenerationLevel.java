@@ -323,7 +323,11 @@ public class ProceduralContentGenerationLevel {
     }
 
     public void addEnemy(int offsetFromStart, int offsetFromFlag, PCGLevelDto pcgLevelDto) throws IllegalArgumentException {
-        for (int k = 0; k < pcgLevelDto.getEnemies() ; k++) {
+        if(pcgLevelDto.getEnemies() < 1){
+            return;
+        }
+        var total = pcgLevelDto.getEnemies() == 1 ? 1 : rand.nextInt(1, pcgLevelDto.getEnemies() + 1);
+        for (int k = 0; k < total ; k++) {
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
             int height = rand.nextInt(pcgLevelDto.getEnemiesHeightOrigin(), pcgLevelDto.getEnemiesHeightBound());
@@ -360,8 +364,12 @@ public class ProceduralContentGenerationLevel {
     }
 
     public void addBlock(int offsetFromStart, int offsetFromFlag, PCGLevelDto pcgLevelDto) throws IllegalArgumentException {
+        if(pcgLevelDto.getBlocks() < 1){
+            return;
+        }
+        var total = pcgLevelDto.getBlocks() == 1 ? 1 : rand.nextInt(1, pcgLevelDto.getBlocks() + 1);
         int k = 0;
-        while (k < pcgLevelDto.getBlocks()) {
+        while (k < total) {
             int randomBlock = rand.nextInt(0, blocks.length);
             EnumBlockType blockType = blocks[randomBlock];
             doAddBlock(blockType, offsetFromStart, offsetFromFlag, pcgLevelDto);
@@ -417,11 +425,15 @@ public class ProceduralContentGenerationLevel {
     }
 
     private void addCoin(int offsetFromStart, int offsetFromFlag, PCGLevelDto pcgLevelDto) {
-        for (int k = 0; k < pcgLevelDto.getCoins(); k++) {
+        if(pcgLevelDto.getCoins() < 1){
+            return;
+        }
+        var total = pcgLevelDto.getCoins() == 1 ? 1 : rand.nextInt(1, pcgLevelDto.getCoins() + 1);
+        for (int k = 0; k < total; k++) {
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
             int height = rand.nextInt(pcgLevelDto.getCoinsHeightOrigin(), pcgLevelDto.getCoinsHeightBound());
-            boolean needPlatform = height < 9;
+            boolean needPlatform = height < 10;
             boolean randomNormalBlockLeft = rand.nextInt(2) == 0;
             boolean randomNormalBlockRight = rand.nextInt(2) == 0;
 
@@ -466,11 +478,13 @@ public class ProceduralContentGenerationLevel {
                 addIndex = rand.nextInt(offsetFromStart, maxIndex);
             }
             boolean secondPyramid = rand.nextInt(2) == 0;
+            //boolean secondPyramid = false;
             boolean randomPit = rand.nextInt(2) == 0;
+            //boolean randomPit = false;
             int maxHeight = rand.nextInt(1,5);
             //boolean randomTunnel = rand.nextInt(2) == 0;
             boolean randomTunnel = false;
-            maxHeight =4;
+            //maxHeight =4;
             if(maxHeight == 1){
                 randomTunnel = false;
             }

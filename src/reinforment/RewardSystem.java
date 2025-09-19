@@ -10,14 +10,16 @@ import java.util.ArrayList;
 
 public class RewardSystem {
     // Per-objective shaping (dense)
-    private static final float KILL_REWARD = 2f;
-    private static final float BUMP_REWARD = 1f;
-    private static final float COIN_REWARD = 1f;
-    private static final float POWER_UP_REWARD = 2f;
+    private static final float KILL_REWARD = 4f;
+    private static final float BUMP_REWARD = 2f;
+    private static final float COIN_REWARD = 2f;
+    private static final float POWER_UP_REWARD = 4f;
 
     // Step & behavior costs
     public static final float STEP_COST = -0.01f;
-    private static final float IDLE_PENALTY = -1f;
+    private static final float IDLE_PENALTY = 0.0f;
+    private static final float HIT_WALL_PENALTY = -0.5f;
+    private static final float PROGRESS_REWARD = 0.0f;
 
     // Win structure (small base + modest perfect bonus)
     private static final float BASE_WIN_REWARD = 5f;
@@ -55,6 +57,10 @@ public class RewardSystem {
                 reward += COIN_REWARD;
             }
 
+            if (e.getEventType() == EventType.HIT_WALL.getValue()) {
+                reward += HIT_WALL_PENALTY;
+            }
+
             if (e.getEventType() == EventType.WIN.getValue()) {
                 reward += calculateWinReward(world);
             }
@@ -65,6 +71,10 @@ public class RewardSystem {
 
             if (e.getEventType() == EventType.TIME_OUT.getValue()) {
                 reward += dynamicFailurePenalty(world);
+            }
+
+            if (e.getEventType() == EventType.PROGRESS.getValue()) {
+                reward += PROGRESS_REWARD;
             }
 
             if(e.getEventType() == EventType.IDLE.getValue()){
@@ -88,7 +98,7 @@ public class RewardSystem {
         float total = world.level.getCoins().size()
                 + world.level.getBumpableBlocks().size()
                 + world.level.getEnemies().size();
-        if (total <= 0f) return 0f;
+        if (total <= 0f) return 1f;
 
         float completed = (world.level.getEnemies().size() - world.getAliveEnemies().size())
                 + (world.level.getBumpableBlocks().size() - world.getUnbumpBlocks().size())
@@ -134,6 +144,10 @@ public class RewardSystem {
                 value = dynamicFailurePenalty(world);
             } else if(e.getEventType() == EventType.IDLE.getValue()){
                 value = IDLE_PENALTY;
+            } else if(e.getEventType() == EventType.HIT_WALL.getValue()){
+                value = HIT_WALL_PENALTY;
+            } else if(e.getEventType() == EventType.PROGRESS.getValue()){
+                value = PROGRESS_REWARD;
             } else {
                 value = 0f;
             }

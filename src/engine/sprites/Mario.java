@@ -125,17 +125,18 @@ public class Mario extends MarioSprite {
                 collide = true;
             if (isBlocking(x + xa - width, y + ya, xa, ya))
                 collide = true;
+
         }
         if (collide) {
             if (xa < 0) {
                 x = (int) ((x - width) / 16) * 16 + width;
                 this.xa = 0;
-                //this.world.addEvent(EventType.HIT_WALL, 0);
+                this.world.addEvent(EventType.HIT_WALL, 0);
             }
             if (xa > 0) {
                 x = (int) ((x + width) / 16 + 1) * 16 - width - 1;
                 this.xa = 0;
-                //this.world.addEvent(EventType.HIT_WALL, 0);
+                this.world.addEvent(EventType.HIT_WALL, 0);
             }
             if (ya < 0) {
                 y = (int) ((y - height) / 16) * 16 + height;

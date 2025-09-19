@@ -94,7 +94,7 @@ public class MarioGameTraining {
 
     private int fps = 0;
     private ProceduralContentGenerationLevel pcg = null;
-    private final int frameSkip = 4;
+    private final int frameSkip = 2;
 
     /**
      * Create a mario game to be played

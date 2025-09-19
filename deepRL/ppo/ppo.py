@@ -292,7 +292,7 @@ class PPO():
     
         self.nS, nA = env.observation_space, env.action_space.n
 
-        total_iterations=500 + (self.max_buffer_episodes * self.n_workers)
+        total_iterations= 500 + (self.max_buffer_episodes * self.n_workers)
         start_factor=1.0
         end_factor=0.2
         logger.info(f'scheduler lr total iteration {total_iterations} start factor {start_factor} end factor {end_factor}')

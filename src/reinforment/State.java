@@ -194,35 +194,17 @@ public class State {
         outputStream.write((byte) (model.isMarioOnGround() ? 1 : 0));
         outputStream.write((byte) (model.getMarioCanJumpHigher() ? 1 : 0));
         outputStream.write((byte) (model.getMarioFacing() == 1 ? 1 : 0)); // 6
-        outputStream.write(float2ByteArray(normalizedVelX));
-        outputStream.write(float2ByteArray(normalizedVelY));
-        outputStream.write(float2ByteArray(subTileX));
-        outputStream.write(float2ByteArray(subTileY)); // 22
+        
+        outputStream.write(float2ByteArray(normalizedVelX)); // 10
+        outputStream.write(float2ByteArray(normalizedVelY)); // 14
+        outputStream.write(float2ByteArray(subTileX)); // 18
+        outputStream.write(float2ByteArray(subTileY)); // 22 10
+        outputStream.write(float2ByteArray(normalizedTimer)); // 26 11
+        outputStream.write(float2ByteArray(completionPercentage)); // 30 12
 
-        outputStream.write(nearestBlockFound);
-        outputStream.write(float2ByteArray(nearestBlockDx));
-        outputStream.write(float2ByteArray(nearestBlockDy));
-
-        outputStream.write(nearestCoinFound);
-        outputStream.write(float2ByteArray(nearestCoinDx));
-        outputStream.write(float2ByteArray(nearestCoinDy));
-
-        outputStream.write(nearestEnemyFound);
-        outputStream.write(float2ByteArray(nearestEnemyDx));
-        outputStream.write(float2ByteArray(nearestEnemyDy)); // 49
-
-        outputStream.write(float2ByteArray(normalizedTimer)); // 53
-
-        outputStream.write(goalCoinReach);
-        outputStream.write(goalEnemyReach);
-        outputStream.write(goalBlockReach); // 56
-
-        outputStream.write(float2ByteArray(completionPercentage)); // 60
-        outputStream.write(float2ByteArray(idleCounterPayload)); // 64
-
-        outputStream.write(intArrayToBytes(coinsObjective)); // 114
-        outputStream.write(intArrayToBytes(blocksObjective)); // 164
-        outputStream.write(intArrayToBytes(enemiesObjective)); // 214
+        outputStream.write(intArrayToBytes(coinsObjective)); // 80
+        outputStream.write(intArrayToBytes(blocksObjective)); // 130
+        outputStream.write(intArrayToBytes(enemiesObjective)); // 180
         return outputStream.toByteArray();
     }
 }

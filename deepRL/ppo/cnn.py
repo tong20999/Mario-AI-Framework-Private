@@ -3,7 +3,6 @@ import torch.nn as nn
 import numpy as np
 from gymnasium.spaces import Dict
 
-
 class ResidualBlock(nn.Module):
     """
     A simple residual block with two convolutional layers.
@@ -23,40 +22,45 @@ class ResidualBlock(nn.Module):
         out = self.relu(out + identity)
         return out
 
-
+# --- NEW, MORE POWERFUL (but simplified) CNNBase ---
 class CNNBase(nn.Module):
     def __init__(self, observation_space: Dict, num_stack: int = 3, num_object_types: int = 24,
-                 embedding_dim: int = 6, hidden_sizes=(512, 256)): # Wider MLP defaults
+                 embedding_dim: int = 16, hidden_sizes=(256, 128)): # Increased defaults
         super().__init__()
 
-        # --- 1. Wider and Deeper Grid (Vision) Processing Stream ---
+        # --- 1. Enhanced Grid (Vision) Processing Stream ---
+        # Increased embedding_dim for richer object representation
         self.embedding = nn.Embedding(num_embeddings=num_object_types, embedding_dim=embedding_dim)
         cnn_input_channels = embedding_dim * num_stack
         
+        # Deeper and Wider CNN
         self.cnn = nn.Sequential(
-            nn.Conv2d(cnn_input_channels, 128, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(cnn_input_channels, 128, kernel_size=3, stride=1, padding=1), # Wider
             nn.ReLU(),
-            nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1), # 16x16 -> 8x8
+            nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1), # Wider, 16x16 -> 8x8
             nn.ReLU(),
             ResidualBlock(256),
+            ResidualBlock(256), # Deeper: Added another residual block
             nn.Conv2d(256, 256, kernel_size=3, stride=2, padding=1), # 8x8 -> 4x4
             nn.ReLU(),
             ResidualBlock(256),
             nn.AdaptiveAvgPool2d(1)
         )
-        cnn_feature_size = 256
+        cnn_feature_size = 256 # Updated feature size
 
-        # --- 2. Wider Vector (State Info) Processing Stream ---
+        # --- 2. Enhanced Vector (State Info) Processing Stream ---
         vector_shape = observation_space['vector'].shape
         vector_size = vector_shape[0]
+        # Wider MLP for vector data
         self.vector_mlp = nn.Sequential(
             nn.Linear(vector_size, hidden_sizes[0]),
             nn.ReLU(),
             nn.Linear(hidden_sizes[0], hidden_sizes[1]),
             nn.ReLU()
         )
-        vector_feature_size = hidden_sizes[1]
+        vector_feature_size = hidden_sizes[1] # Updated feature size
 
+        # The total feature dimension is now the sum of the two streams
         self.feature_dim = cnn_feature_size + vector_feature_size
 
     def forward(self, states: dict):
@@ -73,7 +77,7 @@ class CNNBase(nn.Module):
         vector_input = states['vector']
         vector_features = self.vector_mlp(vector_input)
 
-        # --- 3. Late Fusion ---
+        # --- 3. Simple Concatenation Fusion ---
         final_features = torch.cat([grid_features, vector_features], dim=1)
 
         return final_features

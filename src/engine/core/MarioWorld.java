@@ -545,7 +545,6 @@ public class MarioWorld {
     public void bump(int xTile, int yTile, boolean canBreakBricks) {
         int block = this.level.getBlock(xTile, yTile);
         ArrayList<TileFeature> features = TileFeature.getTileType(block);
-
         if (features.contains(TileFeature.BUMPABLE)) {
             unbumpBlocks.removeIf(b -> b.getX() == xTile && b.getY() == yTile);
             blocksObjective.mark(new Point(xTile, yTile));
