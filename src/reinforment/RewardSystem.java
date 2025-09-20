@@ -10,22 +10,25 @@ import java.util.ArrayList;
 
 public class RewardSystem {
     // Per-objective shaping (dense)
-    private static final float KILL_REWARD = 2f;
-    private static final float BUMP_REWARD = 1f;
-    private static final float COIN_REWARD = 1f;
-    private static final float POWER_UP_REWARD = 2f;
+    private static final float KILL_REWARD = 4f;
+    private static final float BUMP_REWARD = 2f;
+    private static final float COIN_REWARD = 2f;
+    private static final float POWER_UP_REWARD = 4f;
 
     // Step & behavior costs
     public static final float STEP_COST = -0.01f;
-    private static final float IDLE_PENALTY = -1f;
+    private static final float IDLE_PENALTY = -5.0f;
+    private static final float HIT_WALL_PENALTY = -0.5f;
+    private static final float PROGRESS_REWARD = 0.1f;
 
     // Win structure (small base + modest perfect bonus)
-    private static final float BASE_WIN_REWARD = 10f;
-    private static final float PERFECT_BONUS = 20f;
+    private static final float BASE_WIN_REWARD = 5f;
+    private static final float PERFECT_BONUS = 150f;
 
     // Dynamic failure penalty parameters
-    private static final float FAILURE_BASE = -50f;          // Worst-case (0% completion)
-    private static final float FAILURE_PROGRESS_DELTA = 40f;
+    private static final float FAILURE_BASE = -60f;          // Worst-case (0% completion)
+    private static final float FAILURE_PROGRESS_DELTA = 20f;
+    private static final float FAILURE_80_PERCENT = -20f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = STEP_COST;
@@ -54,6 +57,10 @@ public class RewardSystem {
                 reward += COIN_REWARD;
             }
 
+            if (e.getEventType() == EventType.HIT_WALL.getValue()) {
+                reward += HIT_WALL_PENALTY;
+            }
+
             if (e.getEventType() == EventType.WIN.getValue()) {
                 reward += calculateWinReward(world);
             }
@@ -64,6 +71,10 @@ public class RewardSystem {
 
             if (e.getEventType() == EventType.TIME_OUT.getValue()) {
                 reward += dynamicFailurePenalty(world);
+            }
+
+            if (e.getEventType() == EventType.PROGRESS.getValue()) {
+                reward += PROGRESS_REWARD;
             }
 
             if(e.getEventType() == EventType.IDLE.getValue()){
@@ -77,18 +88,17 @@ public class RewardSystem {
     private static float calculateWinReward(MarioWorld world) {
         float ratio = completionRatio(world);
         if (ratio >= 1f) {
-            // Perfect: base + bonus (objective rewards were already granted during play)
             return BASE_WIN_REWARD + PERFECT_BONUS;
         }
-        // Non-perfect finish: only base; no extra partial bonus to avoid double counting
-        return BASE_WIN_REWARD;
+
+        return BASE_WIN_REWARD * ratio;
     }
 
     private static float completionRatio(MarioWorld world) {
         float total = world.level.getCoins().size()
                 + world.level.getBumpableBlocks().size()
                 + world.level.getEnemies().size();
-        if (total <= 0f) return 0f;
+        if (total <= 0f) return 1f;
 
         float completed = (world.level.getEnemies().size() - world.getAliveEnemies().size())
                 + (world.level.getBumpableBlocks().size() - world.getUnbumpBlocks().size())
@@ -98,7 +108,10 @@ public class RewardSystem {
 
     private static float dynamicFailurePenalty(MarioWorld world) {
         float ratio = completionRatio(world);
-        return FAILURE_BASE + (FAILURE_PROGRESS_DELTA * ratio); // [-50, -10]
+        if(ratio > 0.8f){
+            return FAILURE_80_PERCENT;
+        }
+        return FAILURE_BASE + (FAILURE_PROGRESS_DELTA * ratio); // [-60, -40]
     }
 
     public static ArrayList<RewardEvent> logRewardEvent(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
@@ -131,8 +144,11 @@ public class RewardSystem {
                 value = dynamicFailurePenalty(world);
             } else if(e.getEventType() == EventType.IDLE.getValue()){
                 value = IDLE_PENALTY;
-            }
-            else {
+            } else if(e.getEventType() == EventType.HIT_WALL.getValue()){
+                value = HIT_WALL_PENALTY;
+            } else if(e.getEventType() == EventType.PROGRESS.getValue()){
+                value = PROGRESS_REWARD;
+            } else {
                 value = 0f;
             }
             rewardEvents.add(new RewardEvent(value, e, timer));

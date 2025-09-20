@@ -4,9 +4,12 @@ import numpy as np
 from gymnasium.spaces import Dict
 
 class CNNBase(nn.Module):
-    def __init__(self, observation_space: Dict, num_stack: int, num_object_types: int = 14, 
-                 hidden_dims=(512, 512)):
+    def __init__(self, observation_space: Dict, num_stack: int, num_object_types: int = 21, 
+                 hidden_dims=(512, 256)):
         super(CNNBase, self).__init__()
+        device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        self.device = torch.device(device)
+        self.to(self.device)
 
         cnn_input_channels = num_object_types * num_stack
 
@@ -14,7 +17,11 @@ class CNNBase(nn.Module):
         cnn_output_channels = 64
 
         self.cnn = nn.Sequential(
-            nn.Conv2d(cnn_input_channels, cnn_output_channels, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(cnn_input_channels, out_channels=32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.Flatten()
         )
@@ -22,9 +29,9 @@ class CNNBase(nn.Module):
         # This MLP processes the CNN's output
         cnn_feature_size = cnn_output_channels * 16 * 16
         self.grid_mlp = nn.Sequential(
-            nn.Linear(cnn_feature_size, 512),
+            nn.Linear(cnn_feature_size, 4096),
             nn.ReLU(),
-            nn.Linear(512, hidden_dims[0]),
+            nn.Linear(4096, hidden_dims[0]),
             nn.ReLU()
         )
 
@@ -66,6 +73,12 @@ class CNNBase(nn.Module):
         final_output = self.final_mlp(combined_features)
         
         return final_output
+    
+    def _format_obs(self, obs: dict):
+        return {
+            'grid': torch.tensor(obs['grid'], dtype=torch.float32, device=self.device),
+            'vector': torch.tensor(obs['vector'], dtype=torch.float32, device=self.device)
+        }
 
 class CNNActor(CNNBase):
     """
@@ -74,16 +87,6 @@ class CNNActor(CNNBase):
     def __init__(self, observation_space, output_dim, num_stack, **kwargs):
         super().__init__(observation_space, num_stack, **kwargs)
         self.actor_head = nn.Linear(self.feature_dim, output_dim)
-        
-        device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        self.device = torch.device(device)
-        self.to(self.device)
-
-    def _format_obs(self, obs: dict):
-        return {
-            'grid': torch.tensor(obs['grid'], dtype=torch.float32, device=self.device),
-            'vector': torch.tensor(obs['vector'], dtype=torch.float32, device=self.device)
-        }
 
     def _format_single_obs(self, obs: dict):
         return {
@@ -146,12 +149,6 @@ class CNNCritic(CNNBase):
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
         self.device = torch.device(device)
         self.to(self.device)
-
-    def _format_obs(self, obs: dict):
-        return {
-            'grid': torch.tensor(obs['grid'], dtype=torch.float32, device=self.device),
-            'vector': torch.tensor(obs['vector'], dtype=torch.float32, device=self.device)
-        }
 
     def forward(self, states):
         if not isinstance(states['grid'], torch.Tensor):
