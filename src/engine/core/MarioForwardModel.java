@@ -783,7 +783,7 @@ public class MarioForwardModel {
 
         ArrayList<Point> collection = new ArrayList<>();
         for (MarioSprite s:  aliveEnemies
-             ) {
+        ) {
             collection.add(new Point(s.getMapX(), s.getMapY()));
         }
 
@@ -916,5 +916,17 @@ public class MarioForwardModel {
 
     public int getIdleCounter(){
         return world.getIdleCounter();
+    }
+
+    public int[] getCoinsObjective(){
+        return world.getCoinsObjective();
+    }
+
+    public int[] getBlocksObjective(){
+        return world.getBlocksObjective();
+    }
+
+    public int[] getEnemiesObjective(){
+        return world.getEnemiesObjective();
     }
 }

@@ -149,6 +149,10 @@ public class State {
 
         float idleCounterPayload = model.getIdleCounter()/100f;
 
+        int[] coinsObjective = model.getCoinsObjective();
+        int[] blocksObjective = model.getBlocksObjective();
+        int[] enemiesObjective = model.getEnemiesObjective();
+
         // Write all features to the output stream
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         outputStream.write(observationGridPayload); // 256
@@ -156,15 +160,17 @@ public class State {
         outputStream.write((byte) (model.isMarioOnGround() ? 1 : 0));
         outputStream.write((byte) (model.getMarioCanJumpHigher() ? 1 : 0));
         outputStream.write((byte) (model.getMarioFacing() == 1 ? 1 : 0)); // 6
-        outputStream.write(float2ByteArray(normalizedVelX));
-        outputStream.write(float2ByteArray(normalizedVelY));
-        outputStream.write(float2ByteArray(subTileX));
+        outputStream.write(float2ByteArray(normalizedVelX)); // 10
+        outputStream.write(float2ByteArray(normalizedVelY)); // 14
+        outputStream.write(float2ByteArray(subTileX)); // 18
         outputStream.write(float2ByteArray(subTileY)); // 22
-        outputStream.write(float2ByteArray(normalizedTimer)); // 53
-        outputStream.write(float2ByteArray(completionPercentage)); //72
-        outputStream.write(float2ByteArray(idleCounterPayload)); //76
+        outputStream.write(float2ByteArray(normalizedTimer)); // 26
+        outputStream.write(float2ByteArray(completionPercentage)); // 30
+        outputStream.write(float2ByteArray(idleCounterPayload)); // 34
 
-
+        outputStream.write(intArrayToBytes(coinsObjective)); // 84
+        outputStream.write(intArrayToBytes(blocksObjective)); // 134
+        outputStream.write(intArrayToBytes(enemiesObjective)); // 184
         return outputStream.toByteArray();
     }
 }

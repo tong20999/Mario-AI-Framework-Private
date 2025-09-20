@@ -9,8 +9,8 @@ import engine.effects.*;
 import engine.graphics.MarioBackground;
 import engine.helper.*;
 import engine.sprites.*;
+import reinforment.Objective;
 import reinforment.Point;
-import reinforment.RewardSystem;
 
 public class MarioWorld {
     public GameStatus gameStatus;
@@ -44,6 +44,10 @@ public class MarioWorld {
     private ArrayList<MarioSprite> aliveEnemy = new ArrayList<>();
     private ArrayList<Point> unbumpBlocks = new ArrayList<>();
     private ArrayList<Point> unCollectCoin = new ArrayList<>();
+
+    private Objective coinsObjective = new Objective();
+    private Objective blocksObjective = new Objective();
+    private Objective enemiesObjective = new Objective();
 
     private float currentProgress = 0f;
     private int idleCounter;
@@ -107,6 +111,9 @@ public class MarioWorld {
         aliveEnemy.addAll(this.level.getEnemies());
         unbumpBlocks.addAll(this.level.getBumpableBlocks());
         unCollectCoin.addAll(this.level.getCoins());
+        coinsObjective.addAll(this.level.getCoins());
+        blocksObjective.addAll(this.level.getBumpableBlocks());
+        enemiesObjective.addAllEnemy(this.level.getEnemies());
     }
 
     public ArrayList<MarioSprite> getEnemies() {
@@ -172,6 +179,9 @@ public class MarioWorld {
             world.unCollectCoin.add(new Point(c.getX(), c.getY()));
         }
 
+        world.coinsObjective = this.coinsObjective.clone();
+        world.blocksObjective = this.blocksObjective.clone();
+        world.enemiesObjective = this.enemiesObjective.clone();
         return world;
     }
 
@@ -215,6 +225,7 @@ public class MarioWorld {
         this.addEvent(killEvent, sprite.type.getValue(), sprite.initialCode);
         aliveEnemy.removeIf(a -> Objects.equals(sprite.initialCode,
                 MessageFormat.format("{0}_{1}_{2}", a.x, a.y, a.type.getValue())));
+        enemiesObjective.mark(sprite.initialCode);
     }
 
     public void removeSprite(MarioSprite sprite) {
@@ -255,9 +266,9 @@ public class MarioWorld {
         int centerYInMap = (int) centerY / 16;
 
         for (int y = centerYInMap - MarioGame.tileHeight / 2,
-                obsY = 0; y < centerYInMap + MarioGame.tileHeight / 2; y++, obsY++) {
+             obsY = 0; y < centerYInMap + MarioGame.tileHeight / 2; y++, obsY++) {
             for (int x = centerXInMap - MarioGame.tileWidth / 2,
-                    obsX = 0; x < centerXInMap + MarioGame.tileWidth / 2; x++, obsX++) {
+                 obsX = 0; x < centerXInMap + MarioGame.tileWidth / 2; x++, obsX++) {
                 int currentX = x;
                 if (currentX < 0) {
                     currentX = 0;
@@ -311,9 +322,9 @@ public class MarioWorld {
         int centerYInMap = (int) centerY / 16;
 
         for (int y = centerYInMap - MarioGame.tileHeight / 2,
-                obsY = 0; y < centerYInMap + MarioGame.tileHeight / 2; y++, obsY++) {
+             obsY = 0; y < centerYInMap + MarioGame.tileHeight / 2; y++, obsY++) {
             for (int x = centerXInMap - MarioGame.tileWidth / 2,
-                    obsX = 0; x < centerXInMap + MarioGame.tileWidth / 2; x++, obsX++) {
+                 obsX = 0; x < centerXInMap + MarioGame.tileWidth / 2; x++, obsX++) {
                 int currentX = x;
                 if (currentX < 0) {
                     currentX = 0;
@@ -534,9 +545,9 @@ public class MarioWorld {
     public void bump(int xTile, int yTile, boolean canBreakBricks) {
         int block = this.level.getBlock(xTile, yTile);
         ArrayList<TileFeature> features = TileFeature.getTileType(block);
-
         if (features.contains(TileFeature.BUMPABLE)) {
             unbumpBlocks.removeIf(b -> b.getX() == xTile && b.getY() == yTile);
+            blocksObjective.mark(new Point(xTile, yTile));
             bumpInto(xTile, yTile - 1);
             this.addEvent(EventType.BUMP, MarioForwardModel.OBS_QUESTION_BLOCK);
             level.setBlock(xTile, yTile, 14);
@@ -667,5 +678,24 @@ public class MarioWorld {
 
     public int getIdleCounter() {
         return idleCounter;
+    }
+
+    public void collectCoin(int block, int xTile, int yTile) {
+        this.addEvent(EventType.COLLECT, block);
+        this.collectCoin++;
+        this.getUnCollectCoin().removeIf(c -> c.getX() == xTile && c.getY() == yTile);
+        this.coinsObjective.mark(new Point(xTile, yTile));
+    }
+
+    public int[] getCoinsObjective() {
+        return coinsObjective.getObjectives();
+    }
+
+    public int[] getBlocksObjective() {
+        return blocksObjective.getObjectives();
+    }
+
+    public int[] getEnemiesObjective() {
+        return enemiesObjective.getObjectives();
     }
 }
