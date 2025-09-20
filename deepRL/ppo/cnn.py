@@ -3,61 +3,94 @@ import torch.nn as nn
 import numpy as np
 from gymnasium.spaces import Dict
 
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from gymnasium.spaces import Dict
+
+class ResidualBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, stride=1):
+        super(ResidualBlock, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(out_channels)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(out_channels)
+
+        self.shortcut = nn.Sequential()
+        if stride != 1 or in_channels != out_channels:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(out_channels)
+            )
+
+    def forward(self, x):
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.bn2(self.conv2(out))
+        out += self.shortcut(x) # The "residual" connection!
+        out = F.relu(out)
+        return out
+
 class CNNBase(nn.Module):
-    def __init__(self, observation_space: Dict, num_stack: int, num_object_types: int = 21,
-                 hidden_dims=(256, 128)): # Reduced hidden dimensions
+    def __init__(self, observation_space: Dict, num_stack: int, num_object_types: int = 21):
         super(CNNBase, self).__init__()
 
+        # --- 1. Upgraded CNN Path with Residual Blocks ---
         cnn_input_channels = num_object_types * num_stack
-
-        # --- Path 1: A simpler CNN for Grid Processing ---
-        self.cnn = nn.Sequential(
-            # Two simpler Conv layers are often enough for semantic grids
-            nn.Conv2d(cnn_input_channels, out_channels=32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
+        self.cnn_pre_layer = nn.Conv2d(cnn_input_channels, 64, kernel_size=3, stride=1, padding=1)
+        
+        self.res_stack = nn.Sequential(
+            ResidualBlock(64, 64),
+            ResidualBlock(64, 128, stride=2), # Downsamples from 16x16 to 8x8
+            ResidualBlock(128, 128),
+            ResidualBlock(128, 256, stride=2), # Downsamples from 8x8 to 4x4
+            ResidualBlock(256, 256),
+            nn.AdaptiveAvgPool2d((1, 1)), # Global average pooling
             nn.Flatten()
         )
+        grid_feature_dim = 256
 
-        # Calculate the flattened feature size from the CNN
-        with torch.no_grad():
-            dummy_input = torch.zeros(1, cnn_input_channels, 16, 16)
-            cnn_feature_size = self.cnn(dummy_input).shape[1]
+        # --- 2. Refined Vector Path with Separate Streams ---
+        # NOTE: You'd need to calculate these exact sizes from marioGame.py
+        mario_phys_dim = 13 # 6 bools + 7 floats
+        objective_dim = 150 # 3x 50-byte objectives
+        
+        self.mario_mlp = nn.Sequential(nn.Linear(mario_phys_dim, 64), nn.ReLU())
+        self.objective_mlp = nn.Sequential(nn.Linear(objective_dim, 128), nn.ReLU())
+        vector_feature_dim = 64 + 128
 
-        # --- Path 2: A simpler MLP for Vector Processing ---
-        vector_shape = observation_space['vector'].shape
-        self.vector_mlp = nn.Sequential(
-            nn.Linear(vector_shape[0], 128), # Reduced size
-            nn.ReLU(),
-        )
-
-        # --- Early Fusion Head ---
-        # Combine the features from CNN and vector MLP much earlier
-        combined_input_size = cnn_feature_size + 128
-
+        # --- 3. Fusion Head ---
+        combined_dim = grid_feature_dim + vector_feature_dim
         self.final_mlp = nn.Sequential(
-            nn.Linear(combined_input_size, hidden_dims[0]),
+            nn.Linear(combined_dim, 512),
             nn.ReLU(),
-            # No need for the second hidden layer if the first is small enough
-            # nn.Linear(hidden_dims[0], hidden_dims[1]),
-            # nn.ReLU(),
+            nn.Linear(512, 256),
+            nn.ReLU()
         )
-
-        self.feature_dim = hidden_dims[0] # The final feature dimension
+        self.feature_dim = 256
 
     def forward(self, states: dict):
+        # --- CNN Path ---
         grid_obs = states['grid']
         batch_size, num_stack, num_planes, height, width = grid_obs.shape
         cnn_input = grid_obs.view(batch_size, num_stack * num_planes, height, width)
-        grid_features = self.cnn(cnn_input)
+        
+        x = self.cnn_pre_layer(cnn_input)
+        grid_features = self.res_stack(x)
 
-        vector_features = self.vector_mlp(states['vector'])
+        # --- Vector Path ---
+        vector_obs = states['vector']
+        # Split the vector observation into its semantic parts
+        # IMPORTANT: Slicing indices are illustrative and must be set correctly!
+        mario_phys_vec = vector_obs[:, :13]
+        objective_vec = vector_obs[:, 13:]
 
-        combined_features = torch.cat([grid_features, vector_features], dim=1)
-
+        mario_features = self.mario_mlp(mario_phys_vec)
+        objective_features = self.objective_mlp(objective_vec)
+        
+        # --- Fusion ---
+        combined_features = torch.cat([grid_features, mario_features, objective_features], dim=1)
+        
         final_output = self.final_mlp(combined_features)
-
         return final_output
 
 class CNNActor(CNNBase):
@@ -74,8 +107,8 @@ class CNNActor(CNNBase):
 
     def _format_obs(self, obs: dict):
         return {
-            'grid': torch.tensor(obs['grid'], dtype=torch.float32, device=self.device),
-            'vector': torch.tensor(obs['vector'], dtype=torch.float32, device=self.device)
+            'grid': torch.tensor(np.array(obs['grid']), dtype=torch.float32, device=self.device),
+            'vector': torch.tensor(np.array(obs['vector']), dtype=torch.float32, device=self.device)
         }
 
     def _format_single_obs(self, obs: dict):
@@ -142,8 +175,8 @@ class CNNCritic(CNNBase):
 
     def _format_obs(self, obs: dict):
         return {
-            'grid': torch.tensor(obs['grid'], dtype=torch.float32, device=self.device),
-            'vector': torch.tensor(obs['vector'], dtype=torch.float32, device=self.device)
+            'grid': torch.tensor(np.array(obs['grid']), dtype=torch.float32, device=self.device),
+            'vector': torch.tensor(np.array(obs['vector']), dtype=torch.float32, device=self.device)
         }
 
     def forward(self, states):
