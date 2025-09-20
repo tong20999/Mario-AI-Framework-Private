@@ -125,6 +125,7 @@ public class Mario extends MarioSprite {
                 collide = true;
             if (isBlocking(x + xa - width, y + ya, xa, ya))
                 collide = true;
+
         }
         if (collide) {
             if (xa < 0) {
@@ -164,10 +165,8 @@ public class Mario extends MarioSprite {
         int block = world.level.getBlock(xTile, yTile);
 
         if (TileFeature.getTileType(block).contains(TileFeature.PICKABLE)) {
-            this.world.addEvent(EventType.COLLECT, block);
-            this.world.collectCoin++;
+            this.world.collectCoin(block, xTile, yTile);
             this.collectCoin();
-            this.world.getUnCollectCoin().removeIf(c -> c.getX() == xTile && c.getY() == yTile);
             world.level.setBlock(xTile, yTile, 0);
         }
         if (blocking && ya < 0) {
@@ -287,14 +286,14 @@ public class Mario extends MarioSprite {
                 jumpTime++;
             } else if (onGround && mayJump) {
                 xJumpSpeed = 0;
-                    yJumpSpeed = -1.9f;
-                    jumpTime = 7;
-                    ya = jumpTime * yJumpSpeed;
-                    onGround = false;
-                    if (!(isBlocking(x, y - 4 - height, 0, -4) || isBlocking(x - width, y - 4 - height, 0, -4)
-                            || isBlocking(x + width, y - 4 - height, 0, -4))) {
-                        this.xJumpStart = this.x;
-                        this.world.addEvent(EventType.JUMP, 0);
+                yJumpSpeed = -1.9f;
+                jumpTime = 7;
+                ya = jumpTime * yJumpSpeed;
+                onGround = false;
+                if (!(isBlocking(x, y - 4 - height, 0, -4) || isBlocking(x - width, y - 4 - height, 0, -4)
+                        || isBlocking(x + width, y - 4 - height, 0, -4))) {
+                    this.xJumpStart = this.x;
+                    this.world.addEvent(EventType.JUMP, 0);
                 }
             } else if (jumpTime > 0) {
                 xa += xJumpSpeed;
