@@ -10,25 +10,25 @@ import java.util.ArrayList;
 
 public class RewardSystem {
     // Per-objective shaping (dense)
-    private static final float KILL_REWARD = 4f;
-    private static final float BUMP_REWARD = 2f;
-    private static final float COIN_REWARD = 2f;
-    private static final float POWER_UP_REWARD = 4f;
+    private static final float KILL_REWARD = 5f;
+    private static final float BUMP_REWARD = 5f;
+    private static final float COIN_REWARD = 5f;
+    private static final float POWER_UP_REWARD = 5f;
 
     // Step & behavior costs
-    public static final float STEP_COST = -0.01f;
+    public static final float STEP_COST = -0.05f;
     private static final float IDLE_PENALTY = 0.0f;
-    private static final float HIT_WALL_PENALTY = -0.5f;
+    private static final float HIT_WALL_PENALTY = -0.0f;
     private static final float PROGRESS_REWARD = 0.0f;
 
     // Win structure (small base + modest perfect bonus)
-    private static final float BASE_WIN_REWARD = 5f;
-    private static final float PERFECT_BONUS = 150f;
+    private static final float BASE_WIN_REWARD = 10f;
+    private static final float PERFECT_BONUS = 50f;
+
 
     // Dynamic failure penalty parameters
     private static final float FAILURE_BASE = -60f;          // Worst-case (0% completion)
-    private static final float FAILURE_PROGRESS_DELTA = 20f;
-    private static final float FAILURE_80_PERCENT = -20f;
+    private static final float FAILURE_PROGRESS_DELTA = 50f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = STEP_COST;
@@ -88,7 +88,7 @@ public class RewardSystem {
     private static float calculateWinReward(MarioWorld world) {
         float ratio = completionRatio(world);
         if (ratio >= 1f) {
-            return BASE_WIN_REWARD + PERFECT_BONUS;
+            return PERFECT_BONUS;
         }
 
         return BASE_WIN_REWARD * ratio;
@@ -108,9 +108,6 @@ public class RewardSystem {
 
     private static float dynamicFailurePenalty(MarioWorld world) {
         float ratio = completionRatio(world);
-        if(ratio > 0.8f){
-            return FAILURE_80_PERCENT;
-        }
         return FAILURE_BASE + (FAILURE_PROGRESS_DELTA * ratio); // [-60, -40]
     }
 
