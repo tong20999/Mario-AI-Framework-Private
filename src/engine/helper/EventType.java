@@ -17,6 +17,7 @@ public enum EventType {
     FALL_PIT(14),
     FLAG(15),
     BUMP_KILL(16),
+    EXPLORER(17),
     BREAK(18),
     BONK(19),
     TIME_OUT(20),

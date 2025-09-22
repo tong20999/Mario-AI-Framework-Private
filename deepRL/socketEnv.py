@@ -7,7 +7,7 @@ from logger import setup_logging
 
 logger = logging.getLogger('Agent')
 
-payload_size = 512
+payload_size = 1024
 
 class SocketEnv(gym.Env):
     #def __init__(self, host='192.168.1.47', port=4455):

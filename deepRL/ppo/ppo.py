@@ -297,7 +297,7 @@ class PPO():
         end_factor=0.2
         logger.info(f'scheduler lr total iteration {total_iterations} start factor {start_factor} end factor {end_factor}')
 
-        self.policy_model = self.policy_model_fn(self.nS, nA)
+        self.policy_model = self.policy_model_fn(nA)
         self.policy_optimizer = self.policy_optimizer_fn(self.policy_model, self.policy_optimizer_lr)
 
         
@@ -308,7 +308,7 @@ class PPO():
             total_iters=total_iterations
         )   
 
-        self.value_model = self.value_model_fn(self.nS)
+        self.value_model = self.value_model_fn()
         self.value_optimizer = self.value_optimizer_fn(self.value_model, self.value_optimizer_lr)
         self.value_scheduler = LinearLR(
             self.value_optimizer,

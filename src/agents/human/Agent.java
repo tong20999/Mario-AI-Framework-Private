@@ -6,6 +6,7 @@ import java.awt.event.KeyEvent;
 import engine.core.MarioAgent;
 import engine.core.MarioForwardModel;
 import engine.core.MarioTimer;
+import engine.core.MarioWorld;
 import engine.helper.MarioActions;
 import reinforment.State;
 
@@ -71,10 +72,29 @@ public class Agent extends KeyAdapter implements MarioAgent {
             case KeyEvent.VK_M:
                 if(isPressed){
                     var sceneObservation = State.toByte(model);
+                    var height = model.a();
+                    var a = calculateReward(height);
+                    System.out.println(a);
                 }
 
                 break;
         }
+    }
+
+    public static double calculateReward(double height) {
+        if (height >= 13) {
+            return 0.1; // Base reward for heights 13, 14, 15
+        }
+
+        if (height <= 5) {
+            return 0.5; // Max reward for heights 0, 1, 2, 3, 4
+        }
+
+        double rangeHeight = 12.0 - 4.0; // The linear range is from height 4 to 12
+        double rangeReward = 0.5 - 0.1;
+        double adjustedHeight = 12.0 - height;
+        double reward = 0.1 + (adjustedHeight / rangeHeight) * rangeReward;
+        return reward;
     }
 
 }

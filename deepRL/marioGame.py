@@ -6,7 +6,7 @@ import numpy as np
 # Assuming socketEnv.py is in the same directory.
 from socketEnv import SocketEnv
 
-payload_size = 512
+payload_size = 1024
 
 all_possible_input:list[list[bool]] = [
     # [LEFT, RIGHT , DOWN, SPEED, JUMP]
@@ -41,7 +41,8 @@ class MarioGame(SocketEnv):
         self.observation_space = gym.spaces.Dict({
             'grid': gym.spaces.Box(
                 low=0, high=1,
-                shape=(21, self.grid_h, self.grid_w),  # 20 binary channels
+                # The shape is updated to 22, adding one plane for the visit heat map
+                shape=(22, self.grid_h, self.grid_w),
                 dtype=np.uint8
             ),
             'vector': gym.spaces.Box(
@@ -53,21 +54,31 @@ class MarioGame(SocketEnv):
 
     def _parse_observation(self, payload: bytes) -> dict:
         grid_size = self.grid_h * self.grid_w
-        grid_flat = np.frombuffer(payload[:grid_size], dtype=np.uint8, count=grid_size)
-        grid = grid_flat.reshape(self.grid_h, self.grid_w)  # shape (16,16)
+        
+        # Grid 1: Obstacles, enemies, etc.
+        grid1_flat = np.frombuffer(payload[:grid_size], dtype=np.uint8, count=grid_size)
+        grid1 = grid1_flat.reshape(self.grid_h, self.grid_w)  # shape (16,16)
 
-        # --- One-hot encode into 20 binary planes ---
+        # Grid 2: Visit heat map. This is a separate grid.
+        grid2_flat = np.frombuffer(payload[grid_size : grid_size * 2], dtype=np.uint8, count=grid_size)
+        grid2 = grid2_flat.reshape(self.grid_h, self.grid_w)
+
+        # --- One-hot encode the first grid into 21 binary planes ---
         one_hot_grid = np.zeros((21, self.grid_h, self.grid_w), dtype=np.uint8)
         for obj_id in range(21):
-            one_hot_grid[obj_id] = (grid == obj_id).astype(np.uint8)
+            one_hot_grid[obj_id] = (grid1 == obj_id).astype(np.uint8)
 
-        vector_bytes = payload[grid_size : grid_size + self.vector_transfer_byte_len]
+        # Add the visit heat map as a new, 22nd plane to the one-hot grid.
+        full_grid = np.concatenate((one_hot_grid, np.expand_dims(grid2, axis=0)), axis=0)
+
+        # Vector data starts after both grids.
+        vector_bytes = payload[grid_size * 2 : grid_size * 2 + self.vector_transfer_byte_len]
         format_string = '>6B7f50b50b50b'
         unpacked_values = struct.unpack(format_string, vector_bytes)
         vector_part = np.array(unpacked_values, dtype=np.float32)
 
         return {
-            'grid': one_hot_grid,
+            'grid': full_grid,
             'vector': vector_part
         }
 
@@ -88,7 +99,7 @@ class MarioGame(SocketEnv):
         return bytes(select_action)
 
     def _get_obs_shape(self) -> int:
-        return (self.grid_h * self.grid_w) + self.vector_transfer_byte_len
+        return (self.grid_h * self.grid_w * 2) + self.vector_transfer_byte_len
 
     def _receive_reset(self):
         data = self._receive_fixed(payload_size)

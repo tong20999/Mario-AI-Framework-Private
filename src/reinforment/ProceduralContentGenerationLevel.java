@@ -112,7 +112,7 @@ public class ProceduralContentGenerationLevel {
         pcg.createEmptyLevel(width);
 
         try {
-            pcg.addRamp(9, 2, pcgLevelDto);
+            pcg.addRamp(12, 2, pcgLevelDto);
             pcg.addPit(9, 2, pcgLevelDto);
             pcg.addPipe(9, 2, pcgLevelDto);
             pcg.addEnemy(8, 2, pcgLevelDto);
@@ -470,22 +470,22 @@ public class ProceduralContentGenerationLevel {
 
     private void addRamp(int offsetFromStart, int offsetFromFlag, PCGLevelDto pcgLevelDto) {
         for (int k = 0; k < pcgLevelDto.getRamps(); k++) {
-            int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
-            int addIndex = rand.nextInt(offsetFromStart, maxIndex);
+            int maxIndex = getFlagIndex() - offsetFromFlag - 4;
+            int addIndex = rand.nextInt(offsetFromStart, maxIndex + 1);
             while (true) {
                 if (isValidToAdd(addIndex)) {
                     break;
                 }
                 addIndex = rand.nextInt(offsetFromStart, maxIndex);
             }
-            boolean secondPyramid = rand.nextInt(2) == 0;
-            // boolean secondPyramid = false;
-            boolean randomPit = rand.nextInt(2) == 0;
-            // boolean randomPit = false;
+            //boolean secondPyramid = rand.nextInt(2) == 0;
+            boolean secondPyramid = false;
+            //boolean randomPit = rand.nextInt(2) == 0;
+            boolean randomPit = false;
             int maxHeight = rand.nextInt(1, 5);
             // boolean randomTunnel = rand.nextInt(2) == 0;
+            // maxHeight = 4;
             boolean randomTunnel = false;
-            // maxHeight =4;
             if (maxHeight == 1) {
                 randomTunnel = false;
             }

@@ -29,6 +29,11 @@ public class MarioLevel {
     private ArrayList<Enemy> enemies = new ArrayList<>();
     private ArrayList<Point> blocks = new ArrayList<>();
     private ArrayList<Point> coins = new ArrayList<>();
+    private int[][] visitHeat;
+
+    public int getVisitHeat(int tileX, int tileY) {
+        return visitHeat[tileX][tileY];
+    }
 
     public MarioLevel(String level, boolean visuals) {
         if (level.trim().length() == 0) {
@@ -45,6 +50,7 @@ public class MarioLevel {
         this.height = this.tileHeight * 16;
 
         this.levelTiles = new int[lines[0].length()][lines.length];
+        this.visitHeat = new int[lines[0].length()][lines.length];
         this.spriteTemplates = new SpriteType[lines[0].length()][lines.length];
         this.lastSpawnTime = new int[lines[0].length()][lines.length];
         for (int y = 0; y < lines.length; y++) {
@@ -52,6 +58,7 @@ public class MarioLevel {
                 this.levelTiles[x][y] = 0;
                 this.spriteTemplates[x][y] = SpriteType.NONE;
                 this.lastSpawnTime[x][y] = -40;
+                this.visitHeat[x][y] = 0;
             }
         }
 
@@ -107,10 +114,12 @@ public class MarioLevel {
                     case 'X':
                         //floor
                         this.levelTiles[x][y] = 1;
+                        this.visitHeat[x][y] = 1;
                         break;
                     case '#':
                         //pyramidBlock
                         this.levelTiles[x][y] = 2;
+                        this.visitHeat[x][y] = 1;
                         break;
                     case '%':
                         //jump through block
@@ -122,6 +131,7 @@ public class MarioLevel {
                             tempIndex += 1;
                         }
                         this.levelTiles[x][y] = 43 + tempIndex;
+                        this.visitHeat[x][y] = 1;
                         break;
                     case '|':
                         //background for jump through block
@@ -137,10 +147,12 @@ public class MarioLevel {
                             tempIndex += 1;
                         }
                         this.levelTiles[x][y] = 3 + tempIndex;
+                        this.visitHeat[x][y] = 1;
                         break;
                     case 'B':
                         //bullet bill head
                         this.levelTiles[x][y] = 3;
+                        this.visitHeat[x][y] = 1;
                         break;
                     case 'b':
                         //bullet bill neck and body
@@ -149,30 +161,36 @@ public class MarioLevel {
                             tempIndex += 1;
                         }
                         this.levelTiles[x][y] = 4 + tempIndex;
+                        this.visitHeat[x][y] = 1;
                         break;
                     case '?':
                     case '@':
                         //mushroom question block
                         this.levelTiles[x][y] = 8;
+                        this.visitHeat[x][y] = 1;
                         blocks.add(new Point(x,y));
                         break;
                     case 'Q':
                     case '!':
                         //coin question block
                         this.levelTiles[x][y] = 11;
+                        this.visitHeat[x][y] = 1;
                         blocks.add(new Point(x,y));
                         break;
                     case '1':
                         //invisible 1 up block
                         this.levelTiles[x][y] = 48;
+                        this.visitHeat[x][y] = 1;
                         break;
                     case '2':
                         //invisible coin block
                         this.levelTiles[x][y] = 49;
+                        this.visitHeat[x][y] = 1;
                         break;
                     case 'D':
                         //used
                         this.levelTiles[x][y] = 14;
+                        this.visitHeat[x][y] = 1;
                         break;
                     case 'S':
                         //normal block
@@ -222,6 +240,7 @@ public class MarioLevel {
                         } else {
                             this.levelTiles[x][y] = 18 + tempIndex;
                         }
+                        this.visitHeat[x][y] = 1;
                         break;
                     case 'T':
                         //flower pipe
@@ -246,22 +265,27 @@ public class MarioLevel {
                             }
                             this.levelTiles[x][y] = 18 + tempIndex;
                         }
+                        this.visitHeat[x][y] = 1;
                         break;
                     case '<':
                         //pipe top left
                         this.levelTiles[x][y] = 18;
+                        this.visitHeat[x][y] = 1;
                         break;
                     case '>':
                         //pipe top right
                         this.levelTiles[x][y] = 19;
+                        this.visitHeat[x][y] = 1;
                         break;
                     case '[':
                         //pipe body left
                         this.levelTiles[x][y] = 20;
+                        this.visitHeat[x][y] = 1;
                         break;
                     case ']':
                         //pipe body right
                         this.levelTiles[x][y] = 21;
+                        this.visitHeat[x][y] = 1;
                         break;
                 }
             }
@@ -298,11 +322,13 @@ public class MarioLevel {
         level.exitTileX = this.exitTileX;
         level.exitTileY = this.exitTileY;
         level.levelTiles = new int[this.levelTiles.length][this.levelTiles[0].length];
+        level.visitHeat = new int[this.levelTiles.length][this.levelTiles[0].length];
         level.lastSpawnTime = new int[this.levelTiles.length][this.levelTiles[0].length];
         for (int x = 0; x < level.levelTiles.length; x++) {
             for (int y = 0; y < level.levelTiles[x].length; y++) {
                 level.levelTiles[x][y] = this.levelTiles[x][y];
                 level.lastSpawnTime[x][y] = this.lastSpawnTime[x][y];
+                level.visitHeat[x][y] = this.visitHeat[x][y];
             }
         }
         level.spriteTemplates = this.spriteTemplates;
@@ -416,5 +442,12 @@ public class MarioLevel {
 
     public List<Point> getBumpableBlocks() {
         return this.blocks;
+    }
+
+    public void updateVisitHeat(int tileX, int tileY) {
+        if( this.visitHeat[tileX][tileY] == 1){
+            return;
+        }
+        this.visitHeat[tileX][tileY] = 1;
     }
 }

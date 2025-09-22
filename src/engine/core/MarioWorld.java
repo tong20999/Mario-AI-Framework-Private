@@ -373,7 +373,7 @@ public class MarioWorld {
     }
 
     public void update(boolean[] actions) {
-        int progressBefore = (int)(this.mario.x/16);
+        //int progressBefore = (int)(this.mario.x/16);
         this.lastFrameEvents.clear();
         if (this.gameStatus != GameStatus.RUNNING) {
             return;
@@ -515,22 +515,34 @@ public class MarioWorld {
         addedSprites.clear();
         removedSprites.clear();
 
-        float progressAfter =  (int)(this.mario.x/16);;
-        if(progressAfter > progressBefore && progressAfter > this.currentProgress) {
-            this.currentProgress = progressAfter;
-            this.addEvent(EventType.PROGRESS, 0);
+//        float progressAfter =  (int)(this.mario.x/16);
+//        if(progressAfter > progressBefore && progressAfter > this.currentProgress) {
+//            this.currentProgress = progressAfter;
+//            this.addEvent(EventType.PROGRESS, 0);
+//        }
+
+//        if(progressAfter == progressBefore){
+//            idleCounter++;
+//        } else {
+//            idleCounter = 0;
+//        }
+//
+//        if(idleCounter > 100){
+//            idleCounter = 0;
+//            this.addEvent(EventType.IDLE,0);
+//        }
+
+        var marioTileX = this.mario.getMapX();
+        var marioTileY = this.mario.getMapY();
+        if (marioTileY > 15) {
+            marioTileY = 15;
         }
 
-        if(progressAfter == progressBefore){
-            idleCounter++;
-        } else {
-            idleCounter = 0;
+        int countBefore = level.getVisitHeat(marioTileX, marioTileY);
+        if (countBefore == 0) {
+            this.addEvent(EventType.EXPLORER, 0);
         }
-
-        if(idleCounter > 100){
-            idleCounter = 0;
-            this.addEvent(EventType.IDLE,0);
-        }
+        this.level.updateVisitHeat(marioTileX, marioTileY);
 
         // punishing forward model
         if (this.killEvents != null) {
@@ -697,5 +709,34 @@ public class MarioWorld {
 
     public int[] getEnemiesObjective() {
         return enemiesObjective.getObjectives();
+    }
+
+    public int[][] getVisitHeat(float centerX, float centerY) {
+        int[][] ret = new int[MarioGame.tileWidth][MarioGame.tileHeight];
+        int centerXInMap = (int) centerX / 16;
+        int centerYInMap = (int) centerY / 16;
+
+        for (int y = centerYInMap - MarioGame.tileHeight / 2,
+             obsY = 0; y < centerYInMap + MarioGame.tileHeight / 2; y++, obsY++) {
+            for (int x = centerXInMap - MarioGame.tileWidth / 2,
+                 obsX = 0; x < centerXInMap + MarioGame.tileWidth / 2; x++, obsX++) {
+                int currentX = x;
+                if (currentX < 0) {
+                    currentX = 0;
+                }
+                if (currentX > level.tileWidth - 1) {
+                    currentX = level.tileWidth - 1;
+                }
+                int currentY = y;
+                if (currentY < 0) {
+                    currentY = 0;
+                }
+                if (currentY > level.tileHeight - 1) {
+                    currentY = level.tileHeight - 1;
+                }
+                ret[obsX][obsY] = this.level.getVisitHeat(currentX, currentY);
+            }
+        }
+        return ret;
     }
 }

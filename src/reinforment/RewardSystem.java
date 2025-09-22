@@ -10,25 +10,22 @@ import java.util.ArrayList;
 
 public class RewardSystem {
     // Per-objective shaping (dense)
-    private static final float KILL_REWARD = 4f;
-    private static final float BUMP_REWARD = 2f;
-    private static final float COIN_REWARD = 2f;
-    private static final float POWER_UP_REWARD = 4f;
+    private static final float KILL_REWARD = 10f;
+    private static final float BUMP_REWARD = 8f;
+    private static final float COIN_REWARD = 8f;
+    private static final float POWER_UP_REWARD = 20f;
 
     // Step & behavior costs
-    public static final float STEP_COST = -0.01f;
-    private static final float IDLE_PENALTY = -5.0f;
-    private static final float HIT_WALL_PENALTY = -0.5f;
-    private static final float PROGRESS_REWARD = 0.1f;
+    public static final float STEP_COST = -0.00f;
+    private static final float IDLE_PENALTY = -0.0f;
+    private static final float EXPLORER_REWARD = 0.00f;
+    private static final float HIT_WALL_PENALTY = -0.00f;
 
     // Win structure (small base + modest perfect bonus)
-    private static final float BASE_WIN_REWARD = 5f;
-    private static final float PERFECT_BONUS = 150f;
+    private static final float WIN_REWARD = 5f;
 
     // Dynamic failure penalty parameters
-    private static final float FAILURE_BASE = -60f;          // Worst-case (0% completion)
-    private static final float FAILURE_PROGRESS_DELTA = 20f;
-    private static final float FAILURE_80_PERCENT = -20f;
+    private static final float FAILURE_PENALTY = -25f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = STEP_COST;
@@ -57,29 +54,29 @@ public class RewardSystem {
                 reward += COIN_REWARD;
             }
 
-            if (e.getEventType() == EventType.HIT_WALL.getValue()) {
-                reward += HIT_WALL_PENALTY;
-            }
-
             if (e.getEventType() == EventType.WIN.getValue()) {
                 reward += calculateWinReward(world);
             }
 
             if (e.getEventType() == EventType.LOSE.getValue()) {
-                reward += dynamicFailurePenalty(world);
+                reward += FAILURE_PENALTY;
             }
 
             if (e.getEventType() == EventType.TIME_OUT.getValue()) {
-                reward += dynamicFailurePenalty(world);
+                reward += FAILURE_PENALTY;
             }
 
-            if (e.getEventType() == EventType.PROGRESS.getValue()) {
-                reward += PROGRESS_REWARD;
+            if (e.getEventType() == EventType.HIT_WALL.getValue()) {
+                reward += HIT_WALL_PENALTY;
             }
 
-            if(e.getEventType() == EventType.IDLE.getValue()){
-                reward += IDLE_PENALTY;
-            }
+//            if(e.getEventType() == EventType.IDLE.getValue()){
+//                reward += IDLE_PENALTY;
+//            }
+
+//            if(e.getEventType() == EventType.EXPLORER.getValue()){
+//                reward += dynamicExplorerReward(world);
+//            }
         }
 
         return reward;
@@ -88,10 +85,10 @@ public class RewardSystem {
     private static float calculateWinReward(MarioWorld world) {
         float ratio = completionRatio(world);
         if (ratio >= 1f) {
-            return BASE_WIN_REWARD + PERFECT_BONUS;
+            return WIN_REWARD;
         }
 
-        return BASE_WIN_REWARD * ratio;
+        return WIN_REWARD * ratio;
     }
 
     private static float completionRatio(MarioWorld world) {
@@ -106,12 +103,25 @@ public class RewardSystem {
         return completed / total;
     }
 
-    private static float dynamicFailurePenalty(MarioWorld world) {
-        float ratio = completionRatio(world);
-        if(ratio > 0.8f){
-            return FAILURE_80_PERCENT;
+//    private static float dynamicFailurePenalty(MarioWorld world) {
+//        float ratio = completionRatio(world);
+//        return FAILURE_BASE + (FAILURE_PROGRESS_DELTA * ratio); // [-60, -40]
+//    }
+
+    private static float dynamicExplorerReward(MarioWorld world) {
+        var height = world.mario.y/16f;
+        if (height >= 13) {
+            return EXPLORER_REWARD;
         }
-        return FAILURE_BASE + (FAILURE_PROGRESS_DELTA * ratio); // [-60, -40]
+
+        if (height <= 5) {
+            return EXPLORER_REWARD * 3;
+        }
+
+        float rangeHeight = 12.0f - 4.0f; // The linear range is from height 4 to 12
+        float rangeReward = (EXPLORER_REWARD * 3) - EXPLORER_REWARD;
+        float adjustedHeight = 12.0f - height;
+        return 0.1f + (adjustedHeight / rangeHeight) * rangeReward;
     }
 
     public static ArrayList<RewardEvent> logRewardEvent(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
@@ -139,16 +149,19 @@ public class RewardSystem {
             } else if (e.getEventType() == EventType.WIN.getValue()) {
                 value = calculateWinReward(world);
             } else if (e.getEventType() == EventType.LOSE.getValue()) {
-                value = dynamicFailurePenalty(world);
+                value = FAILURE_PENALTY;
             } else if (e.getEventType() == EventType.TIME_OUT.getValue()) {
-                value = dynamicFailurePenalty(world);
+                value = FAILURE_PENALTY;
             } else if(e.getEventType() == EventType.IDLE.getValue()){
                 value = IDLE_PENALTY;
-            } else if(e.getEventType() == EventType.HIT_WALL.getValue()){
-                value = HIT_WALL_PENALTY;
-            } else if(e.getEventType() == EventType.PROGRESS.getValue()){
-                value = PROGRESS_REWARD;
-            } else {
+            }
+//            else if(e.getEventType() == EventType.HIT_WALL.getValue()){
+//                value = HIT_WALL_PENALTY;
+//            }
+//            else if(e.getEventType() == EventType.EXPLORER.getValue()){
+//                value = dynamicExplorerReward(world);
+//            }
+            else {
                 value = 0f;
             }
             rewardEvents.add(new RewardEvent(value, e, timer));

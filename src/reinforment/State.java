@@ -121,6 +121,8 @@ public class State {
     public static byte[] toByte(MarioForwardModel model) throws Exception {
         // Observation grid
         var observationGridPayload = createObservationGrid(model);
+        var visitObservation = model.getMarioVisitHeat();
+        var visitObservationPayload = intArrayToBytes(Arrays.stream(visitObservation).flatMapToInt(Arrays::stream).toArray());
 
         // Mario state
         byte[] marioMode = getMode(model);
@@ -156,6 +158,7 @@ public class State {
         // Write all features to the output stream
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         outputStream.write(observationGridPayload); // 256
+        outputStream.write(visitObservationPayload); // 256
         outputStream.write(marioMode); // one hot small, large, fire
         outputStream.write((byte) (model.isMarioOnGround() ? 1 : 0));
         outputStream.write((byte) (model.getMarioCanJumpHigher() ? 1 : 0));
