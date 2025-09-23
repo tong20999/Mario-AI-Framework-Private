@@ -16,10 +16,12 @@ public class RewardSystem {
     private static final float POWER_UP_REWARD = 5f;
 
     // Step & behavior costs
-    public static final float STEP_COST = -0.05f;
-    private static final float IDLE_PENALTY = 0.0f;
-    private static final float HIT_WALL_PENALTY = -0.0f;
-    private static final float PROGRESS_REWARD = 0.0f;
+    public static final float STEP_COST = -0.01f;
+    private static final float IDLE_PENALTY = -1.0f;
+    private static final float HIT_WALL_PENALTY = -0.1f;
+    private static final float PROGRESS_REWARD = 0.05f;
+
+    private static final float DAMAGE_PENALTY = -1f; // Currently unused
 
     // Win structure (small base + modest perfect bonus)
     private static final float BASE_WIN_REWARD = 10f;
@@ -79,6 +81,10 @@ public class RewardSystem {
 
             if(e.getEventType() == EventType.IDLE.getValue()){
                 reward += IDLE_PENALTY;
+            }
+
+            if(e.getEventType() == EventType.DAMAGE.getValue()){
+                reward += DAMAGE_PENALTY;
             }
         }
 
@@ -145,6 +151,8 @@ public class RewardSystem {
                 value = HIT_WALL_PENALTY;
             } else if(e.getEventType() == EventType.PROGRESS.getValue()){
                 value = PROGRESS_REWARD;
+            } else if(e.getEventType() == EventType.DAMAGE.getValue()){
+                value = DAMAGE_PENALTY;
             } else {
                 value = 0f;
             }

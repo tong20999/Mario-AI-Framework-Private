@@ -407,6 +407,7 @@ public class Mario extends MarioSprite {
                 this.isLarge = false;
             }
             invulnerableTime = 32;
+            this.world.addEvent(EventType.DAMAGE, this.type.getValue());
         } else {
             if (this.world != null) {
                 this.world.lose();
