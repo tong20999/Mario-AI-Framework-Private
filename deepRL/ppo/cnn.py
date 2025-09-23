@@ -28,38 +28,48 @@ class CNNBase(nn.Module):
                  embedding_dim: int = 16):
         super().__init__()
 
-        # --- 1. Enhanced Grid (Vision) Processing Stream ---
-        # Increased embedding_dim for richer object representation
+        # --- 1. Embedding (semantic token representation) ---
         self.embedding = nn.Embedding(num_embeddings=num_object_types, embedding_dim=embedding_dim)
-        cnn_input_channels = embedding_dim * num_stack
+        in_channels = embedding_dim * num_stack
         
-        self.cnn_initial = nn.Sequential(
-            nn.Conv2d(cnn_input_channels, cnn_input_channels, kernel_size=1, stride=1, padding=0),
+        # Multi-scale path (Architecture B):
+        # 16x16 -> (res block) -> 16x16 -> stride2 -> 8x8 -> res -> stride2 -> 4x4 -> res
+        self.cnn = nn.Sequential(
+            # Stem @16x16
+            nn.Conv2d(in_channels, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            ResidualBlock(64),  # Stage 1 full resolution
+            # Downsample to 8x8
+            nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1),
+            nn.ReLU(inplace=True),
+            ResidualBlock(64),  # Stage 2 @8x8
+            # Downsample to 4x4
+            nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1),
+            nn.ReLU(inplace=True),
+            ResidualBlock(64)   # Stage 3 @4x4
         )
-        
-        self.flatten = nn.Flatten()
-        grid_feature_dim = cnn_input_channels * 16 * 16
 
-        # --- 2. Vector Path (No changes needed here) ---
+        self.flatten = nn.Flatten()
+        grid_feature_dim = 64 * 4 * 4  # final spatial size 4x4
+
+        # --- 3. Vector Path (unchanged) ---
         mario_phys_dim = 12
         objective_dim = 150
-        
         self.mario_mlp = nn.Sequential(nn.Linear(mario_phys_dim, 64), nn.ReLU())
         self.objective_mlp = nn.Sequential(nn.Linear(objective_dim, 128), nn.ReLU())
         vector_feature_dim = 64 + 128
 
-        # --- 3. Fusion Head ---
+        # --- 4. Fusion ---
         self.combined_dim = grid_feature_dim + vector_feature_dim
 
     def forward(self, states: dict):
         grid_obs = states['grid']
         batch_size, num_stack, height, width = grid_obs.shape
-        embedded_grid = self.embedding(grid_obs.long())
-        embedded_grid = embedded_grid.view(batch_size, num_stack, height, width, -1)
-        embedded_grid = embedded_grid.permute(0, 1, 4, 2, 3)
+        embedded_grid = self.embedding(grid_obs.long())  # (B, S, H, W, E)
+        embedded_grid = embedded_grid.view(batch_size, num_stack, height, width, -1).permute(0, 1, 4, 2, 3)
         cnn_input = embedded_grid.reshape(batch_size, num_stack * self.embedding.embedding_dim, height, width)
-        x = self.cnn_initial(cnn_input)
-        grid_features = self.flatten(x).view(batch_size, -1)
+        x = self.cnn(cnn_input)
+        grid_features = self.flatten(x)
 
         # --- Vector Path (unchanged) ---
         vector_obs = states['vector']

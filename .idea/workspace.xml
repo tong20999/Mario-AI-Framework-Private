@@ -9,18 +9,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="update network">
+    <list default="true" id="a81ba07b-1b4a-41c1-a59f-b746f9844b89" name="Changes" comment="update">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/marioGame.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/marioGame.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deepRL/ppo/cnn.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ppo/cnn.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deepRL/ppo/ppo.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepRL/ppo/ppo.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/PlayLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/PlayLevel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioGameTraining.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/engine/core/MarioWorld.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/core/MarioWorld.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/engine/sprites/Mario.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/engine/sprites/Mario.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/reinforment/ProceduralContentGenerationLevel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/reinforment/ProceduralContentGenerationLevel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/reinforment/RewardSystem.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/reinforment/RewardSystem.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/reinforment/State.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/reinforment/State.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -53,7 +44,7 @@
   <component name="GithubPullRequestsUISettings"><![CDATA[{
   "selectedUrlAndAccountId": {
     "url": "https://github.com/tong20999/Mario-AI-Framework-Private.git",
-    "accountId": "a827681a-3a23-4bfd-8a87-a1f2be4045c7"
+    "accountId": "406b0290-e0de-485e-9087-1b2eff961c19"
   }
 }]]></component>
   <component name="MarkdownSettingsMigration">
@@ -78,7 +69,6 @@
     &quot;Repository.Attach.Sources&quot;: &quot;false&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;ppo__embedding__1&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
@@ -242,7 +232,23 @@
       <option name="project" value="LOCAL" />
       <updated>1755181124093</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="update">
+      <option name="closed" value="true" />
+      <created>1758596640847</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1758596640847</updated>
+    </task>
+    <task id="LOCAL-00013" summary="update">
+      <option name="closed" value="true" />
+      <created>1758599024893</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1758599024893</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -267,7 +273,8 @@
     <MESSAGE value="add normalize screen position" />
     <MESSAGE value="refactor random" />
     <MESSAGE value="add exploration" />
-    <option name="LAST_COMMIT_MESSAGE" value="add exploration" />
+    <MESSAGE value="update" />
+    <option name="LAST_COMMIT_MESSAGE" value="update" />
   </component>
   <component name="XDebuggerManager">
     <pin-to-top-manager>
