@@ -28,7 +28,6 @@ public class MarioWorld {
     public int coins, lives, collectCoin;
 
     public ArrayList<MarioEvent> lastFrameEvents;
-    public boolean isEvaluation = false;
 
     private MarioEvent[] killEvents;
     private ArrayList<MarioSprite> sprites;
@@ -531,7 +530,6 @@ public class MarioWorld {
         if(idleCounter > 100){
             idleCounter = 0;
             this.addEvent(EventType.IDLE,0);
-            this.mario.getHurt();
         }
 
         // punishing forward model

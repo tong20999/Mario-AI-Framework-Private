@@ -139,49 +139,11 @@ public class State {
         float subTileX = (marioPos[0] / 16.0f) - (int) (marioPos[0] / 16);
         float subTileY = (marioPos[1] / 16.0f) - (int) (marioPos[1] / 16);
 
-        // Nearest Block
-        var nearestBlock = model.getNearestBlockScreenPos();
-        byte nearestBlockFound = (byte) (nearestBlock != null ? 1 : 0);
-        float nearestBlockDx = nearestBlock != null ? nearestBlock[0] : 0.0f;
-        float nearestBlockDy = nearestBlock != null ? nearestBlock[1] : 0.0f;
-
-        // Nearest Coin
-        var nearestCoin = model.getNearestCoinScreenPos();
-        byte nearestCoinFound = (byte) (nearestCoin != null ? 1 : 0);
-        float nearestCoinDx = nearestCoin != null ? nearestCoin[0] : 0.0f;
-        float nearestCoinDy = nearestCoin != null ? nearestCoin[1] : 0.0f;
-
-        // Nearest Enemy
-        var nearestEnemy = model.getNearestAliveEnemyScreenPos();
-        byte nearestEnemyFound = (byte) (nearestEnemy != null ? 1 : 0);
-        float nearestEnemyDx = nearestEnemy != null ? nearestEnemy[0] : 0.0f;
-        float nearestEnemyDy = nearestEnemy != null ? nearestEnemy[1] : 0.0f;
-
         // Timer
         float normalizedTimer = (float) model.getRemainingTime() / (float) model.getInitialTimer();
 
-        // Objective
-        float normalizedCoinsLeft = model.getTotalCoins() > 0
-                ? (float) model.getUnCollectCoin() / (float) model.getTotalCoins()
-                : 0.0f;
-        byte goalCoinReach = (byte) (model.getUnCollectCoin() == 0 ? 1 : 0);
-
-        // Enemy Task
-        float normalizedEnemiesLeft = model.getTotalEnemies() > 0
-                ? (float) model.getAliveEnemies() / (float) model.getTotalEnemies()
-                : 0.0f;
-        byte goalEnemyReach = (byte) (model.getAliveEnemies() == 0 ? 1 : 0);
-
-        // Block Task
-        float normalizedBlocksLeft = model.getTotalBlocks() > 0
-                ? (float) model.getUnbumpBlocks() / (float) model.getTotalBlocks()
-                : 0.0f;
-        byte goalBlockReach = (byte) (model.getUnbumpBlocks() == 0 ? 1 : 0);
-
         // Completion percentage
         float completionPercentage = model.getCompletionPercentage();
-
-        float idleCounterPayload = model.getIdleCounter()/100f;
 
         int[] coinsObjective = model.getCoinsObjective();
         int[] blocksObjective = model.getBlocksObjective();

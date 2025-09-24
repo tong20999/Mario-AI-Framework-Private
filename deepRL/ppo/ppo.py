@@ -317,6 +317,13 @@ class PPO():
             total_iters=total_iterations
         )
 
+        self.entropy_scheduler = LinearLR(
+            self.entropy_loss_weight,
+            start_factor=1.0,
+            end_factor=0.1,
+            total_iters=total_iterations
+        )
+
         checkpoint_path = self.find_model_file_path('checkpoint_')
         if checkpoint_path is not None:
             checkpoint = torch.load(checkpoint_path)
