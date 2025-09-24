@@ -531,9 +531,7 @@ public class MarioWorld {
         if(idleCounter > 100){
             idleCounter = 0;
             this.addEvent(EventType.IDLE,0);
-            if(!this.isEvaluation){
-                this.mario.getHurt();
-            }
+            this.mario.getHurt();
         }
 
         // punishing forward model

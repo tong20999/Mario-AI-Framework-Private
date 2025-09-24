@@ -17,7 +17,7 @@ public class RewardSystem {
 
     // Step & behavior costs
     public static final float STEP_COST = -0.01f;
-    private static final float IDLE_PENALTY = -10f;
+    private static final float IDLE_PENALTY = -20f;
     private static final float PROGRESS_REWARD = 0.05f;   // Slightly higher
     private static final float DAMAGE_PENALTY = -1f;
 
