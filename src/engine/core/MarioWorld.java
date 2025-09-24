@@ -515,7 +515,7 @@ public class MarioWorld {
         addedSprites.clear();
         removedSprites.clear();
 
-        float progressAfter =  (int)(this.mario.x/16);;
+        float progressAfter =  (int)(this.mario.x/16);
         if(progressAfter > progressBefore && progressAfter > this.currentProgress) {
             this.currentProgress = progressAfter;
             this.addEvent(EventType.PROGRESS, 0);

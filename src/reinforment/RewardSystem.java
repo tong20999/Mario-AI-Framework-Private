@@ -17,8 +17,7 @@ public class RewardSystem {
 
     // Step & behavior costs
     public static final float STEP_COST = -0.01f;
-    private static final float IDLE_PENALTY = -2.5f;      // Slightly harsher
-    private static final float HIT_WALL_PENALTY = -0.1f;
+    private static final float IDLE_PENALTY = -10f;
     private static final float PROGRESS_REWARD = 0.05f;   // Slightly higher
     private static final float DAMAGE_PENALTY = -1f;
 
@@ -51,8 +50,6 @@ public class RewardSystem {
                 reward += BUMP_REWARD;
             } else if (type == EventType.COLLECT.getValue() && param == 15) {
                 reward += COIN_REWARD;
-            } else if (type == EventType.HIT_WALL.getValue()) {
-                reward += HIT_WALL_PENALTY;
             } else if (type == EventType.WIN.getValue()) {
                 reward += calculateWinReward(world);
             } else if (type == EventType.LOSE.getValue() || type == EventType.TIME_OUT.getValue()) {
@@ -135,8 +132,6 @@ public class RewardSystem {
                 value = dynamicFailurePenalty(world);
             } else if (type == EventType.IDLE.getValue()) {
                 value = IDLE_PENALTY;
-            } else if (type == EventType.HIT_WALL.getValue()) {
-                value = HIT_WALL_PENALTY;
             } else if (type == EventType.PROGRESS.getValue()) {
                 value = PROGRESS_REWARD;
             } else if (type == EventType.DAMAGE.getValue()) {
