@@ -17,9 +17,9 @@ public class RewardSystem {
 
     // Step & behavior costs
     public static final float STEP_COST = -0.01f;
-    private static final float IDLE_PENALTY = -1.5f;      // Slightly harsher
+    private static final float IDLE_PENALTY = -2.5f;      // Slightly harsher
     private static final float HIT_WALL_PENALTY = -0.1f;
-    private static final float PROGRESS_REWARD = 0.02f;   // Slightly higher
+    private static final float PROGRESS_REWARD = 0.05f;   // Slightly higher
     private static final float DAMAGE_PENALTY = -1f;
 
     // Win / completion structure
@@ -28,8 +28,8 @@ public class RewardSystem {
     private static final float MISSING_OBJECT_PENALTY = 5f; // Applied per remaining objective on win
 
     // Failure penalty
-    private static final float FAILURE_BASE = -60f;
-    private static final float FAILURE_PROGRESS_DELTA = 50f;
+    private static final float FAILURE_BASE = -30f;
+    private static final float FAILURE_PROGRESS_DELTA = 20f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = STEP_COST;
