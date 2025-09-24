@@ -317,7 +317,8 @@ class PPO():
             total_iters=total_iterations
         )
 
-        end_entropy_weight = 0.1
+        end_factor = 0.1
+        initial_entropy_weight = self.entropy_loss_weight
 
         checkpoint_path = self.find_model_file_path('checkpoint_')
         if checkpoint_path is not None:
@@ -375,9 +376,9 @@ class PPO():
                 self.policy_scheduler.step()
                 self.value_scheduler.step()
 
-                if self.entropy_loss_weight > end_entropy_weight:
-                    decay_factor = evaluation_count / total_iterations
-                    self.entropy_loss_weight = max(end_entropy_weight, self.entropy_loss_weight * (1.0 - decay_factor) + end_entropy_weight * decay_factor)
+                decay_factor = evaluation_count / total_iterations
+                end_value = initial_entropy_weight * end_factor
+                self.entropy_loss_weight = initial_entropy_weight - (initial_entropy_weight - end_value) * min(1.0, decay_factor)
 
                 logger.info(f'policy LR: {self.policy_scheduler.get_last_lr()[0]}')
                 logger.info(f'value LR: {self.value_scheduler.get_last_lr()[0]}')
