@@ -168,6 +168,7 @@ public class MarioGameTraining {
         this.rewardEvents = new ArrayList<>();
         this.world = new MarioWorld(this.killEvents);
         this.world.visuals = visual;
+        this.world.isEvaluation = this.evaluation;
         this.minTimer = pcgLevel == null ? 200 : pcgLevel.getTimerMin();
         this.maxTimer = pcgLevel == null ? 201 : pcgLevel.getTimerMax();
         this.timer = rand.nextInt(this.minTimer, this.maxTimer);
