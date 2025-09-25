@@ -234,6 +234,10 @@ public class MarioGameTraining {
             this.episodeTimer = this.world.currentTimer;
         }
 
+        var truncated = miniStepEvents.stream().anyMatch(
+                e -> e.getEventType() == EventType.IDLE.getValue()
+        );
+
         if (this.world.gameStatus != GameStatus.RUNNING && this.evaluation && this.fps < 30) {
             rewardEvents.add(new RewardEvent(stepCount * RewardSystem.STEP_COST, new MarioEvent(EventType.TOTAL_STEP)
             , (world.currentTimer == -1 ? "Inf" : (int) Math.ceil(world.currentTimer / 1000f)).toString()));
@@ -243,7 +247,7 @@ public class MarioGameTraining {
 
         return State.stepResult(State.toByte(nextState), reward,
                 this.world.gameStatus != GameStatus.RUNNING,
-                false);
+                truncated);
     }
 
     public ArrayList<MarioEvent> miniStep(boolean[] action) throws Exception {
