@@ -10,16 +10,16 @@ import java.util.ArrayList;
 
 public class RewardSystem {
     // Per-objective shaping (dense)
-    private static final float KILL_REWARD = 5f;
+    private static final float KILL_REWARD = 10f;
     private static final float BUMP_REWARD = 5f;
     private static final float COIN_REWARD = 5f;
-    private static final float POWER_UP_REWARD = 5f;
+    private static final float POWER_UP_REWARD = 10f;
 
     // Step & behavior costs
     public static final float STEP_COST = -0.01f;
     private static final float IDLE_PENALTY = -0f;
     private static final float PROGRESS_REWARD = 0.04f;
-    private static final float DAMAGE_PENALTY = -1f;
+    private static final float DAMAGE_PENALTY = -10f;
 
     // Win / completion structure
     private static final float BASE_WIN_REWARD = 5f;      // Lowered so partial wins pay less
