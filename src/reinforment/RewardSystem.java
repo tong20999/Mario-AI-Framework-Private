@@ -20,10 +20,10 @@ public class RewardSystem {
     private static final float IDLE_PENALTY = -0f;
     private static final float PROGRESS_REWARD = 0.04f;
     private static final float DAMAGE_PENALTY = -10f;
-
+    private static final float SHELL_KICK = 1f;
     // Win / completion structure
-    private static final float BASE_WIN_REWARD = 5f;      // Lowered so partial wins pay less
-    private static final float PERFECT_BONUS = 50f;       // Slight bump
+    private static final float BASE_WIN_REWARD = 5f; // Lowered so partial wins pay less
+    private static final float PERFECT_BONUS = 50f; // Slight bump
     private static final float MISSING_OBJECT_PENALTY = 5f; // Applied per remaining objective on win
 
     // Failure penalty
@@ -60,6 +60,8 @@ public class RewardSystem {
                 reward += IDLE_PENALTY;
             } else if (type == EventType.DAMAGE.getValue()) {
                 reward += DAMAGE_PENALTY;
+            } else if (type == EventType.KICK.getValue()) {
+                reward += SHELL_KICK;
             }
         }
         return reward;
@@ -77,7 +79,8 @@ public class RewardSystem {
 
     private static float completionRatio(MarioWorld world) {
         float total = objectiveTotal(world);
-        if (total <= 0f) return 1f;
+        if (total <= 0f)
+            return 1f;
         float completed = objectiveCompleted(world);
         return completed / total;
     }
@@ -91,7 +94,7 @@ public class RewardSystem {
     private static int remainingObjectives(MarioWorld world) {
         int enemiesLeft = world.getAliveEnemies().size();
         int blocksLeft = world.getUnbumpBlocks().size();
-        int coinsLeft  = world.getUnCollectCoin().size();
+        int coinsLeft = world.getUnCollectCoin().size();
         return enemiesLeft + blocksLeft + coinsLeft;
     }
 
@@ -106,7 +109,8 @@ public class RewardSystem {
 
     public static ArrayList<RewardEvent> logRewardEvent(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         ArrayList<RewardEvent> rewardEvents = new ArrayList<>();
-        String timer = (world.currentTimer == -1 ? "Inf" : Integer.toString((int)Math.ceil(world.currentTimer / 1000f)));
+        String timer = (world.currentTimer == -1 ? "Inf"
+                : Integer.toString((int) Math.ceil(world.currentTimer / 1000f)));
         for (MarioEvent e : miniStepEvents) {
             float value;
             int type = e.getEventType();
@@ -136,6 +140,8 @@ public class RewardSystem {
                 value = PROGRESS_REWARD;
             } else if (type == EventType.DAMAGE.getValue()) {
                 value = DAMAGE_PENALTY;
+            } else if (type == EventType.KICK.getValue()) {
+                value = SHELL_KICK;
             } else {
                 value = 0f;
             }
