@@ -317,7 +317,7 @@ class PPO():
             total_iters=total_iterations
         )
 
-        end_factor = 0.1
+        end_factor = 0.01
         initial_entropy_weight = self.entropy_loss_weight
 
         checkpoint_path = self.find_model_file_path('checkpoint_')
