@@ -22,7 +22,7 @@ public class RewardSystem {
     private static final float DAMAGE_PENALTY = -1f;
 
     // Win / completion structure
-    private static final float BASE_WIN_REWARD = 10f;      // Lowered so partial wins pay less
+    private static final float BASE_WIN_REWARD = 5f;      // Lowered so partial wins pay less
     private static final float PERFECT_BONUS = 50f;       // Slight bump
     private static final float MISSING_OBJECT_PENALTY = 5f; // Applied per remaining objective on win
 
@@ -68,11 +68,11 @@ public class RewardSystem {
     private static float calculateWinReward(MarioWorld world) {
         float ratio = completionRatio(world);
         if (ratio >= 1f) {
-            // Give BOTH the base win reward and the perfect bonus
-            return BASE_WIN_REWARD + PERFECT_BONUS; // Total: +75 for a perfect win
+            return PERFECT_BONUS;
         }
-        // Give only the base reward for a partial win. No penalties.
-        return BASE_WIN_REWARD;
+        int remaining = remainingObjectives(world);
+        // Partial win: scaled base + penalty for what is left
+        return (BASE_WIN_REWARD * ratio) - (remaining * MISSING_OBJECT_PENALTY);
     }
 
     private static float completionRatio(MarioWorld world) {
