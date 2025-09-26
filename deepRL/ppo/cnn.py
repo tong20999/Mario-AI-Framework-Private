@@ -24,8 +24,8 @@ class ResidualBlock(nn.Module):
 
 # --- NEW, MORE POWERFUL (but simplified) CNNBase ---
 class CNNBase(nn.Module):
-    def __init__(self, num_stack: int = 4, num_object_types: int = 14,
-                 embedding_dim: int = 8):
+    def __init__(self, num_stack: int = 4, num_object_types: int = 19,
+                 embedding_dim: int = 6):
         super().__init__()
 
         # --- 1. Embedding (semantic token representation) ---

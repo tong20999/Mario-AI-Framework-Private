@@ -41,7 +41,7 @@ class MarioGame(SocketEnv):
     def _init_spaces(self):
         self.observation_space = gym.spaces.Dict({
             'grid': gym.spaces.Box(
-                low=0, high=13,  # support up to 14 object types (0-13)
+                low=0, high=18,  # support up to 14 object types (0-13)
                 shape=(self.grid_h, self.grid_w),
                 dtype=np.uint8
             ),

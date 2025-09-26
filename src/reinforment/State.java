@@ -36,9 +36,9 @@ public class State {
 
     private static byte[] createObservationGrid(MarioForwardModel model) throws Exception {
         int size = 16;
-        var sceneObservation = model.getMarioSceneObservation(1);
-        var flagObservation = model.getMarioSceneObservation(0);
-        var enemyObservation = model.getMarioEnemiesObservation(0);
+        var sceneObservation = model.getScreenSceneObservation(1);
+        var flagObservation = model.getScreenSceneObservation(0);
+        var enemyObservation = model.getScreenEnemiesObservation(0);
         var grid = new int[size][size];
 
         for (int col = 0; col < size; col++) {
@@ -51,36 +51,59 @@ public class State {
                     grid[col][row] = 1;
                 }
 
-                if (scene == MarioForwardModel.OBS_SOLID) {
+                if (scene == MarioForwardModel.OBS_SOLID
+                        || scene == MarioForwardModel.OBS_CANNON
+                        || scene == MarioForwardModel.OBS_PIPE
+                        || scene == MarioForwardModel.OBS_PLATFORM
+                ) {
                     grid[col][row] = 2;
-                } else if(scene == MarioForwardModel.OBS_PIPE){
-                    grid[col][row] = 3;
                 } else if(scene == MarioForwardModel.OBS_BRICK){
-                    grid[col][row] = 4;
+                    grid[col][row] = 3;
                 } else if (scene == MarioForwardModel.OBS_QUESTION_BLOCK) {
-                    grid[col][row] = 5;
+                    grid[col][row] = 4;
                 } else if (scene == MarioForwardModel.OBS_COIN) {
-                    grid[col][row] = 6;
-                } else if(scene == MarioForwardModel.OBS_CANNON){
-                    grid[col][row] = 12;
+                    grid[col][row] = 5;
                 }
 
                 if (enemy == MarioForwardModel.OBS_MUSHROOM) {
-                    grid[col][row] = 7;
+                    grid[col][row] = 6;
+                } else if(enemy == MarioForwardModel.OBS_LIFE_MUSHROOM){
+                    grid[col][row] = 6;
                 } else if(enemy == MarioForwardModel.OBS_FIRE_FLOWER){
-                    grid[col][row] = 8;
+                    grid[col][row] = 7;
                 } else if (enemy == MarioForwardModel.OBS_GOOMBA) {
                     grid[col][row] = 9;
-                } else if(enemy == MarioForwardModel.OBS_GREEN_KOOPA){
+                } else if(enemy == MarioForwardModel.OBS_GOOMBA_WINGED){
                     grid[col][row] = 10;
-                } else if(enemy == MarioForwardModel.OBS_SHELL){
+                } else if(enemy == MarioForwardModel.OBS_GREEN_KOOPA){
                     grid[col][row] = 11;
-                } else if(enemy == MarioForwardModel.OBS_BULLET_BILL){
+                } else if(enemy == MarioForwardModel.OBS_GREEN_KOOPA_WINGED){
+                    grid[col][row] = 12;
+                } else if(enemy == MarioForwardModel.OBS_RED_KOOPA){
+                    grid[col][row] = 11;
+                } else if(enemy == MarioForwardModel.OBS_RED_KOOPA_WINGED){
+                    grid[col][row] = 12;
+                } else if(enemy == MarioForwardModel.OBS_SPIKY){
                     grid[col][row] = 13;
+                } else if(enemy == MarioForwardModel.OBS_SPIKY_WINGED){
+                    grid[col][row] = 14;
+                } else if(enemy == MarioForwardModel.OBS_ENEMY_FLOWER){
+                    grid[col][row] = 15;
+                } else if(enemy == MarioForwardModel.OBS_SHELL){
+                    grid[col][row] = 16;
+                } else if(enemy == MarioForwardModel.OBS_BULLET_BILL){
+                    grid[col][row] = 17;
                 }
             }
         }
 
+        var mario = model.getMarioScreenTilePos();
+        if(mario[0] >= 16) mario[0] = 15;
+        if(mario[1] >= 16) mario[1] = 15;
+        if(mario[0] <= 0) mario[0] = 0;
+        if(mario[1] <= 0) mario[1] = 0;
+
+        grid[mario[0]][mario[1]] = 18;
         var flatGrid = Arrays.stream(grid).flatMapToInt(Arrays::stream).toArray();
 
         return intArrayToBytes(flatGrid);
