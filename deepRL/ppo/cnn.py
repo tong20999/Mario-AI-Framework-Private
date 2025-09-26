@@ -21,20 +21,25 @@ class ResidualBlock(nn.Module):
 
 # Updated CNNBase class with residual blocks
 class CNNBase(nn.Module):
-    def __init__(self, num_stack: int, num_object_types: int = 22):
+    def __init__(self, num_stack: int, num_object_types: int = 21):
         super(CNNBase, self).__init__()
         cnn_input_channels = num_object_types * num_stack
 
         self.cnn_initial = nn.Sequential(
-            nn.Conv2d(cnn_input_channels, cnn_input_channels, kernel_size=1, stride=1, padding=0),
+            nn.Conv2d(cnn_input_channels, 32, kernel_size=3, stride=1, padding=1),  # [32,16,16]
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
         )
         
         self.flatten = nn.Flatten()
-        grid_feature_dim = cnn_input_channels * 16 * 16
+        grid_feature_dim = 128 * 16 * 4
 
         # --- 2. Vector Path (No changes needed here) ---
-        mario_phys_dim = 13
-        objective_dim = 150
+        mario_phys_dim = 12
+        objective_dim = 90
         
         self.mario_mlp = nn.Sequential(nn.Linear(mario_phys_dim, 64), nn.ReLU())
         self.objective_mlp = nn.Sequential(nn.Linear(objective_dim, 128), nn.ReLU())
@@ -55,8 +60,8 @@ class CNNBase(nn.Module):
 
         # --- Vector Path (unchanged) ---
         vector_obs = states['vector']
-        mario_phys_vec = vector_obs[:, :13]
-        objective_vec = vector_obs[:, 13:]
+        mario_phys_vec = vector_obs[:, :12]
+        objective_vec = vector_obs[:, 12:]
 
         mario_features = self.mario_mlp(mario_phys_vec)
         objective_features = self.objective_mlp(objective_vec)

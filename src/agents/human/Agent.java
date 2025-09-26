@@ -72,9 +72,6 @@ public class Agent extends KeyAdapter implements MarioAgent {
             case KeyEvent.VK_M:
                 if(isPressed){
                     var sceneObservation = State.toByte(model);
-                    var height = model.a();
-                    var a = calculateReward(height);
-                    System.out.println(a);
                 }
 
                 break;

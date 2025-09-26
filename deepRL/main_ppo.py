@@ -12,7 +12,7 @@ from ppo.ppo import PPO
 from logger import setup_logging
 
 logger = logging.getLogger('Agent:Main')
-num_stack = 3
+num_stack = 4
 
 def make_env_fn():
   # Wrap the base environment with our new frame stacker
