@@ -235,8 +235,6 @@ public class MarioGameTraining {
         }
 
         if (this.world.gameStatus != GameStatus.RUNNING && this.evaluation && this.fps < 30) {
-            rewardEvents.add(new RewardEvent(stepCount * RewardSystem.STEP_COST, new MarioEvent(EventType.TOTAL_STEP)
-            , (world.currentTimer == -1 ? "Inf" : (int) Math.ceil(world.currentTimer / 1000f)).toString()));
             Helper.logEvaluationResult(this.episode, this.world.gameStatus.toString(),
                     this.pcg, this.world, this.rewardEvents, this.evaluationReward, this.minTimer, this.maxTimer);
         }

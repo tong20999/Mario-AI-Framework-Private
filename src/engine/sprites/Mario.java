@@ -131,12 +131,10 @@ public class Mario extends MarioSprite {
             if (xa < 0) {
                 x = (int) ((x - width) / 16) * 16 + width;
                 this.xa = 0;
-                this.world.addEvent(EventType.HIT_WALL, 0);
             }
             if (xa > 0) {
                 x = (int) ((x + width) / 16 + 1) * 16 - width - 1;
                 this.xa = 0;
-                this.world.addEvent(EventType.HIT_WALL, 0);
             }
             if (ya < 0) {
                 y = (int) ((y - height) / 16) * 16 + height;
@@ -407,6 +405,7 @@ public class Mario extends MarioSprite {
                 this.isLarge = false;
             }
             invulnerableTime = 32;
+            this.world.addEvent(EventType.DAMAGE, this.type.getValue());
         } else {
             if (this.world != null) {
                 this.world.lose();

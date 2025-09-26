@@ -17,13 +17,10 @@ public enum EventType {
     FALL_PIT(14),
     FLAG(15),
     BUMP_KILL(16),
-    EXPLORER(17),
+    DAMAGE(17),
     BREAK(18),
     BONK(19),
-    TIME_OUT(20),
-    TOTAL_STEP(25),
-    PROGRESS(26),
-    IDLE(27);
+    TIME_OUT(20);
 
     private final int value;
 
