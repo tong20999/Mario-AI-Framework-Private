@@ -16,11 +16,7 @@ public class RewardSystem {
     private static final float POWER_UP_REWARD = 10f;
 
     // Step & behavior costs
-    public static final float STEP_COST = -0.01f;
-    private static final float IDLE_PENALTY = -0f;
-    private static final float PROGRESS_REWARD = 0.04f;
     private static final float DAMAGE_PENALTY = -10f;
-    private static final float SHELL_KICK = 1f;
     // Win / completion structure
     private static final float BASE_WIN_REWARD = 5f; // Lowered so partial wins pay less
     private static final float PERFECT_BONUS = 50f; // Slight bump
@@ -31,7 +27,7 @@ public class RewardSystem {
     private static final float FAILURE_PROGRESS_DELTA = 20f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
-        float reward = STEP_COST;
+        float reward = 0;
         for (MarioEvent e : miniStepEvents) {
             int type = e.getEventType();
             int param = e.getEventParam();
@@ -54,14 +50,8 @@ public class RewardSystem {
                 reward += calculateWinReward(world);
             } else if (type == EventType.LOSE.getValue() || type == EventType.TIME_OUT.getValue()) {
                 reward += dynamicFailurePenalty(world);
-            } else if (type == EventType.PROGRESS.getValue()) {
-                reward += PROGRESS_REWARD;
-            } else if (type == EventType.IDLE.getValue()) {
-                reward += IDLE_PENALTY;
             } else if (type == EventType.DAMAGE.getValue()) {
                 reward += DAMAGE_PENALTY;
-            } else if (type == EventType.KICK.getValue()) {
-                reward += SHELL_KICK;
             }
         }
         return reward;
@@ -134,14 +124,8 @@ public class RewardSystem {
                 value = calculateWinReward(world);
             } else if (type == EventType.LOSE.getValue() || type == EventType.TIME_OUT.getValue()) {
                 value = dynamicFailurePenalty(world);
-            } else if (type == EventType.IDLE.getValue()) {
-                value = IDLE_PENALTY;
-            } else if (type == EventType.PROGRESS.getValue()) {
-                value = PROGRESS_REWARD;
             } else if (type == EventType.DAMAGE.getValue()) {
                 value = DAMAGE_PENALTY;
-            } else if (type == EventType.KICK.getValue()) {
-                value = SHELL_KICK;
             } else {
                 value = 0f;
             }

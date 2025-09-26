@@ -94,7 +94,7 @@ public class MarioGameTraining {
 
     private int fps = 0;
     private ProceduralContentGenerationLevel pcg = null;
-    private final int frameSkip = 4;
+    private final int frameSkip = 2;
 
     /**
      * Create a mario game to be played
@@ -234,20 +234,14 @@ public class MarioGameTraining {
             this.episodeTimer = this.world.currentTimer;
         }
 
-        var truncated = miniStepEvents.stream().anyMatch(
-                e -> e.getEventType() == EventType.IDLE.getValue()
-        );
-
         if (this.world.gameStatus != GameStatus.RUNNING && this.evaluation && this.fps < 30) {
-            rewardEvents.add(new RewardEvent(stepCount * RewardSystem.STEP_COST, new MarioEvent(EventType.TOTAL_STEP)
-            , (world.currentTimer == -1 ? "Inf" : (int) Math.ceil(world.currentTimer / 1000f)).toString()));
             Helper.logEvaluationResult(this.episode, this.world.gameStatus.toString(),
                     this.pcg, this.world, this.rewardEvents, this.evaluationReward, this.minTimer, this.maxTimer);
         }
 
         return State.stepResult(State.toByte(nextState), reward,
                 this.world.gameStatus != GameStatus.RUNNING,
-                truncated);
+                false);
     }
 
     public ArrayList<MarioEvent> miniStep(boolean[] action) throws Exception {

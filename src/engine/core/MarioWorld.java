@@ -373,7 +373,6 @@ public class MarioWorld {
     }
 
     public void update(boolean[] actions) {
-        int progressBefore = (int)(this.mario.x/16);
         this.lastFrameEvents.clear();
         if (this.gameStatus != GameStatus.RUNNING) {
             return;
@@ -514,23 +513,6 @@ public class MarioWorld {
         sprites.removeAll(removedSprites);
         addedSprites.clear();
         removedSprites.clear();
-
-        float progressAfter =  (int)(this.mario.x/16);
-        if(progressAfter > progressBefore && progressAfter > this.currentProgress) {
-            this.currentProgress = progressAfter;
-            this.addEvent(EventType.PROGRESS, 0);
-        }
-
-        if(progressAfter == progressBefore){
-            idleCounter++;
-        } else {
-            idleCounter = 0;
-        }
-
-        if(idleCounter > 100){
-            idleCounter = 0;
-            this.addEvent(EventType.IDLE,0);
-        }
 
         // punishing forward model
         if (this.killEvents != null) {

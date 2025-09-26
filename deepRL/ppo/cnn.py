@@ -24,37 +24,37 @@ class ResidualBlock(nn.Module):
 
 # --- NEW, MORE POWERFUL (but simplified) CNNBase ---
 class CNNBase(nn.Module):
-    def __init__(self, num_stack: int = 3, num_object_types: int = 24,
-                 embedding_dim: int = 16):
+    def __init__(self, num_stack: int = 4, num_object_types: int = 14,
+                 embedding_dim: int = 8):
         super().__init__()
 
         # --- 1. Embedding (semantic token representation) ---
         self.embedding = nn.Embedding(num_embeddings=num_object_types, embedding_dim=embedding_dim)
         in_channels = embedding_dim * num_stack
-        
+        size = 128
         # Multi-scale path (Architecture B):
         # 16x16 -> (res block) -> 16x16 -> stride2 -> 8x8 -> res -> stride2 -> 4x4 -> res
         self.cnn = nn.Sequential(
             # Stem @16x16
-            nn.Conv2d(in_channels, 64, kernel_size=3, padding=1),
+            nn.Conv2d(in_channels, size, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
-            ResidualBlock(64),  # Stage 1 full resolution
+            ResidualBlock(size),  # Stage 1 full resolution
             # Downsample to 8x8
-            nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1),
+            nn.Conv2d(size, size, kernel_size=3, stride=2, padding=1),
             nn.ReLU(inplace=True),
-            ResidualBlock(64),  # Stage 2 @8x8
+            ResidualBlock(size),  # Stage 2 @8x8
             # Downsample to 4x4
-            nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1),
+            nn.Conv2d(size, size, kernel_size=3, stride=2, padding=1),
             nn.ReLU(inplace=True),
-            ResidualBlock(64)   # Stage 3 @4x4
+            ResidualBlock(size)   # Stage 3 @4x4
         )
 
         self.flatten = nn.Flatten()
-        grid_feature_dim = 64 * 4 * 4  # final spatial size 4x4
+        grid_feature_dim = size * 4 * 4  # final spatial size 4x4
 
         # --- 3. Vector Path (unchanged) ---
         mario_phys_dim = 12
-        objective_dim = 150
+        objective_dim = 90
         self.mario_mlp = nn.Sequential(nn.Linear(mario_phys_dim, 64), nn.ReLU())
         self.objective_mlp = nn.Sequential(nn.Linear(objective_dim, 128), nn.ReLU())
         vector_feature_dim = 64 + 128
