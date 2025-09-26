@@ -119,10 +119,10 @@ public class State {
     }
 
     public static byte[] toByte(MarioForwardModel model) throws Exception {
+
+
         // Observation grid
         var observationGridPayload = createObservationGrid(model);
-        var visitObservation = model.getMarioVisitHeat();
-        var visitObservationPayload = intArrayToBytes(Arrays.stream(visitObservation).flatMapToInt(Arrays::stream).toArray());
 
         // Mario state
         byte[] marioMode = getMode(model);
@@ -149,8 +149,6 @@ public class State {
         // Completion percentage
         float completionPercentage = model.getCompletionPercentage();
 
-        float idleCounterPayload = model.getIdleCounter()/100f;
-
         int[] coinsObjective = model.getCoinsObjective();
         int[] blocksObjective = model.getBlocksObjective();
         int[] enemiesObjective = model.getEnemiesObjective();
@@ -158,22 +156,21 @@ public class State {
         // Write all features to the output stream
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         outputStream.write(observationGridPayload); // 256
-        outputStream.write(visitObservationPayload); // 256
         outputStream.write(marioMode); // one hot small, large, fire
         outputStream.write((byte) (model.isMarioOnGround() ? 1 : 0));
         outputStream.write((byte) (model.getMarioCanJumpHigher() ? 1 : 0));
         outputStream.write((byte) (model.getMarioFacing() == 1 ? 1 : 0)); // 6
+
         outputStream.write(float2ByteArray(normalizedVelX)); // 10
         outputStream.write(float2ByteArray(normalizedVelY)); // 14
         outputStream.write(float2ByteArray(subTileX)); // 18
-        outputStream.write(float2ByteArray(subTileY)); // 22
-        outputStream.write(float2ByteArray(normalizedTimer)); // 26
-        outputStream.write(float2ByteArray(completionPercentage)); // 30
-        outputStream.write(float2ByteArray(idleCounterPayload)); // 34
+        outputStream.write(float2ByteArray(subTileY)); // 22 10
+        outputStream.write(float2ByteArray(normalizedTimer)); // 26 11
+        outputStream.write(float2ByteArray(completionPercentage)); // 30 12
 
-        outputStream.write(intArrayToBytes(coinsObjective)); // 84
-        outputStream.write(intArrayToBytes(blocksObjective)); // 134
-        outputStream.write(intArrayToBytes(enemiesObjective)); // 184
+        outputStream.write(intArrayToBytes(coinsObjective)); // 60
+        outputStream.write(intArrayToBytes(blocksObjective)); // 90
+        outputStream.write(intArrayToBytes(enemiesObjective)); // 120
         return outputStream.toByteArray();
     }
 }
