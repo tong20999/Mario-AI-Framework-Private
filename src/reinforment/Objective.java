@@ -10,14 +10,14 @@ import java.util.Map;
 public class Objective {
     // preserves insertion order
     private final Map<Point, Integer> positionMap = new LinkedHashMap<>();
-
+    private int maxItem = 30;
     public int[] getObjectives() {
-        int[] result = new int[50];
+        int[] result = new int[maxItem];
         Arrays.fill(result, -1); // default = undefined
 
         int i = 0;
         for (Integer value : positionMap.values()) {
-            if (i >= 50) break; // safety
+            if (i >= maxItem) break; // safety
             result[i++] = value; // 1 (active) or 0 (marked)
         }
 
@@ -39,15 +39,15 @@ public class Objective {
     }
 
     public void add(Point point) {
-        if (positionMap.size() < 50) { // enforce max 50
+        if (positionMap.size() < maxItem) { // enforce max 50
             positionMap.put(point, 1);
         }
     }
 
     public void addAll(List<Point> points) {
         for (Point p : points) {
-            if (positionMap.size() >= 50) {
-                break; // enforce max 50
+            if (positionMap.size() >= maxItem) {
+                break;
             }
             positionMap.put(p, 1);
         }
@@ -55,8 +55,8 @@ public class Objective {
 
     public void addAllEnemy(List<Enemy> enemies) {
         for (Enemy e : enemies) {
-            if (positionMap.size() >= 50) {
-                break; // enforce max 50
+            if (positionMap.size() >= maxItem) {
+                break;
             }
             positionMap.put(new Point((int)e.x, (int)e.y), 1);
         }

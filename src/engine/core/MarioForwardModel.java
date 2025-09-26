@@ -74,10 +74,6 @@ public class MarioForwardModel {
 
     private List<MarioEvent> miniStepEvents = new ArrayList<>();
 
-    public int a(){
-        return (int)(this.world.mario.y / 16f);
-    }
-
     public static int getSpriteTypeGeneralization(SpriteType sprite, int detail) {
         switch (detail) {
             case (0):
@@ -918,10 +914,6 @@ public class MarioForwardModel {
         return new byte[]{ (byte) near, (byte) mid, (byte) far };
     }
 
-    public int[][] getMarioVisitHeat() {
-        return this.world.getVisitHeat(this.world.cameraX + MarioGame.width / 2, MarioGame.height / 2);
-    }
-
     public int getIdleCounter(){
         return world.getIdleCounter();
     }
@@ -933,7 +925,6 @@ public class MarioForwardModel {
     public int[] getBlocksObjective(){
         return world.getBlocksObjective();
     }
-
 
     public int[] getEnemiesObjective(){
         return world.getEnemiesObjective();
