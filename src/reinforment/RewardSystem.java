@@ -10,163 +10,105 @@ import java.util.ArrayList;
 
 public class RewardSystem {
     // Per-objective shaping (dense)
-    private static final float KILL_REWARD = 10f;
-    private static final float BUMP_REWARD = 8f;
-    private static final float COIN_REWARD = 8f;
-    private static final float POWER_UP_REWARD = 20f;
+    private static final float KILL_REWARD = 0.02f;
+    private static final float BUMP_REWARD = 0.01f;
+    private static final float COIN_REWARD = 0.01f;
+    private static final float POWER_UP_REWARD = 0.05f;
 
     // Step & behavior costs
-    public static final float STEP_COST = -0.00f;
-    private static final float IDLE_PENALTY = -0.0f;
-    private static final float EXPLORER_REWARD = 0.00f;
-    private static final float HIT_WALL_PENALTY = -0.00f;
+    private static final float DAMAGE_PENALTY = -0.5f;
+    // Win / completion structure
+    private static final float BASE_WIN_REWARD = 1f;
 
-    // Win structure (small base + modest perfect bonus)
-    private static final float WIN_REWARD = 5f;
 
-    // Dynamic failure penalty parameters
-    private static final float FAILURE_PENALTY = -25f;
+    // Failure penalty
+    private static final float PARTIAL_WIN = -0.5f;
+    private static final float FAILURE_LOSE = -1f;
+    private static final float FAILURE_TIMEOUT = -1f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
-        float reward = STEP_COST;
+        float reward = 0;
         for (MarioEvent e : miniStepEvents) {
-            if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
-                    e.getEventType() == EventType.FIRE_KILL.getValue() ||
-                    e.getEventType() == EventType.SHELL_KILL.getValue() ||
-                    e.getEventType() == EventType.BUMP_KILL.getValue() ||
-                    e.getEventType() == EventType.FALL_KILL.getValue()) {
+            int type = e.getEventType();
+            int param = e.getEventParam();
+
+            if (type == EventType.STOMP_KILL.getValue() ||
+                    type == EventType.FIRE_KILL.getValue() ||
+                    type == EventType.SHELL_KILL.getValue() ||
+                    type == EventType.BUMP_KILL.getValue() ||
+                    type == EventType.FALL_KILL.getValue()) {
                 reward += KILL_REWARD;
-            }
-            if (e.getEventType() == EventType.COLLECT.getValue()
-                    && e.getEventParam() == SpriteType.FIRE_FLOWER.getValue()) {
+            } else if (type == EventType.COLLECT.getValue() &&
+                    (param == SpriteType.FIRE_FLOWER.getValue() || param == SpriteType.MUSHROOM.getValue())) {
                 reward += POWER_UP_REWARD;
-            }
-            if (e.getEventType() == EventType.COLLECT.getValue()
-                    && e.getEventParam() == SpriteType.MUSHROOM.getValue()) {
-                reward += POWER_UP_REWARD;
-            }
-
-            if (e.getEventType() == EventType.BUMP.getValue()
-                    && e.getEventParam() == MarioForwardModel.OBS_QUESTION_BLOCK) {
+            } else if (type == EventType.BUMP.getValue() &&
+                    param == MarioForwardModel.OBS_QUESTION_BLOCK) {
                 reward += BUMP_REWARD;
-            }
-            if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == 15) {
+            } else if (type == EventType.COLLECT.getValue() && param == 15) {
                 reward += COIN_REWARD;
-            }
-
-            if (e.getEventType() == EventType.WIN.getValue()) {
+            } else if (type == EventType.WIN.getValue()) {
                 reward += calculateWinReward(world);
+            } else if (type == EventType.LOSE.getValue()) {
+                reward += FAILURE_LOSE;
+            } else if (type == EventType.TIME_OUT.getValue()) {
+                reward += FAILURE_TIMEOUT;
+            } else if (type == EventType.DAMAGE.getValue()) {
+                reward += DAMAGE_PENALTY;
             }
-
-            if (e.getEventType() == EventType.LOSE.getValue()) {
-                reward += FAILURE_PENALTY;
-            }
-
-            if (e.getEventType() == EventType.TIME_OUT.getValue()) {
-                reward += FAILURE_PENALTY;
-            }
-
-            if (e.getEventType() == EventType.HIT_WALL.getValue()) {
-                reward += HIT_WALL_PENALTY;
-            }
-
-//            if(e.getEventType() == EventType.IDLE.getValue()){
-//                reward += IDLE_PENALTY;
-//            }
-
-//            if(e.getEventType() == EventType.EXPLORER.getValue()){
-//                reward += dynamicExplorerReward(world);
-//            }
         }
-
         return reward;
     }
 
-    private static float calculateWinReward(MarioWorld world) {
-        float ratio = completionRatio(world);
-        if (ratio >= 1f) {
-            return WIN_REWARD;
-        }
-
-        return WIN_REWARD * ratio;
-    }
-
-    private static float completionRatio(MarioWorld world) {
-        float total = world.level.getCoins().size()
-                + world.level.getBumpableBlocks().size()
-                + world.level.getEnemies().size();
-        if (total <= 0f) return 1f;
-
-        float completed = (world.level.getEnemies().size() - world.getAliveEnemies().size())
-                + (world.level.getBumpableBlocks().size() - world.getUnbumpBlocks().size())
-                + (world.level.getCoins().size() - world.getUnCollectCoin().size());
-        return completed / total;
-    }
-
-//    private static float dynamicFailurePenalty(MarioWorld world) {
-//        float ratio = completionRatio(world);
-//        return FAILURE_BASE + (FAILURE_PROGRESS_DELTA * ratio); // [-60, -40]
-//    }
-
-    private static float dynamicExplorerReward(MarioWorld world) {
-        var height = world.mario.y/16f;
-        if (height >= 13) {
-            return EXPLORER_REWARD;
-        }
-
-        if (height <= 5) {
-            return EXPLORER_REWARD * 3;
-        }
-
-        float rangeHeight = 12.0f - 4.0f; // The linear range is from height 4 to 12
-        float rangeReward = (EXPLORER_REWARD * 3) - EXPLORER_REWARD;
-        float adjustedHeight = 12.0f - height;
-        return 0.1f + (adjustedHeight / rangeHeight) * rangeReward;
+    private static int remainingObjectives(MarioWorld world) {
+        int enemiesLeft = world.getAliveEnemies().size();
+        int blocksLeft = world.getUnbumpBlocks().size();
+        int coinsLeft = world.getUnCollectCoin().size();
+        return enemiesLeft + blocksLeft + coinsLeft;
     }
 
     public static ArrayList<RewardEvent> logRewardEvent(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         ArrayList<RewardEvent> rewardEvents = new ArrayList<>();
-        String timer = (world.currentTimer == -1 ? "Inf" : (int) Math.ceil(world.currentTimer / 1000f)).toString();
-        float value;
+        String timer = (world.currentTimer == -1 ? "Inf"
+                : Integer.toString((int) Math.ceil(world.currentTimer / 1000f)));
         for (MarioEvent e : miniStepEvents) {
-            if (e.getEventType() == EventType.STOMP_KILL.getValue() ||
-                    e.getEventType() == EventType.FIRE_KILL.getValue() ||
-                    e.getEventType() == EventType.SHELL_KILL.getValue() ||
-                    e.getEventType() == EventType.BUMP_KILL.getValue() ||
-                    e.getEventType() == EventType.FALL_KILL.getValue()) {
+            float value;
+            int type = e.getEventType();
+            int param = e.getEventParam();
+
+            if (type == EventType.STOMP_KILL.getValue() ||
+                    type == EventType.FIRE_KILL.getValue() ||
+                    type == EventType.SHELL_KILL.getValue() ||
+                    type == EventType.BUMP_KILL.getValue() ||
+                    type == EventType.FALL_KILL.getValue()) {
                 value = KILL_REWARD;
-            } else if (e.getEventType() == EventType.BUMP.getValue()
-                    && e.getEventParam() == MarioForwardModel.OBS_QUESTION_BLOCK) {
+            } else if (type == EventType.BUMP.getValue() &&
+                    param == MarioForwardModel.OBS_QUESTION_BLOCK) {
                 value = BUMP_REWARD;
-            } else if (e.getEventType() == EventType.COLLECT.getValue() && e.getEventParam() == 15) {
+            } else if (type == EventType.COLLECT.getValue() && param == 15) {
                 value = COIN_REWARD;
-            } else if (e.getEventType() == EventType.COLLECT.getValue()
-                    && e.getEventParam() == SpriteType.FIRE_FLOWER.getValue()) {
+            } else if (type == EventType.COLLECT.getValue() &&
+                    (param == SpriteType.FIRE_FLOWER.getValue() || param == SpriteType.MUSHROOM.getValue())) {
                 value = POWER_UP_REWARD;
-            } else if (e.getEventType() == EventType.COLLECT.getValue()
-                    && e.getEventParam() == SpriteType.MUSHROOM.getValue()) {
-                value = POWER_UP_REWARD;
-            } else if (e.getEventType() == EventType.WIN.getValue()) {
+            } else if (type == EventType.WIN.getValue()) {
                 value = calculateWinReward(world);
-            } else if (e.getEventType() == EventType.LOSE.getValue()) {
-                value = FAILURE_PENALTY;
-            } else if (e.getEventType() == EventType.TIME_OUT.getValue()) {
-                value = FAILURE_PENALTY;
-            } else if(e.getEventType() == EventType.IDLE.getValue()){
-                value = IDLE_PENALTY;
-            }
-//            else if(e.getEventType() == EventType.HIT_WALL.getValue()){
-//                value = HIT_WALL_PENALTY;
-//            }
-//            else if(e.getEventType() == EventType.EXPLORER.getValue()){
-//                value = dynamicExplorerReward(world);
-//            }
-            else {
+            } else if (type == EventType.LOSE.getValue()) {
+                value = FAILURE_LOSE;
+            } else if (type == EventType.TIME_OUT.getValue()) {
+                value = FAILURE_TIMEOUT;
+            } else if (type == EventType.DAMAGE.getValue()) {
+                value = DAMAGE_PENALTY;
+            } else {
                 value = 0f;
             }
             rewardEvents.add(new RewardEvent(value, e, timer));
         }
-
         return rewardEvents;
+    }
+
+    private static float calculateWinReward(MarioWorld world) {
+        if(remainingObjectives(world) > 0){
+            return PARTIAL_WIN;
+        }
+        return BASE_WIN_REWARD;
     }
 }
