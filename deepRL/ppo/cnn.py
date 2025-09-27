@@ -3,39 +3,45 @@ import torch.nn as nn
 import numpy as np
 
 class ResidualBlock(nn.Module):
+    """
+    A simple residual block with two convolutional layers.
+    The input to the block is added to its output, creating a skip connection.
+    """
     def __init__(self, channels):
         super(ResidualBlock, self).__init__()
-        self.conv_block = nn.Sequential(
-            nn.Conv2d(channels, channels, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(channels, channels, kernel_size=3, padding=1),
-        )
-        self.relu = nn.ReLU()
+        self.conv0 = nn.Conv2d(in_channels=channels, out_channels=channels, kernel_size=3, padding=1)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv1 = nn.Conv2d(in_channels=channels, out_channels=channels, kernel_size=3, padding=1)
 
     def forward(self, x):
-        residual = x
-        x = self.conv_block(x)
-        x += residual
-        x = self.relu(x)
-        return x
-
+        identity = x  # Save the input for the skip connection
+        out = self.relu(self.conv0(x))
+        out = self.conv1(out)
+        # Add the original input (identity) to the output of the convolutions
+        out = self.relu(out + identity)
+        return out
+    
 # Updated CNNBase class with residual blocks
 class CNNBase(nn.Module):
     def __init__(self, num_stack: int, num_object_types: int = 21):
         super(CNNBase, self).__init__()
         cnn_input_channels = num_object_types * num_stack
-
-        self.cnn_initial = nn.Sequential(
-            nn.Conv2d(cnn_input_channels, 32, kernel_size=3, stride=1, padding=1),  # [32,16,16]
+        cnn_output = 128
+        self.cnn = nn.Sequential(
+            # Stem @16x16
+            nn.Conv2d(cnn_input_channels, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            ResidualBlock(64),
+            # Downsample to 8x8
+            nn.Conv2d(64, cnn_output, kernel_size=3, stride=2, padding=1),
             nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
+            # Downsample to 4x4
+            nn.Conv2d(cnn_output, cnn_output, kernel_size=3, stride=2, padding=1),
             nn.ReLU(),
-            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
+            nn.Flatten()
         )
-        
-        self.flatten = nn.Flatten()
-        grid_feature_dim = 128 * 16 * 4
+
+        grid_feature_dim = 128 * 4 * 4
 
         # --- 2. Vector Path (No changes needed here) ---
         mario_phys_dim = 12
@@ -55,8 +61,7 @@ class CNNBase(nn.Module):
         cnn_input = grid_obs.view(batch_size, num_stack * num_planes, height, width)
         
         # Pass data through the new CNN structure
-        x = self.cnn_initial(cnn_input)
-        grid_features = self.flatten(x)
+        grid_features = self.cnn(cnn_input)
 
         # --- Vector Path (unchanged) ---
         vector_obs = states['vector']

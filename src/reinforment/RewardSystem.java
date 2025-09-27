@@ -10,21 +10,21 @@ import java.util.ArrayList;
 
 public class RewardSystem {
     // Per-objective shaping (dense)
-    private static final float KILL_REWARD = 0.02f;
-    private static final float BUMP_REWARD = 0.01f;
-    private static final float COIN_REWARD = 0.01f;
-    private static final float POWER_UP_REWARD = 0.05f;
+    private static final float KILL_REWARD = 2f;
+    private static final float BUMP_REWARD = 1f;
+    private static final float COIN_REWARD = 1f;
+    private static final float POWER_UP_REWARD = 5f;
 
     // Step & behavior costs
-    private static final float DAMAGE_PENALTY = -0.5f;
+    private static final float DAMAGE_PENALTY = -50f;
     // Win / completion structure
-    private static final float BASE_WIN_REWARD = 1f;
+    private static final float BASE_WIN_REWARD = 100f;
 
 
     // Failure penalty
-    private static final float PARTIAL_WIN = -0.5f;
-    private static final float FAILURE_LOSE = -1f;
-    private static final float FAILURE_TIMEOUT = -1f;
+    private static final float FAILURE_LOSE = -100f;
+    private static final float FAILURE_TIMEOUT = -100f;
+    private static final float PARTIAL_WIN = -50f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = 0;

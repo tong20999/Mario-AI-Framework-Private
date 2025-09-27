@@ -286,13 +286,17 @@ class PPO():
         env = self.make_env_fn()
         envs = self.make_envs_fn(make_env_fn, self.n_workers)
 
-        SEEDS = (12, 34, 56, 78, 90)
-        seed = random.choice(SEEDS)
-        torch.manual_seed(seed) ; np.random.seed(seed) ; random.seed(seed)
+        seed = 0
+        torch.manual_seed(seed)
+        np.random.seed(seed)
+        random.seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed(seed)
+            torch.cuda.manual_seed_all(seed)
     
         self.nS, nA = env.observation_space, env.action_space.n
 
-        total_iterations=500 + (self.max_buffer_episodes * self.n_workers)
+        total_iterations=(self.max_buffer_episodes * self.n_workers)
         start_factor=1.0
         end_factor=0.2
         logger.info(f'scheduler lr total iteration {total_iterations} start factor {start_factor} end factor {end_factor}')

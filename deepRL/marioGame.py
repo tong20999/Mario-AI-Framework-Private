@@ -28,6 +28,7 @@ class MarioGame(SocketEnv):
         self.fps = fps
         
         self.channel_count = 1
+        self.num_object = 21
         self.grid_h = 16
         self.grid_w = 16
         
@@ -42,7 +43,7 @@ class MarioGame(SocketEnv):
             'grid': gym.spaces.Box(
                 low=0, high=1,
                 # The shape is updated to 21
-                shape=(21, self.grid_h, self.grid_w),
+                shape=(self.num_object, self.grid_h, self.grid_w),
                 dtype=np.uint8
             ),
             'vector': gym.spaces.Box(
@@ -60,8 +61,8 @@ class MarioGame(SocketEnv):
         grid1 = grid1_flat.reshape(self.grid_h, self.grid_w)  # shape (16,16)
 
         # --- One-hot encode the first grid into 21 binary planes ---
-        one_hot_grid = np.zeros((21, self.grid_h, self.grid_w), dtype=np.uint8)
-        for obj_id in range(21):
+        one_hot_grid = np.zeros((self.num_object, self.grid_h, self.grid_w), dtype=np.uint8)
+        for obj_id in range(self.num_object):
             one_hot_grid[obj_id] = (grid1 == obj_id).astype(np.uint8)
 
         # Vector data starts after both grids.
