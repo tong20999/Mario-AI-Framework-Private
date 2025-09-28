@@ -24,7 +24,7 @@ public class RewardSystem {
     // Failure penalty
     private static final float FAILURE_LOSE = -100f;
     private static final float FAILURE_TIMEOUT = -100f;
-    private static final float PARTIAL_WIN = -50f;
+    private static final float PARTIAL_WIN = -100f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = 0;

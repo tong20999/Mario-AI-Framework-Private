@@ -408,6 +408,7 @@ public class Mario extends MarioSprite {
             this.world.addEvent(EventType.DAMAGE, this.type.getValue());
         } else {
             if (this.world != null) {
+                this.world.addEvent(EventType.DAMAGE, this.type.getValue());
                 this.world.lose();
             }
         }

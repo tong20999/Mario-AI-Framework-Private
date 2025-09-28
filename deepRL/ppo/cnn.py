@@ -23,14 +23,14 @@ class ResidualBlock(nn.Module):
     
 # Updated CNNBase class with residual blocks
 class CNNBase(nn.Module):
-    def __init__(self, num_stack: int, num_object_types: int = 21):
+    def __init__(self, num_stack: int, num_object_types: int = 19):
         super(CNNBase, self).__init__()
         cnn_input_channels = num_object_types * num_stack
         cnn_output = 128
         self.cnn = nn.Sequential(
             # Stem @16x16
             nn.Conv2d(cnn_input_channels, 64, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             ResidualBlock(64),
             # Downsample to 8x8
             nn.Conv2d(64, cnn_output, kernel_size=3, stride=2, padding=1),
