@@ -29,19 +29,20 @@ class MarioGame(SocketEnv):
         self.fps = fps
         
         self.channel_count = 1
+        self.object_type = 21
         self.grid_h = 16
         self.grid_w = 16
         
         # Vector
-        self.vector_transfer_byte_len = 30 + 90
-        self.vector_size = 12 + 90
+        self.vector_transfer_byte_len = 34 + 90
+        self.vector_size = 13 + 90
         
         self._init_spaces()
 
     def _init_spaces(self):
         self.observation_space = gym.spaces.Dict({
             'grid': gym.spaces.Box(
-                low=0, high=18,  # support up to 14 object types (0-13)
+                low=0, high=self.object_type,
                 shape=(self.grid_h, self.grid_w),
                 dtype=np.uint8
             ),
@@ -57,7 +58,7 @@ class MarioGame(SocketEnv):
         grid_flat = np.frombuffer(payload[:grid_size], dtype=np.uint8, count=grid_size)
         grid = grid_flat.reshape(self.grid_h, self.grid_w)
         vector_bytes = payload[grid_size: grid_size + self.vector_transfer_byte_len]
-        format_string = '>6B6f30b30b30b'
+        format_string = '>6B7f30b30b30b'
         unpacked_values = struct.unpack(format_string, vector_bytes)
         vector_part = np.array(unpacked_values, dtype=np.float32)
 

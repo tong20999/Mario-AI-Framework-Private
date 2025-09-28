@@ -929,4 +929,28 @@ public class MarioForwardModel {
     public int[] getEnemiesObjective(){
         return world.getEnemiesObjective();
     }
+
+    public float getCoinCompletionObjective() {
+        return doGetCompletionObjective(world.level.getCoins().size(),
+                world.getUnCollectCoin().size());
+    }
+
+    public float getEnemiesCompletionObjective() {
+        return doGetCompletionObjective(world.level.getEnemies().size(),
+                world.getAliveEnemies().size());
+    }
+
+    public float getBlocksCompletionObjective() {
+        return doGetCompletionObjective(world.level.getBumpableBlocks().size(),
+                world.getUnbumpBlocks().size());
+    }
+
+    public float doGetCompletionObjective(int total, int remain) {
+        int complete = total - remain;
+        if (total == 0) {
+            return 1.0f;
+        }
+
+        return (float) complete / total;
+    }
 }

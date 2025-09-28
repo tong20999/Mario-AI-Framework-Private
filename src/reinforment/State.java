@@ -52,11 +52,13 @@ public class State {
                 }
 
                 if (scene == MarioForwardModel.OBS_SOLID
-                        || scene == MarioForwardModel.OBS_CANNON
-                        || scene == MarioForwardModel.OBS_PIPE
                         || scene == MarioForwardModel.OBS_PLATFORM
                 ) {
                     grid[col][row] = 2;
+                } else if(scene == MarioForwardModel.OBS_PIPE){
+                    grid[col][row] = 18;
+                } else if(scene == MarioForwardModel.OBS_CANNON){
+                    grid[col][row] = 19;
                 } else if(scene == MarioForwardModel.OBS_BRICK){
                     grid[col][row] = 3;
                 } else if (scene == MarioForwardModel.OBS_QUESTION_BLOCK) {
@@ -103,7 +105,7 @@ public class State {
         if(mario[0] <= 0) mario[0] = 0;
         if(mario[1] <= 0) mario[1] = 0;
 
-        grid[mario[0]][mario[1]] = 18;
+        grid[mario[0]][mario[1]] = 20;
         var flatGrid = Arrays.stream(grid).flatMapToInt(Arrays::stream).toArray();
 
         return intArrayToBytes(flatGrid);
@@ -119,24 +121,11 @@ public class State {
     }
 
     public static byte[] toByte(MarioForwardModel model) throws Exception {
-
-
         // Observation grid
         var observationGridPayload = createObservationGrid(model);
 
         // Mario state
         byte[] marioMode = getMode(model);
-
-        // Velocity
-        var velocity = model.getMarioFloatVelocity();
-        float normalizedVelX = Math.max(-1.0f, Math.min(1.0f, velocity[0] / maxVelocity));
-        if (Math.abs(normalizedVelX) < 0.001f) {
-            normalizedVelX = 0.0f;
-        }
-        float normalizedVelY = Math.max(-1.0f, Math.min(1.0f, velocity[1] / maxVelocity));
-        if (Math.abs(normalizedVelY) < 0.001f) {
-            normalizedVelY = 0.0f;
-        }
 
         // Sub-tile position
         float[] marioPos = model.getMarioFloatPos();
@@ -146,10 +135,12 @@ public class State {
         // Timer
         float normalizedTimer = (float) model.getRemainingTime() / (float) model.getInitialTimer();
 
+        float completionCoinObjective = model.getCoinCompletionObjective();
+        float completionBlockObjective = model.getBlocksCompletionObjective();
+        float completionEnemiesObjective = model.getEnemiesCompletionObjective();
+
         // Completion percentage
         float completionPercentage = model.getCompletionPercentage();
-
-        float idleCounterPayload = model.getIdleCounter() / 100f;
 
         int[] coinsObjective = model.getCoinsObjective();
         int[] blocksObjective = model.getBlocksObjective();
@@ -162,13 +153,13 @@ public class State {
         outputStream.write((byte) (model.isMarioOnGround() ? 1 : 0));
         outputStream.write((byte) (model.getMarioCanJumpHigher() ? 1 : 0));
         outputStream.write((byte) (model.getMarioFacing() == 1 ? 1 : 0)); // 6
-        
-        outputStream.write(float2ByteArray(normalizedVelX)); // 10
-        outputStream.write(float2ByteArray(normalizedVelY)); // 14
-        outputStream.write(float2ByteArray(subTileX)); // 18
-        outputStream.write(float2ByteArray(subTileY)); // 22 10
-        outputStream.write(float2ByteArray(normalizedTimer)); // 26 11
-        outputStream.write(float2ByteArray(completionPercentage)); // 30 12
+        outputStream.write(float2ByteArray(subTileX)); // 10
+        outputStream.write(float2ByteArray(subTileY)); // 14
+        outputStream.write(float2ByteArray(normalizedTimer)); // 18
+        outputStream.write(float2ByteArray(completionCoinObjective)); // 22
+        outputStream.write(float2ByteArray(completionBlockObjective)); // 26
+        outputStream.write(float2ByteArray(completionEnemiesObjective)); // 30
+        outputStream.write(float2ByteArray(completionPercentage)); // 34
 
         outputStream.write(intArrayToBytes(coinsObjective)); // 64
         outputStream.write(intArrayToBytes(blocksObjective)); // 94
