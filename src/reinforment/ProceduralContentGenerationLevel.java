@@ -344,8 +344,8 @@ public class ProceduralContentGenerationLevel {
                     currentLevel.add(addIndex, 'X');
                 } else if (i == height) {
                     // Add 't' at index and index + 1
-                    //var enemy = rand.nextInt(2) == 0 ? EnumEnemy.GREEN_KOOPA : EnumEnemy.GOOMBA;
-                    var enemy = EnumEnemy.GOOMBA;
+                    var enemy = rand.nextInt(2) == 0 ? EnumEnemy.GREEN_KOOPA : EnumEnemy.GOOMBA;
+                    //var enemy = EnumEnemy.GOOMBA;
                     currentLevel.add(addIndex, enemy.getValue());
                     currentLevel.add(addIndex - 1, '-');
                     currentLevel.add(addIndex + 1, '-');
