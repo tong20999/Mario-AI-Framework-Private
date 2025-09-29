@@ -3,22 +3,23 @@ import torch.nn as nn
 import numpy as np
 from gymnasium.spaces import Dict
 
-class ResidualBlock(nn.Module):
-    """
-    A simple residual block with two convolutional layers.
-    The input to the block is added to its output, creating a skip connection.
-    """
+class ResidualBlock3D(nn.Module):
     def __init__(self, channels):
-        super(ResidualBlock, self).__init__()
-        self.conv0 = nn.Conv2d(in_channels=channels, out_channels=channels, kernel_size=3, padding=1)
+        super(ResidualBlock3D, self).__init__()
+        self.conv0 = nn.Conv3d(
+            in_channels=channels, out_channels=channels, kernel_size=3, padding=1
+        )
         self.relu = nn.ReLU(inplace=True)
-        self.conv1 = nn.Conv2d(in_channels=channels, out_channels=channels, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv3d(
+            in_channels=channels, out_channels=channels, kernel_size=3, padding=1
+        )
 
     def forward(self, x):
-        identity = x  # Save the input for the skip connection
+        identity = x
+        
         out = self.relu(self.conv0(x))
         out = self.conv1(out)
-        # Add the original input (identity) to the output of the convolutions
+        
         out = self.relu(out + identity)
         return out
 
@@ -27,70 +28,72 @@ class CNNBase(nn.Module):
                  embedding_dim: int = 8):
         super().__init__()
 
-        # --- 1. Grid Embedding Path ---
+        # --- 1. Embedding (semantic token representation) ---
         self.embedding = nn.Embedding(num_embeddings=num_object_types, embedding_dim=embedding_dim)
-        grid_channels = embedding_dim * num_stack
-
-        # --- 2. Vector Processing Path (unchanged) ---
-        mario_phys_dim = 13
-        objective_dim = 90
-        self.mario_mlp = nn.Sequential(nn.Linear(mario_phys_dim, 64), nn.ReLU())
-        self.objective_mlp = nn.Sequential(nn.Linear(objective_dim, 128), nn.ReLU())
         
-        # --- 3. Early Fusion Setup ---
-        # We will add the processed vector features as extra channels to the grid.
-        # Let's define how many extra channels the vector data will contribute.
-        vector_channels = 16  # This is a new hyperparameter you can tune.
+        # The number of input channels for Conv3d is the embedding dimension.
+        # The num_stack becomes the "depth" of our 3D data.
+        in_channels = embedding_dim
+        c1, c2, c3 = 64, 128, 128
 
-        # A linear layer to project the combined vector features into the desired channel size.
-        combined_vector_dim = 64 + 128
-        self.vector_projector = nn.Linear(combined_vector_dim, vector_channels)
-
-        # --- 4. Unified CNN Path ---
-        # The CNN's input now includes channels from the grid AND the projected vector.
-        total_in_channels = grid_channels + vector_channels
-        
-        size = 32  # Number of output channels for the first conv layer
+        # --- 2. 3D Convolutional Path ---
+        # We replace Conv2d with Conv3d.
         self.cnn = nn.Sequential(
-            nn.Conv2d(total_in_channels, size, kernel_size=3, padding=1),
+            nn.Conv3d(in_channels, c1, kernel_size=(3, 3, 3), stride=(1, 2, 2), padding=(1, 1, 1)),
+            nn.ReLU(),
+            ResidualBlock3D(channels=c1),
+            nn.Conv3d(c1, c2, kernel_size=3, stride=(1, 2, 2), padding=(1, 1, 1)),
+            nn.ReLU(),
+            nn.Conv3d(c2, c3, kernel_size=3, stride=1, padding=(1, 1, 1)),
             nn.ReLU(),
             nn.Flatten()
         )
 
-        # The final output dimension is determined by the CNN's flattened output.
-        # This is now the single source of features.
-        self.combined_dim = size * 16 * 16
+        # Calculate the output size after flattening.
+        # The Conv3d with this padding preserves the D, H, W dimensions.
+        # So the output shape before flattening is (B, size, num_stack, 16, 16).
+        grid_feature_dim = c3 * num_stack * 4 * 4
+
+        # --- 3. Vector Path (unchanged) ---
+        mario_phys_dim = 13
+        objective_dim = 90
+        self.mario_mlp = nn.Sequential(nn.Linear(mario_phys_dim, 64), nn.ReLU())
+        self.objective_mlp = nn.Sequential(nn.Linear(objective_dim, 128), nn.ReLU())
+        vector_feature_dim = 64 + 128
+
+        # --- 4. Fusion ---
+        self.combined_dim = grid_feature_dim + vector_feature_dim
 
     def forward(self, states: dict):
-        # --- Process Grid Input ---
         grid_obs = states['grid']
         batch_size, num_stack, height, width = grid_obs.shape
-        embedded_grid = self.embedding(grid_obs.long())
-        embedded_grid = embedded_grid.view(batch_size, num_stack, height, width, -1).permute(0, 1, 4, 2, 3)
-        grid_features_spatial = embedded_grid.reshape(batch_size, num_stack * self.embedding.embedding_dim, height, width)
+        
+        # Embedding remains the same
+        embedded_grid = self.embedding(grid_obs.long())  # Shape: (B, S, H, W, E)
 
-        # --- Process Vector Input ---
+        # --- CRITICAL RESHAPE FOR CONV3D ---
+        # We need to rearrange the dimensions to (B, C, D, H, W)
+        # B = Batch Size
+        # C = Channels (embedding_dim)
+        # D = Depth (num_stack)
+        # H = Height
+        # W = Width
+        # Original: (B:0, S:1, H:2, W:3, E:4) -> Target: (B:0, E:4, S:1, H:2, W:3)
+        cnn_input = embedded_grid.permute(0, 4, 1, 2, 3)
+        
+        # The cnn (Conv3d -> Flatten) processes the spatio-temporal data
+        grid_features = self.cnn(cnn_input)
+
+        # --- Vector Path (unchanged) ---
         vector_obs = states['vector']
         mario_phys_vec = vector_obs[:, :13]
         objective_vec = vector_obs[:, 13:]
+
         mario_features = self.mario_mlp(mario_phys_vec)
         objective_features = self.objective_mlp(objective_vec)
-        combined_vector_features = torch.cat([mario_features, objective_features], dim=1)
-
-        # --- EARLY FUSION STEP ---
-        # Project the vector features to the desired channel size.
-        projected_vector = self.vector_projector(combined_vector_features) # Shape: (B, vector_channels)
-
-        # "Tile" the projected vector across the spatial dimensions of the grid.
-        # We expand its dimensions to match the grid's HxW.
-        tiled_vector_features = projected_vector.unsqueeze(-1).unsqueeze(-1) # Shape: (B, vector_channels, 1, 1)
-        tiled_vector_features = tiled_vector_features.expand(-1, -1, height, width) # Shape: (B, vector_channels, H, W)
-
-        # Concatenate the grid and tiled vector features along the channel dimension.
-        fused_input = torch.cat([grid_features_spatial, tiled_vector_features], dim=1)
         
-        # --- Pass the fused representation through the single CNN ---
-        combined_features = self.cnn(fused_input)
+        # --- Fusion (unchanged) ---
+        combined_features = torch.cat([grid_features, mario_features, objective_features], dim=1)
         
         return combined_features
 

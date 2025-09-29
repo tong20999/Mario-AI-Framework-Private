@@ -377,9 +377,9 @@ class PPO():
                 self.policy_scheduler.step()
                 self.value_scheduler.step()
 
-                decay_factor = evaluation_count / total_iterations
-                end_value = initial_entropy_weight * end_factor
-                self.entropy_loss_weight = initial_entropy_weight - (initial_entropy_weight - end_value) * min(1.0, decay_factor)
+                # decay_factor = evaluation_count / total_iterations
+                # end_value = initial_entropy_weight * end_factor
+                # self.entropy_loss_weight = initial_entropy_weight - (initial_entropy_weight - end_value) * min(1.0, decay_factor)
 
                 logger.info(f'policy LR: {self.policy_scheduler.get_last_lr()[0]}')
                 logger.info(f'value LR: {self.value_scheduler.get_last_lr()[0]}')
