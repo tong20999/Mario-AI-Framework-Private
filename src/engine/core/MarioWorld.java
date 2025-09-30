@@ -49,6 +49,9 @@ public class MarioWorld {
     private Objective blocksObjective = new Objective();
     private Objective enemiesObjective = new Objective();
 
+    public boolean isEvaluation = false;
+    private int stallCounter = 0;
+
     public MarioWorld(MarioEvent[] killEvents) {
         this.pauseTimer = 0;
         this.gameStatus = GameStatus.RUNNING;
@@ -134,8 +137,9 @@ public class MarioWorld {
         world.currentTimer = this.currentTimer;
         world.initTimer = this.initTimer;
         world.currentTick = this.currentTick;
+        world.isEvaluation = this.isEvaluation;
         world.level = this.level.clone();
-
+        world.stallCounter = this.stallCounter;
         // Clone sprites
         for (MarioSprite sprite : this.sprites) {
             MarioSprite cloneSprite = sprite.clone();
@@ -369,6 +373,7 @@ public class MarioWorld {
 
     public void update(boolean[] actions) {
         this.lastFrameEvents.clear();
+        var beforePosition = new int[] { (int) ((this.mario.x - this.cameraX) / 16), (int) (this.mario.y / 16) };
         if (this.gameStatus != GameStatus.RUNNING) {
             return;
         }
@@ -508,6 +513,19 @@ public class MarioWorld {
             openGate();
         }
 
+        var afterPosition = new int[] { (int) ((this.mario.x - this.cameraX) / 16), (int) (this.mario.y / 16) };
+        if (afterPosition[1] == beforePosition[1] && afterPosition[0] == beforePosition[0]) {
+            stallCounter++;
+        } else {
+            stallCounter = 0;
+        }
+
+        if(stallCounter > 160){
+            if(!isEvaluation){
+                this.timeout();
+            }
+            stallCounter = 0;
+        }
 
         sprites.addAll(0, addedSprites);
         sprites.removeAll(removedSprites);
