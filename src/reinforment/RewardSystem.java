@@ -9,12 +9,12 @@ import engine.helper.SpriteType;
 import java.util.ArrayList;
 
 public class RewardSystem {
-    private static final float WIN_REWARD = 1f;
+    private static final float WIN_REWARD = 100f;
 
     private static final float PARTIAL_WIN = 0f;
 
-    private static final float FAILURE_LOSE = -1f;
-    private static final float FAILURE_TIMEOUT = -1f;
+    private static final float FAILURE_LOSE = -100f;
+    private static final float FAILURE_TIMEOUT = -100f;
 
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
