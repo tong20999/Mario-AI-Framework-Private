@@ -29,6 +29,11 @@ public class MarioLevel {
     private ArrayList<Enemy> enemies = new ArrayList<>();
     private ArrayList<Point> blocks = new ArrayList<>();
     private ArrayList<Point> coins = new ArrayList<>();
+    private ArrayList<Point> gates = new ArrayList<>();
+
+    public ArrayList<Point> getGates() {
+        return gates;
+    }
 
     public MarioLevel(String level, boolean visuals) {
         if (level.trim().length() == 0) {
@@ -111,6 +116,11 @@ public class MarioLevel {
                     case '#':
                         //pyramidBlock
                         this.levelTiles[x][y] = 2;
+                        break;
+                    case 'N':
+                        //Gate
+                        this.levelTiles[x][y] = 2;
+                        gates.add(new Point(x,y));
                         break;
                     case '%':
                         //jump through block
@@ -309,6 +319,7 @@ public class MarioLevel {
         level.coins = this.coins;
         level.blocks = this.blocks;
         level.enemies = this.enemies;
+        level.gates = this.gates;
         return level;
     }
 

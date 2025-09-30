@@ -504,6 +504,11 @@ public class MarioWorld {
         }
         fireballsToCheck.clear();
 
+        if (isSubGoalEnemyMet() && isSubGoalBlockMet() && isSubGoalCoinMet()){
+            openGate();
+        }
+
+
         sprites.addAll(0, addedSprites);
         sprites.removeAll(removedSprites);
         addedSprites.clear();
@@ -516,6 +521,13 @@ public class MarioWorld {
                     this.lose();
                 }
             }
+        }
+    }
+
+    private void openGate() {
+
+        for (var g : this.level.getGates()){
+            this.level.setBlock(g.getX(), g.getY(), 0);
         }
     }
 
@@ -578,6 +590,7 @@ public class MarioWorld {
         int block = level.getBlock(xTile, yTile);
         if (TileFeature.getTileType(block).contains(TileFeature.PICKABLE)) {
             this.addEvent(EventType.COLLECT, block);
+            this.collectCoin(block, xTile, yTile);
             this.mario.collectCoin();
             level.setBlock(xTile, yTile, 0);
             if (this.visuals) {

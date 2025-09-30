@@ -169,6 +169,8 @@ public class ProceduralContentGenerationLevel {
                 for (int j = 0; j < width; j++) {
                     if (j == width - 4) {
                         line.add('#');
+                    }else if(j == width - 5){
+                        line.add('N');
                     }
                     else {
                         line.add('-');
@@ -178,6 +180,9 @@ public class ProceduralContentGenerationLevel {
                 for (int j = 0; j < width; j++) {
                     if (j == width - 4) {
                         line.add('F');
+                    }
+                    else if(j == width - 5){
+                        line.add('N');
                     }
                     else {
                         line.add('-');
@@ -190,7 +195,12 @@ public class ProceduralContentGenerationLevel {
                 }
             } else {
                 for (int j = 0; j < width; j++) {
-                    line.add('-');
+                    if (j == width - 5) {
+                        line.add('N');
+                    }
+                    else {
+                        line.add('-');
+                    }
                 }
             }
             levels.put(i, line);
