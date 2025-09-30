@@ -155,9 +155,10 @@ class PPO():
         device = self.device
         n_samples = len(actions_np)
 
-        returns_mean = np.mean(returns_np)
-        returns_std = np.std(returns_np)
-        returns_np = (returns_np - returns_mean) / (returns_std + EPS)
+        # IMPORTANT: Keep returns in raw reward scale for value loss to match
+        # the scale used by GAE deltas in EpisodeBuffer. Normalizing returns here
+        # would cause a scale mismatch between r + gamma*V(s') - V(s) (raw) and V targets (normalized).
+        # We still normalize advantages (GAE) below for policy stability.
 
         gaes_mean = np.mean(gaes_np)
         gaes_std = np.std(gaes_np)
@@ -387,8 +388,11 @@ class PPO():
 
                 # stats
                 evaluation_count +=1
-                evaluation_score, _ = self.evaluate(evaluation_count, self.policy_model, env, levelBase64)
-                logger.info('evaluation {} score {} value losses {}'.format(evaluation_count, np.round(evaluation_score, 2), np.round(value_losses, 3)))
+                # Evaluate over multiple episodes for stability; also get success rate (scale-invariant)
+                eval_eps = 10
+                evaluation_score, success_rate = self.evaluate(evaluation_count, self.policy_model, env, levelBase64, n_episodes=eval_eps)
+                logger.info('evaluation {} mean_return {} success_rate {}% value losses {}'.format(
+                    evaluation_count, np.round(evaluation_score, 2), np.round(success_rate*100, 1), np.round(value_losses, 3)))
 
                 training_time += episode_seconds.sum()
                 wallclock_time = time.time() - training_start
@@ -399,6 +403,7 @@ class PPO():
                     "episode_exploration.txt": np.round(episode_exploration, 2),
                     "episode_seconds.txt": np.round(episode_seconds, 2),
                     "evaluation_score.txt": evaluation_score,
+                    "evaluation_success_rate.txt": success_rate,
                     "training_time.txt": training_time,
                     "wallclock_time.txt": wallclock_time,
                     "policy_losses.txt": policy_losses,
@@ -527,12 +532,13 @@ class PPO():
 
     def evaluate(self, evaluation_count, eval_model:CNNActor, eval_env, level:str, n_episodes=1, greedy=True, visual=True, playMode=False):
         rs = []
+        successes = 0
         for _ in range(n_episodes):
             try:
                 info = {"episode" : evaluation_count, "evaluation" : True, "visual":visual, "level" : level}
                 s, _  = eval_env.reset(options=info)
                 d = False
-                rs.append(0)
+                rs.append(0.0)
                 for _ in count():
                     if greedy:
                         a = eval_model.select_greedy_action(s)
@@ -540,10 +546,18 @@ class PPO():
                         a = eval_model.select_action(s)
                     s, r, d, t, _ = eval_env.step(a)
                     rs[-1] += r
-                    if d or t: break
+                    if d or t:
+                        break
+                # Success heuristic: total episode return > 0 works for both +1 and +100 scales
+                if rs[-1] > 0:
+                    successes += 1
             except KeyboardInterrupt:
                 pass
-        return np.mean(rs), np.std(rs)
+        mean_return = float(np.mean(rs)) if len(rs) > 0 else 0.0
+        success_rate = float(successes) / float(len(rs)) if len(rs) > 0 else 0.0
+        logger.info(f"evaluation mean return: {mean_return:.3f}, success rate: {success_rate*100:.1f}% over {len(rs)} episodes")
+        # Keep signature compatible with existing call sites; the second value is success rate
+        return mean_return, success_rate
             
     def save_checkpoint(self, evaluation_idx: int):
         checkpoint_path = os.path.join(self.working_dir, f'checkpoint_{evaluation_idx}.tar')

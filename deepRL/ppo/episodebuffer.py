@@ -175,7 +175,7 @@ class EpisodeBuffer():
 
         ep_r = self.episode_reward[ep_idxs]
         ep_x = self.episode_exploration[ep_idxs]
-        ep_s = a=self.episode_seconds[ep_idxs]
+        ep_s = self.episode_seconds[ep_idxs]
         logger.info(f'filling 100%')
         return ep_t, ep_r, ep_x, ep_s
 
