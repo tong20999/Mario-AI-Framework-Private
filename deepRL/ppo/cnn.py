@@ -116,13 +116,13 @@ class CNNActor(nn.Module):
 
     def _format_obs(self, obs: dict):
         return {
-            'grid': torch.tensor(np.array(obs['grid']), dtype=torch.float32, device=self.device),
+            'grid': torch.tensor(np.array(obs['grid']), dtype=torch.long, device=self.device),
             'vector': torch.tensor(np.array(obs['vector']), dtype=torch.float32, device=self.device)
         }
 
     def _format_single_obs(self, obs: dict):
         return {
-            'grid': torch.tensor(obs['grid'], dtype=torch.float32, device=self.device).unsqueeze(0),
+            'grid': torch.tensor(obs['grid'], dtype=torch.long, device=self.device).unsqueeze(0),
             'vector': torch.tensor(obs['vector'], dtype=torch.float32, device=self.device).unsqueeze(0)
         }
 
@@ -192,7 +192,7 @@ class CNNCritic(nn.Module):
 
     def _format_obs(self, obs: dict):
         return {
-            'grid': torch.tensor(np.array(obs['grid']), dtype=torch.float32, device=self.device),
+            'grid': torch.tensor(np.array(obs['grid']), dtype=torch.long, device=self.device),
             'vector': torch.tensor(np.array(obs['vector']), dtype=torch.float32, device=self.device)
         }
 

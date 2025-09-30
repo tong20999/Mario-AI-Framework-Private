@@ -49,9 +49,6 @@ public class MarioWorld {
     private Objective blocksObjective = new Objective();
     private Objective enemiesObjective = new Objective();
 
-    private float currentProgress = 0f;
-    private int idleCounter;
-
     public MarioWorld(MarioEvent[] killEvents) {
         this.pauseTimer = 0;
         this.gameStatus = GameStatus.RUNNING;
@@ -138,8 +135,6 @@ public class MarioWorld {
         world.initTimer = this.initTimer;
         world.currentTick = this.currentTick;
         world.level = this.level.clone();
-        world.currentProgress = this.currentProgress;
-        world.idleCounter = this.idleCounter;
 
         // Clone sprites
         for (MarioSprite sprite : this.sprites) {
@@ -656,10 +651,6 @@ public class MarioWorld {
 
     public int getCollectedCoinCount() {
         return this.level.getCoins().size() - this.getUnCollectCoin().size();
-    }
-
-    public int getIdleCounter() {
-        return idleCounter;
     }
 
     public void collectCoin(int block, int xTile, int yTile) {

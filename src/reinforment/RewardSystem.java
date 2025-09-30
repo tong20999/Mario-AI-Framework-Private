@@ -10,21 +10,22 @@ import java.util.ArrayList;
 
 public class RewardSystem {
     // Per-objective shaping (dense)
-    private static final float KILL_REWARD = 40f;
-    private static final float BUMP_REWARD = 20f;
-    private static final float COIN_REWARD = 20f;
+    private static final float KILL_REWARD = 80f;
+    private static final float BUMP_REWARD = 50f;
+    private static final float COIN_REWARD = 50f;
     private static final float POWER_UP_REWARD = 20f;
 
     // Step & behavior costs
-    private static final float DAMAGE_PENALTY = -50f;
+    private static final float STEP_COST = -0.5f;
+
     // Win / completion structure
     private static final float BASE_WIN_REWARD = 200f;
 
-
     // Failure penalty
-    private static final float FAILURE_LOSE = -100f;
-    private static final float FAILURE_TIMEOUT = -100f;
-    private static final float PARTIAL_WIN = 0f;
+    private static final float DAMAGE_PENALTY = -30f;
+    private static final float FAILURE_LOSE = -70f;
+    private static final float FAILURE_TIMEOUT = -70f;
+    private static final float PARTIAL_WIN = -50f;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = 0;
@@ -52,6 +53,8 @@ public class RewardSystem {
                 reward += FAILURE_LOSE;
             } else if (type == EventType.TIME_OUT.getValue()) {
                 reward += FAILURE_TIMEOUT;
+            } else if (type == EventType.STEP.getValue()) {
+                reward += STEP_COST;
             } else if (type == EventType.DAMAGE.getValue()) {
                 reward += DAMAGE_PENALTY;
             }
@@ -97,6 +100,8 @@ public class RewardSystem {
                 value = FAILURE_TIMEOUT;
             } else if (type == EventType.DAMAGE.getValue()) {
                 value = DAMAGE_PENALTY;
+            } else if (type == EventType.STEP.getValue()) {
+                value = STEP_COST;
             } else {
                 value = 0f;
             }

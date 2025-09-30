@@ -914,10 +914,6 @@ public class MarioForwardModel {
         return new byte[]{ (byte) near, (byte) mid, (byte) far };
     }
 
-    public int getIdleCounter(){
-        return world.getIdleCounter();
-    }
-
     public int[] getCoinsObjective(){
         return world.getCoinsObjective();
     }

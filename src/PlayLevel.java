@@ -42,12 +42,12 @@ public class PlayLevel {
 
         while (true){
             ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel
-                    .parseLevel(new PCGLevelDto(30, 35, 100,101, 5,9,11,
-                    false,false,false, 0 ,9 ,11 ,3
+                    .parseLevel(new PCGLevelDto(30, 35, 5,6, 5,9,11,
+                    false,false,false, 0 ,9 ,11 ,5
                     , 13 ,14 , 0, 0 ,0 ,0 ,2, 5, 0
                     ,100, null, false));
             pcgLevel.generate();
-            printResults(game.runGame(new agents.human.Agent(), pcgLevel.getContent(), 1000, 0, true));
+            printResults(game.runGame(new agents.human.Agent(), pcgLevel.getContent(), 50, 0, true));
         }
 
     }
