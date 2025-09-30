@@ -220,7 +220,6 @@ public class MarioGameTraining {
             var events = miniStep(action);
             miniStepEvents.addAll(events);
         }
-        miniStepEvents.add(new MarioEvent(EventType.STEP, 0));
         var nextWorldState = this.world.clone();
         var nextState = new MarioForwardModel(nextWorldState, miniStepEvents);
         float reward = RewardSystem.getReward(this.world, miniStepEvents);

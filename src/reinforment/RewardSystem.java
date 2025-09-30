@@ -13,10 +13,7 @@ public class RewardSystem {
     private static final float KILL_REWARD = 80f;
     private static final float BUMP_REWARD = 50f;
     private static final float COIN_REWARD = 50f;
-    private static final float POWER_UP_REWARD = 20f;
-
-    // Step & behavior costs
-    private static final float STEP_COST = -0.5f;
+    private static final float POWER_UP_REWARD = 100f;
 
     // Win / completion structure
     private static final float BASE_WIN_REWARD = 200f;
@@ -53,8 +50,6 @@ public class RewardSystem {
                 reward += FAILURE_LOSE;
             } else if (type == EventType.TIME_OUT.getValue()) {
                 reward += FAILURE_TIMEOUT;
-            } else if (type == EventType.STEP.getValue()) {
-                reward += STEP_COST;
             } else if (type == EventType.DAMAGE.getValue()) {
                 reward += DAMAGE_PENALTY;
             }
@@ -100,8 +95,6 @@ public class RewardSystem {
                 value = FAILURE_TIMEOUT;
             } else if (type == EventType.DAMAGE.getValue()) {
                 value = DAMAGE_PENALTY;
-            } else if (type == EventType.STEP.getValue()) {
-                value = STEP_COST;
             } else {
                 value = 0f;
             }

@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
   environment_settings = {
       'env_name': 'LunarLander-v2',
-      'gamma': 0.997,
+      'gamma': 0.999,
       'max_minutes': 6000,
       'max_episodes': 100000,
       'goal_mean_100_reward': 25000
