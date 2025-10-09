@@ -131,10 +131,17 @@ class CNNActor(nn.Module):
         logits = self.actor_head(features)
         return logits
 
-    def np_pass(self, states):
+    def np_pass(self, states, ban_jump_only_mask=None):
         formatted_states = self._format_obs(states)
         logits = self.forward(formatted_states)
-        
+        logits = self._mask_logits(logits, banned_idx=(9,)) 
+
+        if ban_jump_only_mask is not None:
+            if not torch.is_tensor(ban_jump_only_mask):
+                ban_jump_only_mask = torch.tensor(ban_jump_only_mask, dtype=torch.bool, device=logits.device)
+            logits = logits.clone()
+            logits[ban_jump_only_mask, 4] = -1e9  # 4 = JUMP-only
+
         dist = torch.distributions.Categorical(logits=logits)
         actions = dist.sample()
         logpas = dist.log_prob(actions)
@@ -150,6 +157,7 @@ class CNNActor(nn.Module):
     def select_action(self, obs: dict):
         states = self._format_single_obs(obs)
         logits = self.forward(states)
+        logits = self._mask_logits(logits, banned_idx=(9,))
         dist = torch.distributions.Categorical(logits=logits)
         action = dist.sample()
         return action.item()
@@ -157,6 +165,7 @@ class CNNActor(nn.Module):
     def select_greedy_action(self, obs: dict):
         states = self._format_single_obs(obs)
         logits = self.forward(states)
+        logits = self._mask_logits(logits, banned_idx=(9,))
         action = torch.argmax(logits, dim=-1)
         return action.item()
 
@@ -167,11 +176,20 @@ class CNNActor(nn.Module):
         if not isinstance(actions, torch.Tensor):
             actions = torch.tensor(actions, device=self.device)
         logits = self.forward(states)
-        
+        logits = self._mask_logits(logits, banned_idx=(9,))
         dist = torch.distributions.Categorical(logits=logits)
         logpas = dist.log_prob(actions.squeeze())
         entropies = dist.entropy()
         return logpas, entropies
+    
+    def _mask_logits(self, logits, banned_idx=(9,)):   # 9 = NO-OP in marioGame.py
+        # logits: (B, n_actions)
+        if not isinstance(banned_idx, (list, tuple)):
+            banned_idx = (banned_idx,)
+        logits = logits.clone()                     # avoid in-place on autograd graph
+        for idx in banned_idx:
+            logits[:, idx] = -1e9                   # effectively zero probability
+        return logits
 
 class CNNCritic(nn.Module):
     def __init__(self, num_stack: int, **kwargs):

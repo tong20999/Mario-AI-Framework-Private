@@ -12,7 +12,7 @@ from ppo.ppo import PPO
 from logger import setup_logging
 
 logger = logging.getLogger('Agent:Main')
-num_stack = 8
+num_stack = 4
 
 def make_env_fn():
   # Wrap the base environment with our new frame stacker
@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
   environment_settings = {
       'env_name': 'LunarLander-v2',
-      'gamma': 0.999,
+      'gamma': 0.997,
       'max_minutes': 6000,
       'max_episodes': 100000,
       'goal_mean_100_reward': 25000

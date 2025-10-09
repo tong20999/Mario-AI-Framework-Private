@@ -86,7 +86,6 @@ public class GameServer {
             } catch (IOException e) {
                 // Ignore
             }
-            System.out.println("Client disconnected: " + socket.getInetAddress());
 
             // *** ADDED: Clean up the game instance when the client disconnects. ***
             clientGame.close(); // You must implement this method in MarioGameTraining

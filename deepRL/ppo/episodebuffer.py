@@ -58,7 +58,8 @@ class EpisodeBuffer():
              max_episodes:int, 
              max_episode_steps:int,
              visual: bool = True):
-            
+        jump_streak = np.zeros(self.n_workers, dtype=np.int32)   
+        K = 3
         self.clear(max_episodes, max_episode_steps)
         levels_to_assign = [levelBase64 for _ in range(self.n_workers)] 
 
@@ -75,7 +76,8 @@ class EpisodeBuffer():
         
         while not buffer_full and length < max_episodes:
             with torch.no_grad():
-                actions, logpas, are_exploratory = policy_model.np_pass(states)
+                ban_mask = (jump_streak >= K)
+                actions, logpas, are_exploratory = policy_model.np_pass(states, ban_jump_only_mask=ban_mask)
                 values:torch.Tensor = value_model(states)
 
             next_states, rewards, terminals, truncateds, _ = envs.step(actions)
@@ -89,6 +91,12 @@ class EpisodeBuffer():
             worker_exploratory[np.arange(self.n_workers), worker_steps] = are_exploratory
             worker_rewards[np.arange(self.n_workers), worker_steps] = rewards
 
+            for w_idx, a in enumerate(actions):
+                if a == 4:
+                    jump_streak[w_idx] += 1
+                else:
+                    jump_streak[w_idx] = 0
+
             for w_idx in range(self.n_workers):
                 if worker_steps[w_idx] + 1 == max_episode_steps:
                     truncateds[w_idx] = 1
@@ -97,6 +105,9 @@ class EpisodeBuffer():
             worker_steps += 1
 
             dones = terminals | truncateds
+
+            for w_idx in np.flatnonzero(dones):
+                jump_streak[w_idx] = 0
 
             percent = length / max_episodes
             if percent >= 0.25 and percent < 0.5 and not self.progress_25:
@@ -173,11 +184,21 @@ class EpisodeBuffer():
         self.gaes_mem = np.concatenate([row[:ep_t[i]] for i, row in enumerate(self.gaes_mem[ep_idxs])])
         self.logpas_mem = np.concatenate([row[:ep_t[i]] for i, row in enumerate(self.logpas_mem[ep_idxs])])
 
+        gaes_mean_for_logging = np.mean(self.gaes_mem)
+
+        # Normalize returns and advantages for the entire batch
+        returns_mean = np.mean(self.returns_mem)
+        returns_std = np.std(self.returns_mem)
+        self.returns_mem = (self.returns_mem - returns_mean) / (returns_std + 1e-8)
+
+        gaes_std = np.std(self.gaes_mem)
+        self.gaes_mem = (self.gaes_mem - gaes_mean_for_logging) / (gaes_std + 1e-8)
+
         ep_r = self.episode_reward[ep_idxs]
         ep_x = self.episode_exploration[ep_idxs]
         ep_s = self.episode_seconds[ep_idxs]
         logger.info(f'filling 100%')
-        return ep_t, ep_r, ep_x, ep_s
+        return ep_t, ep_r, ep_x, ep_s, gaes_mean_for_logging
 
     def get_data(self):
         state_data = tuple(self.cat_mem[key] for key in self.state_keys)

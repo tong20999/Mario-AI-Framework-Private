@@ -51,6 +51,7 @@ public class MarioWorld {
 
     public boolean isEvaluation = false;
     private int stallCounter = 0;
+    private final int MAX_STALL = 90;
 
     public MarioWorld(MarioEvent[] killEvents) {
         this.pauseTimer = 0;
@@ -140,6 +141,7 @@ public class MarioWorld {
         world.isEvaluation = this.isEvaluation;
         world.level = this.level.clone();
         world.stallCounter = this.stallCounter;
+        world.isEvaluation = this.isEvaluation;
         // Clone sprites
         for (MarioSprite sprite : this.sprites) {
             MarioSprite cloneSprite = sprite.clone();
@@ -225,6 +227,7 @@ public class MarioWorld {
         aliveEnemy.removeIf(a -> Objects.equals(sprite.initialCode,
                 MessageFormat.format("{0}_{1}_{2}", a.x, a.y, a.type.getValue())));
         enemiesObjective.mark(sprite.initialCode);
+        this.stallCounter = 0;
     }
 
     public void removeSprite(MarioSprite sprite) {
@@ -520,9 +523,10 @@ public class MarioWorld {
             stallCounter = 0;
         }
 
-        if(stallCounter > 160){
+        if(stallCounter > MAX_STALL){
             if(!isEvaluation){
-                this.timeout();
+                this.addEvent(EventType.STALL, 0);
+                //this.timeout();
             }
             stallCounter = 0;
         }
@@ -554,6 +558,7 @@ public class MarioWorld {
         ArrayList<TileFeature> features = TileFeature.getTileType(block);
         if (features.contains(TileFeature.BUMPABLE)) {
             unbumpBlocks.removeIf(b -> b.getX() == xTile && b.getY() == yTile);
+            this.stallCounter = 0;
             blocksObjective.mark(new Point(xTile, yTile));
             bumpInto(xTile, yTile - 1);
             this.addEvent(EventType.BUMP, MarioForwardModel.OBS_QUESTION_BLOCK);
@@ -689,6 +694,7 @@ public class MarioWorld {
         this.collectCoin++;
         this.getUnCollectCoin().removeIf(c -> c.getX() == xTile && c.getY() == yTile);
         this.coinsObjective.mark(new Point(xTile, yTile));
+        this.stallCounter = 0;
     }
 
     public int[] getCoinsObjective() {

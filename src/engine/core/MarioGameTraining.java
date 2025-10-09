@@ -94,7 +94,7 @@ public class MarioGameTraining {
 
     private int fps = 0;
     private ProceduralContentGenerationLevel pcg = null;
-    private final int frameSkip = 5;
+    private final int frameSkip = 3;
 
     /**
      * Create a mario game to be played
@@ -236,13 +236,15 @@ public class MarioGameTraining {
         }
 
         if (this.world.gameStatus != GameStatus.RUNNING && this.evaluation && this.fps < 30) {
-            Helper.logEvaluationResult(this.episode, this.world.gameStatus.toString(),
+            Helper.logEvaluationResultToDataBase(this.episode, this.world.gameStatus.toString(),
                     this.pcg, this.world, this.rewardEvents, this.evaluationReward, this.minTimer, this.maxTimer);
         }
 
+        var isTruncated = miniStepEvents.stream().anyMatch(e -> e.getEventTypeEnum() == EventType.STALL);
+
         return State.stepResult(State.toByte(nextState), reward,
                 this.world.gameStatus != GameStatus.RUNNING,
-                false);
+                isTruncated);
     }
 
     public ArrayList<MarioEvent> miniStep(boolean[] action) throws Exception {

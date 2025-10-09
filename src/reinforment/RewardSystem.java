@@ -1,7 +1,6 @@
 package reinforment;
 
 import engine.core.MarioEvent;
-import engine.core.MarioForwardModel;
 import engine.core.MarioWorld;
 import engine.helper.EventType;
 import engine.helper.SpriteType;
@@ -17,40 +16,61 @@ public class RewardSystem {
     private static final float FAILURE_LOSE = -100f;
     private static final float FAILURE_TIMEOUT = -100f;
 
-    // Potential-based shaping parameters
-    // Phi(s) = -(remainingEnemies + remainingCoins + remainingBlocks)
-    // r_shape = K * (gamma * Phi(s') - Phi(s))
-    // Note: Keep K modest so per-progress signal aids learning without dwarfing terminal rewards.
-    private static final float SHAPING_K = 3.0f;      // tune 2.0–5.0
-    private static final float SHAPING_GAMMA = 0.99f; // match PPO gamma if possible
+    private static final float POWER_UP_REWARD = 10f;
 
-    // Track previous remaining objectives per world (auto-removed when world GC'ed)
+    // The total shaping reward an agent receives for completing 100% of a level's
+    // sub-goals (enemies, coins, etc.). This value now acts as the scaling factor 'K'.
+    private static final float MAX_SHAPING_REWARD = 25.0f;
+    private static final float SHAPING_GAMMA = 0.999f; // Match PPO gamma if possible
+
+    // Weights for each objective to define their relative importance.
+    private static final int ENEMY_WEIGHT = 15;
+    private static final int BLOCK_WEIGHT = 3;
+    private static final int COIN_WEIGHT = 1;
+
+
+
+    // Track previous remaining objectives per world. This is still needed.
     private static final WeakHashMap<MarioWorld, Integer> prevRemainingMap = new WeakHashMap<>();
 
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
-        float reward = 0f;
+        float reward = -0.002f;
 
-        // Potential-based shaping (training-only)
-        // Compute before handling terminal events; world state already reflects this step's updates.
-        int currRemaining = remainingObjectives(world);
-        int prevRemaining = prevRemainingMap.getOrDefault(world, currRemaining);
+        // --- Potential-based shaping (training-only) ---
         if (!world.isEvaluation) {
-            float phiPrev = -prevRemaining;
-            float phiCurr = -currRemaining;
-            float shaping = SHAPING_K * (SHAPING_GAMMA * phiCurr - phiPrev);
-            reward += shaping;
-        }
-        // Update tracker for next step
-        prevRemainingMap.put(world, currRemaining);
+            // Step 1: Calculate the level's total potential dynamically on each step.
+            // This replaces the need for a cache/map.
+            int maxPotential = totalObjective(world);
 
+            if (maxPotential > 0) {
+                // Step 2: Calculate current and previous potential.
+                int currRemaining = remainingObjectives(world);
+                int prevRemaining = prevRemainingMap.getOrDefault(world, currRemaining);
+
+                // Step 3: Normalize potential to a range of [-1, 0].
+                float phiPrev = -prevRemaining / (float) maxPotential;
+                float phiCurr = -currRemaining / (float) maxPotential;
+
+                // Step 4: Calculate the shaping reward.
+                float shaping = MAX_SHAPING_REWARD * (SHAPING_GAMMA * phiCurr - phiPrev);
+                reward += shaping;
+
+                // Update tracker for the next step.
+                prevRemainingMap.put(world, currRemaining);
+            }
+        }
+
+        // --- Terminal Rewards (Win/Loss/Timeout) ---
         for (MarioEvent e : miniStepEvents) {
             int type = e.getEventType();
-
+            int param = e.getEventParam();
             if (type == EventType.WIN.getValue()) {
                 reward += calculateWinReward(world);
-                // Episode ended, cleanup tracker
-                prevRemainingMap.remove(world);
+                prevRemainingMap.remove(world); // Episode ended, cleanup tracker.
+            } else if (type == EventType.COLLECT.getValue() &&
+                    (param == SpriteType.FIRE_FLOWER.getValue() || param == SpriteType.MUSHROOM.getValue())) {
+                reward += POWER_UP_REWARD;
             } else if (type == EventType.LOSE.getValue()) {
                 reward += FAILURE_LOSE;
                 prevRemainingMap.remove(world);
@@ -63,10 +83,17 @@ public class RewardSystem {
     }
 
     private static int remainingObjectives(MarioWorld world) {
-        int enemiesLeft = world.getAliveEnemies().size();
-        int blocksLeft = world.getUnbumpBlocks().size();
-        int coinsLeft = world.getUnCollectCoin().size();
+        int enemiesLeft = world.getAliveEnemies().size() * ENEMY_WEIGHT;
+        int blocksLeft = world.getUnbumpBlocks().size() * BLOCK_WEIGHT;
+        int coinsLeft = world.getUnCollectCoin().size() * COIN_WEIGHT;
         return enemiesLeft + blocksLeft + coinsLeft;
+    }
+
+    private static int totalObjective(MarioWorld world) {
+        int enemies = world.level.getEnemies().size() * ENEMY_WEIGHT;
+        int blocks = world.level.getBumpableBlocks().size() * BLOCK_WEIGHT;
+        int coins = world.level.getCoins().size() * COIN_WEIGHT;
+        return enemies + blocks + coins;
     }
 
     public static ArrayList<RewardEvent> logRewardEvent(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
@@ -76,9 +103,12 @@ public class RewardSystem {
         for (MarioEvent e : miniStepEvents) {
             float value;
             int type = e.getEventType();
-
+            int param = e.getEventParam();
             if (type == EventType.WIN.getValue()) {
                 value = calculateWinReward(world);
+            } else if (type == EventType.COLLECT.getValue() &&
+                    (param == SpriteType.FIRE_FLOWER.getValue() || param == SpriteType.MUSHROOM.getValue())) {
+                value = POWER_UP_REWARD;
             } else if (type == EventType.LOSE.getValue()) {
                 value = FAILURE_LOSE;
             } else if (type == EventType.TIME_OUT.getValue()) {

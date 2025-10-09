@@ -155,15 +155,6 @@ class PPO():
         device = self.device
         n_samples = len(actions_np)
 
-        # IMPORTANT: Keep returns in raw reward scale for value loss to match
-        # the scale used by GAE deltas in EpisodeBuffer. Normalizing returns here
-        # would cause a scale mismatch between r + gamma*V(s') - V(s) (raw) and V targets (normalized).
-        # We still normalize advantages (GAE) below for policy stability.
-
-        gaes_mean = np.mean(gaes_np)
-        gaes_std = np.std(gaes_np)
-        gaes_np = (gaes_np - gaes_mean) / (gaes_std + EPS)
-
         policy_losses, value_losses, entropy_losses = [], [], []
         entropies, values_, kls = [], [], []
 
@@ -174,7 +165,7 @@ class PPO():
         # Policy Optimization Loop
         # =================================================================
         policy_start_time = time.time()
-        for _ in range(self.policy_optimization_epochs):
+        for j in range(self.policy_optimization_epochs):
             early_stop = False
             indices = np.random.permutation(n_samples)
             for i in range(0, n_samples, self.batch_size):
@@ -215,7 +206,7 @@ class PPO():
                     break
             
             if early_stop:
-                logger.warning(f'Early stopping policy training due to KL divergence: {kl_div:.4f}')
+                logger.warning(f'Early stopping policy training at {j} due to KL divergence: {kl_div:.4f}')
                 break
                 
         logger.info(f'Policy optimization finished in {time.time() - policy_start_time:.2f} seconds')
@@ -268,7 +259,7 @@ class PPO():
         logger.info(f'Total optimization finished in {time.time() - start_optimize_time:.2f} seconds')
         
         return (np.mean(policy_losses), np.mean(value_losses), np.mean(entropy_losses), 
-                np.mean(entropies), np.mean(values_), np.mean(kls), gaes_mean)
+                np.mean(entropies), np.mean(values_), np.mean(kls))
 
     def train(self, make_envs_fn:Callable, make_env_fn:Callable, gamma, 
               max_minutes, max_episodes, goal_mean_100_reward, 
@@ -294,32 +285,32 @@ class PPO():
     
         self.nS, nA = env.observation_space, env.action_space.n
 
-        total_iterations= 500 + (self.max_buffer_episodes * self.n_workers)
+        total_iterations= 500
         start_factor=1.0
-        end_factor=0.5
+        end_factor=1.0
         logger.info(f'scheduler lr total iteration {total_iterations} start factor {start_factor} end factor {end_factor}')
 
         self.policy_model = self.policy_model_fn(self.nS, nA)
         self.policy_optimizer = self.policy_optimizer_fn(self.policy_model, self.policy_optimizer_lr)
 
         
-        self.policy_scheduler = LinearLR(
-            self.policy_optimizer,
-            start_factor=start_factor,
-            end_factor=end_factor,
-            total_iters=total_iterations
-        )   
+        # self.policy_scheduler = LinearLR(
+        #     self.policy_optimizer,
+        #     start_factor=start_factor,
+        #     end_factor=end_factor,
+        #     total_iters=total_iterations
+        # )   
 
         self.value_model = self.value_model_fn(self.nS)
         self.value_optimizer = self.value_optimizer_fn(self.value_model, self.value_optimizer_lr)
-        self.value_scheduler = LinearLR(
-            self.value_optimizer,
-            start_factor=start_factor,
-            end_factor=end_factor,
-            total_iters=total_iterations
-        )
+        # self.value_scheduler = LinearLR(
+        #     self.value_optimizer,
+        #     start_factor=start_factor,
+        #     end_factor=end_factor,
+        #     total_iters=total_iterations
+        # )
 
-        end_factor = 0.1
+        end_factor = 0.5
         initial_entropy_weight = self.entropy_loss_weight
 
         checkpoint_path = self.find_model_file_path('checkpoint_')
@@ -359,7 +350,7 @@ class PPO():
                 try:
                     start_time = time.time()
                     episode_timestep, episode_reward, episode_exploration, \
-                    episode_seconds = self.episode_buffer.fill(
+                    episode_seconds, gaes_mean = self.episode_buffer.fill(
                         envs, self.policy_model, self.value_model, episode, 
                         levelBase64, 
                         self.max_buffer_episodes,
@@ -374,23 +365,23 @@ class PPO():
                         shutil.rmtree(self.working_dir)
                 
                 n_ep_batch = len(episode_timestep)
-                policy_losses, value_losses, entropy_losses, entropies, values, kls, gaes_mean = self.optimize_model()
-                self.policy_scheduler.step()
-                self.value_scheduler.step()
+                policy_losses, value_losses, entropy_losses, entropies, values, kls = self.optimize_model()
+                #self.policy_scheduler.step()
+                #self.value_scheduler.step()
 
-                decay_factor = evaluation_count / total_iterations
-                end_value = initial_entropy_weight * end_factor
-                self.entropy_loss_weight = initial_entropy_weight - (initial_entropy_weight - end_value) * min(1.0, decay_factor)
+                # decay_factor = evaluation_count / total_iterations
+                # end_value = initial_entropy_weight * end_factor
+                # self.entropy_loss_weight = initial_entropy_weight - (initial_entropy_weight - end_value) * min(1.0, decay_factor)
 
-                logger.info(f'policy LR: {self.policy_scheduler.get_last_lr()[0]}')
-                logger.info(f'value LR: {self.value_scheduler.get_last_lr()[0]}')
-                logger.info(f'entropy weight: {self.entropy_loss_weight}')
+                # logger.info(f'policy LR: {self.policy_scheduler.get_last_lr()[0]}')
+                # logger.info(f'value LR: {self.value_scheduler.get_last_lr()[0]}')
+                # logger.info(f'entropy weight: {self.entropy_loss_weight}')
 
                 # stats
                 evaluation_count +=1
                 # Evaluate over multiple episodes for stability; also get success rate (scale-invariant)
                 eval_eps = 10
-                evaluation_score, success_rate = self.evaluate(evaluation_count, self.policy_model, env, levelBase64, n_episodes=eval_eps)
+                evaluation_score, success_rate, action_list = self.evaluate(evaluation_count, self.policy_model, env, levelBase64, n_episodes=eval_eps, visual=False)
                 logger.info('evaluation {} mean_return {} success_rate {}% value losses {}'.format(
                     evaluation_count, np.round(evaluation_score, 2), np.round(success_rate*100, 1), np.round(value_losses, 3)))
 
@@ -413,12 +404,15 @@ class PPO():
                     "values.txt": values,
                     "kls.txt": kls,
                     "gaes.txt": gaes_mean,
-                    "policy_lr.txt": self.policy_scheduler.get_last_lr()[0],
-                    "value_lr.txt": self.value_scheduler.get_last_lr()[0],
+                    #"policy_lr.txt": self.policy_scheduler.get_last_lr()[0],
+                    #"value_lr.txt": self.value_scheduler.get_last_lr()[0],
                 }
 
                 for filename, value in stats_to_write.items():
                     self.write_info(self.working_dir, filename, f"{value}\n")
+                
+                for ep_action in action_list:
+                    self.write_info(self.working_dir, "action_list.txt", f"{ep_action}\n")
 
                
                 if evaluation_count % 50 == 0:
@@ -530,34 +524,38 @@ class PPO():
             
         self.working_dir = working_dir
 
-    def evaluate(self, evaluation_count, eval_model:CNNActor, eval_env, level:str, n_episodes=1, greedy=True, visual=True, playMode=False):
+    def evaluate(self, evaluation_count, eval_model:CNNActor, eval_env, level:str, n_episodes=1, greedy=True, visual=True, playMode=False) -> tuple[float, float, list]:
         rs = []
         successes = 0
-        for _ in range(n_episodes):
+        action_list = []
+        for i in range(n_episodes):
             try:
-                info = {"episode" : evaluation_count, "evaluation" : True, "visual":visual, "level" : level}
+                unique_episode_number = (evaluation_count - 1) * n_episodes + i + 1
+                info = {"episode" : unique_episode_number, "evaluation" : True, "visual":i == 0, "level" : level}
                 s, _  = eval_env.reset(options=info)
                 d = False
                 rs.append(0.0)
+                action_hist = np.zeros(eval_env.action_space.n, dtype=int)
                 for _ in count():
-                    if greedy:
-                        a = eval_model.select_greedy_action(s)
-                    else: 
-                        a = eval_model.select_action(s)
+                    a = eval_model.select_greedy_action(s)
                     s, r, d, t, _ = eval_env.step(a)
+                    action_hist[a] += 1
                     rs[-1] += r
                     if d or t:
                         break
                 # Success heuristic: total episode return > 0 works for both +1 and +100 scales
                 if rs[-1] > 0:
                     successes += 1
+                action_list.append(action_hist.tolist())
             except KeyboardInterrupt:
                 pass
+
+        logger.info(f"[EVAL] action histogram: {action_hist.tolist()}")
         mean_return = float(np.mean(rs)) if len(rs) > 0 else 0.0
         success_rate = float(successes) / float(len(rs)) if len(rs) > 0 else 0.0
         logger.info(f"evaluation mean return: {mean_return:.3f}, success rate: {success_rate*100:.1f}% over {len(rs)} episodes")
         # Keep signature compatible with existing call sites; the second value is success rate
-        return mean_return, success_rate
+        return mean_return, success_rate, action_list
             
     def save_checkpoint(self, evaluation_idx: int):
         checkpoint_path = os.path.join(self.working_dir, f'checkpoint_{evaluation_idx}.tar')
@@ -578,7 +576,7 @@ class PPO():
                 policy_model.load_state_dict(checkpoint['policy_model_state_dict'])
                 policy_model.eval()
                 
-            final_eval_score, score_std = self.evaluate(1, policy_model, env, level, n_episodes=10000, visual=True, playMode=True)
+            final_eval_score, score_std, _ = self.evaluate(1, policy_model, env, level, n_episodes=10000, visual=True, playMode=True)
 
     def write_info(self, working_dir, filename, value):
         with open(os.path.join(working_dir, filename), "a") as file:
