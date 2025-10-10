@@ -489,8 +489,7 @@ public class ProceduralContentGenerationLevel {
             if(!doIsValidToAdd(addIndex, 4)){
                 return;
             }
-            int pattern = rand.nextInt(0, 3);
-            pattern = 1;
+            int pattern = rand.nextInt(0, 2);
             switch (pattern){
                 case 0:
                     doAddRamp1(addIndex);
@@ -501,30 +500,34 @@ public class ProceduralContentGenerationLevel {
                     continue;
                 case 1:
                     doAddObstacle(addIndex);
-                    continue;
-                case 2:
-                    doAddObstacle2(addIndex);
             }
         }
     }
 
-    private void doAddObstacle(int addIndex){
-        int maxHeight = rand.nextInt(9,13);
-        for (int height = 0; height < levels.size(); height++) {
-            // Get the current level's list once and reuse it
-            ArrayList<Character> currentLevel = levels.get(height);
-            if (height == GROUND_1_LEVEL || height == GROUND_2_LEVEL) {
-                currentLevel.add(addIndex, 'X');
-            } else if (height < GROUND_1_LEVEL && height > maxHeight) {
-                currentLevel.add(addIndex,'#');
-            }
-            else {
-                currentLevel.add(addIndex, '-');
-            }
-        }
-    }
+    private void doAddObstacle(int addIndex) {
+        // Random number of vertical obstacles (1 to 4)
+        int obstacleCount = rand.nextInt(1, 5);
+        int currentIndex = addIndex;
 
-    private void doAddObstacle2(int addIndex){
+        for (int i = 0; i < obstacleCount; i++) {
+            int obstacleHeight = rand.nextInt(9, 13);
+
+            // Create one vertical obstacle at currentIndex
+            for (int height = 0; height < levels.size(); height++) {
+                ArrayList<Character> currentLevel = levels.get(height);
+
+                if (height == GROUND_1_LEVEL || height == GROUND_2_LEVEL) {
+                    currentLevel.add(currentIndex, 'X');
+                } else if (height < GROUND_1_LEVEL && height > obstacleHeight) {
+                    currentLevel.add(currentIndex, '#');
+                } else {
+                    currentLevel.add(currentIndex, '-');
+                }
+            }
+
+            // Move to next obstacle position with random spacing (1–2)
+            currentIndex += rand.nextInt(1, 3);
+        }
     }
 
     private void doAddRamp2(int addIndex){
