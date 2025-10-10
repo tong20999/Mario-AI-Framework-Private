@@ -949,4 +949,8 @@ public class MarioForwardModel {
 
         return (float) complete / total;
     }
+
+    public MarioWorld getMarioWorld() {
+        return world;
+    }
 }

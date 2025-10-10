@@ -53,6 +53,24 @@ public class MarioWorld {
     private int stallCounter = 0;
     private final int MAX_STALL = 90;
 
+    public List<MarioSprite> getNearestEnemies(){
+        Set<String> aliveEnemyCodes = new HashSet<>();
+        for (MarioSprite a : aliveEnemy) {
+            // Construct the unique code string for comparison
+            String code = MessageFormat.format("{0}_{1}_{2}", a.x, a.y, a.type.getValue());
+            aliveEnemyCodes.add(code);
+        }
+
+        List<MarioSprite> out = new ArrayList<>();
+        for (MarioSprite sprite : sprites) {
+            if (aliveEnemyCodes.contains(sprite.initialCode)) {
+                out.add(sprite);
+            }
+        }
+
+        return out;
+    }
+
     public MarioWorld(MarioEvent[] killEvents) {
         this.pauseTimer = 0;
         this.gameStatus = GameStatus.RUNNING;

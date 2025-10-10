@@ -95,7 +95,7 @@ public class MarioGameTraining {
     private int fps = 0;
     private ProceduralContentGenerationLevel pcg = null;
     private final int frameSkip = 3;
-
+    private RewardSystem rewardSystem;
     /**
      * Create a mario game to be played
      */
@@ -175,6 +175,7 @@ public class MarioGameTraining {
         this.lastMilestone = 0;
         this.lastCoinCount = 0;
         this.stepCount = 0;
+        this.rewardSystem = new RewardSystem();
         String level;
 
         if(pcgLevel.getFile() != null){
@@ -223,9 +224,9 @@ public class MarioGameTraining {
         }
         var nextWorldState = this.world.clone();
         var nextState = new MarioForwardModel(nextWorldState, miniStepEvents);
-        float reward = RewardSystem.getReward(this.world, miniStepEvents);
+        float reward = rewardSystem.getReward(this.world, miniStepEvents);
         if (this.evaluation) {
-            ArrayList<RewardEvent> miniStepRewardEvents = RewardSystem.logRewardEvent(this.world, miniStepEvents);
+            ArrayList<RewardEvent> miniStepRewardEvents = rewardSystem.logRewardEvent(this.world, miniStepEvents);
             rewardEvents.addAll(miniStepRewardEvents);
 
             this.evaluationReward += reward;

@@ -1,12 +1,12 @@
 package reinforment;
 
 import engine.core.MarioEvent;
+import engine.core.MarioForwardModel;
 import engine.core.MarioWorld;
 import engine.helper.EventType;
 import engine.helper.SpriteType;
 
 import java.util.ArrayList;
-import java.util.WeakHashMap;
 
 public class RewardSystem {
     private static final float WIN_REWARD = 100f;
@@ -18,6 +18,10 @@ public class RewardSystem {
 
     private static final float POWER_UP_REWARD = 10f;
 
+    private static final float KILL_REWARD = 5f;
+    private static final float BUMP_REWARD = 2f;
+    private static final float COIN_REWARD = 1f;
+
     // The total shaping reward an agent receives for completing 100% of a level's
     // sub-goals (enemies, coins, etc.). This value now acts as the scaling factor 'K'.
     private static final float MAX_SHAPING_REWARD = 25.0f;
@@ -28,36 +32,35 @@ public class RewardSystem {
     private static final int BLOCK_WEIGHT = 3;
     private static final int COIN_WEIGHT = 1;
 
+    private static final int   TILE_SIZE          = 16;
+    // Scale of potential per tile (keep small so shaping <~5–10% of a win total)
+    private static final float PHI_LAMBDA         = 0.05f;
+    private static final float PBS_GAMMA          = 0.999f;
+    // Overall shaping scale (usually 1.0). We also clip per-step below.
+    private static final float PBS_BETA           = 1.0f;
+    // Clip shaping each step so it can’t dominate (if win=+100, ±0.5 is a good cap)
+    private static final float PBS_PER_STEP_CLIP  = 0.5f;
+    // ------- Per-episode state (per env/worker) -------
+    private float prevPhi   = 0f;
+    private boolean phiInit = false;
 
-
-    // Track previous remaining objectives per world. This is still needed.
-    private static final WeakHashMap<MarioWorld, Integer> prevRemainingMap = new WeakHashMap<>();
-
-
-    public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
+    public float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = -0.002f;
 
-        // --- Potential-based shaping (training-only) ---
         if (!world.isEvaluation) {
-            // Step 1: Calculate the level's total potential dynamically on each step.
-            // This replaces the need for a cache/map.
-            int maxPotential = totalObjective(world);
+            if (!phiInit) {
+                this.prevPhi = computePotential(world);
+                this.phiInit = true;
+            } else {
+                final float newPhi = computePotential(world);
+                float shaping = PBS_BETA * (PBS_GAMMA * newPhi - this.prevPhi);
 
-            if (maxPotential > 0) {
-                // Step 2: Calculate current and previous potential.
-                int currRemaining = remainingObjectives(world);
-                int prevRemaining = prevRemainingMap.getOrDefault(world, currRemaining);
+                // Clip per step so it stays a nudge
+                if (shaping > PBS_PER_STEP_CLIP)  shaping = PBS_PER_STEP_CLIP;
+                if (shaping < -PBS_PER_STEP_CLIP) shaping = -PBS_PER_STEP_CLIP;
 
-                // Step 3: Normalize potential to a range of [-1, 0].
-                float phiPrev = -prevRemaining / (float) maxPotential;
-                float phiCurr = -currRemaining / (float) maxPotential;
-
-                // Step 4: Calculate the shaping reward.
-                float shaping = MAX_SHAPING_REWARD * (SHAPING_GAMMA * phiCurr - phiPrev);
+                this.prevPhi = newPhi;
                 reward += shaping;
-
-                // Update tracker for the next step.
-                prevRemainingMap.put(world, currRemaining);
             }
         }
 
@@ -65,18 +68,26 @@ public class RewardSystem {
         for (MarioEvent e : miniStepEvents) {
             int type = e.getEventType();
             int param = e.getEventParam();
-            if (type == EventType.WIN.getValue()) {
-                reward += calculateWinReward(world);
-                prevRemainingMap.remove(world); // Episode ended, cleanup tracker.
+            if (type == EventType.STOMP_KILL.getValue() ||
+                    type == EventType.FIRE_KILL.getValue() ||
+                    type == EventType.SHELL_KILL.getValue() ||
+                    type == EventType.BUMP_KILL.getValue() ||
+                    type == EventType.FALL_KILL.getValue()) {
+                reward += KILL_REWARD;
             } else if (type == EventType.COLLECT.getValue() &&
                     (param == SpriteType.FIRE_FLOWER.getValue() || param == SpriteType.MUSHROOM.getValue())) {
                 reward += POWER_UP_REWARD;
+            } else if (type == EventType.BUMP.getValue() &&
+                    param == MarioForwardModel.OBS_QUESTION_BLOCK) {
+                reward += BUMP_REWARD;
+            } else if (type == EventType.COLLECT.getValue() && param == 15) {
+                reward += COIN_REWARD;
+            } else if (type == EventType.WIN.getValue()) {
+                reward += WIN_REWARD;
             } else if (type == EventType.LOSE.getValue()) {
                 reward += FAILURE_LOSE;
-                prevRemainingMap.remove(world);
             } else if (type == EventType.TIME_OUT.getValue()) {
                 reward += FAILURE_TIMEOUT;
-                prevRemainingMap.remove(world);
             }
         }
         return reward;
@@ -96,7 +107,7 @@ public class RewardSystem {
         return enemies + blocks + coins;
     }
 
-    public static ArrayList<RewardEvent> logRewardEvent(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
+    public ArrayList<RewardEvent> logRewardEvent(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         ArrayList<RewardEvent> rewardEvents = new ArrayList<>();
         String timer = (world.currentTimer == -1 ? "Inf"
                 : Integer.toString((int) Math.ceil(world.currentTimer / 1000f)));
@@ -105,7 +116,7 @@ public class RewardSystem {
             int type = e.getEventType();
             int param = e.getEventParam();
             if (type == EventType.WIN.getValue()) {
-                value = calculateWinReward(world);
+                value = WIN_REWARD;
             } else if (type == EventType.COLLECT.getValue() &&
                     (param == SpriteType.FIRE_FLOWER.getValue() || param == SpriteType.MUSHROOM.getValue())) {
                 value = POWER_UP_REWARD;
@@ -121,10 +132,40 @@ public class RewardSystem {
         return rewardEvents;
     }
 
-    private static float calculateWinReward(MarioWorld world) {
-        if(remainingObjectives(world) > 0){
-            return PARTIAL_WIN;
+    private static float computePotential(MarioWorld world) {
+        // Mario's tile X in camera space
+        final int marioTileX = (int)(world.mario.x / TILE_SIZE);
+
+        // Scan all *unfinished* objectives and keep the minimum dx ahead.
+        int nearestDxTiles = Integer.MAX_VALUE;
+
+        // ---- COINS not yet collected ----
+        // TODO: adapt to your actual API. Examples:
+        // for (Coin c : world.getCoins()) { if (!c.collected) { ... } }
+        for (var coin : world.getUnCollectCoin()) {
+            int dx = coin.getX() - marioTileX;
+            if (dx > 0 && dx < nearestDxTiles) nearestDxTiles = dx;
         }
-        return WIN_REWARD;
+
+        // ---- BLOCKS not yet hit ----
+        for (var block : world.getUnbumpBlocks()) {
+            int dx = block.getX() - marioTileX;
+            if (dx > 0 && dx < nearestDxTiles) nearestDxTiles = dx;
+        }
+
+        // ---- ENEMIES still alive ----
+        for (var enemy : world.getNearestEnemies()) {
+            int dx = (int)((enemy.x / TILE_SIZE) - (world.mario.x/ TILE_SIZE));
+            if (dx > 0 && dx < nearestDxTiles) nearestDxTiles = dx;
+        }
+
+        if (nearestDxTiles == Integer.MAX_VALUE) {
+            // nothing ahead → potential = 0 (no shaping)
+            return 0f;
+        }
+
+        // Potential increases as we get closer:  Φ(s) = -λ * nearest_dx_tiles
+        // (More negative far away; increases toward 0 as we approach)
+        return -PHI_LAMBDA * (float) nearestDxTiles;
     }
 }
