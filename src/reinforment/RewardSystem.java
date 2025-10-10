@@ -22,10 +22,9 @@ public class RewardSystem {
     private static final float BUMP_REWARD = 2f;
     private static final float COIN_REWARD = 1f;
 
-    // The total shaping reward an agent receives for completing 100% of a level's
-    // sub-goals (enemies, coins, etc.). This value now acts as the scaling factor 'K'.
-    private static final float MAX_SHAPING_REWARD = 25.0f;
-    private static final float SHAPING_GAMMA = 0.999f; // Match PPO gamma if possible
+    // Progress shaping scale K: Φ_progress(s) = K * (1 - remaining/total)
+    // Keep small so per-step shaping stays a nudge.
+    private static final float PROGRESS_K          = 15.0f;
 
     // Weights for each objective to define their relative importance.
     private static final int ENEMY_WEIGHT = 15;
@@ -40,6 +39,8 @@ public class RewardSystem {
     private static final float PBS_BETA           = 1.0f;
     // Clip shaping each step so it can’t dominate (if win=+100, ±0.5 is a good cap)
     private static final float PBS_PER_STEP_CLIP  = 0.5f;
+    // Combine progress and directional potentials: Φ = α*Φ_progress + (1-α)*Φ_dir
+    private static final float PBS_ALPHA          = 0.8f;
     // ------- Per-episode state (per env/worker) -------
     private float prevPhi   = 0f;
     private boolean phiInit = false;
@@ -132,7 +133,25 @@ public class RewardSystem {
         return rewardEvents;
     }
 
+    // Combined potential used for shaping.
+    // Φ(s) = α * Φ_progress(s) + (1-α) * Φ_directional(s)
     private static float computePotential(MarioWorld world) {
+        float phiProgress = computeProgressPotential(world);
+        float phiDirectional = computeDirectionalPotential(world);
+        return PBS_ALPHA * phiProgress + (1f - PBS_ALPHA) * phiDirectional;
+    }
+
+    // Encourages completing sub-goals (coins/blocks/enemies). Monotonic w.r.t. progress.
+    private static float computeProgressPotential(MarioWorld world) {
+        int total = totalObjective(world);
+        if (total <= 0) return 0f;
+        int remaining = remainingObjectives(world);
+        float progress = 1f - ((float) remaining / (float) total);
+        return PROGRESS_K * progress;
+    }
+
+    // Encourages moving toward the nearest unfinished objective ahead of Mario.
+    private static float computeDirectionalPotential(MarioWorld world) {
         // Mario's tile X in camera space
         final int marioTileX = (int)(world.mario.x / TILE_SIZE);
 
