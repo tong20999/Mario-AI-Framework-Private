@@ -175,7 +175,7 @@ public class MarioGameTraining {
         this.lastMilestone = 0;
         this.lastCoinCount = 0;
         this.stepCount = 0;
-        this.rewardSystem = new RewardSystem();
+        this.rewardSystem = new RewardSystem(world);
         String level;
 
         if(pcgLevel.getFile() != null){
