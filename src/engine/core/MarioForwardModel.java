@@ -189,6 +189,8 @@ public class MarioForwardModel {
                     case 45:
                     case 46:
                         return OBS_PLATFORM;
+                    case 999:
+                        return 999;
                 }
                 return OBS_NONE;
             case (2):

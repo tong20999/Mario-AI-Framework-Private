@@ -24,7 +24,7 @@ class ResidualBlock3D(nn.Module):
         return out
 
 class CNNBase(nn.Module):
-    def __init__(self, num_stack: int = 4, num_object_types: int = 21,
+    def __init__(self, num_stack: int = 4, num_object_types: int = 22,
                  embedding_dim: int = 8):
         super().__init__()
 
@@ -33,18 +33,13 @@ class CNNBase(nn.Module):
         
         # The number of input channels for Conv3d is the embedding dimension.
         # The num_stack becomes the "depth" of our 3D data.
-        in_channels = embedding_dim
-        c1, c2, c3 = 64, 128, 128
+        in_channels = embedding_dim * num_stack
+        c1 = 16
 
         # --- 2. 3D Convolutional Path ---
         # We replace Conv2d with Conv3d.
         self.cnn = nn.Sequential(
-            nn.Conv3d(in_channels, c1, kernel_size=(3, 3, 3), stride=(1, 2, 2), padding=(1, 1, 1)),
-            nn.ReLU(),
-            ResidualBlock3D(channels=c1),
-            nn.Conv3d(c1, c2, kernel_size=3, stride=(1, 2, 2), padding=(1, 1, 1)),
-            nn.ReLU(),
-            nn.Conv3d(c2, c3, kernel_size=3, stride=1, padding=(1, 1, 1)),
+            nn.Conv2d(in_channels, c1, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.Flatten()
         )
@@ -52,7 +47,7 @@ class CNNBase(nn.Module):
         # Calculate the output size after flattening.
         # The Conv3d with this padding preserves the D, H, W dimensions.
         # So the output shape before flattening is (B, size, num_stack, 16, 16).
-        grid_feature_dim = c3 * num_stack * 4 * 4
+        grid_feature_dim = c1 * 16 * 16
 
         # --- 3. Vector Path (unchanged) ---
         mario_phys_dim = 13
@@ -65,49 +60,38 @@ class CNNBase(nn.Module):
         self.combined_dim = grid_feature_dim + vector_feature_dim
 
     def forward(self, states: dict):
-        grid_obs = states['grid']
-        batch_size, num_stack, height, width = grid_obs.shape
-        
-        # Embedding remains the same
-        embedded_grid = self.embedding(grid_obs.long())  # Shape: (B, S, H, W, E)
+        # GRID branch
+        grid_obs = states['grid']                          # (B, S, 16, 16)
+        embedded = self.embedding(grid_obs.long())         # (B, S, 16, 16, E)
 
-        # --- CRITICAL RESHAPE FOR CONV3D ---
-        # We need to rearrange the dimensions to (B, C, D, H, W)
-        # B = Batch Size
-        # C = Channels (embedding_dim)
-        # D = Depth (num_stack)
-        # H = Height
-        # W = Width
-        # Original: (B:0, S:1, H:2, W:3, E:4) -> Target: (B:0, E:4, S:1, H:2, W:3)
-        cnn_input = embedded_grid.permute(0, 4, 1, 2, 3)
-        
-        # The cnn (Conv3d -> Flatten) processes the spatio-temporal data
-        grid_features = self.cnn(cnn_input)
+        # Pack time (S) and embedding (E) into channels: (B,S,E,H,W) -> (B, S*E, H, W)
+        x = embedded.permute(0, 1, 4, 2, 3).contiguous()   # (B, S, E, 16, 16)
+        B, S, E, H, W = x.shape
+        x = x.view(B, S * E, H, W)                         # (B, in_channels=S*E, 16, 16)
 
-        # --- Vector Path (unchanged) ---
-        vector_obs = states['vector']
-        mario_phys_vec = vector_obs[:, :13]
-        objective_vec = vector_obs[:, 13:]
+        grid_features = self.cnn(x)                        # (B, c1*16*16) after Flatten
 
-        mario_features = self.mario_mlp(mario_phys_vec)
-        objective_features = self.objective_mlp(objective_vec)
-        
-        # --- Fusion (unchanged) ---
-        combined_features = torch.cat([grid_features, mario_features, objective_features], dim=1)
-        
+        # VECTOR branch
+        vector_obs      = states['vector']                 # (B, 103)
+        mario_phys_vec  = vector_obs[:, :13]
+        objective_vec   = vector_obs[:, 13:]
+        mario_features  = self.mario_mlp(mario_phys_vec)
+        objective_feats = self.objective_mlp(objective_vec)
+
+        # FUSE
+        combined_features = torch.cat([grid_features, mario_features, objective_feats], dim=1)
         return combined_features
+
 
 class CNNActor(nn.Module):
     def __init__(self, output_dim, num_stack: int, **kwargs):
         super(CNNActor, self).__init__()
         self.features = CNNBase(num_stack=num_stack)
-        hidden_dim = [512, 256]
+        hidden_dim = [512]
         self.actor_head = nn.Sequential(
             nn.Linear(self.features.combined_dim, hidden_dim[0]),
             nn.ReLU(),
-            nn.Linear(hidden_dim[0], hidden_dim[1]),
-            nn.ReLU(),
-            nn.Linear(hidden_dim[1], output_dim)
+            nn.Linear(hidden_dim[0], output_dim)
         )
         
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -175,14 +159,12 @@ class CNNActor(nn.Module):
 class CNNCritic(nn.Module):
     def __init__(self, num_stack: int, **kwargs):
         super(CNNCritic, self).__init__()
-        hidden_dim = [512, 256]
+        hidden_dim = [512]
         self.features = CNNBase(num_stack=num_stack)
         self.critic_head = nn.Sequential(
             nn.Linear(self.features.combined_dim, hidden_dim[0]),
             nn.ReLU(),
-            nn.Linear(hidden_dim[0], hidden_dim[1]),
-            nn.ReLU(),
-            nn.Linear(hidden_dim[1], 1)
+            nn.Linear(hidden_dim[0], 1)
         )
         
         device = "cuda:0" if torch.cuda.is_available() else "cpu"

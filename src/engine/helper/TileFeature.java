@@ -28,6 +28,7 @@ public enum TileFeature {
             case 5:
             case 52:
             case 53:
+            case 999:
                 features.add(TileFeature.BLOCK_ALL);
                 break;
             case 43:

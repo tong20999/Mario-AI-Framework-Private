@@ -119,7 +119,7 @@ public class MarioLevel {
                         break;
                     case 'N':
                         //Gate
-                        this.levelTiles[x][y] = 2;
+                        this.levelTiles[x][y] = 999;
                         gates.add(new Point(x,y));
                         break;
                     case '%':

@@ -66,6 +66,8 @@ public class State {
                     grid[col][row] = 4;
                 } else if (scene == MarioForwardModel.OBS_COIN) {
                     grid[col][row] = 5;
+                } else if (scene == 999) {
+                    grid[col][row] = 21;
                 }
 
                 if (enemy == MarioForwardModel.OBS_MUSHROOM) {

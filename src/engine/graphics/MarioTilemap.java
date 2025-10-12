@@ -52,6 +52,7 @@ public class MarioTilemap extends MarioGraphics {
                 }
                 int index = currentIndeces[xTile][yTile] + indexShift[xTile][yTile];
                 int move = (int) moveShift[xTile][yTile];
+                if (index == 999) index = 2;
                 Image img = sheet[index % 8][index / 8];
                 og.drawImage(img, xTile * 16 - x, yTile * 16 - y - move, null);
             }
