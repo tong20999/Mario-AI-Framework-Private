@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from gymnasium.spaces import Dict
 
 class ResidualBlock3D(nn.Module):
     def __init__(self, channels):
@@ -34,7 +33,7 @@ class CNNBase(nn.Module):
             ResidualBlock3D(c1)
         )
 
-        grid_feature_dim = c1 * 16 * 16  # after temporal mean
+        grid_feature_dim = (2 * c1) * 16 * 16  # after temporal mean
 
         # --- 3. Vector Path ---
         self.mario_phys_dim = 22          # first 6B + 16f
@@ -61,29 +60,31 @@ class CNNBase(nn.Module):
         self.combined_dim = grid_feature_dim + vector_feature_dim
 
     def forward(self, states: dict):
-        grid = states['grid']            # (B, S, 16, 16)
-        vec  = states['vector']          # (B, 112)
+        grid = states['grid']
+        vec  = states['vector']
 
-        # --- Grid branch ---
-        emb = self.embedding(grid.long())                # (B, S, H, W, E)
-        x = emb.permute(0, 4, 1, 2, 3).contiguous()      # (B, E, S, H, W)
-        x = self.cnn(x)                                  # (B, C, S, H, W)
-        x = x.mean(dim=2)                                # (B, C, H, W)
-        grid_feat = x.flatten(1)                         # (B, C*H*W)
+        emb = self.embedding(grid.long())                 # (B,S,H,W,E)
+        x = emb.permute(0, 4, 1, 2, 3).contiguous()       # (B,E,S,H,W)
+        x = self.cnn(x)                                   # (B,C,S,H,W)
 
-        # --- Vector branch ---
-        mario_phys = vec[:, :self.mario_phys_dim]        # (B, 22)
-        objective  = vec[:, self.mario_phys_dim:]        # (B, 90)
-        mario_feat = self.mario_mlp(mario_phys)          # (B, 64)
-        objective_feat = self.objective_mlp(objective)   # (B, 128)
+        x_last = x[:, :, -1]
+        if x.size(2) > 1:
+            x_prev = x[:, :, -2]
+            x_diff = x_last - x_prev
+        else:
+            x_diff = torch.zeros_like(x_last)
+        x = torch.cat([x_last, x_diff], dim=1)            # (B,2C,H,W)
+        grid_feat = x.flatten(1)
 
+        mario_feat = self.mario_mlp(vec[:, :self.mario_phys_dim])
+        objective_feat = self.objective_mlp(vec[:, self.mario_phys_dim:])
         return torch.cat([grid_feat, mario_feat, objective_feat], dim=1)
 
 
 class CNNActor(nn.Module):
     def __init__(self, output_dim, num_stack: int, **kwargs):
         super(CNNActor, self).__init__()
-        self.features = CNNBase(num_stack=num_stack)
+        self.features = CNNBase(num_stack=num_stack, **kwargs)
         hidden_dim = [512]
         self.actor_head = nn.Sequential(
             nn.Linear(self.features.combined_dim, hidden_dim[0]),
@@ -157,7 +158,7 @@ class CNNCritic(nn.Module):
     def __init__(self, num_stack: int, **kwargs):
         super(CNNCritic, self).__init__()
         hidden_dim = [512]
-        self.features = CNNBase(num_stack=num_stack)
+        self.features = CNNBase(num_stack=num_stack, **kwargs)
         self.critic_head = nn.Sequential(
             nn.Linear(self.features.combined_dim, hidden_dim[0]),
             nn.ReLU(),
