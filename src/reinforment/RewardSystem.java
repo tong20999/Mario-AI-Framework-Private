@@ -28,13 +28,16 @@ public class RewardSystem {
     private static final int BLOCK_WEIGHT = 3;
     private static final int COIN_WEIGHT = 1;
 
-    public  RewardSystem(MarioWorld world){
-        prevRemaining = remainingObjectives(world);
-    }
+    private static final float PROGRESS_SCALE = 10.0f;
 
     // Track previous remaining objectives per world. This is still needed.
     private int prevRemaining;
+    private float prevProgress;
 
+    public  RewardSystem(MarioWorld world){
+        prevRemaining = remainingObjectives(world);
+        prevProgress = clamp01(getCompletionPercentage(world));
+    }
 
     public float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = -0.002f;
@@ -60,6 +63,12 @@ public class RewardSystem {
                 // Update tracker for the next step.
                 prevRemaining = currRemaining;
             }
+
+            // --- Horizontal Progress Potential Shaping ---
+            float currProgress = clamp01(getCompletionPercentage(world)); // Φ_prog in [0,1]
+            float shapingProg = PROGRESS_SCALE * (SHAPING_GAMMA * currProgress - prevProgress);
+            reward += shapingProg;
+            prevProgress = currProgress;
         }
 
         // --- Terminal Rewards (Win/Loss/Timeout) ---
@@ -95,6 +104,18 @@ public class RewardSystem {
         int blocks = world.level.getBumpableBlocks().size() * BLOCK_WEIGHT;
         int coins = world.level.getCoins().size() * COIN_WEIGHT;
         return enemies + blocks + coins;
+    }
+
+    private float getCompletionPercentage(MarioWorld world) {
+        float goalPixels = (world.level.exitTileX * 16f);
+        if (goalPixels <= 1f) return 0f;
+        return world.mario.x / goalPixels;
+    }
+
+    private static float clamp01(float v) {
+        if (v < 0f) return 0f;
+        if (v > 1f) return 1f;
+        return v;
     }
 
     public static ArrayList<RewardEvent> logRewardEvent(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
