@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
   environment_settings = {
       'env_name': 'LunarLander-v2',
-      'gamma': 0.999,
+      'gamma': 0.997,
       'max_minutes': 6000,
       'max_episodes': 100000,
       'goal_mean_100_reward': 25000
@@ -107,7 +107,7 @@ if __name__ == '__main__':
   max_buffer_episode_steps = hyperParams.get('MaxBufferEpisodeSteps')
 
   entropy_loss_weight = hyperParams.get('EntropyLossWeight')
-  tau = 0.99
+  tau = 0.95
   n_workers = hyperParams.get('NWorkers')
   batch_size = hyperParams.get('BatchSize')
 

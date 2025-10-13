@@ -16,14 +16,14 @@ public class RewardSystem {
     private static final float POWER_UP_REWARD = 10f;
 
     // Discount used for potential difference (match PPO gamma)
-    private static final float SHAPING_GAMMA = 0.999f;
+    private static final float SHAPING_GAMMA = 0.997f;
 
     // Per-weight-unit reward you want for removing one weighted objective
     // (e.g. enemy removal gives ENEMY_WEIGHT * BASE_PER_WEIGHTED_UNIT)
-    private static final float BASE_PER_WEIGHTED_UNIT = 1.0f;
+    private static final float BASE_PER_WEIGHTED_UNIT = 0.5f;
 
     // Progress shaping (kept as before)
-    private static final float PROGRESS_SCALE = 10.0f;
+    private static final float PROGRESS_SCALE = 5f;
 
     // Weights
     private static final int ENEMY_WEIGHT = 15;
