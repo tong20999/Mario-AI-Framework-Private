@@ -145,6 +145,13 @@ public class State {
         // Completion percentage
         float completionPercentage = model.getCompletionPercentage();
 
+        var nearestBlock = model.getNearestBlockScreenPos();
+        if(nearestBlock != null) System.out.println("BLOCK " + nearestBlock[0] + " " + nearestBlock[1]);
+        var nearestCoin = model.getNearestCoinScreenPos();
+        //System.out.println("COIN " + nearestCoin[0] + " " + nearestCoin[1]);
+        var nearestEnemies = model.getNearestAliveEnemyScreenPos();
+        if(nearestEnemies != null) System.out.println("ENEMY " + nearestEnemies[0] + " " + nearestEnemies[1]);
+
         int[] coinsObjective = model.getCoinsObjective();
         int[] blocksObjective = model.getBlocksObjective();
         int[] enemiesObjective = model.getEnemiesObjective();
@@ -163,6 +170,8 @@ public class State {
         outputStream.write(float2ByteArray(completionBlockObjective)); // 26
         outputStream.write(float2ByteArray(completionEnemiesObjective)); // 30
         outputStream.write(float2ByteArray(completionPercentage)); // 34
+
+
 
         outputStream.write(intArrayToBytes(coinsObjective)); // 64
         outputStream.write(intArrayToBytes(blocksObjective)); // 94

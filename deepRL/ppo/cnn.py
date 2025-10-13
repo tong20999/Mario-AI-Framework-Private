@@ -50,14 +50,14 @@ class CNNBase(nn.Module):
         grid_feature_dim = c1 * 16 * 16
 
         # --- 3. Vector Path (unchanged) ---
-        mario_phys_dim = 13
-        objective_dim = 90
-        self.mario_mlp = nn.Sequential(nn.Linear(mario_phys_dim, 64), nn.ReLU())
-        self.objective_mlp = nn.Sequential(nn.Linear(objective_dim, 128), nn.ReLU())
-        vector_feature_dim = 64 + 128
+        # mario_phys_dim = 13
+        # objective_dim = 90
+        # self.mario_mlp = nn.Sequential(nn.Linear(mario_phys_dim, 64), nn.ReLU())
+        # self.objective_mlp = nn.Sequential(nn.Linear(objective_dim, 128), nn.ReLU())
+        # vector_feature_dim = 64 + 128
 
         # --- 4. Fusion ---
-        self.combined_dim = grid_feature_dim + vector_feature_dim
+        self.combined_dim = grid_feature_dim
 
     def forward(self, states: dict):
         # GRID branch
@@ -75,12 +75,12 @@ class CNNBase(nn.Module):
         vector_obs      = states['vector']                 # (B, 103)
         mario_phys_vec  = vector_obs[:, :13]
         objective_vec   = vector_obs[:, 13:]
-        mario_features  = self.mario_mlp(mario_phys_vec)
-        objective_feats = self.objective_mlp(objective_vec)
+        #mario_features  = self.mario_mlp(mario_phys_vec)
+        #objective_feats = self.objective_mlp(objective_vec)
 
         # FUSE
-        combined_features = torch.cat([grid_features, mario_features, objective_feats], dim=1)
-        return combined_features
+        #combined_features = torch.cat([grid_features, mario_features, objective_feats], dim=1)
+        return grid_features
 
 
 class CNNActor(nn.Module):

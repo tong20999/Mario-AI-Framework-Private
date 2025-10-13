@@ -730,13 +730,14 @@ public class MarioForwardModel {
         }
 
         float minDistance = Float.MAX_VALUE;
-        Mario mario = this.world.mario;
+        var xOffset = (int) (this.world.mario.x - this.world.cameraX) / 16;
+        var marioX = (int) (this.world.mario.x) / 16;
+        var marioY = (int) (this.world.mario.y / 16);
         Point nearestPoint = null;
-
         // Find the closest block to Mario
         for (Point p : collections) {
-            float dx = p.getX() - (mario.x - 8) / 16f;
-            float dy = p.getY() - (mario.y - 16) / 16f;
+            float dx = p.getX() - marioX;
+            float dy = p.getY() - marioY;
             float distance = (float) Math.sqrt(dx * dx + dy * dy);
 
             if (distance < minDistance) {
@@ -747,28 +748,25 @@ public class MarioForwardModel {
 
         if (nearestPoint != null) {
             // Recalculate dx and dy for the nearest block
-            float dx = nearestPoint.getX() - (mario.x - 8) / 16f;
-            float dy = nearestPoint.getY() - (mario.y - 16) / 16f;
-
-            if(dx > 8 || dx < -8){
-                return new float[]{0, 0, 0};
+            float dx = nearestPoint.getX() - marioX;
+            float dy = nearestPoint.getY() - marioY;
+            if(dx < -8){
+                return new float[]{0, 0};
             }
 
-            // Normalizing the direction vector (dx, dy)
-            // Check for zero distance to avoid division by zero
+            if(xOffset < 7 && nearestPoint.getX() > 15){
+                return new float[]{0, 0};
+            }
+
+            if(xOffset >= 7 && dx > 8){
+                return new float[]{0, 0};
+            }
+
             if (minDistance == 0) {
-                return new float[]{0, 0, 0};
+                return new float[]{0, 0};
             }
 
-            // Normalize dx and dy
-            float dxNormalized = dx/8;
-            float dyNormalized = dy/8;
-
-            // Return the normalized vector and the normalized distance
-            // Assuming a max distance of 11.31f (e.g., in an 8x16 grid)
-            float normalizedDistance = minDistance / 17.89f;
-
-            return new float[]{dxNormalized, dyNormalized, normalizedDistance};
+            return new float[]{dx, dy};
         }
 
         // Return null if no block was found
@@ -777,7 +775,7 @@ public class MarioForwardModel {
 
     public float[] getNearestAliveEnemyScreenPos() {
         // Get the list of blocks that can be bumped but haven't been yet
-        ArrayList<MarioSprite> aliveEnemies = this.world.getEnemies();
+        List<MarioSprite> aliveEnemies = world.getNearestEnemies();
         if (aliveEnemies == null || aliveEnemies.isEmpty()) {
             return null;
         }
