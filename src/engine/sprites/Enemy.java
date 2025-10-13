@@ -128,7 +128,7 @@ public class Enemy extends MarioSprite {
             return;
         }
 
-        float sideWaysSpeed = 0.0f;
+        float sideWaysSpeed = 1.75f;
 
         if (xa > 2) {
             facing = 1;
