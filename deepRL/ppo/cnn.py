@@ -5,23 +5,15 @@ from gymnasium.spaces import Dict
 
 class ResidualBlock3D(nn.Module):
     def __init__(self, channels):
-        super(ResidualBlock3D, self).__init__()
-        self.conv0 = nn.Conv3d(
-            in_channels=channels, out_channels=channels, kernel_size=3, padding=1
-        )
-        self.relu = nn.ReLU(inplace=True)
-        self.conv1 = nn.Conv3d(
-            in_channels=channels, out_channels=channels, kernel_size=3, padding=1
-        )
+        super().__init__()
+        self.conv1 = nn.Conv3d(channels, channels, 3, padding=1)
+        self.conv2 = nn.Conv3d(channels, channels, 3, padding=1)
+        self.act = nn.ReLU(inplace=True)
 
     def forward(self, x):
-        identity = x
-        
-        out = self.relu(self.conv0(x))
-        out = self.conv1(out)
-        
-        out = self.relu(out + identity)
-        return out
+        out = self.act(self.conv1(x))
+        out = self.conv2(out)
+        return self.act(out + x)
 
 class CNNBase(nn.Module):
     def __init__(self, num_stack: int = 4, num_object_types: int = 22,
@@ -30,57 +22,62 @@ class CNNBase(nn.Module):
 
         # --- 1. Embedding (semantic token representation) ---
         self.embedding = nn.Embedding(num_embeddings=num_object_types, embedding_dim=embedding_dim)
+        self.num_stack = num_stack
         
-        # The number of input channels for Conv3d is the embedding dimension.
-        # The num_stack becomes the "depth" of our 3D data.
-        in_channels = embedding_dim * num_stack
-        c1 = 16
+        c1 = 32
 
         # --- 2. 3D Convolutional Path ---
-        # We replace Conv2d with Conv3d.
         self.cnn = nn.Sequential(
-            nn.Conv2d(in_channels, c1, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.Flatten()
+            nn.Conv3d(embedding_dim, c1, kernel_size=1),
+            ResidualBlock3D(c1),
+            ResidualBlock3D(c1),
+            ResidualBlock3D(c1)
         )
 
-        # Calculate the output size after flattening.
-        # The Conv3d with this padding preserves the D, H, W dimensions.
-        # So the output shape before flattening is (B, size, num_stack, 16, 16).
-        grid_feature_dim = c1 * 16 * 16
+        grid_feature_dim = c1 * 16 * 16  # after temporal mean
 
-        # --- 3. Vector Path (unchanged) ---
-        mario_phys_dim = 22
-        objective_dim = 90
-        self.mario_mlp = nn.Sequential(nn.Linear(mario_phys_dim, 64), nn.ReLU())
-        self.objective_mlp = nn.Sequential(nn.Linear(objective_dim, 128), nn.ReLU())
+        # --- 3. Vector Path ---
+        self.mario_phys_dim = 22          # first 6B + 16f
+        self.objective_dim = 90           # three 30-length integer lists
+        self.total_vector_dim = self.mario_phys_dim + self.objective_dim
+        # (Optional safety) you can assert at runtime if desired:
+        # assert self.total_vector_dim == 112, "Vector length mismatch."
+
+        self.mario_mlp = nn.Sequential(
+            nn.Linear(self.mario_phys_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU()
+        )
+        self.objective_mlp = nn.Sequential(
+            nn.Linear(self.objective_dim, 128), 
+            nn.ReLU(),
+            nn.Linear(128, 128),
+            nn.ReLU(),
+        )
         vector_feature_dim = 64 + 128
 
         # --- 4. Fusion ---
         self.combined_dim = grid_feature_dim + vector_feature_dim
 
     def forward(self, states: dict):
-        # GRID branch
-        grid_obs = states['grid']                          # (B, S, 16, 16)
-        embedded = self.embedding(grid_obs.long())         # (B, S, 16, 16, E)
+        grid = states['grid']            # (B, S, 16, 16)
+        vec  = states['vector']          # (B, 112)
 
-        # Pack time (S) and embedding (E) into channels: (B,S,E,H,W) -> (B, S*E, H, W)
-        x = embedded.permute(0, 1, 4, 2, 3).contiguous()   # (B, S, E, 16, 16)
-        B, S, E, H, W = x.shape
-        x = x.view(B, S * E, H, W)                         # (B, in_channels=S*E, 16, 16)
+        # --- Grid branch ---
+        emb = self.embedding(grid.long())                # (B, S, H, W, E)
+        x = emb.permute(0, 4, 1, 2, 3).contiguous()      # (B, E, S, H, W)
+        x = self.cnn(x)                                  # (B, C, S, H, W)
+        x = x.mean(dim=2)                                # (B, C, H, W)
+        grid_feat = x.flatten(1)                         # (B, C*H*W)
 
-        grid_features = self.cnn(x)                        # (B, c1*16*16) after Flatten
+        # --- Vector branch ---
+        mario_phys = vec[:, :self.mario_phys_dim]        # (B, 22)
+        objective  = vec[:, self.mario_phys_dim:]        # (B, 90)
+        mario_feat = self.mario_mlp(mario_phys)          # (B, 64)
+        objective_feat = self.objective_mlp(objective)   # (B, 128)
 
-        # VECTOR branch
-        vector_obs      = states['vector']                 # (B, 103)
-        mario_phys_vec  = vector_obs[:, :22]
-        objective_vec   = vector_obs[:, 22:]
-        mario_features  = self.mario_mlp(mario_phys_vec)
-        objective_feats = self.objective_mlp(objective_vec)
-
-        # FUSE
-        combined_features = torch.cat([grid_features, mario_features, objective_feats], dim=1)
-        return combined_features
+        return torch.cat([grid_feat, mario_feat, objective_feat], dim=1)
 
 
 class CNNActor(nn.Module):
