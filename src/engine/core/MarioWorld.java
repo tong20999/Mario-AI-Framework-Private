@@ -50,8 +50,6 @@ public class MarioWorld {
     private Objective enemiesObjective = new Objective();
 
     public boolean isEvaluation = false;
-    private int stallCounter = 0;
-    private final int MAX_STALL = 90;
 
     public List<MarioSprite> getNearestEnemies(){
         Set<String> aliveEnemyCodes = new HashSet<>();
@@ -121,7 +119,7 @@ public class MarioWorld {
     public void initializeLevel(String level, int timer) {
         this.currentTimer = timer;
         this.initTimer = timer;
-        this.level = new MarioLevel(level, this.visuals);
+        this.level = new MarioLevel(level, this.visuals, isEvaluation);
 
         this.mario = new Mario(this.visuals, this.level.marioTileX * 16, this.level.marioTileY * 16);
         this.mario.alive = true;
@@ -158,8 +156,6 @@ public class MarioWorld {
         world.currentTick = this.currentTick;
         world.isEvaluation = this.isEvaluation;
         world.level = this.level.clone();
-        world.stallCounter = this.stallCounter;
-        world.isEvaluation = this.isEvaluation;
         // Clone sprites
         for (MarioSprite sprite : this.sprites) {
             MarioSprite cloneSprite = sprite.clone();
@@ -245,7 +241,6 @@ public class MarioWorld {
         aliveEnemy.removeIf(a -> Objects.equals(sprite.initialCode,
                 MessageFormat.format("{0}_{1}_{2}", a.x, a.y, a.type.getValue())));
         enemiesObjective.mark(sprite.initialCode);
-        this.stallCounter = 0;
     }
 
     public void removeSprite(MarioSprite sprite) {
@@ -394,7 +389,6 @@ public class MarioWorld {
 
     public void update(boolean[] actions) {
         this.lastFrameEvents.clear();
-        var beforePosition = new int[] { (int) ((this.mario.x - this.cameraX) / 16), (int) (this.mario.y / 16) };
         if (this.gameStatus != GameStatus.RUNNING) {
             return;
         }
@@ -534,21 +528,6 @@ public class MarioWorld {
             openGate();
         }
 
-        var afterPosition = new int[] { (int) ((this.mario.x - this.cameraX) / 16), (int) (this.mario.y / 16) };
-        if (afterPosition[1] == beforePosition[1] && afterPosition[0] == beforePosition[0]) {
-            stallCounter++;
-        } else {
-            stallCounter = 0;
-        }
-
-        if(stallCounter > MAX_STALL){
-            if(!isEvaluation){
-                this.addEvent(EventType.STALL, 0);
-                //this.timeout();
-            }
-            stallCounter = 0;
-        }
-
         sprites.addAll(0, addedSprites);
         sprites.removeAll(removedSprites);
         addedSprites.clear();
@@ -565,7 +544,9 @@ public class MarioWorld {
     }
 
     private void openGate() {
-
+        if(isEvaluation){
+            return;
+        }
         for (var g : this.level.getGates()){
             this.level.setBlock(g.getX(), g.getY(), 0);
         }
@@ -576,7 +557,6 @@ public class MarioWorld {
         ArrayList<TileFeature> features = TileFeature.getTileType(block);
         if (features.contains(TileFeature.BUMPABLE)) {
             unbumpBlocks.removeIf(b -> b.getX() == xTile && b.getY() == yTile);
-            this.stallCounter = 0;
             blocksObjective.mark(new Point(xTile, yTile));
             bumpInto(xTile, yTile - 1);
             this.addEvent(EventType.BUMP, MarioForwardModel.OBS_QUESTION_BLOCK);
@@ -712,7 +692,6 @@ public class MarioWorld {
         this.collectCoin++;
         this.getUnCollectCoin().removeIf(c -> c.getX() == xTile && c.getY() == yTile);
         this.coinsObjective.mark(new Point(xTile, yTile));
-        this.stallCounter = 0;
     }
 
     public int[] getCoinsObjective() {

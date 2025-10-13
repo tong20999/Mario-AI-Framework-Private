@@ -10,112 +10,115 @@ import java.util.WeakHashMap;
 
 public class RewardSystem {
     private static final float WIN_REWARD = 100f;
-
     private static final float PARTIAL_WIN = 0f;
-
     private static final float FAILURE_LOSE = -100f;
     private static final float FAILURE_TIMEOUT = -100f;
-
     private static final float POWER_UP_REWARD = 10f;
 
-    // The total shaping reward an agent receives for completing 100% of a level's
-    // sub-goals (enemies, coins, etc.). This value now acts as the scaling factor 'K'.
-    private static final float MAX_SHAPING_REWARD = 25.0f;
-    private static final float SHAPING_GAMMA = 0.999f; // Match PPO gamma if possible
+    // Discount used for potential difference (match PPO gamma)
+    private static final float SHAPING_GAMMA = 0.999f;
 
-    // Weights for each objective to define their relative importance.
+    // Per-weight-unit reward you want for removing one weighted objective
+    // (e.g. enemy removal gives ENEMY_WEIGHT * BASE_PER_WEIGHTED_UNIT)
+    private static final float BASE_PER_WEIGHTED_UNIT = 1.0f;
+
+    // Progress shaping (kept as before)
+    private static final float PROGRESS_SCALE = 10.0f;
+
+    // Weights
     private static final int ENEMY_WEIGHT = 15;
     private static final int BLOCK_WEIGHT = 3;
     private static final int COIN_WEIGHT = 1;
 
-    private static final float PROGRESS_SCALE = 10.0f;
+    // Cached totals (fixed for the episode)
+    private final int totalWeightedObjectives;   // sum(weight * count) at episode start
+    private final float dynamicMaxShapingReward; // K = basePerUnit * totalWeightedObjectives
 
-    // Track previous remaining objectives per world. This is still needed.
-    private int prevRemaining;
-    private float prevProgress;
+    // State
+    private int prevRemaining;   // weighted remaining objectives
+    private float prevProgress;  // 0..1
 
-    public  RewardSystem(MarioWorld world){
-        prevRemaining = remainingObjectives(world);
+    public RewardSystem(MarioWorld world){
+        // Capture initial full counts (do NOT use "alive"/remaining lists here)
+        totalWeightedObjectives = computeTotalWeightedObjectives(world);
+        dynamicMaxShapingReward = BASE_PER_WEIGHTED_UNIT * totalWeightedObjectives;
+
+        prevRemaining = computeRemainingWeighted(world);      // should equal totalWeightedObjectives initially
         prevProgress = clamp01(getCompletionPercentage(world));
     }
 
     public float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
-        float reward = -0.002f;
+        float reward = -0.002f; // step cost
 
-        // --- Potential-based shaping (training-only) ---
         if (!world.isEvaluation) {
-            // Step 1: Calculate the level's total potential dynamically on each step.
-            // This replaces the need for a cache/map.
-            int maxPotential = totalObjective(world);
-
-            if (maxPotential > 0) {
-                // Step 2: Calculate current and previous potential.
-                int currRemaining = remainingObjectives(world);
-
-                // Step 3: Normalize potential to a range of [-1, 0].
-                float phiPrev = -prevRemaining / (float) maxPotential;
-                float phiCurr = -currRemaining / (float) maxPotential;
-
-                // Step 4: Calculate the shaping reward.
-                float shaping = MAX_SHAPING_REWARD * (SHAPING_GAMMA * phiCurr - phiPrev);
-                reward += shaping;
-
-                // Update tracker for the next step.
+            // --- Objective shaping with dynamic K ---
+            if (totalWeightedObjectives > 0) {
+                int currRemaining = computeRemainingWeighted(world);
+                // Normalized potentials in [-1,0]
+                float phiPrev = -prevRemaining / (float) totalWeightedObjectives;
+                float phiCurr = -currRemaining / (float) totalWeightedObjectives;
+                float shapingObj = dynamicMaxShapingReward * (SHAPING_GAMMA * phiCurr - phiPrev);
+                reward += shapingObj;
                 prevRemaining = currRemaining;
             }
 
-            // --- Horizontal Progress Potential Shaping ---
-            float currProgress = clamp01(getCompletionPercentage(world)); // Φ_prog in [0,1]
+            // --- Progress shaping (unchanged) ---
+            float currProgress = clamp01(getCompletionPercentage(world));
             float shapingProg = PROGRESS_SCALE * (SHAPING_GAMMA * currProgress - prevProgress);
             reward += shapingProg;
             prevProgress = currProgress;
         }
 
-        // --- Terminal Rewards (Win/Loss/Timeout) ---
+        // Events
         for (MarioEvent e : miniStepEvents) {
             int type = e.getEventType();
             int param = e.getEventParam();
             if (type == EventType.WIN.getValue()) {
                 reward += calculateWinReward(world);
-                //prevRemainingMap.remove(world); // Episode ended, cleanup tracker.
             } else if (type == EventType.COLLECT.getValue() &&
                     (param == SpriteType.FIRE_FLOWER.getValue() || param == SpriteType.MUSHROOM.getValue())) {
                 reward += POWER_UP_REWARD;
             } else if (type == EventType.LOSE.getValue()) {
                 reward += FAILURE_LOSE;
-                //prevRemainingMap.remove(world);
             } else if (type == EventType.TIME_OUT.getValue()) {
                 reward += FAILURE_TIMEOUT;
-                //prevRemainingMap.remove(world);
             }
         }
         return reward;
     }
 
-    private static int remainingObjectives(MarioWorld world) {
+    // Weighted remaining that actually changes during play
+    private static int computeRemainingWeighted(MarioWorld world){
         int enemiesLeft = world.getAliveEnemies().size() * ENEMY_WEIGHT;
-        int blocksLeft = world.getUnbumpBlocks().size() * BLOCK_WEIGHT;
-        int coinsLeft = world.getUnCollectCoin().size() * COIN_WEIGHT;
+        int blocksLeft  = world.getUnbumpBlocks().size()   * BLOCK_WEIGHT;
+        int coinsLeft   = world.getUnCollectCoin().size()  * COIN_WEIGHT;
         return enemiesLeft + blocksLeft + coinsLeft;
     }
 
-    private static int totalObjective(MarioWorld world) {
-        int enemies = world.level.getEnemies().size() * ENEMY_WEIGHT;
-        int blocks = world.level.getBumpableBlocks().size() * BLOCK_WEIGHT;
-        int coins = world.level.getCoins().size() * COIN_WEIGHT;
+    // Initial weighted total (use static level definitions so denominator fixed)
+    private static int computeTotalWeightedObjectives(MarioWorld world){
+        int enemies = world.level.getEnemies().size()          * ENEMY_WEIGHT;
+        int blocks  = world.level.getBumpableBlocks().size()   * BLOCK_WEIGHT;
+        int coins   = world.level.getCoins().size()            * COIN_WEIGHT;
         return enemies + blocks + coins;
     }
 
-    private float getCompletionPercentage(MarioWorld world) {
-        float goalPixels = (world.level.exitTileX * 16f);
-        if (goalPixels <= 1f) return 0f;
-        return world.mario.x / goalPixels;
+    private static float calculateWinReward(MarioWorld world) {
+        // Optionally require all objectives cleared
+        if (computeRemainingWeighted(world) > 0) return PARTIAL_WIN;
+        return WIN_REWARD;
     }
 
-    private static float clamp01(float v) {
-        if (v < 0f) return 0f;
-        if (v > 1f) return 1f;
-        return v;
+    // Horizontal completion 0..1
+    private float getCompletionPercentage(MarioWorld world) {
+        float goalPixels = world.level.exitTileX * 16f;
+        if (goalPixels <= 1f) return 0f;
+        float p = world.mario.x / goalPixels;
+        return clamp01(p);
+    }
+
+    private static float clamp01(float v){
+        return v < 0f ? 0f : (Math.min(v, 1f));
     }
 
     public static ArrayList<RewardEvent> logRewardEvent(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
@@ -141,12 +144,5 @@ public class RewardSystem {
             rewardEvents.add(new RewardEvent(value, e, timer));
         }
         return rewardEvents;
-    }
-
-    private static float calculateWinReward(MarioWorld world) {
-        if(remainingObjectives(world) > 0){
-            return PARTIAL_WIN;
-        }
-        return WIN_REWARD;
     }
 }

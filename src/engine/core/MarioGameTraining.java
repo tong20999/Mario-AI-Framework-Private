@@ -241,11 +241,9 @@ public class MarioGameTraining {
                     this.pcg, this.world, this.rewardEvents, this.evaluationReward, this.minTimer, this.maxTimer);
         }
 
-        var isTruncated = miniStepEvents.stream().anyMatch(e -> e.getEventTypeEnum() == EventType.STALL);
-
         return State.stepResult(State.toByte(nextState), reward,
                 this.world.gameStatus != GameStatus.RUNNING,
-                isTruncated);
+                false);
     }
 
     public ArrayList<MarioEvent> miniStep(boolean[] action) throws Exception {

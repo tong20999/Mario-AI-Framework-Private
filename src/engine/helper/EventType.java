@@ -18,8 +18,7 @@ public enum EventType {
     DAMAGE(17),
     BREAK(18),
     BONK(19),
-    TIME_OUT(20),
-    STALL(21);
+    TIME_OUT(20);
 
     private final int value;
 

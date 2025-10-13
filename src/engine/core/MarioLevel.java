@@ -35,7 +35,9 @@ public class MarioLevel {
         return gates;
     }
 
-    public MarioLevel(String level, boolean visuals) {
+    private boolean isEvaluation = false;
+
+    public MarioLevel(String level, boolean visuals, boolean isEvaluation) {
         if (level.trim().length() == 0) {
             this.tileWidth = 0;
             this.width = 0;
@@ -43,6 +45,7 @@ public class MarioLevel {
             this.height = 0;
             return;
         }
+        this.isEvaluation = isEvaluation;
         String[] lines = level.split("\\r?\\n");
         this.tileWidth = lines[0].length();
         this.width = this.tileWidth * 16;
@@ -119,8 +122,10 @@ public class MarioLevel {
                         break;
                     case 'N':
                         //Gate
-                        this.levelTiles[x][y] = 999;
-                        gates.add(new Point(x,y));
+                        if(!isEvaluation){
+                            this.levelTiles[x][y] = 999;
+                            gates.add(new Point(x,y));
+                        }
                         break;
                     case '%':
                         //jump through block
@@ -298,7 +303,8 @@ public class MarioLevel {
     }
 
     public MarioLevel clone() {
-        MarioLevel level = new MarioLevel("", false);
+        MarioLevel level = new MarioLevel("", false, false);
+        level.isEvaluation = this.isEvaluation;
         level.width = this.width;
         level.height = this.height;
         level.tileWidth = this.tileWidth;
