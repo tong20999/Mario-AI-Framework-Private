@@ -724,60 +724,104 @@ public class MarioForwardModel {
         return getNearestObjectScreenPos(this.world.getUnCollectCoin());
     }
 
+    private static final float[] NO_TARGET_NORM = new float[]{0f, 0f, 0f}; // dx_norm, dy_norm, present=0
+
+    private static float clamp(float v, float lo, float hi) {
+        return Math.max(lo, Math.min(hi, v));
+    }
+
+    private static float safeDiv(float num, float den) {
+        return (den == 0f) ? 0f : (num / den);
+    }
+
+    /**
+     * Returns {dx_norm, dy_norm, present}.
+     * - dx_norm, dy_norm ∈ [-1, 1] when an object is visible.
+     * - present ∈ {0,1}; 0 means "no visible object".
+     *
+     * IMPORTANT: All positions must be in TILES here.
+     * If your Point is in pixels, divide by TILE before use.
+     */
     private float[] getNearestObjectScreenPos(ArrayList<Point> collections) {
-        if (collections == null || collections.isEmpty()) {
-            return null;
-        }
+        if (collections == null || collections.isEmpty()) return NO_TARGET_NORM.clone();
 
-        float minDistance = Float.MAX_VALUE;
-        var xOffset = (int) (this.world.mario.x - this.world.cameraX) / 16;
-        var marioX = (int) (this.world.mario.x) / 16;
-        var marioY = (int) (this.world.mario.y / 16);
-        Point nearestPoint = null;
-        // Find the closest block to Mario
+        final int TILE = 16;   // pixels per tile (adjust if different)
+        final int viewW = 16;  // viewport width in tiles
+        final int viewH = 16;  // viewport height in tiles
+
+        // Camera & Mario in TILES
+        final int camTX   = (int)Math.floor(this.world.cameraX / TILE);
+        final int camTY   = (int)Math.floor(this.world.cameraY / TILE);
+        final int marioTX = (int)Math.floor(this.world.mario.x / TILE);
+        final int marioTY = (int)Math.floor(this.world.mario.y / TILE);
+
+        // Mario's on-screen tile position (0..viewW-1, 0..viewH-1)
+        final int marioScreenX = marioTX - camTX;
+        final int marioScreenY = marioTY - camTY;
+
+        float bestD2 = Float.MAX_VALUE;
+        int bestPX = 0, bestPY = 0;
+        boolean found = false;
+
         for (Point p : collections) {
-            float dx = p.getX() - marioX;
-            float dy = p.getY() - marioY;
-            float distance = (float) Math.sqrt(dx * dx + dy * dy);
+            // If p is in PIXELS, convert:
+            int px = (int)Math.floor(p.getX()); // or (int)Math.floor(p.getX() / TILE) if pixels
+            int py = (int)Math.floor(p.getY()); // or (int)Math.floor(p.getY() / TILE) if pixels
 
-            if (distance < minDistance) {
-                minDistance = distance;
-                nearestPoint = p;
+            // >>> If p is in pixels, uncomment these two lines and delete the two above:
+            // int px = (int)Math.floor(p.getX() / TILE);
+            // int py = (int)Math.floor(p.getY() / TILE);
+
+            int screenX = px - camTX;
+            int screenY = py - camTY;
+            if (screenX < 0 || screenX >= viewW || screenY < 0 || screenY >= viewH) {
+                continue; // off-screen → ignore
+            }
+
+            float dx = px - marioTX; // tiles
+            float dy = py - marioTY; // tiles
+            float d2 = dx*dx + dy*dy;
+            if (d2 < bestD2) {
+                bestD2 = d2;
+                bestPX = px; bestPY = py;
+                found = true;
             }
         }
 
-        if (nearestPoint != null) {
-            // Recalculate dx and dy for the nearest block
-            float dx = nearestPoint.getX() - marioX;
-            float dy = nearestPoint.getY() - marioY;
-            if(dx < -8){
-                return new float[]{0, 0};
-            }
+        if (!found) return NO_TARGET_NORM.clone();
 
-            if(xOffset < 7 && nearestPoint.getX() > 15){
-                return new float[]{0, 0};
-            }
+        // Tile deltas from Mario
+        float dx = bestPX - marioTX;
+        float dy = bestPY - marioTY;
 
-            if(xOffset >= 7 && dx > 8){
-                return new float[]{0, 0};
-            }
+        // --- Direction-aware normalization to [-1, 1] ---
+        // Max right distance (in tiles) from Mario to the right edge; left distance to left edge.
+        float maxRight = (viewW - 1) - marioScreenX; // >= 0
+        float maxLeft  = marioScreenX;               // >= 0
+        float maxDown  = (viewH - 1) - marioScreenY; // >= 0
+        float maxUp    = marioScreenY;               // >= 0
 
-            if (minDistance == 0) {
-                return new float[]{0, 0};
-            }
+        // Normalize based on which side the target is on.
+        float dxNorm = (dx >= 0)
+                ? safeDiv(dx, Math.max(1f, maxRight))   // right side
+                : safeDiv(dx, Math.max(1f, maxLeft))    // left side (dx is negative)
+                ;
+        float dyNorm = (dy >= 0)
+                ? safeDiv(dy, Math.max(1f, maxDown))    // down
+                : safeDiv(dy, Math.max(1f, maxUp))      // up (dy is negative)
+                ;
 
-            return new float[]{dx, dy};
-        }
+        dxNorm = clamp(dxNorm, -1f, 1f);
+        dyNorm = clamp(dyNorm, -1f, 1f);
 
-        // Return null if no block was found
-        return null;
+        return new float[]{dxNorm, dyNorm, 1f};
     }
 
     public float[] getNearestAliveEnemyScreenPos() {
         // Get the list of blocks that can be bumped but haven't been yet
         List<MarioSprite> aliveEnemies = world.getNearestEnemies();
         if (aliveEnemies == null || aliveEnemies.isEmpty()) {
-            return null;
+            return NO_TARGET_NORM.clone();
         }
 
 
@@ -785,8 +829,7 @@ public class MarioForwardModel {
         for (MarioSprite s:  aliveEnemies
              ) {
             collection.add(new Point(s.getMapX(), s.getMapY()));
-        }
-
+        };
         return getNearestObjectScreenPos(collection);
     }
 

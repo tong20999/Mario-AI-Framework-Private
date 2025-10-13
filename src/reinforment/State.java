@@ -145,12 +145,9 @@ public class State {
         // Completion percentage
         float completionPercentage = model.getCompletionPercentage();
 
-        var nearestBlock = model.getNearestBlockScreenPos();
-        if(nearestBlock != null) System.out.println("BLOCK " + nearestBlock[0] + " " + nearestBlock[1]);
-        var nearestCoin = model.getNearestCoinScreenPos();
-        //System.out.println("COIN " + nearestCoin[0] + " " + nearestCoin[1]);
-        var nearestEnemies = model.getNearestAliveEnemyScreenPos();
-        if(nearestEnemies != null) System.out.println("ENEMY " + nearestEnemies[0] + " " + nearestEnemies[1]);
+        float[] nearestBlock = model.getNearestBlockScreenPos();
+        float[] nearestCoin = model.getNearestCoinScreenPos();
+        float[] nearestEnemies = model.getNearestAliveEnemyScreenPos();
 
         int[] coinsObjective = model.getCoinsObjective();
         int[] blocksObjective = model.getBlocksObjective();
@@ -171,11 +168,22 @@ public class State {
         outputStream.write(float2ByteArray(completionEnemiesObjective)); // 30
         outputStream.write(float2ByteArray(completionPercentage)); // 34
 
+        outputStream.write(float2ByteArray(nearestCoin[0])); // 38
+        outputStream.write(float2ByteArray(nearestCoin[1])); // 42
+        outputStream.write(float2ByteArray(nearestCoin[2])); // 46
+
+        outputStream.write(float2ByteArray(nearestBlock[0])); // 50
+        outputStream.write(float2ByteArray(nearestBlock[1])); // 54
+        outputStream.write(float2ByteArray(nearestBlock[2])); // 58
+
+        outputStream.write(float2ByteArray(nearestEnemies[0])); // 62
+        outputStream.write(float2ByteArray(nearestEnemies[1])); // 66
+        outputStream.write(float2ByteArray(nearestEnemies[2])); // 70
 
 
-        outputStream.write(intArrayToBytes(coinsObjective)); // 64
-        outputStream.write(intArrayToBytes(blocksObjective)); // 94
-        outputStream.write(intArrayToBytes(enemiesObjective)); // 124
+        outputStream.write(intArrayToBytes(coinsObjective)); // 100
+        outputStream.write(intArrayToBytes(blocksObjective)); // 130
+        outputStream.write(intArrayToBytes(enemiesObjective)); // 160
         return outputStream.toByteArray();
     }
 }
