@@ -16,21 +16,20 @@ class ResidualBlock3D(nn.Module):
 
 class CNNBase(nn.Module):
     def __init__(self, num_stack: int = 4, num_object_types: int = 22,
-                 embedding_dim: int = 8):
+                 embedding_dim: int = 16):
         super().__init__()
 
         # --- 1. Embedding (semantic token representation) ---
         self.embedding = nn.Embedding(num_embeddings=num_object_types, embedding_dim=embedding_dim)
         self.num_stack = num_stack
         
-        c1 = 32
+        c1 = 24
 
         # --- 2. 3D Convolutional Path ---
         self.cnn = nn.Sequential(
             nn.Conv3d(embedding_dim, c1, kernel_size=1),
             ResidualBlock3D(c1),
             ResidualBlock3D(c1),
-            ResidualBlock3D(c1)
         )
 
         grid_feature_dim = (2 * c1) * 16 * 16  # after temporal mean
