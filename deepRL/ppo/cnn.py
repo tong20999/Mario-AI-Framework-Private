@@ -16,7 +16,7 @@ class ResidualBlock3D(nn.Module):
 
 class CNNBase(nn.Module):
     def __init__(self, num_stack: int = 4, num_object_types: int = 22,
-                 embedding_dim: int = 16):
+                 embedding_dim: int = 12):
         super().__init__()
 
         # --- 1. Embedding (semantic token representation) ---
@@ -79,7 +79,7 @@ class CNNActor(nn.Module):
     def __init__(self, output_dim, num_stack: int, **kwargs):
         super(CNNActor, self).__init__()
         self.features = CNNBase(num_stack=num_stack, **kwargs)
-        hidden_dim = [512, 512]
+        hidden_dim = [512, 256]
         self.actor_head = nn.Sequential(
             nn.Linear(self.features.combined_dim, hidden_dim[0]),
             nn.ReLU(),
@@ -153,7 +153,7 @@ class CNNActor(nn.Module):
 class CNNCritic(nn.Module):
     def __init__(self, num_stack: int, **kwargs):
         super(CNNCritic, self).__init__()
-        hidden_dim = [512, 512]
+        hidden_dim = [512, 256]
         self.features = CNNBase(num_stack=num_stack, **kwargs)
         self.critic_head = nn.Sequential(
             nn.Linear(self.features.combined_dim, hidden_dim[0]),
