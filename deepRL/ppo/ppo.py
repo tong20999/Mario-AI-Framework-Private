@@ -217,25 +217,44 @@ class PPO():
         # Value Optimization Loop
         # =================================================================
         value_start_time = time.time()
+
+        with torch.no_grad():
+            old_values = np.empty(value_cut, dtype=np.float32)
+            # use small chunks (batch_size) to limit peak VRAM
+            for start in range(0, value_cut, self.batch_size):
+                end = min(start + self.batch_size, value_cut)
+                states_slice = {
+                    k: torch.from_numpy(v[start:end]).to(device)
+                    for k, v in state_data_np.items()
+                }
+                old_values[start:end] = self.value_model(states_slice).cpu().numpy()
+                del states_slice
+
         for _ in range(self.value_optimization_epochs):
             early_stop = False
             indices = np.random.permutation(value_cut)
             for i in range(0, value_cut, self.batch_size):
-                batch_idxs = indices[i : i + self.batch_size]
-                states_batch = {key: data[batch_idxs] for key, data in state_data_np.items()}
+                batch_idxs = indices[i:i + self.batch_size]
 
+                # Build batch tensors (only needed slice to GPU)
+                states_batch = {
+                    k: torch.from_numpy(v[batch_idxs]).to(device)
+                    for k, v in state_data_np.items()
+                }
                 returns_batch = torch.from_numpy(returns_np[batch_idxs]).to(device)
-                with torch.no_grad():
-                    values_batch = self.value_model(states_batch)
+                old_values_batch = torch.from_numpy(old_values[batch_idxs]).to(device)
 
-                values_pred:torch.Tensor = self.value_model(states_batch)
-                
-                values_pred_clipped = values_batch + (values_pred - values_batch).clamp(
+                # Current critic prediction
+                values_pred = self.value_model(states_batch)
+
+                # PPO value clipping
+                values_pred_clipped = old_values_batch + (values_pred - old_values_batch).clamp(
                     -self.value_clip_range, self.value_clip_range
                 )
-                v_loss = (returns_batch - values_pred).pow(2)
-                v_loss_clipped = (returns_batch - values_pred_clipped).pow(2)
-                value_loss = torch.max(v_loss, v_loss_clipped).mul(0.5).mean()
+
+                v_loss_unclipped = (returns_batch - values_pred).pow(2)
+                v_loss_clipped   = (returns_batch - values_pred_clipped).pow(2)
+                value_loss = 0.5 * torch.max(v_loss_unclipped, v_loss_clipped).mean()
 
                 self.value_optimizer.zero_grad()
                 value_loss.backward()
@@ -244,14 +263,20 @@ class PPO():
 
                 value_losses.append(value_loss.item())
                 values_.append(values_pred.mean().item())
-                
-                with torch.no_grad():
-                    mse = (returns_batch - values_pred).pow(2).mul(0.5).mean().item()
 
+                with torch.no_grad():
+                    mse = 0.5 * (returns_batch - values_pred).pow(2).mean().item()
+
+                # (If you meant stop-when-good, change '>' to '<')
                 if hasattr(self, 'value_stopping_mse') and mse > self.value_stopping_mse:
                     early_stop = True
+
+                # Free batch tensors
+                del states_batch, returns_batch, old_values_batch, values_pred, values_pred_clipped
+                del v_loss_unclipped, v_loss_clipped, value_loss
+
+                if early_stop:
                     break
-            
             if early_stop:
                 logger.warning(f'Early stopping value training due to MSE: {mse:.4f}')
                 break
