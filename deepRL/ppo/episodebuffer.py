@@ -176,8 +176,7 @@ class EpisodeBuffer():
 
         # Normalize returns and advantages for the entire batch
         returns_mean = np.mean(self.returns_mem)
-        returns_std = np.std(self.returns_mem)
-        self.returns_mem = (self.returns_mem - returns_mean) / (returns_std + 1e-8)
+        self.returns_mem = self.returns_mem - returns_mean * 0.0
 
         gaes_std = np.std(self.gaes_mem)
         self.gaes_mem = (self.gaes_mem - gaes_mean_for_logging) / (gaes_std + 1e-8)

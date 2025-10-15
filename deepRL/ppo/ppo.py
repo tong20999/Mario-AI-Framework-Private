@@ -154,6 +154,8 @@ class PPO():
         
         device = self.device
         n_samples = len(actions_np)
+        policy_cut = int(n_samples * self.policy_sample_ratio)
+        value_cut = int(n_samples * self.value_sample_ratio)
 
         policy_losses, value_losses, entropy_losses = [], [], []
         entropies, values_, kls = [], [], []
@@ -161,14 +163,19 @@ class PPO():
         logger.info(f'Starting model optimization with {n_samples} samples...')
         start_optimize_time = time.time()
 
+        with torch.no_grad():
+            old_values = self.value_model({
+                k: torch.from_numpy(v).to(device) for k, v in state_data_np.items()
+            }).cpu().numpy()
+
         # =================================================================
         # Policy Optimization Loop
         # =================================================================
         policy_start_time = time.time()
         for j in range(self.policy_optimization_epochs):
             early_stop = False
-            indices = np.random.permutation(n_samples)
-            for i in range(0, n_samples, self.batch_size):
+            indices = np.random.permutation(policy_cut)
+            for i in range(0, policy_cut, self.batch_size):
                 batch_idxs = indices[i : i + self.batch_size]
                 states_batch = {key: data[batch_idxs] for key, data in state_data_np.items()}
                 
@@ -217,24 +224,23 @@ class PPO():
         value_start_time = time.time()
         for _ in range(self.value_optimization_epochs):
             early_stop = False
-            indices = np.random.permutation(n_samples)
-
-            for i in range(0, n_samples, self.batch_size):
+            indices = np.random.permutation(value_cut)
+            for i in range(0, value_cut, self.batch_size):
                 batch_idxs = indices[i : i + self.batch_size]
                 states_batch = {key: data[batch_idxs] for key, data in state_data_np.items()}
 
                 returns_batch = torch.from_numpy(returns_np[batch_idxs]).to(device)
-                with torch.no_grad():
-                    values_batch = self.value_model(states_batch)
+                old_values_batch = torch.from_numpy(old_values[batch_idxs]).to(device)
 
-                values_pred:torch.Tensor = self.value_model(states_batch)
-                
-                values_pred_clipped = values_batch + (values_pred - values_batch).clamp(
+                values_pred: torch.Tensor = self.value_model(states_batch)
+
+                values_pred_clipped = old_values_batch + (values_pred - old_values_batch).clamp(
                     -self.value_clip_range, self.value_clip_range
                 )
-                v_loss = (returns_batch - values_pred).pow(2)
+
+                v_loss_unclipped = (returns_batch - values_pred).pow(2)
                 v_loss_clipped = (returns_batch - values_pred_clipped).pow(2)
-                value_loss = torch.max(v_loss, v_loss_clipped).mul(0.5).mean()
+                value_loss = 0.5 * torch.max(v_loss_unclipped, v_loss_clipped).mean()
 
                 self.value_optimizer.zero_grad()
                 value_loss.backward()
@@ -243,9 +249,8 @@ class PPO():
 
                 value_losses.append(value_loss.item())
                 values_.append(values_pred.mean().item())
-                
                 with torch.no_grad():
-                    mse = (returns_batch - values_pred).pow(2).mul(0.5).mean().item()
+                    mse = 0.5 * (returns_batch - values_pred).pow(2).mean().item()
 
                 if hasattr(self, 'value_stopping_mse') and mse > self.value_stopping_mse:
                     early_stop = True

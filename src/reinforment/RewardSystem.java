@@ -18,21 +18,18 @@ public class RewardSystem {
     // Discount used for potential difference (match PPO gamma)
     private static final float SHAPING_GAMMA = 0.997f;
 
-    // Per-weight-unit reward you want for removing one weighted objective
-    // (e.g. enemy removal gives ENEMY_WEIGHT * BASE_PER_WEIGHTED_UNIT)
-    private static final float BASE_PER_WEIGHTED_UNIT = 1.0f;
-
     // Progress shaping (kept as before)
     private static final float PROGRESS_SCALE = 10f;
 
+    private static final float OBJECTIVE_SHAPING_CAP = 25f;
     // Weights
-    private static final int ENEMY_WEIGHT = 15;
-    private static final int BLOCK_WEIGHT = 3;
-    private static final int COIN_WEIGHT = 1;
+    private static final int ENEMY_WEIGHT = 10;
+    private static final int BLOCK_WEIGHT = 5;
+    private static final int COIN_WEIGHT = 2;
 
     // Cached totals (fixed for the episode)
     private final int totalWeightedObjectives;   // sum(weight * count) at episode start
-    private final float dynamicMaxShapingReward; // K = basePerUnit * totalWeightedObjectives
+    private final float dynamicMaxShapingReward; // a constant cap (≈ total shaping budget)
 
     // State
     private int prevRemaining;   // weighted remaining objectives
@@ -41,7 +38,7 @@ public class RewardSystem {
     public RewardSystem(MarioWorld world){
         // Capture initial full counts (do NOT use "alive"/remaining lists here)
         totalWeightedObjectives = computeTotalWeightedObjectives(world);
-        dynamicMaxShapingReward = BASE_PER_WEIGHTED_UNIT * totalWeightedObjectives;
+        dynamicMaxShapingReward = OBJECTIVE_SHAPING_CAP;
 
         prevRemaining = computeRemainingWeighted(world);      // should equal totalWeightedObjectives initially
         prevProgress = clamp01(getCompletionPercentage(world));
@@ -58,6 +55,8 @@ public class RewardSystem {
                 float phiPrev = -prevRemaining / (float) totalWeightedObjectives;
                 float phiCurr = -currRemaining / (float) totalWeightedObjectives;
                 float shapingObj = dynamicMaxShapingReward * (SHAPING_GAMMA * phiCurr - phiPrev);
+                if (shapingObj > 3f) shapingObj = 3f;
+                if (shapingObj < -3f) shapingObj = -3f;
                 reward += shapingObj;
                 prevRemaining = currRemaining;
             }

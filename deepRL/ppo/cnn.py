@@ -23,7 +23,7 @@ class CNNBase(nn.Module):
         self.embedding = nn.Embedding(num_embeddings=num_object_types, embedding_dim=embedding_dim)
         self.num_stack = num_stack
         
-        c1 = 24
+        c1 = 16
 
         # --- 2. 3D Convolutional Path ---
         self.cnn = nn.Sequential(
@@ -32,7 +32,7 @@ class CNNBase(nn.Module):
             ResidualBlock3D(c1),
         )
 
-        grid_feature_dim = (2 * c1) * 16 * 16  # after temporal mean
+        grid_feature_dim = (num_stack * c1) * 16 * 16  # after temporal mean
 
         # --- 3. Vector Path ---
         self.mario_phys_dim = 22          # first 6B + 16f
@@ -66,13 +66,8 @@ class CNNBase(nn.Module):
         x = emb.permute(0, 4, 1, 2, 3).contiguous()       # (B,E,S,H,W)
         x = self.cnn(x)                                   # (B,C,S,H,W)
 
-        x_last = x[:, :, -1]
-        if x.size(2) > 1:
-            x_prev = x[:, :, -2]
-            x_diff = x_last - x_prev
-        else:
-            x_diff = torch.zeros_like(x_last)
-        x = torch.cat([x_last, x_diff], dim=1)            # (B,2C,H,W)
+        B,C,S,H,W = x.shape
+        x = x.view(B, C*S, H, W)
         grid_feat = x.flatten(1)
 
         mario_feat = self.mario_mlp(vec[:, :self.mario_phys_dim])
@@ -84,11 +79,13 @@ class CNNActor(nn.Module):
     def __init__(self, output_dim, num_stack: int, **kwargs):
         super(CNNActor, self).__init__()
         self.features = CNNBase(num_stack=num_stack, **kwargs)
-        hidden_dim = [512]
+        hidden_dim = [512, 512]
         self.actor_head = nn.Sequential(
             nn.Linear(self.features.combined_dim, hidden_dim[0]),
             nn.ReLU(),
-            nn.Linear(hidden_dim[0], output_dim)
+            nn.Linear(hidden_dim[0], hidden_dim[1]),
+            nn.ReLU(),
+            nn.Linear(hidden_dim[1], output_dim)
         )
         
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -156,12 +153,14 @@ class CNNActor(nn.Module):
 class CNNCritic(nn.Module):
     def __init__(self, num_stack: int, **kwargs):
         super(CNNCritic, self).__init__()
-        hidden_dim = [512]
+        hidden_dim = [512, 512]
         self.features = CNNBase(num_stack=num_stack, **kwargs)
         self.critic_head = nn.Sequential(
             nn.Linear(self.features.combined_dim, hidden_dim[0]),
             nn.ReLU(),
-            nn.Linear(hidden_dim[0], 1)
+            nn.Linear(hidden_dim[0], hidden_dim[1]),
+            nn.ReLU(),
+            nn.Linear(hidden_dim[1], 1)
         )
         
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
