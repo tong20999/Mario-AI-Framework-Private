@@ -2,11 +2,11 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-class ResidualBlock3D(nn.Module):
+class ResidualBlock2D(nn.Module):
     def __init__(self, channels):
         super().__init__()
-        self.conv1 = nn.Conv3d(channels, channels, 3, padding=1)
-        self.conv2 = nn.Conv3d(channels, channels, 3, padding=1)
+        self.conv1 = nn.Conv2d(channels, channels, 3, padding=1)
+        self.conv2 = nn.Conv2d(channels, channels, 3, padding=1)
         self.act = nn.ReLU(inplace=True)
 
     def forward(self, x):
@@ -16,30 +16,29 @@ class ResidualBlock3D(nn.Module):
 
 class CNNBase(nn.Module):
     def __init__(self, num_stack: int = 4, num_object_types: int = 22,
-                 embedding_dim: int = 12):
+                 embedding_dim: int = 16):
         super().__init__()
-
-        # --- 1. Embedding (semantic token representation) ---
         self.embedding = nn.Embedding(num_embeddings=num_object_types, embedding_dim=embedding_dim)
         self.num_stack = num_stack
-        
-        c1 = 16
 
-        # --- 2. 3D Convolutional Path ---
-        self.cnn = nn.Sequential(
-            nn.Conv3d(embedding_dim, c1, kernel_size=1),
-            ResidualBlock3D(c1),
-            ResidualBlock3D(c1),
+        in_channels = num_stack * embedding_dim  # full stack as channels
+        c = 64
+
+        # Lightweight 2D conv stem + residual blocks
+        self.stem = nn.Sequential(
+            nn.Conv2d(in_channels, c, 3, padding=1),
+            nn.ReLU(inplace=True),
+            ResidualBlock2D(c),
+            ResidualBlock2D(c),
         )
 
-        grid_feature_dim = (num_stack * c1) * 16 * 16  # after temporal mean
+        # Full 16x16 kept
+        grid_feature_dim = c * 16 * 16
 
-        # --- 3. Vector Path ---
-        self.mario_phys_dim = 22          # first 6B + 16f
-        self.objective_dim = 90           # three 30-length integer lists
+        # Vector features (unchanged)
+        self.mario_phys_dim = 22
+        self.objective_dim = 90
         self.total_vector_dim = self.mario_phys_dim + self.objective_dim
-        # (Optional safety) you can assert at runtime if desired:
-        # assert self.total_vector_dim == 112, "Vector length mismatch."
 
         self.mario_mlp = nn.Sequential(
             nn.Linear(self.mario_phys_dim, 64),
@@ -48,27 +47,24 @@ class CNNBase(nn.Module):
             nn.ReLU()
         )
         self.objective_mlp = nn.Sequential(
-            nn.Linear(self.objective_dim, 128), 
+            nn.Linear(self.objective_dim, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
-            nn.ReLU(),
+            nn.ReLU()
         )
         vector_feature_dim = 64 + 128
-
-        # --- 4. Fusion ---
         self.combined_dim = grid_feature_dim + vector_feature_dim
 
     def forward(self, states: dict):
-        grid = states['grid']
-        vec  = states['vector']
+        grid = states['grid']          # (B,S,H,W)
+        vec  = states['vector']        # (B, 112)
 
-        emb = self.embedding(grid.long())                 # (B,S,H,W,E)
-        x = emb.permute(0, 4, 1, 2, 3).contiguous()       # (B,E,S,H,W)
-        x = self.cnn(x)                                   # (B,C,S,H,W)
-
-        B,C,S,H,W = x.shape
-        x = x.view(B, C*S, H, W)
-        grid_feat = x.flatten(1)
+        emb = self.embedding(grid.long())          # (B,S,H,W,E)
+        # Rearrange to (B, S*E, H, W)
+        B,S,H,W,E = emb.shape
+        x = emb.permute(0,1,4,2,3).contiguous().view(B, S*E, H, W)
+        x = self.stem(x)                            # (B,C,16,16)
+        grid_feat = x.flatten(1)                   # (B, C*16*16)
 
         mario_feat = self.mario_mlp(vec[:, :self.mario_phys_dim])
         objective_feat = self.objective_mlp(vec[:, self.mario_phys_dim:])
@@ -87,7 +83,7 @@ class CNNActor(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_dim[1], output_dim)
         )
-        
+
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
         self.device = torch.device(device)
         self.to(self.device)
@@ -116,14 +112,12 @@ class CNNActor(nn.Module):
         dist = torch.distributions.Categorical(logits=logits)
         actions = dist.sample()
         logpas = dist.log_prob(actions)
-        
+
         np_actions = actions.detach().cpu().numpy()
         np_logpas = logpas.detach().cpu().numpy()
         np_logits = logits.detach().cpu().numpy()
-        
-        is_exploratory = np_actions != np.argmax(np_logits, axis=1)
-        
-        return np_actions, np_logpas, is_exploratory
+        exploratory = np_actions != np.argmax(np_logits, axis=1)
+        return np_actions, np_logpas, exploratory
 
     def select_action(self, obs: dict):
         states = self._format_single_obs(obs)
@@ -141,7 +135,6 @@ class CNNActor(nn.Module):
     def get_predictions(self, states, actions):
         if not isinstance(states['grid'], torch.Tensor):
             states = self._format_obs(states)
-        
         if not isinstance(actions, torch.Tensor):
             actions = torch.tensor(actions, device=self.device)
         logits = self.forward(states)
@@ -153,8 +146,8 @@ class CNNActor(nn.Module):
 class CNNCritic(nn.Module):
     def __init__(self, num_stack: int, **kwargs):
         super(CNNCritic, self).__init__()
-        hidden_dim = [512, 256]
         self.features = CNNBase(num_stack=num_stack, **kwargs)
+        hidden_dim = [512, 256]
         self.critic_head = nn.Sequential(
             nn.Linear(self.features.combined_dim, hidden_dim[0]),
             nn.ReLU(),
@@ -162,7 +155,7 @@ class CNNCritic(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_dim[1], 1)
         )
-        
+
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
         self.device = torch.device(device)
         self.to(self.device)
@@ -176,7 +169,7 @@ class CNNCritic(nn.Module):
     def forward(self, states):
         if not isinstance(states['grid'], torch.Tensor):
             states = self._format_obs(states)
-            
+
         features = self.features.forward(states)
         values = self.critic_head(features)
         return values.squeeze(-1)
