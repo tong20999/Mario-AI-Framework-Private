@@ -385,7 +385,8 @@ public class ProceduralContentGenerationLevel {
         while (k < pcgLevelDto.getBlocks()) {
             int randomBlock = rand.nextInt(0, blocks.length);
             EnumBlockType blockType = blocks[randomBlock];
-            int height = k % 2 == 0 ? 10 : rand.nextInt(5, 9);
+            int height = k % 2 == 0 ? 10 :
+                    rand.nextInt(5, 9);
             if(height == 8){
                 height = 7;
             }

@@ -385,6 +385,8 @@ class PPO():
                 logger.info('evaluation {} mean_return {} success_rate {}% value losses {}'.format(
                     evaluation_count, np.round(evaluation_score, 2), np.round(success_rate*100, 1), np.round(value_losses, 3)))
 
+                action_list_sums = [sum(ep_action) for ep_action in action_list]
+                logger.info(f'action list sum {action_list_sums}')
                 training_time += episode_seconds.sum()
                 wallclock_time = time.time() - training_start
 

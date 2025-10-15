@@ -20,10 +20,10 @@ public class RewardSystem {
 
     // Per-weight-unit reward you want for removing one weighted objective
     // (e.g. enemy removal gives ENEMY_WEIGHT * BASE_PER_WEIGHTED_UNIT)
-    private static final float BASE_PER_WEIGHTED_UNIT = 0.5f;
+    private static final float BASE_PER_WEIGHTED_UNIT = 1.0f;
 
     // Progress shaping (kept as before)
-    private static final float PROGRESS_SCALE = 5f;
+    private static final float PROGRESS_SCALE = 10f;
 
     // Weights
     private static final int ENEMY_WEIGHT = 15;
