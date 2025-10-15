@@ -22,7 +22,7 @@ class CNNBase(nn.Module):
         self.num_stack = num_stack
 
         in_channels = num_stack * embedding_dim  # full stack as channels
-        c = 32
+        c = 16
 
         # Lightweight 2D conv stem + residual blocks
         self.stem = nn.Sequential(
