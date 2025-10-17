@@ -171,7 +171,7 @@ class EpisodeBuffer():
         self.returns_mem = np.concatenate([row[:ep_t[i]] for i, row in enumerate(self.returns_mem[ep_idxs])])
         self.gaes_mem = np.concatenate([row[:ep_t[i]] for i, row in enumerate(self.gaes_mem[ep_idxs])])
         self.logpas_mem = np.concatenate([row[:ep_t[i]] for i, row in enumerate(self.logpas_mem[ep_idxs])])
-
+        self.values_mem = np.concatenate([row[:ep_t[i]] for i, row in enumerate(self.values_mem[ep_idxs])])
         gaes_mean_for_logging = np.mean(self.gaes_mem)
 
         # Normalize returns and advantages for the entire batch
