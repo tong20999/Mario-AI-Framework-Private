@@ -23,16 +23,17 @@ class CNNBase(nn.Module):
         self.embedding = nn.Embedding(num_embeddings=num_object_types, embedding_dim=embedding_dim)
         self.num_stack = num_stack
         
-        c1 = 16
+        c1 = 32
 
         # --- 2. 3D Convolutional Path ---
         self.cnn = nn.Sequential(
-            nn.Conv3d(embedding_dim, c1, kernel_size=1),
+            nn.Conv3d(embedding_dim, c1, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
             ResidualBlock3D(c1),
             ResidualBlock3D(c1),
         )
 
-        grid_feature_dim = (num_stack * c1) * 16 * 16  # after temporal mean
+        grid_feature_dim = 2 * c1 * 16 * 16  # after temporal mean
 
         # --- 3. Vector Path ---
         self.mario_phys_dim = 22          # first 6B + 16f
@@ -62,12 +63,11 @@ class CNNBase(nn.Module):
         grid = states['grid']
         vec  = states['vector']
 
-        emb = self.embedding(grid.long())                 # (B,S,H,W,E)
-        x = emb.permute(0, 4, 1, 2, 3).contiguous()       # (B,E,S,H,W)
-        x = self.cnn(x)                                   # (B,C,S,H,W)
-
-        B,C,S,H,W = x.shape
-        x = x.view(B, C*S, H, W)
+        emb = self.embedding(grid.long())                         # (B,S,H,W,E)
+        x3d = self.cnn(emb.permute(0, 4, 1, 2, 3).contiguous())   # (B,C,S,H,W)
+        x_last = x3d[:, :, -1]                                # (B,C,H,W)
+        x_mean = x3d[:, :, :-1].mean(dim=2)                   # (B,C,H,W)
+        x = torch.cat([x_last, x_mean], dim=1)                # (B,2C,H,W)
         grid_feat = x.flatten(1)
 
         mario_feat = self.mario_mlp(vec[:, :self.mario_phys_dim])
@@ -79,7 +79,7 @@ class CNNActor(nn.Module):
     def __init__(self, output_dim, num_stack: int, **kwargs):
         super(CNNActor, self).__init__()
         self.features = CNNBase(num_stack=num_stack, **kwargs)
-        hidden_dim = [512, 256]
+        hidden_dim = [512, 512]
         self.actor_head = nn.Sequential(
             nn.Linear(self.features.combined_dim, hidden_dim[0]),
             nn.ReLU(),
@@ -126,17 +126,19 @@ class CNNActor(nn.Module):
         return np_actions, np_logpas, is_exploratory
 
     def select_action(self, obs: dict):
-        states = self._format_single_obs(obs)
-        logits = self.forward(states)
-        dist = torch.distributions.Categorical(logits=logits)
-        action = dist.sample()
-        return action.item()
+        with torch.no_grad():
+            states = self._format_single_obs(obs)
+            logits = self.forward(states)
+            dist = torch.distributions.Categorical(logits=logits)
+            action = dist.sample()
+            return action.item()
 
     def select_greedy_action(self, obs: dict):
-        states = self._format_single_obs(obs)
-        logits = self.forward(states)
-        action = torch.argmax(logits, dim=-1)
-        return action.item()
+        with torch.no_grad():
+            states = self._format_single_obs(obs)
+            logits = self.forward(states)
+            action = torch.argmax(logits, dim=-1)
+            return action.item()
 
     def get_predictions(self, states, actions):
         if not isinstance(states['grid'], torch.Tensor):
@@ -153,7 +155,7 @@ class CNNActor(nn.Module):
 class CNNCritic(nn.Module):
     def __init__(self, num_stack: int, **kwargs):
         super(CNNCritic, self).__init__()
-        hidden_dim = [512, 256]
+        hidden_dim = [512, 512]
         self.features = CNNBase(num_stack=num_stack, **kwargs)
         self.critic_head = nn.Sequential(
             nn.Linear(self.features.combined_dim, hidden_dim[0]),

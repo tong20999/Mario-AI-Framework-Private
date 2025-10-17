@@ -572,7 +572,7 @@ class PPO():
                     if d or t:
                         break
                 # Success heuristic: total episode return > 0 works for both +1 and +100 scales
-                if rs[-1] > 0:
+                if rs[-1] > 50:
                     successes += 1
                 action_list.append(action_hist.tolist())
             except KeyboardInterrupt:
