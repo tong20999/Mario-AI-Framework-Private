@@ -150,7 +150,7 @@ class PPO():
         state_keys = self.episode_buffer.state_keys
         num_state_keys = len(state_keys)
         state_data_np = {state_keys[i]: all_data[i] for i in range(num_state_keys)}
-        actions_np, returns_np, gaes_np, logpas_np = all_data[num_state_keys:]
+        actions_np, returns_np, gaes_np, logpas_np, old_values_np = all_data[num_state_keys:]
         
         device = self.device
         n_samples = len(actions_np)
@@ -218,36 +218,22 @@ class PPO():
         # =================================================================
         value_start_time = time.time()
 
-        with torch.no_grad():
-            old_values = np.empty(value_cut, dtype=np.float32)
-            # use small chunks (batch_size) to limit peak VRAM
-            for start in range(0, value_cut, self.batch_size):
-                end = min(start + self.batch_size, value_cut)
-                states_slice = {
-                    k: torch.from_numpy(v[start:end]).to(device)
-                    for k, v in state_data_np.items()
-                }
-                old_values[start:end] = self.value_model(states_slice).cpu().numpy()
-                del states_slice
-
         for _ in range(self.value_optimization_epochs):
             early_stop = False
             indices = np.random.permutation(value_cut)
             for i in range(0, value_cut, self.batch_size):
                 batch_idxs = indices[i:i + self.batch_size]
 
-                # Build batch tensors (only needed slice to GPU)
                 states_batch = {
-                    k: torch.from_numpy(v[batch_idxs]).to(device)
+                    k: torch.from_numpy(v[batch_idxs]).to(device, non_blocking=True)
                     for k, v in state_data_np.items()
                 }
-                returns_batch = torch.from_numpy(returns_np[batch_idxs]).to(device)
-                old_values_batch = torch.from_numpy(old_values[batch_idxs]).to(device)
+                returns_batch    = torch.from_numpy(returns_np[batch_idxs]).to(device, non_blocking=True)
+                old_values_batch = torch.from_numpy(old_values_np[batch_idxs]).to(device, non_blocking=True)
 
-                # Current critic prediction
+                # critic forward
                 values_pred = self.value_model(states_batch)
-
-                # PPO value clipping
+                # clipping
                 values_pred_clipped = old_values_batch + (values_pred - old_values_batch).clamp(
                     -self.value_clip_range, self.value_clip_range
                 )

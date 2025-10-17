@@ -194,6 +194,7 @@ class EpisodeBuffer():
            self.returns_mem,
            self.gaes_mem,
            self.logpas_mem,
+           self.values_mem,
         )
         return state_data + other_data
 
