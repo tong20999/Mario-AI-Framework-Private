@@ -137,6 +137,13 @@ public class Helper {
         }
     }
 
+    public static String getLatestTrainingNumber() throws IOException {
+        Optional<File> optional = getWorkingDir(false);
+        var workingDir = optional.get().getAbsolutePath();
+        File dir = new File(workingDir);
+        return dir.getName();
+    }
+
     public static void logEvaluationResultToDataBase(int evaluationEpisode, String gameStatus, ProceduralContentGenerationLevel pcg, MarioWorld world, ArrayList<RewardEvent> rewardEvents, float evaluationReward, int minTimer, int maxTimer) throws IOException {
         String dbPath = "C:/thesis_data/training/evaluation_results.db";
         Optional<File> optional = getWorkingDir(false);
@@ -202,49 +209,40 @@ public class Helper {
                 pstmt.setString(19, trainingNumber);
 
                 pstmt.executeUpdate();
-
-                // Retrieve the auto-generated primary key (the result_id)
-//                try (ResultSet rs = pstmt.getGeneratedKeys()) {
-//                    if (rs.next()) {
-//                        resultId = rs.getLong(1);
-//                    }
-//                }
             }
-
-            // --- PART 2: Insert into reward_events table ---
-//            if (resultId != -1) {
-//                String sqlEvents = "INSERT INTO reward_events (result_id, reward, event_type, " +
-//                        "eventParam, marioX, marioY, marioState, time, timer) " +
-//                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-//
-//                try (PreparedStatement pstmtEvents = conn.prepareStatement(sqlEvents)) {
-//                    // Set the result_id once for batching
-//                    pstmtEvents.setLong(1, resultId);
-//
-//                    for (RewardEvent event : rewardEvents) {
-//                        MarioEvent marioEvent = event.getEvent();
-//
-//                        // Set event parameters (2 to 9)
-//                        pstmtEvents.setFloat(2, event.getReward());
-//                        pstmtEvents.setString(3, marioEvent.getEventTypeEnum().toString()); // Assuming EventType is an Enum
-//                        pstmtEvents.setInt(4, marioEvent.getEventParam());
-//                        pstmtEvents.setFloat(5, marioEvent.getMarioX());
-//                        pstmtEvents.setFloat(6, marioEvent.getMarioY());
-//                        pstmtEvents.setInt(7, marioEvent.getMarioState());
-//                        pstmtEvents.setInt(8, marioEvent.getTime());
-//                        pstmtEvents.setString(9, event.getTimer());
-//
-//                        pstmtEvents.addBatch(); // Add the insert to the batch
-//                    }
-//
-//                    // Execute all batched inserts at once for performance
-//                    pstmtEvents.executeBatch();
-//                }
-//            }
 
         } catch (SQLException e) {
             System.err.println("Database error: " + e.getMessage());
         }
+    }
+
+    public static List<String> getPcgContentForLatestTraining(int trainingNumber) throws SQLException {
+        String dbPath = "C:/thesis_data/training/evaluation_results.db";
+        List<String> pcgContentList = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath)) {
+
+            // This query finds the maximum training_number and then selects the
+            // pcg_content for all rows matching that number and the specified statuses.
+            // CAST is used to ensure numeric comparison for training_number, which is safer.
+            String sql = MessageFormat.format("SELECT pcg_content FROM results " +
+                    "WHERE training_number = {0} " +
+                    "AND final_status IN (''TIME_OUT'', ''LOSE'', ''PARTIAL_WIN'')", trainingNumber);
+
+            // Using try-with-resources to ensure the Statement and ResultSet are auto-closed
+            try (Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery(sql)) {
+
+                // Loop through all the results and add them to the list
+                while (rs.next()) {
+                    pcgContentList.add(rs.getString("pcg_content"));
+                }
+            }
+            return pcgContentList;
+        } catch (SQLException e) {
+            System.err.println("Database error: " + e.getMessage());
+        }
+
+        return pcgContentList;
     }
 
     private static void enableForeignKeys(Connection conn) throws SQLException {

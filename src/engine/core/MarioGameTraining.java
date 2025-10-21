@@ -218,10 +218,24 @@ public class MarioGameTraining {
     public byte[] step(boolean[] action) throws Exception {
         stepCount++;
         miniStepEvents.clear();
+        var beforeX = world.mario.x;
         for (int i = 0; i < this.frameSkip; i++) {
             var events = miniStep(action);
             miniStepEvents.addAll(events);
         }
+        float deltaX = world.mario.x - beforeX;
+
+        if (action[MarioActions.RIGHT.getValue()] &&
+                world.mario.mayJump &&
+                deltaX < 0.1f) {
+            miniStepEvents.add(createEvent(world, EventType.STUCK, 0));
+        }
+        else if (action[MarioActions.LEFT.getValue()] &&
+                world.mario.mayJump &&
+                deltaX > -0.1f) {
+            miniStepEvents.add(createEvent(world, EventType.STUCK, 0));
+        }
+
         var nextWorldState = this.world.clone();
         var nextState = new MarioForwardModel(nextWorldState, miniStepEvents);
         float reward = rewardSystem.getReward(this.world, miniStepEvents);
@@ -270,6 +284,17 @@ public class MarioGameTraining {
             }
         }
         return this.world.lastFrameEvents;
+    }
+
+    private MarioEvent createEvent(MarioWorld world, EventType eventType, int eventParam) {
+        int marioState = 0;
+        if (world.mario.isLarge) {
+            marioState = 1;
+        }
+        if (world.mario.isFire) {
+            marioState = 2;
+        }
+        return new MarioEvent(eventType, eventParam, world.mario.x, world.mario.y, marioState, 0);
     }
 
     private int getDelay(int fps) {

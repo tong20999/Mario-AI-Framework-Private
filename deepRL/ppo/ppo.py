@@ -52,6 +52,7 @@ hyper_params_mapper = {
     "maxBufferEpisodeSteps": "max_buffer_episode_steps",
     "entropyLossWeight": "entropy_loss_weight",
     "batchSize": "batch_size",
+    "valueStoppingMse" : "value_stopping_mse"
 }
 
 class PPO():
@@ -158,7 +159,7 @@ class PPO():
         value_cut = int(n_samples * self.value_sample_ratio)
 
         policy_losses, value_losses, entropy_losses = [], [], []
-        entropies, values_, kls = [], [], []
+        entropies, values_, kls, mses = [], [], [], []
 
         logger.info(f'Starting model optimization with {n_samples} samples...')
         start_optimize_time = time.time()
@@ -211,7 +212,7 @@ class PPO():
                 logger.warning(f'Early stopping policy training at {j} due to KL divergence: {kl_div:.4f}')
                 break
                 
-        logger.info(f'Policy optimization finished in {time.time() - policy_start_time:.2f} seconds')
+        logger.info(f'Policy optimization finished in {time.time() - policy_start_time:.2f} seconds kl {kl_div:.4f}')
             
         # =================================================================
         # Value Optimization Loop
@@ -252,9 +253,9 @@ class PPO():
 
                 with torch.no_grad():
                     mse = 0.5 * (returns_batch - values_pred).pow(2).mean().item()
+                mses.append(mse)
 
-                # (If you meant stop-when-good, change '>' to '<')
-                if hasattr(self, 'value_stopping_mse') and mse > self.value_stopping_mse:
+                if hasattr(self, 'value_stopping_mse') and mse < self.value_stopping_mse:
                     early_stop = True
 
                 # Free batch tensors
@@ -267,11 +268,11 @@ class PPO():
                 logger.warning(f'Early stopping value training due to MSE: {mse:.4f}')
                 break
 
-        logger.info(f'Value optimization finished in {time.time() - value_start_time:.2f} seconds')
+        logger.info(f'Value optimization finished in {time.time() - value_start_time:.2f} seconds mse {mse:.4f}')
         logger.info(f'Total optimization finished in {time.time() - start_optimize_time:.2f} seconds')
         
         return (np.mean(policy_losses), np.mean(value_losses), np.mean(entropy_losses), 
-                np.mean(entropies), np.mean(values_), np.mean(kls))
+                np.mean(entropies), np.mean(values_), np.mean(kls), np.mean(mses))
 
     def train(self, make_envs_fn:Callable, make_env_fn:Callable, gamma, 
               max_minutes, max_episodes, goal_mean_100_reward, 
@@ -288,8 +289,10 @@ class PPO():
         server_listener_thread.daemon = True
         server_listener_thread.start()
 
+        self.create_dir()
+
         env = self.make_env_fn()
-        envs = self.make_envs_fn(make_env_fn, self.n_workers)
+        envs = self.make_envs_fn(make_env_fn, self.n_workers, self.working_dir)
 
         SEEDS = (12, 34, 56, 78, 90)
         seed = random.choice(SEEDS)
@@ -341,7 +344,7 @@ class PPO():
             self.policy_model.train()
             self.value_model.train()
 
-        self.create_dir()
+        
         statistics.write_hyperparameters(
                         self.working_dir,
                         hyper_params,
@@ -377,7 +380,7 @@ class PPO():
                         shutil.rmtree(self.working_dir)
                 
                 n_ep_batch = len(episode_timestep)
-                policy_losses, value_losses, entropy_losses, entropies, values, kls = self.optimize_model()
+                policy_losses, value_losses, entropy_losses, entropies, values, kls, mses = self.optimize_model()
                 #self.policy_scheduler.step()
                 #self.value_scheduler.step()
 
@@ -417,6 +420,7 @@ class PPO():
                     "entropy.txt": entropies,
                     "values.txt": values,
                     "kls.txt": kls,
+                    "mses.txt": mses,
                     "gaes.txt": gaes_mean,
                     #"policy_lr.txt": self.policy_scheduler.get_last_lr()[0],
                     #"value_lr.txt": self.value_scheduler.get_last_lr()[0],
@@ -553,13 +557,12 @@ class PPO():
                 for _ in count():
                     a = eval_model.select_greedy_action(s)
                     s, r, d, t, _ = eval_env.step(a)
+                    if r > 90:
+                        successes += 1
                     action_hist[a] += 1
                     rs[-1] += r
                     if d or t:
                         break
-                # Success heuristic: total episode return > 0 works for both +1 and +100 scales
-                if rs[-1] > 50:
-                    successes += 1
                 action_list.append(action_hist.tolist())
             except KeyboardInterrupt:
                 pass

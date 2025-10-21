@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 import torch.multiprocessing as mp
 import numpy as np
@@ -38,9 +39,10 @@ def worker_process(rank, worker_end, make_env_fn):
             sys.exit(1)
 
 class MultiprocessEnv(object):
-    def __init__(self, make_env_fn, n_workers):
+    def __init__(self, make_env_fn, n_workers, working_dir):
         self.make_env_fn = make_env_fn
         self.n_workers = n_workers
+        self.working_dir = working_dir
         
         # Create a list of pipes for communication
         self.parent_pipes, self.worker_pipes = zip(*[mp.Pipe() for _ in range(self.n_workers)])
@@ -81,9 +83,25 @@ class MultiprocessEnv(object):
         
         for rank, action in enumerate(actions):
             self.parent_pipes[rank].send(('step', {'action': action}))
-            
-        results = [self.parent_pipes[rank].recv() for rank in range(self.n_workers)]
         
+        results = []
+        timeout_seconds = 60  # Wait for up to 60 seconds for a worker response
+
+        for rank, pipe in enumerate(self.parent_pipes):
+            if pipe.poll(timeout_seconds):
+                try:
+                    res = pipe.recv()
+                    if isinstance(res, tuple) and res[0] == 'error':
+                        raise RuntimeError(f"Worker {rank} crashed with error: {res[1]}")
+                    results.append(res)
+                except EOFError:
+                    raise RuntimeError(f"Pipe for worker {rank} was closed unexpectedly.")
+            else:
+                # If pipe.poll returns False, it means the timeout was reached
+                with open(os.path.join(self.working_dir, 'worker.txt'), "a") as file:
+                    file.write(f"Worker {rank} is unresponsive and timed out after {timeout_seconds} seconds.")
+                raise RuntimeError(f"Worker {rank} is unresponsive and timed out after {timeout_seconds} seconds.")
+
         obs_list, rewards, terminateds, truncateds, infos = zip(*results)
         obs_batch = {key: np.stack([o[key] for o in obs_list]) for key in obs_list[0]}
         return obs_batch, np.array(rewards), np.array(terminateds), np.array(truncateds), infos

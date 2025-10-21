@@ -7,8 +7,10 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.List;
 
 public class ProceduralContentGenerationLevel {
     private static final Random rand = new Random();
@@ -43,12 +45,12 @@ public class ProceduralContentGenerationLevel {
         return pcgName;
     }
 
-    private ArrayList<String> failedLevels = new ArrayList<>();
+    private List<String> failedLevels = new ArrayList<>();
 
-    public static ProceduralContentGenerationLevel parseLevel(PCGLevelDto pcgLevelDto) throws IOException {
+    public static ProceduralContentGenerationLevel parseLevel(PCGLevelDto pcgLevelDto) throws IOException, SQLException {
         if(pcgLevelDto.isTrainFailedLevel()){
             ProceduralContentGenerationLevel pcg = new ProceduralContentGenerationLevel(pcgLevelDto);
-            pcg.failedLevels = createFailedLevels();
+            pcg.failedLevels = createFailedLevelsFromDatabase();
             return pcg;
         }
         return doParseLevel(pcgLevelDto);
@@ -74,6 +76,12 @@ public class ProceduralContentGenerationLevel {
 
         // Return the list of extracted pcg strings
         return pcgStrings;
+    }
+
+    private static List<String> createFailedLevelsFromDatabase() throws IOException, SQLException {
+        // Get the working directory
+        int trainingNumber = Integer.parseInt(Helper.getLatestTrainingNumber());
+        return Helper.getPcgContentForLatestTraining(trainingNumber - 1);
     }
 
     // Helper method to parse a given folder
@@ -170,9 +178,10 @@ public class ProceduralContentGenerationLevel {
                 for (int j = 0; j < width; j++) {
                     if (j == width - 4) {
                         line.add('#');
-                    }else if(j == width - 5){
-                        line.add('N');
                     }
+//                    else if(j == width - 5){
+//                        line.add('N');
+//                    }
                     else {
                         line.add('-');
                     }
@@ -182,9 +191,9 @@ public class ProceduralContentGenerationLevel {
                     if (j == width - 4) {
                         line.add('F');
                     }
-                    else if(j == width - 5){
-                        line.add('N');
-                    }
+//                    else if(j == width - 5){
+//                        line.add('N');
+//                    }
                     else {
                         line.add('-');
                     }
@@ -196,12 +205,13 @@ public class ProceduralContentGenerationLevel {
                 }
             } else {
                 for (int j = 0; j < width; j++) {
-                    if (j == width - 5) {
-                        line.add('N');
-                    }
-                    else {
-                        line.add('-');
-                    }
+                    line.add('-');
+//                    if (j == width - 5) {
+//                        line.add('N');
+//                    }
+//                    else {
+//                        line.add('-');
+//                    }
                 }
             }
             levels.put(i, line);
@@ -497,7 +507,7 @@ public class ProceduralContentGenerationLevel {
                     doAddRamp1(addIndex);
                     boolean secondPyramid = rand.nextInt(2) == 0;
                     if(secondPyramid){
-                        //doAddRamp2(addIndex);
+                        doAddRamp2(addIndex);
                     }
                     continue;
                 case 1:

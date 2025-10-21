@@ -13,15 +13,15 @@ public class RewardSystem {
     private static final float PARTIAL_WIN = 0f;
     private static final float FAILURE_LOSE = -100f;
     private static final float FAILURE_TIMEOUT = -100f;
-    private static final float POWER_UP_REWARD = 10f;
+    private static final float POWER_UP_REWARD = 5f;
 
     // Discount used for potential difference (match PPO gamma)
     private static final float SHAPING_GAMMA = 0.997f;
 
     // Progress shaping (kept as before)
-    private static final float PROGRESS_SCALE = 10f;
+    private static final float PROGRESS_SCALE = 5f;
 
-    private static final float OBJECTIVE_SHAPING_CAP = 25f;
+    private static final float OBJECTIVE_SHAPING_CAP = 10f;
     // Weights
     private static final int ENEMY_WEIGHT = 10;
     private static final int BLOCK_WEIGHT = 5;
@@ -35,6 +35,9 @@ public class RewardSystem {
     private int prevRemaining;   // weighted remaining objectives
     private float prevProgress;  // 0..1
 
+    // Progress shaping (kept as before)
+    private static final float STUCK_PENALTY = -4f;
+
     public RewardSystem(MarioWorld world){
         // Capture initial full counts (do NOT use "alive"/remaining lists here)
         totalWeightedObjectives = computeTotalWeightedObjectives(world);
@@ -45,7 +48,7 @@ public class RewardSystem {
     }
 
     public float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
-        float reward = -0.002f; // step cost
+        float reward = -0.05f; // step cost
 
         if (!world.isEvaluation) {
             // --- Objective shaping with dynamic K ---
@@ -81,6 +84,8 @@ public class RewardSystem {
                 reward += FAILURE_LOSE;
             } else if (type == EventType.TIME_OUT.getValue()) {
                 reward += FAILURE_TIMEOUT;
+            } else if (type == EventType.STUCK.getValue()) {
+                reward += STUCK_PENALTY;
             }
         }
         return reward;
@@ -137,6 +142,8 @@ public class RewardSystem {
                 value = FAILURE_LOSE;
             } else if (type == EventType.TIME_OUT.getValue()) {
                 value = FAILURE_TIMEOUT;
+            } else if (type == EventType.STUCK.getValue()) {
+                value = STUCK_PENALTY;
             } else {
                 value = 0f;
             }

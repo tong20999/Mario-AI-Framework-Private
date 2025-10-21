@@ -20,9 +20,8 @@ def make_env_fn():
   env = MultiGridStack(env, num_stack=num_stack)
   return env
 
-
-def make_envs_fn(mef, n):
-  return MultiprocessEnv(mef, n)
+def make_envs_fn(mef, n, working_dir):
+  return MultiprocessEnv(mef, n, working_dir)
 
 if __name__ == '__main__':
   setup_logging(logging.INFO)
@@ -56,7 +55,7 @@ if __name__ == '__main__':
     "PitsMaxWidth": 5,
     "Pipes": 0,
     "Ramp": 0,
-    "File": "./levels/evaluation/lvl-1.txt",
+    "File": "./levels/original/lvl-2.txt",
     "Fps": 40
 }'''
   levelBase64 = sys.argv[1] if len(sys.argv) > 1 else base64.b64encode(default_pcg.encode('utf-8')).decode('utf-8')
@@ -68,6 +67,7 @@ if __name__ == '__main__':
   "ValueOptimizerLr": 0.0001,
   "ValueOptimizationEpochs": 3,
   "ValueClipRange" : 0.2,
+  "ValueStoppingMse": 1.0,
   "EwcLambda": 0,
   "MaxBufferEpisodes": 2,
   "MaxBufferEpisodeSteps": 70,
@@ -97,7 +97,7 @@ if __name__ == '__main__':
   value_optimization_epochs = hyperParams.get('ValueOptimizationEpochs')
   value_sample_ratio = 0.8
   value_clip_range = hyperParams.get('ValueClipRange')
-  value_stopping_mse = float('inf')
+  value_stopping_mse = hyperParams.get('ValueStoppingMse')
 
   ewc_fn = lambda policy_model, ewc_lambda: EWC(policy_model, ewc_lambda)
   ewc_lambda = hyperParams.get('EwcLambda')
