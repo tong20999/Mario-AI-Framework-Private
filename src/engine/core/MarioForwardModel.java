@@ -6,8 +6,7 @@ import java.util.List;
 import engine.helper.EventType;
 import engine.helper.GameStatus;
 import engine.helper.SpriteType;
-import engine.sprites.Mario;
-import reinforment.Point;
+import reinforcement.Point;
 
 public class MarioForwardModel {
     private static final int OBS_SCENE_SHIFT = 16;

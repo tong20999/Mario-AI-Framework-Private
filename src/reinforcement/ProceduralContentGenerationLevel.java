@@ -1,9 +1,8 @@
-package reinforment;
+package reinforcement;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import java.awt.*;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -402,6 +401,26 @@ public class ProceduralContentGenerationLevel {
             }
             doAddBlock(blockType, offsetFromStart, offsetFromFlag, height, pcgLevelDto);
             k++;
+        }
+    }
+
+
+    private void addPrefab(String pattern, int index){
+        String[] lines = pattern.strip().split("\\R");
+
+        int prefabHeight = lines.length;
+        int prefabWidth = lines[0].length();
+
+        for (int y = 0; y < prefabHeight; y++) {
+            ArrayList<Character> row = levels.get(y);
+
+            char[] prefabChars = lines[y].toCharArray();
+
+            for (int x = 0; x < prefabWidth; x++) {
+                int targetX = index + x;
+                // No need to bounds check if you guarantee valid index
+                row.set(targetX, prefabChars[x]);
+            }
         }
     }
 

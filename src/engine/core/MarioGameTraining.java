@@ -12,7 +12,7 @@ import javax.swing.JFrame;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import engine.helper.EventType;
-import reinforment.*;
+import reinforcement.*;
 import engine.helper.GameStatus;
 import engine.helper.MarioActions;
 import info.EndInfo;

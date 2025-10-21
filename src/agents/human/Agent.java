@@ -7,7 +7,7 @@ import engine.core.MarioAgent;
 import engine.core.MarioForwardModel;
 import engine.core.MarioTimer;
 import engine.helper.MarioActions;
-import reinforment.State;
+import reinforcement.State;
 
 public class Agent extends KeyAdapter implements MarioAgent {
     private boolean[] actions = null;

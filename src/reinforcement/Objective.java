@@ -1,4 +1,4 @@
-package reinforment;
+package reinforcement;
 
 import engine.sprites.Enemy;
 

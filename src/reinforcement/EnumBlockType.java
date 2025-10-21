@@ -1,4 +1,4 @@
-package reinforment;
+package reinforcement;
 
 public enum EnumBlockType {
     COIN_QUESTION_BLOCK('!'),

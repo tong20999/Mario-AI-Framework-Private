@@ -9,8 +9,8 @@ import engine.effects.*;
 import engine.graphics.MarioBackground;
 import engine.helper.*;
 import engine.sprites.*;
-import reinforment.Objective;
-import reinforment.Point;
+import reinforcement.Objective;
+import reinforcement.Point;
 
 public class MarioWorld {
     public GameStatus gameStatus;

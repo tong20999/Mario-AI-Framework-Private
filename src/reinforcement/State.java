@@ -1,13 +1,10 @@
-package reinforment;
+package reinforcement;
 
 import engine.core.MarioForwardModel;
-import engine.core.MarioWorld;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.io.ByteArrayOutputStream;
-
-import static java.nio.ByteOrder.BIG_ENDIAN;
 
 public class State {
 

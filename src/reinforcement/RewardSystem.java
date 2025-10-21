@@ -1,4 +1,4 @@
-package reinforment;
+package reinforcement;
 
 import engine.core.MarioEvent;
 import engine.core.MarioWorld;
@@ -6,7 +6,6 @@ import engine.helper.EventType;
 import engine.helper.SpriteType;
 
 import java.util.ArrayList;
-import java.util.WeakHashMap;
 
 public class RewardSystem {
     private static final float WIN_REWARD = 100f;

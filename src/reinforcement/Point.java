@@ -1,9 +1,5 @@
-package reinforment;
+package reinforcement;
 
-import engine.helper.TileFeature;
-
-import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.Objects;
 
 public class Point {

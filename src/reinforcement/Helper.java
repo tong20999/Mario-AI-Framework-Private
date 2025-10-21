@@ -1,8 +1,7 @@
-package reinforment;
+package reinforcement;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import engine.core.MarioEvent;
 import engine.core.MarioWorld;
 import engine.helper.GameStatus;
 

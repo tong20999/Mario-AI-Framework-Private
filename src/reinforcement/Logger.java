@@ -1,4 +1,4 @@
-package reinforment;
+package reinforcement;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;

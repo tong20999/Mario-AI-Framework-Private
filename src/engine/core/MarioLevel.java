@@ -3,7 +3,6 @@ package engine.core;
 import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import engine.graphics.MarioImage;
 import engine.graphics.MarioTilemap;
@@ -11,7 +10,7 @@ import engine.helper.Assets;
 import engine.helper.SpriteType;
 import engine.helper.TileFeature;
 import engine.sprites.Enemy;
-import reinforment.Point;
+import reinforcement.Point;
 
 public class MarioLevel {
 

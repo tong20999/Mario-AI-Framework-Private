@@ -1,4 +1,4 @@
-package reinforment;
+package reinforcement;
 
 public enum EnumEnemy {
     GOOMBA('g'),
