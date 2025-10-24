@@ -62,7 +62,7 @@ public class GameServer {
                             break;
                         case "02": // step
                             payload = Arrays.copyOfRange(buffer, 2, 7);
-                            boolean[] actions = getActionFromPayload(payload); // fix: use payload[0], not [2]
+                            boolean[] actions = getActionFromPayload(payload);
                             var result = clientGame.step(actions);
                             sendResponse(output, "02", result);
                             break;

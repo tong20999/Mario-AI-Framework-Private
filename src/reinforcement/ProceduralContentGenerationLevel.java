@@ -127,7 +127,7 @@ public class ProceduralContentGenerationLevel {
             pcg.addEnemy(8,2, pcgLevelDto);
             pcg.addBlock(8, 2, pcgLevelDto);
             pcg.addCoin(8,2, pcgLevelDto);
-            pcg.addPrefab(Pattern.getRandomPattern(), 12, 12);
+            //pcg.addPrefab(Pattern.getRandomPattern(), 12, 12);
             return pcg;
         }
         catch (IllegalArgumentException ex){
@@ -179,9 +179,9 @@ public class ProceduralContentGenerationLevel {
                     if (j == width - 4) {
                         line.add('#');
                     }
-//                    else if(j == width - 5){
-//                        line.add('N');
-//                    }
+                    else if(j == width - 5){
+                        line.add('N');
+                    }
                     else {
                         line.add('-');
                     }
@@ -191,9 +191,9 @@ public class ProceduralContentGenerationLevel {
                     if (j == width - 4) {
                         line.add('F');
                     }
-//                    else if(j == width - 5){
-//                        line.add('N');
-//                    }
+                    else if(j == width - 5){
+                        line.add('N');
+                    }
                     else {
                         line.add('-');
                     }
@@ -205,13 +205,12 @@ public class ProceduralContentGenerationLevel {
                 }
             } else {
                 for (int j = 0; j < width; j++) {
-                    line.add('-');
-//                    if (j == width - 5) {
-//                        line.add('N');
-//                    }
-//                    else {
-//                        line.add('-');
-//                    }
+                    if (j == width - 5) {
+                        line.add('N');
+                    }
+                    else {
+                        line.add('-');
+                    }
                 }
             }
             levels.put(i, line);

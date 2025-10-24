@@ -49,8 +49,6 @@ public class MarioWorld {
     private Objective blocksObjective = new Objective();
     private Objective enemiesObjective = new Objective();
 
-    public boolean isEvaluation = false;
-
     public List<MarioSprite> getNearestEnemies(){
         Set<String> aliveEnemyCodes = new HashSet<>();
         for (MarioSprite a : aliveEnemy) {
@@ -119,7 +117,7 @@ public class MarioWorld {
     public void initializeLevel(String level, int timer) {
         this.currentTimer = timer;
         this.initTimer = timer;
-        this.level = new MarioLevel(level, this.visuals, isEvaluation);
+        this.level = new MarioLevel(level, this.visuals);
 
         this.mario = new Mario(this.visuals, this.level.marioTileX * 16, this.level.marioTileY * 16);
         this.mario.alive = true;
@@ -154,7 +152,6 @@ public class MarioWorld {
         world.currentTimer = this.currentTimer;
         world.initTimer = this.initTimer;
         world.currentTick = this.currentTick;
-        world.isEvaluation = this.isEvaluation;
         world.level = this.level.clone();
         // Clone sprites
         for (MarioSprite sprite : this.sprites) {
@@ -544,9 +541,6 @@ public class MarioWorld {
     }
 
     private void openGate() {
-        if(isEvaluation){
-            return;
-        }
         for (var g : this.level.getGates()){
             this.level.setBlock(g.getX(), g.getY(), 0);
         }

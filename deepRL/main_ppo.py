@@ -12,12 +12,12 @@ from ppo.ppo import PPO
 from logger import setup_logging
 
 logger = logging.getLogger('Agent:Main')
-num_stack = 4
+num_stack = 2
 
 def make_env_fn():
   # Wrap the base environment with our new frame stacker
   env = MarioGame()
-  env = MultiGridStack(env, num_stack=num_stack)
+  # env = MultiGridStack(env, num_stack=num_stack)
   return env
 
 def make_envs_fn(mef, n, working_dir):
@@ -81,7 +81,7 @@ if __name__ == '__main__':
   hyperParamsString = base64.b64decode(sys.argv[2]).decode("utf-8") if len(sys.argv) > 2 else default_hyper_params
   hyperParams = json.loads(hyperParamsString)
 
-  policy_model_fn = lambda nS, nA: CNNActor(nA, num_stack=num_stack)
+  policy_model_fn = lambda nS, nA: CNNActor(nA)
   policy_model_max_grad_norm = 0.5
   policy_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
   policy_optimizer_lr = hyperParams.get('PolicyOptimizerLr')
@@ -90,7 +90,7 @@ if __name__ == '__main__':
   policy_clip_range = hyperParams.get('PolicyClipRange')
   policy_stopping_kl = hyperParams.get('PolicyStoppingKl')
 
-  value_model_fn = lambda nS: CNNCritic(num_stack=num_stack)
+  value_model_fn = lambda nS: CNNCritic()
   value_model_max_grad_norm = 0.5
   value_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
   value_optimizer_lr = hyperParams.get('ValueOptimizerLr')

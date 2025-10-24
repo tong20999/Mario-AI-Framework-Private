@@ -2,11 +2,11 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-class ResidualBlock3D(nn.Module):
+class ResidualBlock2D(nn.Module):
     def __init__(self, channels):
         super().__init__()
-        self.conv1 = nn.Conv3d(channels, channels, 3, padding=1)
-        self.conv2 = nn.Conv3d(channels, channels, 3, padding=1)
+        self.conv1 = nn.Conv2d(channels, channels, 3, padding=1)
+        self.conv2 = nn.Conv2d(channels, channels, 3, padding=1)
         self.act = nn.ReLU(inplace=True)
 
     def forward(self, x):
@@ -15,32 +15,30 @@ class ResidualBlock3D(nn.Module):
         return self.act(out + x)
 
 class CNNBase(nn.Module):
-    def __init__(self, num_stack: int = 4, num_object_types: int = 22,
+    def __init__(self, num_object_types: int = 22,
                  embedding_dim: int = 16):
         super().__init__()
 
-        # --- 1. Embedding (semantic token representation) ---
         self.embedding = nn.Embedding(num_embeddings=num_object_types, embedding_dim=embedding_dim)
-        self.num_stack = num_stack
         
-        c1 = 32
+        c1 = 64
+        c2 = 8
+        self.input_cnn_channels = embedding_dim
 
-        # --- 2. 3D Convolutional Path ---
         self.cnn = nn.Sequential(
-            nn.Conv3d(embedding_dim, c1, kernel_size=3, padding=1),
+            nn.Conv2d(self.input_cnn_channels, c1, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
-            ResidualBlock3D(c1),
-            ResidualBlock3D(c1),
+            ResidualBlock2D(c1),
+            ResidualBlock2D(c1),
+            nn.Conv2d(c1, c2, kernel_size=1),
+            nn.ReLU(inplace=True)
         )
 
-        grid_feature_dim = 2 * c1 * 16 * 16  # after temporal mean
+        grid_feature_dim = c2 * 16 * 16
 
-        # --- 3. Vector Path ---
-        self.mario_phys_dim = 22          # first 6B + 16f
-        self.objective_dim = 90           # three 30-length integer lists
+        self.mario_phys_dim = 22
+        self.objective_dim = 90
         self.total_vector_dim = self.mario_phys_dim + self.objective_dim
-        # (Optional safety) you can assert at runtime if desired:
-        # assert self.total_vector_dim == 112, "Vector length mismatch."
 
         self.mario_mlp = nn.Sequential(
             nn.Linear(self.mario_phys_dim, 64),
@@ -55,31 +53,36 @@ class CNNBase(nn.Module):
             nn.ReLU(),
         )
         vector_feature_dim = 64 + 128
-
-        # --- 4. Fusion ---
         self.combined_dim = grid_feature_dim + vector_feature_dim
 
     def forward(self, states: dict):
         grid = states['grid']
         vec  = states['vector']
 
-        emb = self.embedding(grid.long())                         # (B,S,H,W,E)
-        x3d = self.cnn(emb.permute(0, 4, 1, 2, 3).contiguous())   # (B,C,S,H,W)
-        x_last = x3d[:, :, -1]                                # (B,C,H,W)
-        x_mean = x3d[:, :, :-1].mean(dim=2)                   # (B,C,H,W)
-        x = torch.cat([x_last, x_mean], dim=1)                # (B,2C,H,W)
-        grid_feat = x.flatten(1)
+        emb = self.embedding(grid.long()) # (B, S, H, W, E)
+        B, S, H, W, E = emb.shape
+        
+        # We "combine" stack (S) and embedding (E) into the channel dimension
+        # (B, S, H, W, E) -> (B, S, E, H, W)
+        x_in = emb.permute(0, 1, 4, 2, 3) 
+        
+        # (B, S, E, H, W) -> (B, S*E, H, W)
+        x_in = x_in.reshape(B, S * E, H, W).contiguous()
+        x_out = self.cnn(x_in) # (B, c1, H, W)
 
+        # Flatten
+        grid_feat = x_out.flatten(1)
         mario_feat = self.mario_mlp(vec[:, :self.mario_phys_dim])
         objective_feat = self.objective_mlp(vec[:, self.mario_phys_dim:])
+        
         return torch.cat([grid_feat, mario_feat, objective_feat], dim=1)
 
 
 class CNNActor(nn.Module):
-    def __init__(self, output_dim, num_stack: int, **kwargs):
+    def __init__(self, output_dim, **kwargs):
         super(CNNActor, self).__init__()
-        self.features = CNNBase(num_stack=num_stack, **kwargs)
-        hidden_dim = [512, 512]
+        self.features = CNNBase(**kwargs)
+        hidden_dim = [1024, 512]
         self.actor_head = nn.Sequential(
             nn.Linear(self.features.combined_dim, hidden_dim[0]),
             nn.ReLU(),
@@ -153,10 +156,10 @@ class CNNActor(nn.Module):
         return logpas, entropies
 
 class CNNCritic(nn.Module):
-    def __init__(self, num_stack: int, **kwargs):
+    def __init__(self, **kwargs):
         super(CNNCritic, self).__init__()
-        hidden_dim = [512, 512]
-        self.features = CNNBase(num_stack=num_stack, **kwargs)
+        hidden_dim = [1024, 512]
+        self.features = CNNBase(**kwargs)
         self.critic_head = nn.Sequential(
             nn.Linear(self.features.combined_dim, hidden_dim[0]),
             nn.ReLU(),
