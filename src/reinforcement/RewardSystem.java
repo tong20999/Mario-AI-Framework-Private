@@ -17,10 +17,7 @@ public class RewardSystem {
     // Discount used for potential difference (match PPO gamma)
     private static final float SHAPING_GAMMA = 0.997f;
 
-    // Progress shaping (kept as before)
-    private static final float PROGRESS_SCALE = 5f;
-
-    private static final float OBJECTIVE_SHAPING_CAP = 10f;
+    private static final float OBJECTIVE_SHAPING_CAP = 25f;
     // Weights
     private static final int ENEMY_WEIGHT = 10;
     private static final int BLOCK_WEIGHT = 5;
@@ -32,10 +29,9 @@ public class RewardSystem {
 
     // State
     private int prevRemaining;   // weighted remaining objectives
-    private float prevProgress;  // 0..1
 
     // Progress shaping (kept as before)
-    private static final float STUCK_PENALTY = -4f;
+    private static final float STUCK_PENALTY = -5f;
 
     public RewardSystem(MarioWorld world){
         // Capture initial full counts (do NOT use "alive"/remaining lists here)
@@ -43,31 +39,21 @@ public class RewardSystem {
         dynamicMaxShapingReward = OBJECTIVE_SHAPING_CAP;
 
         prevRemaining = computeRemainingWeighted(world);      // should equal totalWeightedObjectives initially
-        prevProgress = clamp01(getCompletionPercentage(world));
     }
 
     public float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
-        float reward = -0.05f; // step cost
+        float reward = -0.02f; // step cost
 
-        if (!world.isEvaluation) {
-            // --- Objective shaping with dynamic K ---
-            if (totalWeightedObjectives > 0) {
-                int currRemaining = computeRemainingWeighted(world);
-                // Normalized potentials in [-1,0]
-                float phiPrev = -prevRemaining / (float) totalWeightedObjectives;
-                float phiCurr = -currRemaining / (float) totalWeightedObjectives;
-                float shapingObj = dynamicMaxShapingReward * (SHAPING_GAMMA * phiCurr - phiPrev);
-                if (shapingObj > 3f) shapingObj = 3f;
-                if (shapingObj < -3f) shapingObj = -3f;
-                reward += shapingObj;
-                prevRemaining = currRemaining;
-            }
-
-            // --- Progress shaping (unchanged) ---
-            float currProgress = clamp01(getCompletionPercentage(world));
-            float shapingProg = PROGRESS_SCALE * (SHAPING_GAMMA * currProgress - prevProgress);
-            reward += shapingProg;
-            prevProgress = currProgress;
+        if (totalWeightedObjectives > 0) {
+            int currRemaining = computeRemainingWeighted(world);
+            // Normalized potentials in [-1,0]
+            float phiPrev = -prevRemaining / (float) totalWeightedObjectives;
+            float phiCurr = -currRemaining / (float) totalWeightedObjectives;
+            float shapingObj = dynamicMaxShapingReward * (SHAPING_GAMMA * phiCurr - phiPrev);
+            if (shapingObj > 3f) shapingObj = 3f;
+            if (shapingObj < -3f) shapingObj = -3f;
+            reward += shapingObj;
+            prevRemaining = currRemaining;
         }
 
         // Events
@@ -110,18 +96,6 @@ public class RewardSystem {
         // Optionally require all objectives cleared
         if (computeRemainingWeighted(world) > 0) return PARTIAL_WIN;
         return WIN_REWARD;
-    }
-
-    // Horizontal completion 0..1
-    private float getCompletionPercentage(MarioWorld world) {
-        float goalPixels = world.level.exitTileX * 16f;
-        if (goalPixels <= 1f) return 0f;
-        float p = world.mario.x / goalPixels;
-        return clamp01(p);
-    }
-
-    private static float clamp01(float v){
-        return v < 0f ? 0f : (Math.min(v, 1f));
     }
 
     public static ArrayList<RewardEvent> logRewardEvent(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
