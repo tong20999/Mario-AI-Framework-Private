@@ -39,12 +39,12 @@ public class PlayLevel {
         var original = getLevel("./levels/evaluation/lvl-1a.txt");
 
         //testPcg(levelFileName);
-
+        int a = 1;
         while (true){
             ProceduralContentGenerationLevel pcgLevel = ProceduralContentGenerationLevel
-                    .parseLevel(new PCGLevelDto(31, 35, 5,6, 0,9,11,
-                    false,false,false, 0 ,9 ,11 ,1
-                    , 13 ,14 , 0, 2 ,5 ,0 ,2, 5, 0
+                    .parseLevel(new PCGLevelDto(35, 41, 50,60, 4,5,11,
+                    false,false,false, 4 ,5 ,11 ,4
+                    , 5 ,14 , 2, 2 ,5 ,4 ,2, 5, 6
                     ,100, null, false));
             pcgLevel.generate();
             printResults(game.runGame(new agents.human.Agent(), pcgLevel.getContent(), 100, 0, true));

@@ -123,10 +123,11 @@ public class ProceduralContentGenerationLevel {
             pcg.addObstacle(9,2, pcgLevelDto);
             pcg.addPit(9,2, pcgLevelDto);
             pcg.addPipe(9, 2, pcgLevelDto);
+
             pcg.addEnemy(8,2, pcgLevelDto);
             pcg.addBlock(8, 2, pcgLevelDto);
             pcg.addCoin(8,2, pcgLevelDto);
-
+            pcg.addPrefab(Pattern.getRandomPattern(), 12, 12);
             return pcg;
         }
         catch (IllegalArgumentException ex){
@@ -405,7 +406,15 @@ public class ProceduralContentGenerationLevel {
     }
 
 
-    private void addPrefab(String pattern, int index){
+    private void addPrefab(String pattern, int offsetFromStart, int offsetFromFlag){
+        int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
+        int index = rand.nextInt(offsetFromStart, maxIndex);
+        while (true){
+            if(isValidToAdd(index)){
+                break;
+            }
+            index = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
+        }
         String[] lines = pattern.strip().split("\\R");
 
         int prefabHeight = lines.length;
@@ -563,12 +572,13 @@ public class ProceduralContentGenerationLevel {
 
     private void doAddRamp2(int addIndex){
         int maxHeight = rand.nextInt(1,5);
+        boolean randomPit = rand.nextInt(2) == 0;
         for (int height = 0; height < levels.size(); height++) {
             // Get the current level's list once and reuse it
             ArrayList<Character> currentLevel = levels.get(height);
             if(height == GROUND_1_LEVEL || height == GROUND_2_LEVEL) {
-                currentLevel.add(addIndex + 5,'X');
-                currentLevel.add(addIndex + 6,'X');
+                currentLevel.add(addIndex + 5,randomPit ? '-' : 'X');
+                currentLevel.add(addIndex + 6,randomPit ? '-' : 'X');
                 currentLevel.add(addIndex + 7,'X');
                 currentLevel.add(addIndex + 8,'X');
                 currentLevel.add(addIndex + 9,'X');

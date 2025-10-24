@@ -4,10 +4,11 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 public class Pattern {
     public static final Map<Integer, String> patternMap = new HashMap<>();
-
+    private static Random rand = new Random();
     static {
         loadPatterns();
     }
@@ -31,7 +32,6 @@ public class Pattern {
                             System.err.println("Failed to read " + path + ": " + e.getMessage());
                         }
                     });
-
             System.out.println("Loaded patterns: " + patternMap.keySet());
         } catch (IOException e) {
             System.err.println("Error loading patterns: " + e.getMessage());
@@ -40,5 +40,9 @@ public class Pattern {
 
     public static String getPattern(int index) {
         return patternMap.get(index);
+    }
+
+    public static String getRandomPattern() {
+        return patternMap.get(rand.nextInt(1, patternMap.size() + 1));
     }
 }

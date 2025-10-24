@@ -55,7 +55,7 @@ if __name__ == '__main__':
     "PitsMaxWidth": 5,
     "Pipes": 0,
     "Ramp": 0,
-    "File": "./levels/original/lvl-2.txt",
+    "File": "./levels/original/lvl-1.txt",
     "Fps": 40
 }'''
   levelBase64 = sys.argv[1] if len(sys.argv) > 1 else base64.b64encode(default_pcg.encode('utf-8')).decode('utf-8')
@@ -149,7 +149,7 @@ if __name__ == '__main__':
   ]
 
   #evaluation_levels = ["file=./levels/evaluation/lvl-1.txt"]
-  # agent.play(make_env_fn, policy_model_fn, levelBase64)
+  #agent.play(make_env_fn, policy_model_fn, levelBase64)
   #agent.play(make_env_fn, policy_model_fn, "blocks=1,random_block_height=true,enemies=0,pits=0,pipes=0,width_min=15,width_max=20,fps=50")
   agent.train(make_envs_fn,
               make_env_fn,
