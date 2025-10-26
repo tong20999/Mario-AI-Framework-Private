@@ -161,6 +161,8 @@ class PPO():
         policy_losses, value_losses, entropy_losses = [], [], []
         entropies, values_, kls, mses = [], [], [], []
 
+        clipfracs = []
+
         logger.info(f'Starting model optimization with {n_samples} samples...')
         start_optimize_time = time.time()
 
@@ -201,17 +203,27 @@ class PPO():
                 entropies.append(entropies_pred.mean().item())
 
                 with torch.no_grad():
-                    kl_div = (logpas_batch - logpas_pred).mean().item()
-                kls.append(kl_div)
+                    log_ratio = logpas_pred - logpas_batch
+                    kl_div = 0.5 * (log_ratio ** 2).mean().item()
+                    log_ratio = (logpas_pred - logpas_batch)
+                kls.append(round(kl_div, 4))
+
+                #  clipfrac ~ 0.1–0.3 is healthy.
+                # If clipfrac is very high, reduce LR / epochs / clip range.
+                # If near zero while KL still trips, relax KL a bit or increase epochs.
+                clip_low, clip_high = 1.0 - self.policy_clip_range, 1.0 + self.policy_clip_range
+                clipfrac = ( (ratios < clip_low) | (ratios > clip_high) ).float().mean().item()
+                clipfracs.append(round(clipfrac, 4))
                 
                 if kl_div > self.policy_stopping_kl:
                     early_stop = True
                     break
             
             if early_stop:
-                logger.warning(f'Early stopping policy training at {j} due to KL divergence: {kl_div:.4f}')
+                logger.warning(f'Early stopping policy training at epoch {j} due to KL divergence: {kl_div:.4f}')
                 break
-                
+        
+        logger.info(f'Epoch {j} kl {kls} clipfrac {clipfracs}')
         logger.info(f'Policy optimization finished in {time.time() - policy_start_time:.2f} seconds kl {kl_div:.4f}')
             
         # =================================================================
@@ -395,7 +407,7 @@ class PPO():
                 # stats
                 evaluation_count +=1
                 # Evaluate over multiple episodes for stability; also get success rate (scale-invariant)
-                eval_eps = 10
+                eval_eps = 20
                 evaluation_score, success_rate, action_list = self.evaluate(evaluation_count, self.policy_model, env, levelBase64, n_episodes=eval_eps, visual=False)
                 logger.info('evaluation {} mean_return {} success_rate {}% value losses {} entropy {}'.format(
                     evaluation_count, np.round(evaluation_score, 2), np.round(success_rate*100, 1), np.round(value_losses, 3) , np.round(entropies, 3)))
@@ -549,7 +561,7 @@ class PPO():
         for i in range(n_episodes):
             try:
                 unique_episode_number = (evaluation_count - 1) * n_episodes + i + 1
-                info = {"episode" : unique_episode_number, "evaluation" : True, "visual":i == 0, "level" : level}
+                info = {"episode" : unique_episode_number, "evaluation" : True, "visual":visual, "level" : level}
                 s, _  = eval_env.reset(options=info)
                 d = False
                 rs.append(0.0)

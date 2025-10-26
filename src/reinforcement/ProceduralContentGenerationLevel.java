@@ -123,7 +123,7 @@ public class ProceduralContentGenerationLevel {
             pcg.addObstacle(9,2, pcgLevelDto);
             pcg.addPit(9,2, pcgLevelDto);
             pcg.addPipe(9, 2, pcgLevelDto);
-            pcg.addCannon(9, 2, pcgLevelDto);
+            //pcg.addCannon(9, 2, pcgLevelDto);
 
             pcg.addEnemy(8,2, pcgLevelDto);
             pcg.addBlock(8, 2, pcgLevelDto);

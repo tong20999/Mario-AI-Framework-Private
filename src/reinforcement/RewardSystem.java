@@ -31,7 +31,7 @@ public class RewardSystem {
     private int prevRemaining;   // weighted remaining objectives
 
     // Progress shaping (kept as before)
-    private static final float STUCK_PENALTY = -5f;
+    private static final float STUCK_PENALTY = -10f;
 
     public RewardSystem(MarioWorld world){
         // Capture initial full counts (do NOT use "alive"/remaining lists here)
@@ -42,7 +42,7 @@ public class RewardSystem {
     }
 
     public float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
-        float reward = -0.02f; // step cost
+        float reward = -0.05f; // step cost
 
         if (totalWeightedObjectives > 0) {
             int currRemaining = computeRemainingWeighted(world);

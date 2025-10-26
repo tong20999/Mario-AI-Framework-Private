@@ -34,9 +34,9 @@ public class State {
 
     private static byte[] createObservationGrid(MarioForwardModel model) throws Exception {
         int size = 16;
-        var sceneObservation = model.getScreenSceneObservation(1);
-        var flagObservation = model.getScreenSceneObservation(0);
-        var enemyObservation = model.getScreenEnemiesObservation(0);
+        var sceneObservation = model.getMarioSceneObservation(1);
+        var flagObservation = model.getMarioSceneObservation(0);
+        var enemyObservation = model.getMarioEnemiesObservation(0);
         var grid = new int[size][size];
 
         for (int col = 0; col < size; col++) {
@@ -73,7 +73,14 @@ public class State {
                     grid[col][row] = 6;
                 } else if(enemy == MarioForwardModel.OBS_FIRE_FLOWER){
                     grid[col][row] = 7;
-                } else if (enemy == MarioForwardModel.OBS_GOOMBA) {
+                }
+            }
+        }
+
+        for (int col = 0; col < size; col++) {
+            for (int row = 0; row < size; row++) {
+                int enemy = enemyObservation[col][row];
+                if (enemy == MarioForwardModel.OBS_GOOMBA) {
                     grid[col][row] = 9;
                 } else if(enemy == MarioForwardModel.OBS_GOOMBA_WINGED){
                     grid[col][row] = 10;
@@ -99,13 +106,13 @@ public class State {
             }
         }
 
-        var mario = model.getMarioScreenTilePos();
-        if(mario[0] >= 16) mario[0] = 15;
-        if(mario[1] >= 16) mario[1] = 15;
-        if(mario[0] <= 0) mario[0] = 0;
-        if(mario[1] <= 0) mario[1] = 0;
-
-        grid[mario[0]][mario[1]] = 20;
+//        var mario = model.getMarioScreenTilePos();
+//        if(mario[0] >= 16) mario[0] = 15;
+//        if(mario[1] >= 16) mario[1] = 15;
+//        if(mario[0] <= 0) mario[0] = 0;
+//        if(mario[1] <= 0) mario[1] = 0;
+//
+//        grid[mario[0]][mario[1]] = 20;
         var flatGrid = Arrays.stream(grid).flatMapToInt(Arrays::stream).toArray();
 
         return intArrayToBytes(flatGrid);
