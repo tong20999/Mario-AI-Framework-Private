@@ -29,7 +29,7 @@ class MarioGame(SocketEnv):
         self.fps = fps
         
         self.channel_count = 1
-        self.object_type = 21
+        self.object_type = 22
         self.grid_h = 16
         self.grid_w = 16
         

@@ -94,7 +94,7 @@ public class MarioGameTraining {
 
     private int fps = 0;
     private ProceduralContentGenerationLevel pcg = null;
-    private final int frameSkip = 3;
+    private final int frameSkip = 2;
     private RewardSystem rewardSystem;
     /**
      * Create a mario game to be played
@@ -223,15 +223,11 @@ public class MarioGameTraining {
             miniStepEvents.addAll(events);
         }
         float deltaX = world.mario.x - beforeX;
+        boolean tryingToMove = action[MarioActions.RIGHT.getValue()];
+        boolean onGround = world.mario.mayJump;
+        boolean isStuck = Math.abs(deltaX) < 0.1f;
 
-        if (action[MarioActions.RIGHT.getValue()] &&
-                world.mario.mayJump &&
-                deltaX < 0.1f) {
-            miniStepEvents.add(createEvent(world, EventType.STUCK, 0));
-        }
-        else if (action[MarioActions.LEFT.getValue()] &&
-                world.mario.mayJump &&
-                deltaX > -0.1f) {
+        if (tryingToMove && onGround && isStuck) {
             miniStepEvents.add(createEvent(world, EventType.STUCK, 0));
         }
 

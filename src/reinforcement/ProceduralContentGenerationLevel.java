@@ -123,7 +123,7 @@ public class ProceduralContentGenerationLevel {
             pcg.addObstacle(9,2, pcgLevelDto);
             pcg.addPit(9,2, pcgLevelDto);
             pcg.addPipe(9, 2, pcgLevelDto);
-            //pcg.addCannon(9, 2, pcgLevelDto);
+            pcg.addCannon(9, 2, pcgLevelDto);
 
             pcg.addEnemy(8,2, pcgLevelDto);
             pcg.addBlock(8, 2, pcgLevelDto);
@@ -545,7 +545,7 @@ public class ProceduralContentGenerationLevel {
     }
 
     private void addCannon(int offsetFromStart, int offsetFromFlag, PCGLevelDto pcgLevelDto) {
-        for (int k = 0; k < 1; k++) {
+        for (int k = 0; k < 3; k++) {
             int pipeHeight = rand.nextInt(pcgLevelDto.getPipesMinHeight(), pcgLevelDto.getPipesMaxHeight());
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = rand.nextInt(offsetFromStart, maxIndex);
