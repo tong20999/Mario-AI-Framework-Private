@@ -731,8 +731,7 @@ public class ProceduralContentGenerationLevel {
                 }
                 addIndex = rand.nextInt(offsetFromStart, maxIndex);
             }
-            var pipeType = rand.nextInt(2) == 0 ? 't' : 'T';
-            pipeType = 't';
+            var pipeType = k % 2 == 0 ? 'T' : 't';
             for (int height = 0; height < levels.size(); height++) {
 
 
