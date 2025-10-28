@@ -50,9 +50,13 @@ public class MarioWorld {
     private Objective enemiesObjective = new Objective();
     private float stallCounter = 0;
     public final static int MAX_STALL = 150;
-
+    private boolean stallLose = false;
     public float getStallCounter() {
         return stallCounter;
+    }
+
+    public boolean isStallLose() {
+        return stallLose;
     }
 
     public List<MarioSprite> getNearestEnemies(){
@@ -177,6 +181,7 @@ public class MarioWorld {
         world.initTimer = this.initTimer;
         world.currentTick = this.currentTick;
         world.stallCounter = this.stallCounter;
+        world.stallLose = this.stallLose;
         world.level = this.level.clone();
         // Clone sprites
         for (MarioSprite sprite : this.sprites) {
@@ -563,6 +568,7 @@ public class MarioWorld {
         if(stallCounter > MAX_STALL){
             this.addEvent(EventType.STALL, 0);
             stallCounter = 0;
+            stallLose = true;
             this.lose();
         }
 

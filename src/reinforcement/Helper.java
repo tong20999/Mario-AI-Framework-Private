@@ -159,6 +159,10 @@ public class Helper {
             status = "PARTIAL_WIN";
         }
 
+        if(world.isStallLose()){
+            status = "STALL";
+        }
+
         try {
             // 1. Load the JDBC Driver (optional for modern Java, but good practice)
             Class.forName("org.sqlite.JDBC");
