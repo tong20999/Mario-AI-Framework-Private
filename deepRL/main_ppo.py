@@ -17,7 +17,7 @@ num_stack = 4
 def make_env_fn():
   # Wrap the base environment with our new frame stacker
   env = MarioGame()
-  env = MultiGridStack(env, num_stack=num_stack)
+  # env = MultiGridStack(env, num_stack=num_stack)
   return env
 
 def make_envs_fn(mef, n, working_dir):
@@ -37,25 +37,26 @@ if __name__ == '__main__':
   }
 
   default_pcg = '''{
-    "WidthMin": 20,
-    "WidthMax": 21,
-    "TimerMin": 100,
-    "TimerMax": 101,
-    "Blocks": 3,
+    "WidthMin": 25,
+    "WidthMax": 36,
+    "TimerMin": 17,
+    "TimerMax": 21,
+    "Blocks": 0,
     "BlocksHeightOrigin": 10,
-    "BlocksHeightBound": 9,
-    "Coins": 4,
+    "BlocksHeightBound": 11,
+    "Coins": 0,
     "CoinsHeightOrigin": 10,
-    "CoinsHeightBound": 9,
-    "Enemies": 2,
-    "EnemiesHeightOrigin": 5,
+    "CoinsHeightBound": 11,
+    "Enemies": 1,
+    "EnemiesHeightOrigin": 13,
     "EnemiesHeightBound": 14,
     "Pits": 0,
     "PitsMinWidth": 2,
     "PitsMaxWidth": 5,
     "Pipes": 0,
-    "Ramp": 0,
-    "File": "./levels/original/lvl-1.txt",
+    "PipesMinHeight": 2,
+    "PipesMaxHeight":5,
+    "Ramp": 1,
     "Fps": 40
 }'''
   levelBase64 = sys.argv[1] if len(sys.argv) > 1 else base64.b64encode(default_pcg.encode('utf-8')).decode('utf-8')
@@ -86,7 +87,7 @@ if __name__ == '__main__':
   policy_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
   policy_optimizer_lr = hyperParams.get('PolicyOptimizerLr')
   policy_optimization_epochs = hyperParams.get('PolicyOptimizationEpochs')
-  policy_sample_ratio = 0.8
+  policy_sample_ratio = 1.0
   policy_clip_range = hyperParams.get('PolicyClipRange')
   policy_stopping_kl = hyperParams.get('PolicyStoppingKl')
 
@@ -95,7 +96,7 @@ if __name__ == '__main__':
   value_optimizer_fn = lambda net, lr: optim.Adam(net.parameters(), lr=lr)
   value_optimizer_lr = hyperParams.get('ValueOptimizerLr')
   value_optimization_epochs = hyperParams.get('ValueOptimizationEpochs')
-  value_sample_ratio = 0.8
+  value_sample_ratio = 1.0
   value_clip_range = hyperParams.get('ValueClipRange')
   value_stopping_mse = hyperParams.get('ValueStoppingMse')
 
@@ -149,7 +150,7 @@ if __name__ == '__main__':
   ]
 
   #evaluation_levels = ["file=./levels/evaluation/lvl-1.txt"]
-  #agent.play(make_env_fn, policy_model_fn, levelBase64)
+  agent.play(make_env_fn, policy_model_fn, levelBase64)
   #agent.play(make_env_fn, policy_model_fn, "blocks=1,random_block_height=true,enemies=0,pits=0,pipes=0,width_min=15,width_max=20,fps=50")
   agent.train(make_envs_fn,
               make_env_fn,

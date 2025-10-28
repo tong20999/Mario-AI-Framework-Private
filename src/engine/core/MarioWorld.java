@@ -48,18 +48,42 @@ public class MarioWorld {
     private Objective coinsObjective = new Objective();
     private Objective blocksObjective = new Objective();
     private Objective enemiesObjective = new Objective();
+    private float stallCounter = 0;
+    public final static int MAX_STALL = 150;
+
+    public float getStallCounter() {
+        return stallCounter;
+    }
 
     public List<MarioSprite> getNearestEnemies(){
-        Set<String> aliveEnemyCodes = new HashSet<>();
-        for (MarioSprite a : aliveEnemy) {
-            // Construct the unique code string for comparison
-            String code = MessageFormat.format("{0}_{1}_{2}", a.x, a.y, a.type.getValue());
-            aliveEnemyCodes.add(code);
-        }
-
         List<MarioSprite> out = new ArrayList<>();
         for (MarioSprite sprite : sprites) {
-            if (aliveEnemyCodes.contains(sprite.initialCode)) {
+            if(sprite.type == SpriteType.GOOMBA ||
+                    sprite.type == SpriteType.GOOMBA_WINGED ||
+                    sprite.type == SpriteType.GREEN_KOOPA ||
+                    sprite.type == SpriteType.GREEN_KOOPA_WINGED ||
+                    sprite.type == SpriteType.RED_KOOPA ||
+                    sprite.type == SpriteType.RED_KOOPA_WINGED ||
+                    sprite.type == SpriteType.SPIKY ||
+                    sprite.type == SpriteType.SPIKY_WINGED ||
+                    sprite.type == SpriteType.ENEMY_FLOWER ||
+                    sprite.type == SpriteType.SHELL ||
+                    sprite.type == SpriteType.BULLET_BILL
+            ){
+                out.add(sprite);
+            }
+        }
+
+        return out;
+    }
+
+    public List<MarioSprite> getNearestItems(){
+        List<MarioSprite> out = new ArrayList<>();
+        for (MarioSprite sprite : sprites) {
+            if(sprite.type == SpriteType.MUSHROOM ||
+                    sprite.type == SpriteType.LIFE_MUSHROOM ||
+                    sprite.type == SpriteType.FIRE_FLOWER
+            ){
                 out.add(sprite);
             }
         }
@@ -152,6 +176,7 @@ public class MarioWorld {
         world.currentTimer = this.currentTimer;
         world.initTimer = this.initTimer;
         world.currentTick = this.currentTick;
+        world.stallCounter = this.stallCounter;
         world.level = this.level.clone();
         // Clone sprites
         for (MarioSprite sprite : this.sprites) {
@@ -238,6 +263,7 @@ public class MarioWorld {
         aliveEnemy.removeIf(a -> Objects.equals(sprite.initialCode,
                 MessageFormat.format("{0}_{1}_{2}", a.x, a.y, a.type.getValue())));
         enemiesObjective.mark(sprite.initialCode);
+        this.stallCounter = 0;
     }
 
     public void removeSprite(MarioSprite sprite) {
@@ -386,6 +412,7 @@ public class MarioWorld {
 
     public void update(boolean[] actions) {
         this.lastFrameEvents.clear();
+        var beforePosition = new int[] { (int) ((this.mario.x - this.cameraX) / 16), (int) (this.mario.y / 16) };
         if (this.gameStatus != GameStatus.RUNNING) {
             return;
         }
@@ -525,6 +552,19 @@ public class MarioWorld {
             openGate();
         }
 
+
+        var afterPosition = new int[] { (int) ((this.mario.x - this.cameraX) / 16), (int) (this.mario.y / 16) };
+        if (afterPosition[1] == beforePosition[1] && afterPosition[0] == beforePosition[0]) {
+            stallCounter++;
+        } else {
+            stallCounter = 0;
+        }
+
+        if(stallCounter > MAX_STALL){
+            this.addEvent(EventType.STALL, 0);
+            stallCounter = 0;
+        }
+
         sprites.addAll(0, addedSprites);
         sprites.removeAll(removedSprites);
         addedSprites.clear();
@@ -551,6 +591,7 @@ public class MarioWorld {
         ArrayList<TileFeature> features = TileFeature.getTileType(block);
         if (features.contains(TileFeature.BUMPABLE)) {
             unbumpBlocks.removeIf(b -> b.getX() == xTile && b.getY() == yTile);
+            this.stallCounter = 0;
             blocksObjective.mark(new Point(xTile, yTile));
             bumpInto(xTile, yTile - 1);
             this.addEvent(EventType.BUMP, MarioForwardModel.OBS_QUESTION_BLOCK);
@@ -686,6 +727,7 @@ public class MarioWorld {
         this.collectCoin++;
         this.getUnCollectCoin().removeIf(c -> c.getX() == xTile && c.getY() == yTile);
         this.coinsObjective.mark(new Point(xTile, yTile));
+        this.stallCounter = 0;
     }
 
     public int[] getCoinsObjective() {

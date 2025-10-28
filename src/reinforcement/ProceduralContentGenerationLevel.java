@@ -530,12 +530,13 @@ public class ProceduralContentGenerationLevel {
                 return;
             }
             int pattern = rand.nextInt(0, 2);
+            pattern = 0;
             switch (pattern){
                 case 0:
                     doAddRamp1(addIndex);
                     boolean secondPyramid = rand.nextInt(2) == 0;
                     if(secondPyramid){
-                        doAddRamp2(addIndex);
+                        //doAddRamp2(addIndex);
                     }
                     continue;
                 case 1:
@@ -545,7 +546,7 @@ public class ProceduralContentGenerationLevel {
     }
 
     private void addCannon(int offsetFromStart, int offsetFromFlag, PCGLevelDto pcgLevelDto) {
-        for (int k = 0; k < 3; k++) {
+        for (int k = 0; k < 1; k++) {
             int pipeHeight = rand.nextInt(pcgLevelDto.getPipesMinHeight(), pcgLevelDto.getPipesMaxHeight());
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = rand.nextInt(offsetFromStart, maxIndex);

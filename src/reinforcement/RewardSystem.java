@@ -16,6 +16,8 @@ public class RewardSystem {
 
     // Discount used for potential difference (match PPO gamma)
     private static final float SHAPING_GAMMA = 0.997f;
+    // Progress shaping (kept as before)
+    private static final float PROGRESS_SCALE = 5f;
 
     private static final float OBJECTIVE_SHAPING_CAP = 25f;
     // Weights
@@ -29,9 +31,10 @@ public class RewardSystem {
 
     // State
     private int prevRemaining;   // weighted remaining objectives
+    //private float prevProgress;
 
     // Progress shaping (kept as before)
-    private static final float STUCK_PENALTY = -10f;
+    private static final float STUCK_PENALTY = -25f;
 
     public RewardSystem(MarioWorld world){
         // Capture initial full counts (do NOT use "alive"/remaining lists here)
@@ -39,10 +42,11 @@ public class RewardSystem {
         dynamicMaxShapingReward = OBJECTIVE_SHAPING_CAP;
 
         prevRemaining = computeRemainingWeighted(world);      // should equal totalWeightedObjectives initially
+        //prevProgress = clamp01(getCompletionPercentage(world));
     }
 
     public float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
-        float reward = 0f; // step cost
+        float reward = -0.02f; // step cost
 
         if (totalWeightedObjectives > 0) {
             int currRemaining = computeRemainingWeighted(world);
@@ -55,6 +59,12 @@ public class RewardSystem {
             reward += shapingObj;
             prevRemaining = currRemaining;
         }
+
+        // --- Progress shaping (unchanged) ---
+//        float currProgress = clamp01(getCompletionPercentage(world));
+//        float shapingProg = PROGRESS_SCALE * (SHAPING_GAMMA * currProgress - prevProgress);
+//        reward += shapingProg;
+//        prevProgress = currProgress;
 
         // Events
         for (MarioEvent e : miniStepEvents) {
@@ -96,6 +106,18 @@ public class RewardSystem {
         // Optionally require all objectives cleared
         if (computeRemainingWeighted(world) > 0) return PARTIAL_WIN;
         return WIN_REWARD;
+    }
+
+    // Horizontal completion 0..1
+    private float getCompletionPercentage(MarioWorld world) {
+        float goalPixels = world.level.exitTileX * 16f;
+        if (goalPixels <= 1f) return 0f;
+        float p = world.mario.x / goalPixels;
+        return clamp01(p);
+    }
+
+    private static float clamp01(float v){
+        return v < 0f ? 0f : (Math.min(v, 1f));
     }
 
     public static ArrayList<RewardEvent> logRewardEvent(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {

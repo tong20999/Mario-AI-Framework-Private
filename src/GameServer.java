@@ -133,7 +133,7 @@ public class GameServer {
     }
 
     private void sendResponse(OutputStream output, String opCode, byte[] states) throws IOException {
-        byte[] response = new byte[512];
+        byte[] response = new byte[512 + 128];
         byte[] opBytes = opCode.getBytes(StandardCharsets.UTF_8);
 
         System.arraycopy(opBytes, 0, response, 0, 2);

@@ -94,7 +94,7 @@ public class MarioGameTraining {
 
     private int fps = 0;
     private ProceduralContentGenerationLevel pcg = null;
-    private final int frameSkip = 2;
+    private final int frameSkip = 4;
     private RewardSystem rewardSystem;
     /**
      * Create a mario game to be played
@@ -180,6 +180,7 @@ public class MarioGameTraining {
             level = Helper.getFileFromLevel(pcgLevel.getFile());
             this.fps = pcgLevel.getFps();
         } else{
+            this.fps = pcgLevel.getFps();
             this.pcg = ProceduralContentGenerationLevel.parseLevel(pcgLevel);
             if(!pcgLevel.isTrainFailedLevel()){
                 this.pcg.generate();
@@ -224,7 +225,7 @@ public class MarioGameTraining {
         }
         float deltaX = world.mario.x - beforeX;
         boolean tryingToMove = action[MarioActions.RIGHT.getValue()];
-        boolean onGround = world.mario.mayJump;
+        boolean onGround = world.mario.onGround;
         boolean isStuck = Math.abs(deltaX) < 0.1f;
 
         if (tryingToMove && onGround && isStuck) {

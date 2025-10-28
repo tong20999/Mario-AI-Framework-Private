@@ -1,7 +1,9 @@
 package engine.core;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.PriorityQueue;
 
 import engine.helper.EventType;
 import engine.helper.GameStatus;
@@ -716,14 +718,20 @@ public class MarioForwardModel {
     }
 
     public float[] getNearestBlockScreenPos() {
-        return getNearestObjectScreenPos(this.world.getUnbumpBlocks());
+        return get3NearestObjectScreenPos(this.world.getUnbumpBlocks());
+    }
+
+    public float[] getNearestItemScreenPos() {
+
+        return get3NearestItemScreenPos();
     }
 
     public float[] getNearestCoinScreenPos() {
-        return getNearestObjectScreenPos(this.world.getUnCollectCoin());
+        return get3NearestObjectScreenPos(this.world.getUnCollectCoin());
     }
 
     private static final float[] NO_TARGET_NORM = new float[]{0f, 0f, 0f}; // dx_norm, dy_norm, present=0
+    private static final float[] NO_TARGET_NORM_3 = new float[]{0f, 0f, 0f, 0f, 0f};
 
     private static float clamp(float v, float lo, float hi) {
         return Math.max(lo, Math.min(hi, v));
@@ -731,6 +739,159 @@ public class MarioForwardModel {
 
     private static float safeDiv(float num, float den) {
         return (den == 0f) ? 0f : (num / den);
+    }
+
+    private static class TrackedObject {
+        float d2; // squared distance
+        int px;   // tile x
+        int py;   // tile y
+
+        TrackedObject(float d2, int px, int py) {
+            this.d2 = d2;
+            this.px = px;
+            this.py = py;
+        }
+    }
+
+    private static class TrackedEnemy {
+        float d2; // squared distance
+        int px;   // tile x
+        int py;   // tile y
+        float xa;
+        float ya;
+        int facing;
+
+        TrackedEnemy(float d2, int px, int py, float xa, float ya, int facing) {
+            this.d2 = d2;
+            this.px = px;
+            this.py = py;
+            this.xa = xa;
+            this.ya = ya;
+            this.facing = facing;
+        }
+    }
+
+    private float[] getEmptyTargets(int k, float[] noTargetValue) {
+        float[] results = new float[k * 3];
+        for (int i = 0; i < k; i++) {
+            // Copy the "no target" value (e.g., {0, 0, 0}) into the slot
+            System.arraycopy(noTargetValue, 0, results, i * 3, noTargetValue.length);
+        }
+        return results;
+    }
+
+    private float[] getEmptyEnemiesTargets(int k, float[] noTargetValue) {
+        float[] results = new float[k * 5];
+        for (int i = 0; i < k; i++) {
+            // Copy the "no target" value (e.g., {0, 0, 0}) into the slot
+            System.arraycopy(noTargetValue, 0, results, i * 5, noTargetValue.length);
+        }
+        return results;
+    }
+
+    /**
+     * Finds the 3 nearest objects on the screen.
+     * @return float[9] {dx1, dy1, found1, dx2, dy2, found2, dx3, dy3, found3}
+     */
+    private float[] get3NearestObjectScreenPos(ArrayList<Point> collections) {
+        final int K = 3; // Find 3 nearest objects
+
+        // Assumes NO_TARGET_NORM is the value for "not found", e.g. {0, 0, 0}
+        if (collections == null || collections.isEmpty()) {
+            return getEmptyTargets(K, NO_TARGET_NORM);
+        }
+
+        // This PriorityQueue will be a "max-heap" of size K.
+        // It keeps the K items with the *smallest* d2 values.
+        PriorityQueue<TrackedObject> topK = new PriorityQueue<>(
+                Comparator.comparingDouble(o -> -o.d2) // Sort by d2 descending
+        );
+
+        final int TILE = 16;
+        final int viewW = 16;
+        final int viewH = 16;
+
+        final int camTX   = (int)Math.floor(this.world.cameraX / TILE);
+        final int camTY   = (int)Math.floor(this.world.cameraY / TILE);
+        final int marioTX = (int)Math.floor(this.world.mario.x / TILE);
+        final int marioTY = (int)Math.floor(this.world.mario.y / TILE);
+
+        final int marioScreenX = marioTX - camTX;
+        final int marioScreenY = marioTY - camTY;
+
+        for (Point p : collections) {
+            // Assuming p.getX() and p.getY() are in TILES
+            int px = (int)Math.floor(p.getX());
+            int py = (int)Math.floor(p.getY());
+
+            // >>> If p is in pixels, uncomment these two lines and delete the two above:
+            // int px = (int)Math.floor(p.getX() / TILE);
+            // int py = (int)Math.floor(p.getY() / TILE);
+
+            int screenX = px - camTX;
+            int screenY = py - camTY;
+            if (screenX < 0 || screenX >= viewW || screenY < 0 || screenY >= viewH) {
+                continue; // off-screen → ignore
+            }
+
+            float dx = px - marioTX;
+            float dy = py - marioTY;
+            float d2 = dx*dx + dy*dy;
+
+            // Add to the heap
+            topK.add(new TrackedObject(d2, px, py));
+            // If heap is too big, remove the *farthest* item
+            if (topK.size() > K) {
+                topK.poll();
+            }
+        }
+
+        // --- Process the results ---
+
+        // Get the final list of K nearest objects
+        ArrayList<TrackedObject> nearest = new ArrayList<>(topK);
+        // Sort them by distance (nearest-to-farthest)
+        nearest.sort(Comparator.comparingDouble(o -> o.d2));
+
+        float[] results = new float[K * 3];
+
+        // Get normalization constants (same as your original code)
+        float maxRight = (viewW - 1) - marioScreenX;
+        float maxLeft  = marioScreenX;
+        float maxDown  = (viewH - 1) - marioScreenY;
+        float maxUp    = marioScreenY;
+
+        int i = 0;
+        // Add all found objects (up to K)
+        for (TrackedObject obj : nearest) {
+            float dx = obj.px - marioTX;
+            float dy = obj.py - marioTY;
+
+            float dxNorm = (dx >= 0)
+                    ? safeDiv(dx, Math.max(1f, maxRight))
+                    : safeDiv(dx, Math.max(1f, maxLeft));
+            float dyNorm = (dy >= 0)
+                    ? safeDiv(dy, Math.max(1f, maxDown))
+                    : safeDiv(dy, Math.max(1f, maxUp));
+
+            dxNorm = clamp(dxNorm, -1f, 1f);
+            dyNorm = clamp(dyNorm, -1f, 1f);
+
+            results[i * 3 + 0] = dxNorm;
+            results[i * 3 + 1] = dyNorm;
+            results[i * 3 + 2] = 1f; // 1f = "found"
+            i++;
+        }
+
+        // Fill remaining slots with "not found"
+        while (i < K) {
+            results[i * 3 + 0] = NO_TARGET_NORM[0];
+            results[i * 3 + 1] = NO_TARGET_NORM[1];
+            results[i * 3 + 2] = NO_TARGET_NORM[2]; // e.g., 0f = "not found"
+            i++;
+        }
+
+        return results;
     }
 
     /**
@@ -830,6 +991,232 @@ public class MarioForwardModel {
             collection.add(new Point(s.getMapX(), s.getMapY()));
         };
         return getNearestObjectScreenPos(collection);
+    }
+
+    public float[] get3NearestAliveEnemyScreenPos() {
+        // Get the list of blocks that can be bumped but haven't been yet
+        final int K = 3;
+        List<MarioSprite> sprites = world.getNearestEnemies();
+        if (sprites == null || sprites.isEmpty()) {
+            return getEmptyEnemiesTargets(K, NO_TARGET_NORM_3);
+        }
+
+        // This PriorityQueue will be a "max-heap" of size K.
+        // It keeps the K items with the *smallest* d2 values.
+        PriorityQueue<TrackedEnemy> topK = new PriorityQueue<>(
+                Comparator.comparingDouble(o -> -o.d2) // Sort by d2 descending
+        );
+
+        final int TILE = 16;
+        final int viewW = 16;
+        final int viewH = 16;
+
+        final int camTX   = (int)Math.floor(this.world.cameraX / TILE);
+        final int camTY   = (int)Math.floor(this.world.cameraY / TILE);
+        final int marioTX = (int)Math.floor(this.world.mario.x / TILE);
+        final int marioTY = (int)Math.floor(this.world.mario.y / TILE);
+
+        final int marioScreenX = marioTX - camTX;
+        final int marioScreenY = marioTY - camTY;
+
+        for (MarioSprite s : sprites) {
+            // Assuming p.getX() and p.getY() are in TILES
+            int px = s.getMapX();
+            int py = s.getMapY();
+
+            // >>> If p is in pixels, uncomment these two lines and delete the two above:
+            // int px = (int)Math.floor(p.getX() / TILE);
+            // int py = (int)Math.floor(p.getY() / TILE);
+
+            int screenX = px - camTX;
+            int screenY = py - camTY;
+            if (screenX < 0 || screenX >= viewW || screenY < 0 || screenY >= viewH) {
+                continue; // off-screen → ignore
+            }
+
+            float dx = px - marioTX;
+            float dy = py - marioTY;
+            float d2 = dx*dx + dy*dy;
+
+            // Add to the heap
+            topK.add(new TrackedEnemy(d2, px, py, s.xa, s.ya, s.facing));
+            // If heap is too big, remove the *farthest* item
+            if (topK.size() > K) {
+                topK.poll();
+            }
+        }
+
+        // --- Process the results ---
+
+        // Get the final list of K nearest objects
+        ArrayList<TrackedEnemy> nearest = new ArrayList<>(topK);
+        // Sort them by distance (nearest-to-farthest)
+        nearest.sort(Comparator.comparingDouble(o -> o.d2));
+
+        float[] results = new float[K * 5];
+
+        // Get normalization constants (same as your original code)
+        float maxRight = (viewW - 1) - marioScreenX;
+        float maxLeft  = marioScreenX;
+        float maxDown  = (viewH - 1) - marioScreenY;
+        float maxUp    = marioScreenY;
+
+        int i = 0;
+        // Add all found objects (up to K)
+        for (TrackedEnemy obj : nearest) {
+            float dx = obj.px - marioTX;
+            float dy = obj.py - marioTY;
+
+            float dxNorm = (dx >= 0)
+                    ? safeDiv(dx, Math.max(1f, maxRight))
+                    : safeDiv(dx, Math.max(1f, maxLeft));
+            float dyNorm = (dy >= 0)
+                    ? safeDiv(dy, Math.max(1f, maxDown))
+                    : safeDiv(dy, Math.max(1f, maxUp));
+
+            float xa = Math.abs(obj.xa) < 0.01f ? 0 : obj.xa;
+            float ya = Math.abs(obj.ya) < 0.01f ? 0 : obj.ya;
+
+            float xaNorm = xa/10f;
+            float yaNorm = ya/10f;
+
+            dxNorm = clamp(dxNorm, -1f, 1f);
+            dyNorm = clamp(dyNorm, -1f, 1f);
+            xaNorm = clamp(xaNorm, -1f, 1f);
+            yaNorm = clamp(yaNorm, -1f, 1f);
+
+            results[i * 5 + 0] = dxNorm;
+            results[i * 5 + 1] = dyNorm;
+            results[i * 5 + 2] = xaNorm;
+            results[i * 5 + 3] = yaNorm;
+            results[i * 5 + 4] = 1f; // 1f = "found"
+            i++;
+        }
+
+        // Fill remaining slots with "not found"
+        while (i < K) {
+            results[i * 5 + 0] = NO_TARGET_NORM_3[0];
+            results[i * 5 + 1] = NO_TARGET_NORM_3[1];
+            results[i * 5 + 2] = NO_TARGET_NORM_3[2];
+            results[i * 5 + 3] = NO_TARGET_NORM_3[3];
+            results[i * 5 + 4] = NO_TARGET_NORM_3[4];
+            i++;
+        }
+
+        return results;
+    }
+
+    public float[] get3NearestItemScreenPos() {
+        // Get the list of blocks that can be bumped but haven't been yet
+        final int K = 1;
+        List<MarioSprite> sprites = world.getNearestItems();
+        if (sprites == null || sprites.isEmpty()) {
+            return getEmptyEnemiesTargets(K, NO_TARGET_NORM_3);
+        }
+
+        // This PriorityQueue will be a "max-heap" of size K.
+        // It keeps the K items with the *smallest* d2 values.
+        PriorityQueue<TrackedEnemy> topK = new PriorityQueue<>(
+                Comparator.comparingDouble(o -> -o.d2) // Sort by d2 descending
+        );
+
+        final int TILE = 16;
+        final int viewW = 16;
+        final int viewH = 16;
+
+        final int camTX   = (int)Math.floor(this.world.cameraX / TILE);
+        final int camTY   = (int)Math.floor(this.world.cameraY / TILE);
+        final int marioTX = (int)Math.floor(this.world.mario.x / TILE);
+        final int marioTY = (int)Math.floor(this.world.mario.y / TILE);
+
+        final int marioScreenX = marioTX - camTX;
+        final int marioScreenY = marioTY - camTY;
+
+        for (MarioSprite s : sprites) {
+            // Assuming p.getX() and p.getY() are in TILES
+            int px = s.getMapX();
+            int py = s.getMapY();
+
+            // >>> If p is in pixels, uncomment these two lines and delete the two above:
+            // int px = (int)Math.floor(p.getX() / TILE);
+            // int py = (int)Math.floor(p.getY() / TILE);
+
+            int screenX = px - camTX;
+            int screenY = py - camTY;
+            if (screenX < 0 || screenX >= viewW || screenY < 0 || screenY >= viewH) {
+                continue; // off-screen → ignore
+            }
+
+            float dx = px - marioTX;
+            float dy = py - marioTY;
+            float d2 = dx*dx + dy*dy;
+
+            // Add to the heap
+            topK.add(new TrackedEnemy(d2, px, py, s.xa, s.ya, s.facing));
+            // If heap is too big, remove the *farthest* item
+            if (topK.size() > K) {
+                topK.poll();
+            }
+        }
+
+        // --- Process the results ---
+
+        // Get the final list of K nearest objects
+        ArrayList<TrackedEnemy> nearest = new ArrayList<>(topK);
+        // Sort them by distance (nearest-to-farthest)
+        nearest.sort(Comparator.comparingDouble(o -> o.d2));
+
+        float[] results = new float[K * 5];
+
+        // Get normalization constants (same as your original code)
+        float maxRight = (viewW - 1) - marioScreenX;
+        float maxLeft  = marioScreenX;
+        float maxDown  = (viewH - 1) - marioScreenY;
+        float maxUp    = marioScreenY;
+
+        int i = 0;
+        // Add all found objects (up to K)
+        for (TrackedEnemy obj : nearest) {
+            float dx = obj.px - marioTX;
+            float dy = obj.py - marioTY;
+
+            float dxNorm = (dx >= 0)
+                    ? safeDiv(dx, Math.max(1f, maxRight))
+                    : safeDiv(dx, Math.max(1f, maxLeft));
+            float dyNorm = (dy >= 0)
+                    ? safeDiv(dy, Math.max(1f, maxDown))
+                    : safeDiv(dy, Math.max(1f, maxUp));
+
+            float xa = Math.abs(obj.xa) < 0.01f ? 0 : obj.xa;
+            float ya = Math.abs(obj.ya) < 0.01f ? 0 : obj.ya;
+
+            float xaNorm = xa/10f;
+            float yaNorm = ya/10f;
+
+            dxNorm = clamp(dxNorm, -1f, 1f);
+            dyNorm = clamp(dyNorm, -1f, 1f);
+            xaNorm = clamp(xaNorm, -1f, 1f);
+            yaNorm = clamp(yaNorm, -1f, 1f);
+
+            results[i * 5 + 0] = dxNorm;
+            results[i * 5 + 1] = dyNorm;
+            results[i * 5 + 2] = xaNorm;
+            results[i * 5 + 3] = yaNorm;
+            results[i * 5 + 4] = 1f; // 1f = "found"
+            i++;
+        }
+
+        // Fill remaining slots with "not found"
+        while (i < K) {
+            results[i * 5 + 0] = NO_TARGET_NORM_3[0];
+            results[i * 5 + 1] = NO_TARGET_NORM_3[1];
+            results[i * 5 + 2] = NO_TARGET_NORM_3[2];
+            results[i * 5 + 3] = NO_TARGET_NORM_3[3];
+            results[i * 5 + 4] = NO_TARGET_NORM_3[4];
+            i++;
+        }
+
+        return results;
     }
 
     public static boolean isCeilingBlockingTile(int shiftedId) {
@@ -990,6 +1377,10 @@ public class MarioForwardModel {
         }
 
         return (float) complete / total;
+    }
+
+    public float getStallCounter(){
+        return world.getStallCounter();
     }
 
     public MarioWorld getMarioWorld() {
