@@ -563,6 +563,7 @@ public class MarioWorld {
         if(stallCounter > MAX_STALL){
             this.addEvent(EventType.STALL, 0);
             stallCounter = 0;
+            this.lose();
         }
 
         sprites.addAll(0, addedSprites);
