@@ -224,11 +224,16 @@ public class MarioGameTraining {
             miniStepEvents.addAll(events);
         }
         float deltaX = world.mario.x - beforeX;
-        boolean tryingToMove = action[MarioActions.RIGHT.getValue()];
+        boolean tryingToMoveRight = action[MarioActions.RIGHT.getValue()];
+        boolean tryingToMoveLeft = action[MarioActions.LEFT.getValue()];
         boolean onGround = world.mario.onGround;
         boolean isStuck = Math.abs(deltaX) < 0.1f;
 
-        if (tryingToMove && onGround && isStuck) {
+        if (tryingToMoveRight && onGround && isStuck) {
+            miniStepEvents.add(createEvent(world, EventType.STUCK, 0));
+        }
+
+        if (tryingToMoveLeft && onGround && isStuck) {
             miniStepEvents.add(createEvent(world, EventType.STUCK, 0));
         }
 
