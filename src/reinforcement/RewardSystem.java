@@ -10,8 +10,8 @@ import java.util.ArrayList;
 public class RewardSystem {
     private static final float WIN_REWARD = 100f;
     private static final float PARTIAL_WIN = 0f;
-    private static final float FAILURE_LOSE = -100f;
-    private static final float FAILURE_TIMEOUT = -100f;
+    private static final float FAILURE_LOSE = -150f;
+    private static final float FAILURE_TIMEOUT = -150f;
     private static final float POWER_UP_REWARD = 5f;
 
     // Discount used for potential difference (match PPO gamma)
@@ -34,7 +34,8 @@ public class RewardSystem {
     //private float prevProgress;
 
     // Progress shaping (kept as before)
-    private static final float STUCK_PENALTY = -25f;
+    private static final float STUCK_PENALTY = -20f;
+    private static final float STALL_PENALTY = -35f;
 
     public RewardSystem(MarioWorld world){
         // Capture initial full counts (do NOT use "alive"/remaining lists here)
@@ -46,7 +47,7 @@ public class RewardSystem {
     }
 
     public float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
-        float reward = -0.02f; // step cost
+        float reward = 0f; // step cost
 
         if (totalWeightedObjectives > 0) {
             int currRemaining = computeRemainingWeighted(world);
@@ -81,6 +82,8 @@ public class RewardSystem {
                 reward += FAILURE_TIMEOUT;
             } else if (type == EventType.STUCK.getValue()) {
                 reward += STUCK_PENALTY;
+            } else if (type == EventType.STALL.getValue()) {
+                reward += STALL_PENALTY;
             }
         }
         return reward;
@@ -139,6 +142,8 @@ public class RewardSystem {
                 value = FAILURE_TIMEOUT;
             } else if (type == EventType.STUCK.getValue()) {
                 value = STUCK_PENALTY;
+            } else if (type == EventType.STALL.getValue()) {
+                value = STALL_PENALTY;
             } else {
                 value = 0f;
             }

@@ -587,6 +587,9 @@ public class MarioWorld {
             openGate();
         }
 
+        if(actions[MarioActions.JUMP.getValue()]){
+            stallCounter = 0;
+        }
 
         var afterPosition = new int[] { (int) ((this.mario.x - this.cameraX) / 16), (int) (this.mario.y / 16) };
         if (afterPosition[1] == beforePosition[1] && afterPosition[0] == beforePosition[0]) {
@@ -598,8 +601,8 @@ public class MarioWorld {
         if(stallCounter > MAX_STALL){
             this.addEvent(EventType.STALL, 0);
             stallCounter = 0;
-            stallLose = true;
-            this.lose();
+            //stallLose = true;
+            //this.lose();
         }
 
         sprites.addAll(0, addedSprites);
