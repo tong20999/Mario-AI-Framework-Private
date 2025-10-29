@@ -24,18 +24,14 @@ class CNNBase(nn.Module):
         #self.num_stack = num_stack
         
         c1 = 64
-        c2 = 128
         c3 = 16
         
         self.cnn = nn.Sequential(
             nn.Conv2d(embedding_dim, c1, kernel_size=1),
             nn.ReLU(),
-            nn.Conv2d(c1, c2, kernel_size=3, padding=1), 
-            nn.ReLU(),
-            nn.Conv2d(c2, c2, kernel_size=3, padding=1), 
-            nn.ReLU(),
-            nn.Conv2d(c2, c3, kernel_size=1, padding=0), 
-            nn.ReLU(),
+            ResidualBlock2D(c1),
+            ResidualBlock2D(c1),
+            nn.Conv2d(c1, c3, kernel_size=1, padding=0)
         )
 
         grid_feature_dim = c3 * 16 * 16
@@ -48,14 +44,12 @@ class CNNBase(nn.Module):
         self.mario_mlp = nn.Sequential(
             nn.Linear(self.mario_phys_dim, 128),
             nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU()
+            nn.Linear(128, 128)
         )
         self.objective_mlp = nn.Sequential(
             nn.Linear(self.objective_dim, 128), 
             nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
+            nn.Linear(128, 128)
         )
         vector_feature_dim = 128 + 128
 
