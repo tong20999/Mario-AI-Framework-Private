@@ -144,7 +144,7 @@ public class ProceduralContentGenerationLevel {
         var mapWidth = lanLevel.size() / 2;
         //int spawnMario = rand.nextInt(3 ,maxIndex);
         int spawnMario = rand.nextInt(2) == 0 ? 3 : maxIndex;
-        lanLevel.set(spawnMario, 'M');
+        lanLevel.set(3, 'M');
         levels.replace(LAN_LEVEL, lanLevel);
         StringBuilder contentBuilder = new StringBuilder();
         for (int i = 0; i < levels.size(); i++) {
@@ -546,7 +546,7 @@ public class ProceduralContentGenerationLevel {
     }
 
     private void addCannon(int offsetFromStart, int offsetFromFlag, PCGLevelDto pcgLevelDto) {
-        for (int k = 0; k < 1; k++) {
+        for (int k = 0; k < 3; k++) {
             int pipeHeight = rand.nextInt(pcgLevelDto.getPipesMinHeight(), pcgLevelDto.getPipesMaxHeight());
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = rand.nextInt(offsetFromStart, maxIndex);

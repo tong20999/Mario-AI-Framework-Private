@@ -25,15 +25,18 @@ class CNNBase(nn.Module):
         
         c1 = 32
         c2 = 64
-        # --- 2. 3D Convolutional Path ---
+        
         self.cnn = nn.Sequential(
-            nn.Conv2d(embedding_dim, c1, kernel_size=3, padding=1),
+            nn.Conv2d(embedding_dim, c1, kernel_size=1),
             nn.ReLU(),
-            ResidualBlock2D(c1),
-            nn.Conv2d(c1, c2, kernel_size=3, padding=1),
+            nn.Conv2d(c1, c1, kernel_size=3, padding=1),
             nn.ReLU(),
-            ResidualBlock2D(c2),
-            nn.AdaptiveAvgPool2d(4)
+            nn.Conv2d(c1, c1, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(c1, c2, kernel_size=3, stride=2, padding=1), 
+            nn.ReLU(),
+            nn.Conv2d(c2, c2, kernel_size=3, stride=2, padding=1), 
+            nn.ReLU(),
         )
 
         grid_feature_dim = c2 * 4 * 4
