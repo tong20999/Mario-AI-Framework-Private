@@ -6,7 +6,7 @@ import numpy as np
 # Assuming socketEnv.py is in the same directory.
 from socketEnv import SocketEnv
 
-payload_size = 512 + 128
+payload_size = 512 + 256
 
 all_possible_input:list[list[bool]] = [
     # [LEFT, RIGHT , DOWN, SPEED, JUMP]

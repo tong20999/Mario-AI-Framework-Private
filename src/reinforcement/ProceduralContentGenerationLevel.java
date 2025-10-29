@@ -546,7 +546,7 @@ public class ProceduralContentGenerationLevel {
     }
 
     private void addCannon(int offsetFromStart, int offsetFromFlag, PCGLevelDto pcgLevelDto) {
-        for (int k = 0; k < 3; k++) {
+        for (int k = 0; k < 0; k++) {
             int pipeHeight = rand.nextInt(pcgLevelDto.getPipesMinHeight(), pcgLevelDto.getPipesMaxHeight());
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = rand.nextInt(offsetFromStart, maxIndex);
