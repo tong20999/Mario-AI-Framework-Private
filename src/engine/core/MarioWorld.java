@@ -69,17 +69,47 @@ public class MarioWorld {
                     sprite.type == SpriteType.RED_KOOPA ||
                     sprite.type == SpriteType.RED_KOOPA_WINGED ||
                     sprite.type == SpriteType.SPIKY ||
-                    sprite.type == SpriteType.SPIKY_WINGED ||
-                    sprite.type == SpriteType.ENEMY_FLOWER ||
-                    sprite.type == SpriteType.SHELL ||
-                    sprite.type == SpriteType.BULLET_BILL
+                    sprite.type == SpriteType.SPIKY_WINGED
             ){
                 out.add(sprite);
             }
         }
-
         return out;
     }
+
+    public List<MarioSprite> getNearestBulletBill(){
+        List<MarioSprite> out = new ArrayList<>();
+        for (MarioSprite sprite : sprites) {
+            if(sprite.type == SpriteType.BULLET_BILL
+            ){
+                out.add(sprite);
+            }
+        }
+        return out;
+    }
+
+    public List<MarioSprite> getNearestShell(){
+        List<MarioSprite> out = new ArrayList<>();
+        for (MarioSprite sprite : sprites) {
+            if(sprite.type == SpriteType.SHELL
+            ){
+                out.add(sprite);
+            }
+        }
+        return out;
+    }
+
+    public List<MarioSprite> getNearestFlower(){
+        List<MarioSprite> out = new ArrayList<>();
+        for (MarioSprite sprite : sprites) {
+            if(sprite.type == SpriteType.ENEMY_FLOWER
+            ){
+                out.add(sprite);
+            }
+        }
+        return out;
+    }
+
 
     public List<MarioSprite> getNearestItems(){
         List<MarioSprite> out = new ArrayList<>();

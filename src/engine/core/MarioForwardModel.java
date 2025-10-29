@@ -993,13 +993,45 @@ public class MarioForwardModel {
         return getNearestObjectScreenPos(collection);
     }
 
+
+    public float[] get3NearestBulletBillScreenPos() {
+        final int K = 3;
+        List<MarioSprite> sprites = world.getNearestBulletBill();
+        if (sprites == null || sprites.isEmpty()) {
+            return getEmptyEnemiesTargets(K, NO_TARGET_NORM_3);
+        }
+        return doGet3NearestSpritesScreenPos(sprites);
+    }
+
+    public float[] get3NearestFlowerScreenPos() {
+        final int K = 3;
+        List<MarioSprite> sprites = world.getNearestFlower();
+        if (sprites == null || sprites.isEmpty()) {
+            return getEmptyEnemiesTargets(K, NO_TARGET_NORM_3);
+        }
+        return doGet3NearestSpritesScreenPos(sprites);
+    }
+
+    public float[] get3NearestShellScreenPos() {
+        final int K = 3;
+        List<MarioSprite> sprites = world.getNearestShell();
+        if (sprites == null || sprites.isEmpty()) {
+            return getEmptyEnemiesTargets(K, NO_TARGET_NORM_3);
+        }
+        return doGet3NearestSpritesScreenPos(sprites);
+    }
+
     public float[] get3NearestAliveEnemyScreenPos() {
-        // Get the list of blocks that can be bumped but haven't been yet
         final int K = 3;
         List<MarioSprite> sprites = world.getNearestEnemies();
         if (sprites == null || sprites.isEmpty()) {
             return getEmptyEnemiesTargets(K, NO_TARGET_NORM_3);
         }
+        return doGet3NearestSpritesScreenPos(sprites);
+    }
+
+    public float[] doGet3NearestSpritesScreenPos(List<MarioSprite> sprites) {
+        final int K = 3;
 
         // This PriorityQueue will be a "max-heap" of size K.
         // It keeps the K items with the *smallest* d2 values.

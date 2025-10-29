@@ -154,6 +154,9 @@ public class State {
         float[] nearestCoin = model.getNearestCoinScreenPos();
         float[] nearestItem = model.getNearestItemScreenPos();
         float[] nearestEnemies = model.get3NearestAliveEnemyScreenPos();
+        float[] nearestBulletBill = model.get3NearestBulletBillScreenPos();
+        float[] nearestShell = model.get3NearestFlowerScreenPos();
+        float[] nearestFlower = model.get3NearestShellScreenPos();
 
         float stall = model.getStallCounter() / MarioWorld.MAX_STALL;
 
@@ -196,33 +199,40 @@ public class State {
         outputStream.write(float2ByteArray(nearestBlock[7])); // 96
         outputStream.write(float2ByteArray(nearestBlock[8])); // 100 31
 
-        outputStream.write(float2ByteArray(nearestEnemies[0])); // 104
-        outputStream.write(float2ByteArray(nearestEnemies[1])); // 108
-        outputStream.write(float2ByteArray(nearestEnemies[2])); // 112
-        outputStream.write(float2ByteArray(nearestEnemies[3])); // 116
-        outputStream.write(float2ByteArray(nearestEnemies[4])); // 120
-        outputStream.write(float2ByteArray(nearestEnemies[5])); // 124
-        outputStream.write(float2ByteArray(nearestEnemies[6])); // 128
-        outputStream.write(float2ByteArray(nearestEnemies[7])); // 132
-        outputStream.write(float2ByteArray(nearestEnemies[8])); // 136
-        outputStream.write(float2ByteArray(nearestEnemies[9])); // 140
-        outputStream.write(float2ByteArray(nearestEnemies[10])); // 144
-        outputStream.write(float2ByteArray(nearestEnemies[11])); // 148
-        outputStream.write(float2ByteArray(nearestEnemies[12])); // 152
-        outputStream.write(float2ByteArray(nearestEnemies[13])); // 156
-        outputStream.write(float2ByteArray(nearestEnemies[14])); // 160 46
+        fillObjects(outputStream, nearestEnemies); // 104 160 46
+        fillObjects(outputStream, nearestBulletBill); // 164 220 61
+        fillObjects(outputStream, nearestFlower); // 224 280 76
+        fillObjects(outputStream, nearestShell); // 284 340 91
 
-        outputStream.write(float2ByteArray(nearestItem[0])); // 164
-        outputStream.write(float2ByteArray(nearestItem[1])); // 168
-        outputStream.write(float2ByteArray(nearestItem[2])); // 172
-        outputStream.write(float2ByteArray(nearestItem[3])); // 176
-        outputStream.write(float2ByteArray(nearestItem[4])); // 180 51
+        outputStream.write(float2ByteArray(nearestItem[0])); // 344 92
+        outputStream.write(float2ByteArray(nearestItem[1])); // 348 93
+        outputStream.write(float2ByteArray(nearestItem[2])); // 352 94
+        outputStream.write(float2ByteArray(nearestItem[3])); // 356 95
+        outputStream.write(float2ByteArray(nearestItem[4])); // 360 96
 
-        outputStream.write(float2ByteArray(stall)); // 184 52
+        outputStream.write(float2ByteArray(stall)); // 364 97
 
-        outputStream.write(intArrayToBytes(coinsObjective)); // 210
-        outputStream.write(intArrayToBytes(blocksObjective)); // 240
-        outputStream.write(intArrayToBytes(enemiesObjective)); // 270
+        outputStream.write(intArrayToBytes(coinsObjective)); // 394
+        outputStream.write(intArrayToBytes(blocksObjective)); // 424
+        outputStream.write(intArrayToBytes(enemiesObjective)); // 454
         return outputStream.toByteArray();
+    }
+
+    private static void fillObjects(ByteArrayOutputStream outputStream, float[] object) throws Exception {
+        outputStream.write(float2ByteArray(object[0])); // 104
+        outputStream.write(float2ByteArray(object[1])); // 108
+        outputStream.write(float2ByteArray(object[2])); // 112
+        outputStream.write(float2ByteArray(object[3])); // 116
+        outputStream.write(float2ByteArray(object[4])); // 120
+        outputStream.write(float2ByteArray(object[5])); // 124
+        outputStream.write(float2ByteArray(object[6])); // 128
+        outputStream.write(float2ByteArray(object[7])); // 132
+        outputStream.write(float2ByteArray(object[8])); // 136
+        outputStream.write(float2ByteArray(object[9])); // 140
+        outputStream.write(float2ByteArray(object[10])); // 144
+        outputStream.write(float2ByteArray(object[11])); // 148
+        outputStream.write(float2ByteArray(object[12])); // 152
+        outputStream.write(float2ByteArray(object[13])); // 156
+        outputStream.write(float2ByteArray(object[14])); // 160 46
     }
 }

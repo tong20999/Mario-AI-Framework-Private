@@ -16,7 +16,7 @@ class ResidualBlock2D(nn.Module):
 
 class CNNBase(nn.Module):
     def __init__(self, num_stack: int = 4, num_object_types: int = 21,
-                 embedding_dim: int = 16):
+                 embedding_dim: int = 24):
         super().__init__()
 
         # --- 1. Embedding (semantic token representation) ---
@@ -24,32 +24,27 @@ class CNNBase(nn.Module):
         #self.num_stack = num_stack
         
         c1 = 32
-        c2 = 64
+        c2 = 32
         
         self.cnn = nn.Sequential(
-            nn.Conv2d(embedding_dim, c1, kernel_size=1),
-            nn.ReLU(),
-            nn.Conv2d(c1, c1, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(c1, c1, kernel_size=3, padding=1),
+            nn.Conv2d(embedding_dim, c1, kernel_size=3, padding=1),
             nn.ReLU(),
             nn.Conv2d(c1, c2, kernel_size=3, stride=2, padding=1), 
             nn.ReLU(),
-            nn.Conv2d(c2, c2, kernel_size=3, stride=2, padding=1), 
-            nn.ReLU(),
+            ResidualBlock2D(c2)
         )
 
-        grid_feature_dim = c2 * 4 * 4
+        grid_feature_dim = c2 * 8 * 8
 
         # --- 3. Vector Path ---
-        self.mario_phys_dim = 52        
+        self.mario_phys_dim = 97        
         self.objective_dim = 90          
         self.total_vector_dim = self.mario_phys_dim + self.objective_dim
 
         self.mario_mlp = nn.Sequential(
-            nn.Linear(self.mario_phys_dim, 96),
+            nn.Linear(self.mario_phys_dim, 128),
             nn.ReLU(),
-            nn.Linear(96, 96),
+            nn.Linear(128, 128),
             nn.ReLU()
         )
         self.objective_mlp = nn.Sequential(
@@ -58,7 +53,7 @@ class CNNBase(nn.Module):
             nn.Linear(128, 128),
             nn.ReLU(),
         )
-        vector_feature_dim = 96 + 128
+        vector_feature_dim = 128 + 128
 
         # --- 4. Fusion ---
         self.combined_dim = grid_feature_dim + vector_feature_dim
