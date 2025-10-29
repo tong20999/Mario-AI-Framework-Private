@@ -16,25 +16,29 @@ class ResidualBlock2D(nn.Module):
 
 class CNNBase(nn.Module):
     def __init__(self, num_stack: int = 4, num_object_types: int = 21,
-                 embedding_dim: int = 24):
+                 embedding_dim: int = 16):
         super().__init__()
 
         # --- 1. Embedding (semantic token representation) ---
         self.embedding = nn.Embedding(num_embeddings=num_object_types, embedding_dim=embedding_dim)
         #self.num_stack = num_stack
         
-        c1 = 32
-        c2 = 32
+        c1 = 64
+        c2 = 128
+        c3 = 16
         
         self.cnn = nn.Sequential(
-            nn.Conv2d(embedding_dim, c1, kernel_size=3, padding=1),
+            nn.Conv2d(embedding_dim, c1, kernel_size=1),
             nn.ReLU(),
-            nn.Conv2d(c1, c2, kernel_size=3, stride=2, padding=1), 
+            nn.Conv2d(c1, c2, kernel_size=3, padding=1), 
             nn.ReLU(),
-            ResidualBlock2D(c2)
+            nn.Conv2d(c2, c2, kernel_size=3, padding=1), 
+            nn.ReLU(),
+            nn.Conv2d(c2, c3, kernel_size=1, padding=0), 
+            nn.ReLU(),
         )
 
-        grid_feature_dim = c2 * 8 * 8
+        grid_feature_dim = c3 * 16 * 16
 
         # --- 3. Vector Path ---
         self.mario_phys_dim = 97        

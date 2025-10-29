@@ -10,8 +10,8 @@ import java.util.ArrayList;
 public class RewardSystem {
     private static final float WIN_REWARD = 100f;
     private static final float PARTIAL_WIN = 0f;
-    private static final float FAILURE_LOSE = -150f;
-    private static final float FAILURE_TIMEOUT = -150f;
+    private static final float FAILURE_LOSE = -50f;
+    private static final float FAILURE_TIMEOUT = -50f;
     private static final float POWER_UP_REWARD = 5f;
 
     // Discount used for potential difference (match PPO gamma)
@@ -35,7 +35,7 @@ public class RewardSystem {
 
     // Progress shaping (kept as before)
     private static final float STUCK_PENALTY = -20f;
-    private static final float STALL_PENALTY = -35f;
+    private static final float STALL_PENALTY = -25f;
 
     public RewardSystem(MarioWorld world){
         // Capture initial full counts (do NOT use "alive"/remaining lists here)
