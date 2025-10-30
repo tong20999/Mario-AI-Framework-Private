@@ -122,12 +122,12 @@ public class ProceduralContentGenerationLevel {
         try{
             pcg.addObstacle(9,2, pcgLevelDto);
             pcg.addPit(9,2, pcgLevelDto);
-            pcg.addPipe(9, 2, pcgLevelDto);
-            pcg.addCannon(9, 2, pcgLevelDto);
+            pcg.addPipe(7, 2, pcgLevelDto);
+            pcg.addCannon(7, 2, pcgLevelDto);
 
-            pcg.addEnemy(8,2, pcgLevelDto);
-            pcg.addBlock(8, 2, pcgLevelDto);
-            pcg.addCoin(8,2, pcgLevelDto);
+            pcg.addEnemy(7,2, pcgLevelDto);
+            pcg.addBlock(7, 2, pcgLevelDto);
+            pcg.addCoin(7,2, pcgLevelDto);
             //pcg.addPrefab(Pattern.getRandomPattern(), 12, 12);
             return pcg;
         }
@@ -144,7 +144,7 @@ public class ProceduralContentGenerationLevel {
         var mapWidth = lanLevel.size() / 2;
         //int spawnMario = rand.nextInt(3 ,maxIndex);
         int spawnMario = rand.nextInt(2) == 0 ? 3 : maxIndex;
-        lanLevel.set(3, 'M');
+        lanLevel.set(2, 'M');
         levels.replace(LAN_LEVEL, lanLevel);
         StringBuilder contentBuilder = new StringBuilder();
         for (int i = 0; i < levels.size(); i++) {
