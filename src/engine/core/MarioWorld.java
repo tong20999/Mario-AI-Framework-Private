@@ -49,7 +49,7 @@ public class MarioWorld {
     private Objective blocksObjective = new Objective();
     private Objective enemiesObjective = new Objective();
     private float stallCounter = 0;
-    public final static int MAX_STALL = 150;
+    public final static int MAX_STALL = 100;
     private boolean stallLose = false;
     public float getStallCounter() {
         return stallCounter;

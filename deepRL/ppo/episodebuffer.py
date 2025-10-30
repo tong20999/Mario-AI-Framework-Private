@@ -175,9 +175,8 @@ class EpisodeBuffer():
         gaes_mean_for_logging = np.mean(self.gaes_mem)
 
         # Normalize returns and advantages for the entire batch
-        ret_mean = np.mean(self.returns_mem)
-        ret_std  = np.std(self.returns_mem) + 1e-8
-        self.returns_mem = (self.returns_mem - ret_mean) / ret_std
+        returns_mean = np.mean(self.returns_mem)
+        self.returns_mem = self.returns_mem - returns_mean * 0.0
 
         gaes_std = np.std(self.gaes_mem)
         self.gaes_mem = (self.gaes_mem - gaes_mean_for_logging) / (gaes_std + 1e-8)
@@ -187,7 +186,7 @@ class EpisodeBuffer():
         ep_s = self.episode_seconds[ep_idxs]
         logger.info(f'filling 100%')
         return ep_t, ep_r, ep_x, ep_s, gaes_mean_for_logging
-
+ 
     def get_data(self):
         state_data = tuple(self.cat_mem[key] for key in self.state_keys)
         other_data = (

@@ -17,7 +17,7 @@ public class RewardSystem {
     // Discount used for potential difference (match PPO gamma)
     private static final float SHAPING_GAMMA = 0.997f;
     // Progress shaping (kept as before)
-    private static final float PROGRESS_SCALE = 5f;
+    //private static final float PROGRESS_SCALE = 10f;
 
     private static final float OBJECTIVE_SHAPING_CAP = 25f;
     // Weights
@@ -31,11 +31,11 @@ public class RewardSystem {
 
     // State
     private int prevRemaining; // weighted remaining objectives
-    // private float prevProgress;
+    //private float prevProgress;
 
     // Progress shaping (kept as before)
-    private static final float STUCK_PENALTY = -20f;
-    private static final float STALL_PENALTY = -25f;
+    private static final float STUCK_PENALTY = -10f;
+    private static final float STALL_PENALTY = -10f;
 
     public RewardSystem(MarioWorld world) {
         // Capture initial full counts (do NOT use "alive"/remaining lists here)
@@ -43,7 +43,7 @@ public class RewardSystem {
         dynamicMaxShapingReward = OBJECTIVE_SHAPING_CAP;
 
         prevRemaining = computeRemainingWeighted(world); // should equal totalWeightedObjectives initially
-        // prevProgress = clamp01(getCompletionPercentage(world));
+        //prevProgress = clamp01(getCompletionPercentage(world));
     }
 
     public float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
@@ -64,11 +64,11 @@ public class RewardSystem {
         }
 
         // --- Progress shaping (unchanged) ---
-        // float currProgress = clamp01(getCompletionPercentage(world));
-        // float shapingProg = PROGRESS_SCALE * (SHAPING_GAMMA * currProgress -
-        // prevProgress);
-        // reward += shapingProg;
-        // prevProgress = currProgress;
+//         float currProgress = clamp01(getCompletionPercentage(world));
+//         float shapingProg = PROGRESS_SCALE * (SHAPING_GAMMA * currProgress -
+//         prevProgress);
+//         reward += shapingProg;
+//         prevProgress = currProgress;
 
         // Events
         for (MarioEvent e : miniStepEvents) {

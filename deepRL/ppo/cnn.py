@@ -16,25 +16,23 @@ class ResidualBlock2D(nn.Module):
 
 class CNNBase(nn.Module):
     def __init__(self, num_stack: int = 4, num_object_types: int = 21,
-                 embedding_dim: int = 16):
+                 embedding_dim: int = 32):
         super().__init__()
 
         # --- 1. Embedding (semantic token representation) ---
         self.embedding = nn.Embedding(num_embeddings=num_object_types, embedding_dim=embedding_dim)
         #self.num_stack = num_stack
         
-        c1 = 64
-        c3 = 16
+        c1 = 32
         
         self.cnn = nn.Sequential(
-            nn.Conv2d(embedding_dim, c1, kernel_size=1),
+            nn.Conv2d(embedding_dim, c1, kernel_size=3, padding=1),
             nn.ReLU(),
             ResidualBlock2D(c1),
-            ResidualBlock2D(c1),
-            nn.Conv2d(c1, c3, kernel_size=1, padding=0)
+            ResidualBlock2D(c1)
         )
 
-        grid_feature_dim = c3 * 16 * 16
+        grid_feature_dim = c1 * 16 * 16
 
         # --- 3. Vector Path ---
         self.mario_phys_dim = 97        
@@ -74,7 +72,7 @@ class CNNActor(nn.Module):
     def __init__(self, output_dim, num_stack: int, **kwargs):
         super(CNNActor, self).__init__()
         self.features = CNNBase(num_stack=num_stack, **kwargs)
-        hidden_dim = [512, 256]
+        hidden_dim = [1024, 512]
         self.actor_head = nn.Sequential(
             nn.Linear(self.features.combined_dim, hidden_dim[0]),
             nn.ReLU(),
@@ -150,7 +148,7 @@ class CNNActor(nn.Module):
 class CNNCritic(nn.Module):
     def __init__(self, num_stack: int, **kwargs):
         super(CNNCritic, self).__init__()
-        hidden_dim = [512, 256]
+        hidden_dim = [1024, 512]
         self.features = CNNBase(num_stack=num_stack, **kwargs)
         self.critic_head = nn.Sequential(
             nn.Linear(self.features.combined_dim, hidden_dim[0]),
