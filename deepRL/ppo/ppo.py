@@ -406,14 +406,16 @@ class PPO():
                 # logger.info(f'value LR: {self.value_scheduler.get_last_lr()[0]}')
                 # logger.info(f'entropy weight: {self.entropy_loss_weight}')
 
+                
+
                 # stats
                 evaluation_count +=1
                 # Evaluate over multiple episodes for stability; also get success rate (scale-invariant)
                 eval_eps = 20
                 evaluation_score, success_rate, action_list = self.evaluate(evaluation_count, self.policy_model, env, 
                                                                             levelBase64, n_episodes=eval_eps, visual=False)
-                logger.info('evaluation {} mean_return {} success_rate {}% value losses {} entropy {}'.format(
-                    evaluation_count, np.round(evaluation_score, 2), np.round(success_rate*100, 1), np.round(value_losses, 3) , np.round(entropies, 3)))
+                logger.info('evaluation {} mean_return {} success_rate {}% values {} value losses {} entropy {}'.format(
+                    evaluation_count, np.round(evaluation_score, 2), np.round(success_rate*100, 1), np.round(values, 3) ,np.round(value_losses, 3) , np.round(entropies, 3)))
 
                 action_list_sums = [sum(ep_action) for ep_action in action_list]
                 logger.info(f'action list sum {action_list_sums}')
@@ -602,6 +604,7 @@ class PPO():
             env = make_env_fn()
             policy_model = policy_model_fn(env.observation_space, env.action_space.n)
             checkpoint_path = self.find_model_file_path('checkpoint_')
+            # checkpoint_path = 'C:/thesis_data/training/14/checkpoint_600.tar'
             if checkpoint_path is not None:
                 checkpoint = torch.load(checkpoint_path)
                 logger.info("Loading model states from checkpoint.")

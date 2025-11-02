@@ -36,6 +36,7 @@ public class RewardSystem {
     // Progress shaping (kept as before)
     private static final float STUCK_PENALTY = -10f;
     private static final float STALL_PENALTY = -10f;
+    private static final float DAMAGE_PENALTY = -15f;
 
     public RewardSystem(MarioWorld world) {
         // Capture initial full counts (do NOT use "alive"/remaining lists here)
@@ -47,7 +48,7 @@ public class RewardSystem {
     }
 
     public float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
-        float reward = 0f; // step cost
+        float reward = -0.025f; // step cost
 
         if (totalWeightedObjectives > 0) {
             int currRemaining = computeRemainingWeighted(world);
@@ -87,6 +88,8 @@ public class RewardSystem {
                 reward += STUCK_PENALTY;
             } else if (type == EventType.STALL.getValue()) {
                 reward += STALL_PENALTY;
+            } else if (type == EventType.DAMAGE.getValue()) {
+                reward += DAMAGE_PENALTY;
             }
         }
         return reward;
@@ -149,6 +152,8 @@ public class RewardSystem {
                 value = STUCK_PENALTY;
             } else if (type == EventType.STALL.getValue()) {
                 value = STALL_PENALTY;
+            } else if (type == EventType.DAMAGE.getValue()) {
+                value = DAMAGE_PENALTY;
             } else {
                 value = 0f;
             }

@@ -297,8 +297,12 @@ public class MarioWorld {
         this.addEvent(killEvent, sprite.type.getValue(), sprite.initialCode);
         aliveEnemy.removeIf(a -> Objects.equals(sprite.initialCode,
                 MessageFormat.format("{0}_{1}_{2}", a.x, a.y, a.type.getValue())));
-        enemiesObjective.mark(sprite.initialCode);
         this.stallCounter = 0;
+        if(sprite.type == SpriteType.BULLET_BILL ||
+        sprite.type == SpriteType.ENEMY_FLOWER){
+            return;
+        }
+        enemiesObjective.mark(sprite.initialCode);
     }
 
     public void removeSprite(MarioSprite sprite) {
@@ -587,9 +591,9 @@ public class MarioWorld {
             openGate();
         }
 
-        if(actions[MarioActions.JUMP.getValue()]){
-            stallCounter = 0;
-        }
+//        if(actions[MarioActions.JUMP.getValue()]){
+//            stallCounter = 0;
+//        }
 
         var afterPosition = new int[] { (int) ((this.mario.x - this.cameraX) / 16), (int) (this.mario.y / 16) };
         if (afterPosition[1] == beforePosition[1] && afterPosition[0] == beforePosition[0]) {

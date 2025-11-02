@@ -530,7 +530,7 @@ public class ProceduralContentGenerationLevel {
                 return;
             }
             int pattern = rand.nextInt(0, 2);
-            pattern = 0;
+            //pattern = 0;
             switch (pattern){
                 case 0:
                     doAddRamp1(addIndex);

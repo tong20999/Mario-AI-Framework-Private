@@ -35,7 +35,7 @@ public class PlayLevel {
     public static void main(String[] args) throws Exception {
         MarioGame game = new MarioGame();
         // printResults(game.playGame(getLevel("../levels/original/lvl-1-basic-move-right.txt"), 200, 0));
-        var level = getLevel("./levels/original/lvl-15.txt");
+        var level = getLevel("./levels/original/lvl-2.txt");
         var original = getLevel("./levels/evaluation/lvl-1a.txt");
 
         //testPcg(levelFileName);
@@ -47,7 +47,7 @@ public class PlayLevel {
                     , 5 ,14 , 0, 2 ,5 ,0 ,2, 5, 0
                     ,100, null, false));
             pcgLevel.generate();
-            printResults(game.runGame(new agents.human.Agent(), pcgLevel.getContent(), 100, 0, true));
+            printResults(game.runGame(new agents.human.Agent(), level, 100, 0, true));
         }
     }
 
