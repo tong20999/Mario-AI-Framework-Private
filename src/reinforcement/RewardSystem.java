@@ -34,9 +34,10 @@ public class RewardSystem {
     //private float prevProgress;
 
     // Progress shaping (kept as before)
-    private static final float STUCK_PENALTY = -10f;
-    private static final float STALL_PENALTY = -10f;
-    private static final float DAMAGE_PENALTY = -15f;
+    private static final float STUCK_PENALTY = -5f;
+    private static final float STALL_PENALTY = -5f;
+    private static final float DAMAGE_PENALTY = -10f;
+    private static final float NO_PROGRESS_PENALTY = -1f;
 
     public RewardSystem(MarioWorld world) {
         // Capture initial full counts (do NOT use "alive"/remaining lists here)
@@ -90,6 +91,8 @@ public class RewardSystem {
                 reward += STALL_PENALTY;
             } else if (type == EventType.DAMAGE.getValue()) {
                 reward += DAMAGE_PENALTY;
+            }else if (type == EventType.NO_PROGRESS.getValue()) {
+                reward += NO_PROGRESS_PENALTY;
             }
         }
         return reward;
@@ -154,6 +157,8 @@ public class RewardSystem {
                 value = STALL_PENALTY;
             } else if (type == EventType.DAMAGE.getValue()) {
                 value = DAMAGE_PENALTY;
+            } else if (type == EventType.NO_PROGRESS.getValue()) {
+                value = NO_PROGRESS_PENALTY;
             } else {
                 value = 0f;
             }

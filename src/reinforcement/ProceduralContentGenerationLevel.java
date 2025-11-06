@@ -120,6 +120,7 @@ public class ProceduralContentGenerationLevel {
         pcg.createEmptyLevel(width);
 
         try{
+            //pcg.addPrefab(Pattern.getRandomPattern(), 12, 12);
             pcg.addObstacle(9,2, pcgLevelDto);
             pcg.addPit(9,2, pcgLevelDto);
             pcg.addPipe(7, 2, pcgLevelDto);
@@ -128,7 +129,6 @@ public class ProceduralContentGenerationLevel {
             pcg.addEnemy(7,2, pcgLevelDto);
             pcg.addBlock(7, 2, pcgLevelDto);
             pcg.addCoin(7,2, pcgLevelDto);
-            //pcg.addPrefab(Pattern.getRandomPattern(), 12, 12);
             return pcg;
         }
         catch (IllegalArgumentException ex){

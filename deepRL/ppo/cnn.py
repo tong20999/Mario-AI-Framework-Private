@@ -153,7 +153,9 @@ class CNNCritic(nn.Module):
         self.critic_head = nn.Sequential(
             nn.Linear(self.features.combined_dim, hidden_dim[0]),
             nn.ReLU(),
-            nn.Linear(hidden_dim[0], 1)
+            nn.Linear(hidden_dim[0], hidden_dim[1]),
+            nn.ReLU(),
+            nn.Linear(hidden_dim[1], 1)
         )
         
         device = "cuda:0" if torch.cuda.is_available() else "cpu"

@@ -2,6 +2,7 @@ package reinforcement;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import engine.core.MarioEvent;
 import engine.core.MarioWorld;
 import engine.helper.GameStatus;
 
@@ -145,22 +146,22 @@ public class Helper {
 
     public static void logEvaluationResultToDataBase(int evaluationEpisode, String gameStatus, ProceduralContentGenerationLevel pcg, MarioWorld world, ArrayList<RewardEvent> rewardEvents, float evaluationReward, int minTimer, int maxTimer) throws IOException {
         String dbPath = "C:/thesis_data/training/evaluation_results.db";
+        String dbEventPath = "C:/thesis_data/training/evaluation_events.db";
         Optional<File> optional = getWorkingDir(false);
         var workingDir = optional.get().getAbsolutePath();
         File dir = new File(workingDir);
-        String trainingNumber = dir.getName();
+        int trainingNumber = Integer.parseInt(dir.getName());
         boolean blockClear = world.getHitBlockCount() == world.level.getBumpableBlocks().size();
         boolean killClear = world.getKillCount() == world.level.getEnemies().size();
         boolean coinClear = world.getCollectedCoinCount() == world.level.getCoins().size();
-        boolean completeObjective = blockClear && killClear && coinClear;
 
         String status = gameStatus;
-        if(!completeObjective && gameStatus.equals(GameStatus.WIN.toString())){
-            status = "PARTIAL_WIN";
-        }
-
-        if(world.isStallLose()){
-            status = "STALL";
+        if(gameStatus.equals(GameStatus.TIME_OUT.toString())){
+            if(blockClear || killClear || coinClear){
+                status = GameStatus.TIME_OUT.toString();
+            } else {
+                status = "STALL";
+            }
         }
 
         try {
@@ -170,12 +171,12 @@ public class Helper {
             System.err.println("SQLite JDBC driver not found: " + e.getMessage());
             return;
         }
-
+        long resultId = -1;
         try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath)) {
             // 2. Ensure the table exists (this method is shown below)
-            enableForeignKeys(conn);
             createResultsTable(conn);
-            // createRewardEventTable(conn);
+
+
 
             // --- PART 1: Insert into results table and get ID ---
             String sqlResults = "INSERT INTO results (episode, game_status, final_status, " +
@@ -184,8 +185,6 @@ public class Helper {
                     "initial_timer, min_timer, max_timer, total_reward, " +
                     "unbumped_blocks, uncollected_coins, alive_enemies_count, training_number) " + // Removed reward_events
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"; // Now 19 placeholders
-
-            long resultId = -1;
 
             // Use Statement.RETURN_GENERATED_KEYS to get the new row's ID
             try (PreparedStatement pstmt = conn.prepareStatement(sqlResults, Statement.RETURN_GENERATED_KEYS)) {
@@ -209,13 +208,53 @@ public class Helper {
                 pstmt.setInt(16, world.getUnbumpBlocks().size());
                 pstmt.setInt(17, world.getUnCollectCoin().size());
                 pstmt.setInt(18, world.getAliveEnemies().size());
-                pstmt.setString(19, trainingNumber);
+                pstmt.setInt(19, trainingNumber);
 
                 pstmt.executeUpdate();
+
+                try (ResultSet rs = pstmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        resultId = rs.getLong(1);
+                    }
+                }
             }
 
         } catch (SQLException e) {
-            System.err.println("Database error: " + e.getMessage());
+            System.err.println("Database error result: " + e.getMessage());
+        }
+
+        if (resultId != -1){
+            if(!status.equals("WIN")){
+                try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbEventPath)) {
+                    createRewardEventTable(conn);
+
+                    String sqlEvents = "INSERT INTO reward_events (reward, event_type, " +
+                            "eventParam, marioX, marioY, marioState, time, timer, training_number, result_id) " +
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+                    try (PreparedStatement pstmtEvents = conn.prepareStatement(sqlEvents)) {
+                        for (RewardEvent event : rewardEvents) {
+                            MarioEvent marioEvent = event.getEvent();
+                            pstmtEvents.setFloat(1, event.getReward());
+                            pstmtEvents.setString(2, marioEvent.getEventTypeEnum().toString());
+                            pstmtEvents.setInt(3, marioEvent.getEventParam());
+                            pstmtEvents.setFloat(4, marioEvent.getMarioX());
+                            pstmtEvents.setFloat(5, marioEvent.getMarioY());
+                            pstmtEvents.setInt(6, marioEvent.getMarioState());
+                            pstmtEvents.setInt(7, marioEvent.getTime());
+                            pstmtEvents.setString(8, event.getTimer());
+                            pstmtEvents.setInt(9, trainingNumber);
+                            pstmtEvents.setLong(10, resultId);
+                            pstmtEvents.addBatch(); // Add the insert to the batch
+                        }
+
+                        // Execute all batched inserts at once for performance
+                        pstmtEvents.executeBatch();
+                    }
+                } catch (SQLException e) {
+                    System.err.println("Database error events: " + e.getMessage());
+                }
+            }
         }
     }
 
@@ -229,7 +268,7 @@ public class Helper {
             // CAST is used to ensure numeric comparison for training_number, which is safer.
             String sql = MessageFormat.format("SELECT pcg_content FROM results " +
                     "WHERE training_number = {0} " +
-                    "AND final_status IN (''TIME_OUT'', ''LOSE'', ''PARTIAL_WIN'')", trainingNumber);
+                    "AND final_status IN (''TIME_OUT'', ''LOSE'', ''STALL'')", trainingNumber);
 
             // Using try-with-resources to ensure the Statement and ResultSet are auto-closed
             try (Statement stmt = conn.createStatement();
@@ -276,7 +315,7 @@ public class Helper {
                 "unbumped_blocks INTEGER," +
                 "uncollected_coins INTEGER," +
                 "alive_enemies_count INTEGER," +
-                "training_number TEXT NOT NULL" +
+                "training_number INTEGER" +
                 ");";
 
         try (java.sql.Statement stmt = conn.createStatement()) {
@@ -287,7 +326,6 @@ public class Helper {
     private static void createRewardEventTable(Connection conn) throws SQLException {
         String sql = "CREATE TABLE IF NOT EXISTS reward_events (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                "result_id INTEGER NOT NULL," +
                 "reward REAL," +
                 "event_type TEXT NOT NULL," +
                 "eventParam INTEGER," +
@@ -296,7 +334,8 @@ public class Helper {
                 "marioState INTEGER," +
                 "time INTEGER," +
                 "timer TEXT NOT NULL," +
-                "FOREIGN KEY(result_id) REFERENCES results(id) ON DELETE CASCADE" +
+                "training_number INTEGER," +
+                "result_id INTEGER" +
                 ");";
 
         try (java.sql.Statement stmt = conn.createStatement()) {

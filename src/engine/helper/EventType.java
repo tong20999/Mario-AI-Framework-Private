@@ -20,7 +20,8 @@ public enum EventType {
     BONK(19),
     TIME_OUT(20),
     STUCK(21),
-    STALL(22);
+    STALL(22),
+    NO_PROGRESS(23);
 
     private final int value;
 
