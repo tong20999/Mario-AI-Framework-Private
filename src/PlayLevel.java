@@ -35,7 +35,7 @@ public class PlayLevel {
     public static void main(String[] args) throws Exception {
         MarioGame game = new MarioGame();
         // printResults(game.playGame(getLevel("../levels/original/lvl-1-basic-move-right.txt"), 200, 0));
-        var level = getLevel("./levels/original/lvl-2.txt");
+        var level = getLevel("./levels/original/lvl-5.txt");
         var original = getLevel("./levels/evaluation/lvl-1a.txt");
 
         //testPcg(levelFileName);

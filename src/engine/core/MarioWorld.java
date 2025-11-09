@@ -590,10 +590,6 @@ public class MarioWorld {
         }
         fireballsToCheck.clear();
 
-        if (isSubGoalEnemyMet() && isSubGoalBlockMet() && isSubGoalCoinMet()){
-            openGate();
-        }
-
         var afterPosition = new int[] { (int) ((this.mario.x - this.cameraX) / 16), (int) (this.mario.y / 16) };
         if (afterPosition[1] == beforePosition[1] && afterPosition[0] == beforePosition[0]) {
             stallCounter++;
@@ -648,12 +644,6 @@ public class MarioWorld {
                     this.lose();
                 }
             }
-        }
-    }
-
-    private void openGate() {
-        for (var g : this.level.getGates()){
-            this.level.setBlock(g.getX(), g.getY(), 0);
         }
     }
 

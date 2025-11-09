@@ -180,9 +180,6 @@ public class ProceduralContentGenerationLevel {
                     if (j == width - 4) {
                         line.add('#');
                     }
-                    else if(j == width - 5){
-                        line.add('N');
-                    }
                     else {
                         line.add('-');
                     }
@@ -191,9 +188,6 @@ public class ProceduralContentGenerationLevel {
                 for (int j = 0; j < width; j++) {
                     if (j == width - 4) {
                         line.add('F');
-                    }
-                    else if(j == width - 5){
-                        line.add('N');
                     }
                     else {
                         line.add('-');
@@ -206,12 +200,7 @@ public class ProceduralContentGenerationLevel {
                 }
             } else {
                 for (int j = 0; j < width; j++) {
-                    if (j == width - 5) {
-                        line.add('N');
-                    }
-                    else {
-                        line.add('-');
-                    }
+                    line.add('-');
                 }
             }
             levels.put(i, line);
@@ -731,7 +720,7 @@ public class ProceduralContentGenerationLevel {
                 }
                 addIndex = rand.nextInt(offsetFromStart, maxIndex);
             }
-            var pipeType = k % 2 == 0 ? 'T' : 't';
+            var pipeType = 't';
             for (int height = 0; height < levels.size(); height++) {
 
 

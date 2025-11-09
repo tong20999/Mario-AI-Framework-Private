@@ -156,13 +156,6 @@ public class Helper {
         boolean coinClear = world.getCollectedCoinCount() == world.level.getCoins().size();
 
         String status = gameStatus;
-        if(gameStatus.equals(GameStatus.TIME_OUT.toString())){
-            if(blockClear || killClear || coinClear){
-                status = GameStatus.TIME_OUT.toString();
-            } else {
-                status = "STALL";
-            }
-        }
 
         try {
             // 1. Load the JDBC Driver (optional for modern Java, but good practice)
