@@ -57,6 +57,7 @@ if __name__ == '__main__':
     "PipesMinHeight": 2,
     "PipesMaxHeight":5,
     "Ramps": 1,
+    "File" : "./levels/evaluation/lvl-1.txt",
     "Fps": 40
 }'''
   levelBase64 = sys.argv[1] if len(sys.argv) > 1 else base64.b64encode(default_pcg.encode('utf-8')).decode('utf-8')

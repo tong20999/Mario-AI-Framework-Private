@@ -33,23 +33,16 @@ public class RewardSystem {
     private int prevRemaining; // weighted remaining objectives
     //private float prevProgress;
 
-    // Progress shaping (kept as before)
-    private static final float STUCK_PENALTY = -5f;
-    private static final float STALL_PENALTY = -5f;
-    private static final float DAMAGE_PENALTY = -10f;
-    private static final float NO_PROGRESS_PENALTY = -1f;
-
     public RewardSystem(MarioWorld world) {
         // Capture initial full counts (do NOT use "alive"/remaining lists here)
         totalWeightedObjectives = computeTotalWeightedObjectives(world);
         dynamicMaxShapingReward = OBJECTIVE_SHAPING_CAP;
 
         prevRemaining = computeRemainingWeighted(world); // should equal totalWeightedObjectives initially
-        //prevProgress = clamp01(getCompletionPercentage(world));
     }
 
     public float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
-        float reward = -0.025f; // step cost
+        float reward = 0f; // step cost
 
         if (totalWeightedObjectives > 0) {
             int currRemaining = computeRemainingWeighted(world);
@@ -65,13 +58,6 @@ public class RewardSystem {
             prevRemaining = currRemaining;
         }
 
-        // --- Progress shaping (unchanged) ---
-//         float currProgress = clamp01(getCompletionPercentage(world));
-//         float shapingProg = PROGRESS_SCALE * (SHAPING_GAMMA * currProgress -
-//         prevProgress);
-//         reward += shapingProg;
-//         prevProgress = currProgress;
-
         // Events
         for (MarioEvent e : miniStepEvents) {
             int type = e.getEventType();
@@ -85,14 +71,6 @@ public class RewardSystem {
                 reward += FAILURE_LOSE;
             } else if (type == EventType.TIME_OUT.getValue()) {
                 reward += FAILURE_TIMEOUT;
-            } else if (type == EventType.STUCK.getValue()) {
-                reward += STUCK_PENALTY;
-            } else if (type == EventType.STALL.getValue()) {
-                reward += STALL_PENALTY;
-            } else if (type == EventType.DAMAGE.getValue()) {
-                reward += DAMAGE_PENALTY;
-            }else if (type == EventType.NO_PROGRESS.getValue()) {
-                reward += NO_PROGRESS_PENALTY;
             }
         }
         return reward;
@@ -121,19 +99,6 @@ public class RewardSystem {
         return WIN_REWARD;
     }
 
-    // Horizontal completion 0..1
-    private float getCompletionPercentage(MarioWorld world) {
-        float goalPixels = world.level.exitTileX * 16f;
-        if (goalPixels <= 1f)
-            return 0f;
-        float p = world.mario.x / goalPixels;
-        return clamp01(p);
-    }
-
-    private static float clamp01(float v) {
-        return v < 0f ? 0f : (Math.min(v, 1f));
-    }
-
     public static ArrayList<RewardEvent> logRewardEvent(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         ArrayList<RewardEvent> rewardEvents = new ArrayList<>();
         String timer = (world.currentTimer == -1 ? "Inf"
@@ -151,14 +116,6 @@ public class RewardSystem {
                 value = FAILURE_LOSE;
             } else if (type == EventType.TIME_OUT.getValue()) {
                 value = FAILURE_TIMEOUT;
-            } else if (type == EventType.STUCK.getValue()) {
-                value = STUCK_PENALTY;
-            } else if (type == EventType.STALL.getValue()) {
-                value = STALL_PENALTY;
-            } else if (type == EventType.DAMAGE.getValue()) {
-                value = DAMAGE_PENALTY;
-            } else if (type == EventType.NO_PROGRESS.getValue()) {
-                value = NO_PROGRESS_PENALTY;
             } else {
                 value = 0f;
             }

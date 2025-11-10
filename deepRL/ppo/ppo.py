@@ -574,7 +574,7 @@ class PPO():
                 for _ in count():
                     a = eval_model.select_greedy_action(s)
                     s, r, d, t, _ = eval_env.step(a)
-                    if r > 90:
+                    if r > 50:
                         successes += 1
                     action_hist[a] += 1
                     rs[-1] += r

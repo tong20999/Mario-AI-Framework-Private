@@ -90,7 +90,6 @@ public class MarioGameTraining {
     int minTimer = 20;
     int maxTimer = 30;
     ArrayList<MarioEvent> miniStepEvents = new ArrayList<>();
-    private int stepCount = 0;
 
     private int fps = 0;
     private ProceduralContentGenerationLevel pcg = null;
@@ -173,7 +172,6 @@ public class MarioGameTraining {
         this.timer = rand.nextInt(this.minTimer, this.maxTimer);
         this.lastMilestone = 0;
         this.lastCoinCount = 0;
-        this.stepCount = 0;
         String level;
 
         if(pcgLevel.getFile() != null){
@@ -216,25 +214,10 @@ public class MarioGameTraining {
     }
 
     public byte[] step(boolean[] action) throws Exception {
-        stepCount++;
         miniStepEvents.clear();
-        var beforeX = world.mario.x;
         for (int i = 0; i < this.frameSkip; i++) {
             var events = miniStep(action);
             miniStepEvents.addAll(events);
-        }
-        float deltaX = world.mario.x - beforeX;
-        boolean tryingToMoveRight = action[MarioActions.RIGHT.getValue()];
-        boolean tryingToMoveLeft = action[MarioActions.LEFT.getValue()];
-        boolean onGround = world.mario.onGround;
-        boolean isStuck = Math.abs(deltaX) < 0.1f;
-
-        if (tryingToMoveRight && onGround && isStuck) {
-            miniStepEvents.add(createEvent(world, EventType.STUCK, 0));
-        }
-
-        if (tryingToMoveLeft && onGround && isStuck) {
-            miniStepEvents.add(createEvent(world, EventType.STUCK, 0));
         }
 
         var nextWorldState = this.world.clone();

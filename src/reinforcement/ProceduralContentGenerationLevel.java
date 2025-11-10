@@ -124,7 +124,7 @@ public class ProceduralContentGenerationLevel {
             pcg.addObstacle(9,2, pcgLevelDto);
             pcg.addPit(9,2, pcgLevelDto);
             pcg.addPipe(7, 2, pcgLevelDto);
-            pcg.addCannon(7, 2, pcgLevelDto);
+            //pcg.addCannon(7, 2, pcgLevelDto);
 
             pcg.addEnemy(7,2, pcgLevelDto);
             pcg.addBlock(7, 2, pcgLevelDto);
@@ -180,9 +180,6 @@ public class ProceduralContentGenerationLevel {
                     if (j == width - 4) {
                         line.add('#');
                     }
-                    else if(j == width - 5){
-                        line.add('N');
-                    }
                     else {
                         line.add('-');
                     }
@@ -191,9 +188,6 @@ public class ProceduralContentGenerationLevel {
                 for (int j = 0; j < width; j++) {
                     if (j == width - 4) {
                         line.add('F');
-                    }
-                    else if(j == width - 5){
-                        line.add('N');
                     }
                     else {
                         line.add('-');
@@ -206,12 +200,7 @@ public class ProceduralContentGenerationLevel {
                 }
             } else {
                 for (int j = 0; j < width; j++) {
-                    if (j == width - 5) {
-                        line.add('N');
-                    }
-                    else {
-                        line.add('-');
-                    }
+                    line.add('-');
                 }
             }
             levels.put(i, line);
