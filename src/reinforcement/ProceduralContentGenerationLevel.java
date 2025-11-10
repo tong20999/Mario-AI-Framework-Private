@@ -356,7 +356,12 @@ public class ProceduralContentGenerationLevel {
                     currentLevel.add(addIndex, 'X');
                 } else if (i == height) {
                     // Add 't' at index and index + 1
-                    var enemy = rand.nextInt(2) == 0 ? EnumEnemy.GREEN_KOOPA : EnumEnemy.GOOMBA;
+                    int choice = rand.nextInt(3); // 0, 1, or 2
+                    EnumEnemy enemy = switch (choice) {
+                        case 0 -> EnumEnemy.GREEN_KOOPA;
+                        case 1 -> EnumEnemy.GOOMBA;
+                        default -> EnumEnemy.GREEN_KOOPA_WINGED;
+                    };
                     currentLevel.add(addIndex, enemy.getValue());
                     currentLevel.add(addIndex - 1, '-');
                     currentLevel.add(addIndex + 1, '-');
