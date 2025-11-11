@@ -239,9 +239,13 @@ public class MarioGameTraining {
                     this.pcg, this.world, this.rewardEvents, this.evaluationReward, this.minTimer, this.maxTimer);
         }
 
+        var truncated = this.world.isTruncated();
+        if(this.evaluation){
+            truncated = true;
+        }
+
         return State.stepResult(State.toByte(nextState), reward,
-                this.world.gameStatus != GameStatus.RUNNING,
-                this.world.isTruncated());
+                this.world.gameStatus != GameStatus.RUNNING, truncated);
     }
 
     public ArrayList<MarioEvent> miniStep(boolean[] action) throws Exception {
