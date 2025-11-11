@@ -573,12 +573,12 @@ class PPO():
                 action_hist = np.zeros(eval_env.action_space.n, dtype=int)
                 for _ in count():
                     a = eval_model.select_greedy_action(s)
-                    s, r, d, t, _ = eval_env.step(a)
-                    if r > 50:
-                        successes += 1
+                    s, r, d, t, info = eval_env.step(a)
                     action_hist[a] += 1
                     rs[-1] += r
                     if d or t:
+                        if info.get("success", False):
+                            successes += 1
                         break
                 action_list.append(action_hist.tolist())
             except KeyboardInterrupt:

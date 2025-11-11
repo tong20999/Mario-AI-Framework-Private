@@ -244,10 +244,15 @@ public class MarioGameTraining {
                     this.pcg, this.world, this.rewardEvents, this.evaluationReward, this.minTimer, this.maxTimer);
         }
 
+        boolean blockClear = world.getHitBlockCount() == world.level.getBumpableBlocks().size();
+        boolean killClear = world.getKillCount() == world.level.getEnemies().size();
+        boolean coinClear = world.getCollectedCoinCount() == world.level.getCoins().size();
 
+        var isSuccess = this.world.gameStatus == GameStatus.WIN ||
+                (blockClear && killClear && coinClear);
 
         return State.stepResult(State.toByte(nextState), reward,
-                this.world.gameStatus != GameStatus.RUNNING, truncated);
+                this.world.gameStatus != GameStatus.RUNNING, truncated, isSuccess);
     }
 
     public ArrayList<MarioEvent> miniStep(boolean[] action) throws Exception {

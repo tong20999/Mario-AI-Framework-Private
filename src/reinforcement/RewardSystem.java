@@ -42,7 +42,7 @@ public class RewardSystem {
     }
 
     public float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
-        float reward = 0f; // step cost
+        float reward = -0.1f; // step cost
 
         if (totalWeightedObjectives > 0) {
             int currRemaining = computeRemainingWeighted(world);

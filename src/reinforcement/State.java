@@ -9,11 +9,12 @@ import java.io.ByteArrayOutputStream;
 
 public class State {
 
-    public static byte[] stepResult(byte[] nextState, float reward, boolean is_terminate, boolean is_truncated) {
-        ByteBuffer buffer = ByteBuffer.allocate(4 + 1 + 1 + nextState.length);
+    public static byte[] stepResult(byte[] nextState, float reward, boolean is_terminate, boolean is_truncated, boolean is_success) {
+        ByteBuffer buffer = ByteBuffer.allocate(4 + 1 + 1 + 1 + nextState.length);
         buffer.put(float2ByteArray(reward));
         buffer.put((byte) (is_terminate ? 1 : 0));
         buffer.put((byte) (is_truncated ? 1 : 0));
+        buffer.put((byte) (is_success ? 1 : 0));
         buffer.put(nextState);
         return buffer.array();
     }

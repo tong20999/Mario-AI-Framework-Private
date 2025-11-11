@@ -106,12 +106,12 @@ class MarioGame(SocketEnv):
         reward:float = struct.unpack('>f', reward_byte)[0]
         terminated = bool(payload[4])
         truncated  = bool(payload[5])
-        
+        success  = bool(payload[6])
         obs_shape = self._get_obs_shape()
-        obs_bytes = payload[6: 6 + obs_shape]
+        obs_bytes = payload[7: 7 + obs_shape]
         
         observation = self._parse_observation(obs_bytes)
-        return observation, reward, terminated, truncated, {}
+        return observation, reward, terminated, truncated, {"success": success}
         
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None) -> tuple[dict, dict]:
         episode = options.get("episode") if options else 0
