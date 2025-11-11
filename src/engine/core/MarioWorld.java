@@ -313,6 +313,8 @@ public class MarioWorld {
         aliveEnemy.removeIf(a -> Objects.equals(sprite.initialCode,
                 MessageFormat.format("{0}_{1}_{2}", a.x, a.y, a.type.getValue())));
         this.stallCounter = 0;
+        stuckLeftCounter = 0;
+        stuckRightCounter = 0;
         this.xProgressHistory.clear();
         if(sprite.type == SpriteType.BULLET_BILL ||
         sprite.type == SpriteType.ENEMY_FLOWER){
@@ -679,6 +681,8 @@ public class MarioWorld {
             unbumpBlocks.removeIf(b -> b.getX() == xTile && b.getY() == yTile);
             this.stallCounter = 0;
             this.xProgressHistory.clear();
+            stuckLeftCounter = 0;
+            stuckRightCounter = 0;
             blocksObjective.mark(new Point(xTile, yTile));
             bumpInto(xTile, yTile - 1);
             this.addEvent(EventType.BUMP, MarioForwardModel.OBS_QUESTION_BLOCK);
@@ -816,6 +820,8 @@ public class MarioWorld {
         this.coinsObjective.mark(new Point(xTile, yTile));
         this.stallCounter = 0;
         this.xProgressHistory.clear();
+        stuckLeftCounter = 0;
+        stuckRightCounter = 0;
     }
 
     public int[] getCoinsObjective() {
