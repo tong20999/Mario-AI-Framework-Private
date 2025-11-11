@@ -55,9 +55,19 @@ public class MarioWorld {
         return stallCounter;
     }
 
+    private float stuckRightCounter = 0;
+    private float stuckLeftCounter = 0;
+    private final static int MAX_STUCK = 5;
+    private boolean truncated = false;
+
+    public boolean isTruncated() {
+        return truncated;
+    }
+
     private ArrayList<Float> xProgressHistory = new ArrayList<>();
     private final int NO_PROGRESS_WINDOW = 30;
     private final float NO_PROGRESS_THRESHOLD_PIXELS = 16 * 2;
+
 
     public List<MarioSprite> getNearestEnemies(){
         List<MarioSprite> out = new ArrayList<>();
@@ -215,6 +225,9 @@ public class MarioWorld {
         world.stallLose = this.stallLose;
         world.level = this.level.clone();
         world.xProgressHistory = new ArrayList<>(this.xProgressHistory);
+        world.stuckRightCounter = stuckRightCounter;
+        world.stuckLeftCounter = stuckLeftCounter;
+        world.truncated = truncated;
         // Clone sprites
         for (MarioSprite sprite : this.sprites) {
             MarioSprite cloneSprite = sprite.clone();
@@ -454,6 +467,7 @@ public class MarioWorld {
 
     public void update(boolean[] actions) {
         this.lastFrameEvents.clear();
+        var beforeX = mario.x;
         var beforePosition = new int[] { (int) ((this.mario.x - this.cameraX) / 16), (int) (this.mario.y / 16) };
         if (this.gameStatus != GameStatus.RUNNING) {
             return;
@@ -597,8 +611,50 @@ public class MarioWorld {
             stallCounter = 0;
         }
 
+        this.xProgressHistory.add(this.mario.x);
+
+        // Keep history to the size of the check window
+        while (this.xProgressHistory.size() > NO_PROGRESS_WINDOW) {
+            this.xProgressHistory.remove(0);
+        }
+
+        if (this.xProgressHistory.size() == NO_PROGRESS_WINDOW) {
+            // Find the min and max X position in the last 10 steps
+            float minX = this.mario.x;
+            float maxX = this.mario.x;
+            for (Float xPos : this.xProgressHistory) {
+                if (xPos < minX) minX = xPos;
+                if (xPos > maxX) maxX = xPos;
+            }
+
+            if (maxX - minX <= NO_PROGRESS_THRESHOLD_PIXELS) {
+                truncated = true;
+                this.xProgressHistory.clear();
+            }
+        }
+
         if(stallCounter > MAX_STALL){
             stallCounter = 0;
+        }
+
+        float deltaX = mario.x - beforeX;
+        boolean tryingToMoveRight = actions[MarioActions.RIGHT.getValue()];
+        boolean tryingToMoveLeft = actions[MarioActions.LEFT.getValue()];
+        boolean onGround = mario.onGround;
+        boolean isStuck = Math.abs(deltaX) < 0.1f;
+
+        if (tryingToMoveRight && onGround && isStuck) {
+            stuckRightCounter++;
+        }
+
+        if (tryingToMoveLeft && onGround && isStuck) {
+            stuckLeftCounter++;
+        }
+
+        if(stuckLeftCounter > MAX_STUCK || stuckRightCounter > MAX_STUCK){
+            stuckLeftCounter = 0;
+            stuckRightCounter = 0;
+            truncated = true;
         }
 
         sprites.addAll(0, addedSprites);

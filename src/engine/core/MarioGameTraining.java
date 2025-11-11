@@ -241,7 +241,7 @@ public class MarioGameTraining {
 
         return State.stepResult(State.toByte(nextState), reward,
                 this.world.gameStatus != GameStatus.RUNNING,
-                false);
+                this.world.isTruncated());
     }
 
     public ArrayList<MarioEvent> miniStep(boolean[] action) throws Exception {
