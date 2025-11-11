@@ -120,7 +120,7 @@ public class ProceduralContentGenerationLevel {
         pcg.createEmptyLevel(width);
 
         try{
-            //pcg.addPrefab(Pattern.getRandomPattern(), 12, 12);
+
             pcg.addObstacle(9,2, pcgLevelDto);
             pcg.addPit(9,2, pcgLevelDto);
             pcg.addPipe(7, 2, pcgLevelDto);
@@ -129,6 +129,7 @@ public class ProceduralContentGenerationLevel {
             pcg.addEnemy(7,2, pcgLevelDto);
             pcg.addBlock(7, 2, pcgLevelDto);
             pcg.addCoin(7,2, pcgLevelDto);
+            pcg.addPattern(Pattern.getRandomPattern(), 12, 12);
             return pcg;
         }
         catch (IllegalArgumentException ex){
@@ -356,11 +357,11 @@ public class ProceduralContentGenerationLevel {
                     currentLevel.add(addIndex, 'X');
                 } else if (i == height) {
                     // Add 't' at index and index + 1
-                    int choice = rand.nextInt(3); // 0, 1, or 2
+                    int choice = rand.nextInt(2); // 0, 1, or 2
                     EnumEnemy enemy = switch (choice) {
                         case 0 -> EnumEnemy.GREEN_KOOPA;
                         case 1 -> EnumEnemy.GOOMBA;
-                        default -> EnumEnemy.GREEN_KOOPA_WINGED;
+                        default -> EnumEnemy.GOOMBA;
                     };
                     currentLevel.add(addIndex, enemy.getValue());
                     currentLevel.add(addIndex - 1, '-');
@@ -400,7 +401,7 @@ public class ProceduralContentGenerationLevel {
     }
 
 
-    private void addPrefab(String pattern, int offsetFromStart, int offsetFromFlag){
+    private void addPattern(String pattern, int offsetFromStart, int offsetFromFlag){
         int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
         int index = rand.nextInt(offsetFromStart, maxIndex);
         while (true){

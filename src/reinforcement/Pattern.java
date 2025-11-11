@@ -43,6 +43,6 @@ public class Pattern {
     }
 
     public static String getRandomPattern() {
-        return patternMap.get(rand.nextInt(1, patternMap.size() + 1));
+        return patternMap.get(rand.nextInt(9, patternMap.size() + 1));
     }
 }
