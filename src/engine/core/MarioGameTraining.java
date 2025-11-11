@@ -241,7 +241,7 @@ public class MarioGameTraining {
 
         var truncated = this.world.isTruncated();
         if(this.evaluation){
-            truncated = true;
+            truncated = false;
         }
 
         return State.stepResult(State.toByte(nextState), reward,
