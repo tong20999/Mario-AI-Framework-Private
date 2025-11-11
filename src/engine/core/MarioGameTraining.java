@@ -94,7 +94,6 @@ public class MarioGameTraining {
     private int fps = 0;
     private ProceduralContentGenerationLevel pcg = null;
     private final int frameSkip = 2;
-    private RewardSystem rewardSystem;
     /**
      * Create a mario game to be played
      */
@@ -209,7 +208,6 @@ public class MarioGameTraining {
         } else {
             this.evaluationReward = 0;
         }
-        this.rewardSystem = new RewardSystem(world);
         return State.toByte(new MarioForwardModel(this.world.clone()));
     }
 
@@ -227,9 +225,9 @@ public class MarioGameTraining {
         }
         var nextWorldState = this.world.clone();
         var nextState = new MarioForwardModel(nextWorldState, miniStepEvents);
-        float reward = rewardSystem.getReward(this.world, miniStepEvents);
+        float reward = RewardSystem.getReward(this.world, miniStepEvents);
         if (this.evaluation) {
-            ArrayList<RewardEvent> miniStepRewardEvents = rewardSystem.logRewardEvent(this.world, miniStepEvents);
+            ArrayList<RewardEvent> miniStepRewardEvents = RewardSystem.logRewardEvent(this.world, miniStepEvents);
             rewardEvents.addAll(miniStepRewardEvents);
 
             this.evaluationReward += reward;

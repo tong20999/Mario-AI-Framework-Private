@@ -1,6 +1,7 @@
 package reinforcement;
 
 import engine.core.MarioEvent;
+import engine.core.MarioForwardModel;
 import engine.core.MarioWorld;
 import engine.helper.EventType;
 import engine.helper.SpriteType;
@@ -12,62 +13,38 @@ public class RewardSystem {
     private static final float PARTIAL_WIN = 0f;
     private static final float FAILURE_LOSE = -100f;
     private static final float FAILURE_TIMEOUT = -100f;
-    private static final float POWER_UP_REWARD = 5f;
+    private static final float POWER_UP_REWARD = 25f;
 
-    // Discount used for potential difference (match PPO gamma)
-    private static final float SHAPING_GAMMA = 0.997f;
-    // Progress shaping (kept as before)
-    //private static final float PROGRESS_SCALE = 10f;
-
-    private static final float OBJECTIVE_SHAPING_CAP = 25f;
     // Weights
-    private static final int ENEMY_WEIGHT = 10;
-    private static final int BLOCK_WEIGHT = 5;
-    private static final int COIN_WEIGHT = 2;
+    private static final int KILL_REWARD = 10;
+    private static final int BUMP_REWARD = 5;
+    private static final int COIN_REWARD = 2;
 
-    // Cached totals (fixed for the episode)
-    private final int totalWeightedObjectives; // sum(weight * count) at episode start
-    private final float dynamicMaxShapingReward; // a constant cap (≈ total shaping budget)
-
-    // State
-    private int prevRemaining; // weighted remaining objectives
-    //private float prevProgress;
-
-    public RewardSystem(MarioWorld world) {
-        // Capture initial full counts (do NOT use "alive"/remaining lists here)
-        totalWeightedObjectives = computeTotalWeightedObjectives(world);
-        dynamicMaxShapingReward = OBJECTIVE_SHAPING_CAP;
-
-        prevRemaining = computeRemainingWeighted(world); // should equal totalWeightedObjectives initially
-    }
-
-    public float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
+    public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = -0.1f; // step cost
-
-        if (totalWeightedObjectives > 0) {
-            int currRemaining = computeRemainingWeighted(world);
-            // Normalized potentials in [-1,0]
-            float phiPrev = -prevRemaining / (float) totalWeightedObjectives;
-            float phiCurr = -currRemaining / (float) totalWeightedObjectives;
-            float shapingObj = dynamicMaxShapingReward * (SHAPING_GAMMA * phiCurr - phiPrev);
-            if (shapingObj > 3f)
-                shapingObj = 3f;
-            if (shapingObj < -3f)
-                shapingObj = -3f;
-            reward += shapingObj;
-            prevRemaining = currRemaining;
-        }
 
         // Events
         for (MarioEvent e : miniStepEvents) {
             int type = e.getEventType();
             int param = e.getEventParam();
-            if (type == EventType.WIN.getValue()) {
-                reward += calculateWinReward(world);
+
+            if (type == EventType.STOMP_KILL.getValue() ||
+                    type == EventType.FIRE_KILL.getValue() ||
+                    type == EventType.SHELL_KILL.getValue() ||
+                    type == EventType.BUMP_KILL.getValue() ||
+                    type == EventType.FALL_KILL.getValue()) {
+                reward += KILL_REWARD;
             } else if (type == EventType.COLLECT.getValue() &&
                     (param == SpriteType.FIRE_FLOWER.getValue() || param == SpriteType.MUSHROOM.getValue())) {
                 reward += POWER_UP_REWARD;
-            } else if (type == EventType.LOSE.getValue()) {
+            } else if (type == EventType.BUMP.getValue() &&
+                    param == MarioForwardModel.OBS_QUESTION_BLOCK) {
+                reward += BUMP_REWARD;
+            } else if (type == EventType.COLLECT.getValue() && param == 15) {
+                reward += COIN_REWARD;
+            } else if (type == EventType.WIN.getValue()) {
+                reward += calculateWinReward(world);
+            }  else if (type == EventType.LOSE.getValue()) {
                 reward += FAILURE_LOSE;
             } else if (type == EventType.TIME_OUT.getValue()) {
                 reward += FAILURE_TIMEOUT;
@@ -78,18 +55,10 @@ public class RewardSystem {
 
     // Weighted remaining that actually changes during play
     private static int computeRemainingWeighted(MarioWorld world) {
-        int enemiesLeft = world.getAliveEnemies().size() * ENEMY_WEIGHT;
-        int blocksLeft = world.getUnbumpBlocks().size() * BLOCK_WEIGHT;
-        int coinsLeft = world.getUnCollectCoin().size() * COIN_WEIGHT;
+        int enemiesLeft = world.getAliveEnemies().size();
+        int blocksLeft = world.getUnbumpBlocks().size();
+        int coinsLeft = world.getUnCollectCoin().size();
         return enemiesLeft + blocksLeft + coinsLeft;
-    }
-
-    // Initial weighted total (use static level definitions so denominator fixed)
-    private static int computeTotalWeightedObjectives(MarioWorld world) {
-        int enemies = world.level.getEnemies().size() * ENEMY_WEIGHT;
-        int blocks = world.level.getBumpableBlocks().size() * BLOCK_WEIGHT;
-        int coins = world.level.getCoins().size() * COIN_WEIGHT;
-        return enemies + blocks + coins;
     }
 
     private static float calculateWinReward(MarioWorld world) {
@@ -107,11 +76,23 @@ public class RewardSystem {
             float value;
             int type = e.getEventType();
             int param = e.getEventParam();
-            if (type == EventType.WIN.getValue()) {
-                value = calculateWinReward(world);
+
+            if (type == EventType.STOMP_KILL.getValue() ||
+                    type == EventType.FIRE_KILL.getValue() ||
+                    type == EventType.SHELL_KILL.getValue() ||
+                    type == EventType.BUMP_KILL.getValue() ||
+                    type == EventType.FALL_KILL.getValue()) {
+                value = KILL_REWARD;
             } else if (type == EventType.COLLECT.getValue() &&
                     (param == SpriteType.FIRE_FLOWER.getValue() || param == SpriteType.MUSHROOM.getValue())) {
                 value = POWER_UP_REWARD;
+            } else if (type == EventType.BUMP.getValue() &&
+                    param == MarioForwardModel.OBS_QUESTION_BLOCK) {
+                value = BUMP_REWARD;
+            } else if (type == EventType.COLLECT.getValue() && param == 15) {
+                value = COIN_REWARD;
+            } else if (type == EventType.WIN.getValue()) {
+                value = calculateWinReward(world);
             } else if (type == EventType.LOSE.getValue()) {
                 value = FAILURE_LOSE;
             } else if (type == EventType.TIME_OUT.getValue()) {
