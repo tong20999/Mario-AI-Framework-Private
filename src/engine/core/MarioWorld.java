@@ -57,7 +57,7 @@ public class MarioWorld {
 
     private float stuckRightCounter = 0;
     private float stuckLeftCounter = 0;
-    private final static int MAX_STUCK = 5;
+    private final static int MAX_STUCK = 9;
     private boolean truncated = false;
 
     public boolean isTruncated() {
@@ -65,7 +65,7 @@ public class MarioWorld {
     }
 
     private ArrayList<Float> xProgressHistory = new ArrayList<>();
-    private final int NO_PROGRESS_WINDOW = 30;
+    private final int NO_PROGRESS_WINDOW = 33;
     private final float NO_PROGRESS_THRESHOLD_PIXELS = 16 * 2;
 
 
@@ -631,6 +631,7 @@ public class MarioWorld {
 
             if (maxX - minX <= NO_PROGRESS_THRESHOLD_PIXELS) {
                 truncated = true;
+                this.addEvent(EventType.NO_PROGRESS, 0);
                 this.xProgressHistory.clear();
             }
         }
@@ -657,6 +658,7 @@ public class MarioWorld {
             stuckLeftCounter = 0;
             stuckRightCounter = 0;
             truncated = true;
+            this.addEvent(EventType.STUCK, 0);
         }
 
         sprites.addAll(0, addedSprites);

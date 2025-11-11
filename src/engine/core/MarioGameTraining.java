@@ -219,7 +219,12 @@ public class MarioGameTraining {
             var events = miniStep(action);
             miniStepEvents.addAll(events);
         }
-
+        var truncated = this.world.isTruncated();
+        if(truncated && this.evaluation){
+            truncated = false;
+            this.world.timeout();
+            miniStepEvents.add(new MarioEvent(EventType.TIME_OUT, 0));
+        }
         var nextWorldState = this.world.clone();
         var nextState = new MarioForwardModel(nextWorldState, miniStepEvents);
         float reward = rewardSystem.getReward(this.world, miniStepEvents);
@@ -239,10 +244,7 @@ public class MarioGameTraining {
                     this.pcg, this.world, this.rewardEvents, this.evaluationReward, this.minTimer, this.maxTimer);
         }
 
-        var truncated = this.world.isTruncated();
-        if(this.evaluation){
-            truncated = false;
-        }
+
 
         return State.stepResult(State.toByte(nextState), reward,
                 this.world.gameStatus != GameStatus.RUNNING, truncated);

@@ -39,8 +39,8 @@ if __name__ == '__main__':
   default_pcg = '''{
     "WidthMin": 25,
     "WidthMax": 36,
-    "TimerMin": 40,
-    "TimerMax": 41,
+    "TimerMin": 100,
+    "TimerMax": 101,
     "Blocks": 2,
     "BlocksHeightOrigin": 10,
     "BlocksHeightBound": 11,
