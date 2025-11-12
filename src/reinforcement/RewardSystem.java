@@ -14,6 +14,7 @@ public class RewardSystem {
     private static final float FAILURE_LOSE = -100f;
     private static final float FAILURE_TIMEOUT = -100f;
     private static final float POWER_UP_REWARD = 25f;
+    private static final float STUCK_PENALTY = -1f;
 
     // Weights
     private static final int KILL_REWARD = 10;
@@ -21,7 +22,7 @@ public class RewardSystem {
     private static final int COIN_REWARD = 2;
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
-        float reward = -0.1f; // step cost
+        float reward = 0f; // step cost
 
         // Events
         for (MarioEvent e : miniStepEvents) {
@@ -48,6 +49,8 @@ public class RewardSystem {
                 reward += FAILURE_LOSE;
             } else if (type == EventType.TIME_OUT.getValue()) {
                 reward += FAILURE_TIMEOUT;
+            } else if (type == EventType.STUCK.getValue()) {
+                reward += STUCK_PENALTY;
             }
         }
         return reward;
@@ -97,6 +100,8 @@ public class RewardSystem {
                 value = FAILURE_LOSE;
             } else if (type == EventType.TIME_OUT.getValue()) {
                 value = FAILURE_TIMEOUT;
+            } else if (type == EventType.STUCK.getValue()) {
+                value = STUCK_PENALTY;
             } else {
                 value = 0f;
             }

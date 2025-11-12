@@ -246,7 +246,7 @@ public class MarioGameTraining {
         boolean killClear = world.getKillCount() == world.level.getEnemies().size();
         boolean coinClear = world.getCollectedCoinCount() == world.level.getCoins().size();
 
-        var isSuccess = this.world.gameStatus == GameStatus.WIN ||
+        var isSuccess = this.world.gameStatus == GameStatus.WIN &&
                 (blockClear && killClear && coinClear);
 
         return State.stepResult(State.toByte(nextState), reward,

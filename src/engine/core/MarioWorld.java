@@ -65,7 +65,7 @@ public class MarioWorld {
     }
 
     private ArrayList<Float> xProgressHistory = new ArrayList<>();
-    private final int NO_PROGRESS_WINDOW = 33;
+    private final int NO_PROGRESS_WINDOW = 33 * 3;
     private final float NO_PROGRESS_THRESHOLD_PIXELS = 16 * 2;
 
 
@@ -647,17 +647,10 @@ public class MarioWorld {
         boolean isStuck = Math.abs(deltaX) < 0.1f;
 
         if (tryingToMoveRight && onGround && isStuck) {
-            stuckRightCounter++;
+            this.addEvent(EventType.STUCK, 0);
         }
 
         if (tryingToMoveLeft && onGround && isStuck) {
-            stuckLeftCounter++;
-        }
-
-        if(stuckLeftCounter > MAX_STUCK || stuckRightCounter > MAX_STUCK){
-            stuckLeftCounter = 0;
-            stuckRightCounter = 0;
-            truncated = true;
             this.addEvent(EventType.STUCK, 0);
         }
 
