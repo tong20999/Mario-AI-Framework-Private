@@ -217,12 +217,6 @@ public class MarioGameTraining {
             var events = miniStep(action);
             miniStepEvents.addAll(events);
         }
-        var truncated = this.world.isTruncated();
-        if(truncated && this.evaluation){
-            truncated = false;
-            this.world.timeout();
-            miniStepEvents.add(new MarioEvent(EventType.TIME_OUT, 0));
-        }
         var nextWorldState = this.world.clone();
         var nextState = new MarioForwardModel(nextWorldState, miniStepEvents);
         float reward = RewardSystem.getReward(this.world, miniStepEvents);
@@ -250,7 +244,7 @@ public class MarioGameTraining {
                 (blockClear && killClear && coinClear);
 
         return State.stepResult(State.toByte(nextState), reward,
-                this.world.gameStatus != GameStatus.RUNNING, truncated, isSuccess);
+                this.world.gameStatus != GameStatus.RUNNING, false, isSuccess);
     }
 
     public ArrayList<MarioEvent> miniStep(boolean[] action) throws Exception {

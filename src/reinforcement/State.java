@@ -159,7 +159,7 @@ public class State {
         float[] nearestShell = model.get3NearestFlowerScreenPos();
         float[] nearestFlower = model.get3NearestShellScreenPos();
 
-        float stall = model.getStallCounter() / MarioWorld.MAX_STALL;
+        float stall = model.getStallCounter() / MarioWorld.NO_PROGRESS_WINDOW;
 
         int[] coinsObjective = model.getCoinsObjective();
         int[] blocksObjective = model.getBlocksObjective();

@@ -48,24 +48,9 @@ public class MarioWorld {
     private Objective coinsObjective = new Objective();
     private Objective blocksObjective = new Objective();
     private Objective enemiesObjective = new Objective();
-    private float stallCounter = 0;
-    public final static int MAX_STALL = 100;
-    private boolean stallLose = false;
-    public float getStallCounter() {
-        return stallCounter;
-    }
-
-    private float stuckRightCounter = 0;
-    private float stuckLeftCounter = 0;
-    private final static int MAX_STUCK = 9;
-    private boolean truncated = false;
-
-    public boolean isTruncated() {
-        return truncated;
-    }
 
     private ArrayList<Float> xProgressHistory = new ArrayList<>();
-    private final int NO_PROGRESS_WINDOW = 33 * 3;
+    public static final int NO_PROGRESS_WINDOW = 33;
     private final float NO_PROGRESS_THRESHOLD_PIXELS = 16 * 2;
 
 
@@ -221,13 +206,8 @@ public class MarioWorld {
         world.currentTimer = this.currentTimer;
         world.initTimer = this.initTimer;
         world.currentTick = this.currentTick;
-        world.stallCounter = this.stallCounter;
-        world.stallLose = this.stallLose;
         world.level = this.level.clone();
         world.xProgressHistory = new ArrayList<>(this.xProgressHistory);
-        world.stuckRightCounter = stuckRightCounter;
-        world.stuckLeftCounter = stuckLeftCounter;
-        world.truncated = truncated;
         // Clone sprites
         for (MarioSprite sprite : this.sprites) {
             MarioSprite cloneSprite = sprite.clone();
@@ -312,9 +292,6 @@ public class MarioWorld {
         this.addEvent(killEvent, sprite.type.getValue(), sprite.initialCode);
         aliveEnemy.removeIf(a -> Objects.equals(sprite.initialCode,
                 MessageFormat.format("{0}_{1}_{2}", a.x, a.y, a.type.getValue())));
-        this.stallCounter = 0;
-        stuckLeftCounter = 0;
-        stuckRightCounter = 0;
         this.xProgressHistory.clear();
         if(sprite.type == SpriteType.BULLET_BILL ||
         sprite.type == SpriteType.ENEMY_FLOWER){
@@ -606,13 +583,6 @@ public class MarioWorld {
         }
         fireballsToCheck.clear();
 
-        var afterPosition = new int[] { (int) ((this.mario.x - this.cameraX) / 16), (int) (this.mario.y / 16) };
-        if (afterPosition[1] == beforePosition[1] && afterPosition[0] == beforePosition[0]) {
-            stallCounter++;
-        } else {
-            stallCounter = 0;
-        }
-
         this.xProgressHistory.add(this.mario.x);
 
         // Keep history to the size of the check window
@@ -630,14 +600,9 @@ public class MarioWorld {
             }
 
             if (maxX - minX <= NO_PROGRESS_THRESHOLD_PIXELS) {
-                truncated = true;
                 this.addEvent(EventType.NO_PROGRESS, 0);
                 this.xProgressHistory.clear();
             }
-        }
-
-        if(stallCounter > MAX_STALL){
-            stallCounter = 0;
         }
 
         float deltaX = mario.x - beforeX;
@@ -674,10 +639,7 @@ public class MarioWorld {
         ArrayList<TileFeature> features = TileFeature.getTileType(block);
         if (features.contains(TileFeature.BUMPABLE)) {
             unbumpBlocks.removeIf(b -> b.getX() == xTile && b.getY() == yTile);
-            this.stallCounter = 0;
             this.xProgressHistory.clear();
-            stuckLeftCounter = 0;
-            stuckRightCounter = 0;
             blocksObjective.mark(new Point(xTile, yTile));
             bumpInto(xTile, yTile - 1);
             this.addEvent(EventType.BUMP, MarioForwardModel.OBS_QUESTION_BLOCK);
@@ -813,10 +775,7 @@ public class MarioWorld {
         this.collectCoin++;
         this.getUnCollectCoin().removeIf(c -> c.getX() == xTile && c.getY() == yTile);
         this.coinsObjective.mark(new Point(xTile, yTile));
-        this.stallCounter = 0;
         this.xProgressHistory.clear();
-        stuckLeftCounter = 0;
-        stuckRightCounter = 0;
     }
 
     public int[] getCoinsObjective() {
@@ -829,5 +788,9 @@ public class MarioWorld {
 
     public int[] getEnemiesObjective() {
         return enemiesObjective.getObjectives();
+    }
+
+    public float xProgressHistorySize() {
+        return this.xProgressHistory.size();
     }
 }

@@ -14,7 +14,8 @@ public class RewardSystem {
     private static final float FAILURE_LOSE = -100f;
     private static final float FAILURE_TIMEOUT = -100f;
     private static final float POWER_UP_REWARD = 25f;
-    private static final float STUCK_PENALTY = -1f;
+    private static final float STUCK_PENALTY = -5f;
+    private static final float NO_PROGRESS_PENALTY = -10f;
 
     // Weights
     private static final int KILL_REWARD = 10;
@@ -51,6 +52,8 @@ public class RewardSystem {
                 reward += FAILURE_TIMEOUT;
             } else if (type == EventType.STUCK.getValue()) {
                 reward += STUCK_PENALTY;
+            }else if (type == EventType.NO_PROGRESS.getValue()) {
+                reward += NO_PROGRESS_PENALTY;
             }
         }
         return reward;
@@ -102,6 +105,8 @@ public class RewardSystem {
                 value = FAILURE_TIMEOUT;
             } else if (type == EventType.STUCK.getValue()) {
                 value = STUCK_PENALTY;
+            } else if (type == EventType.NO_PROGRESS.getValue()) {
+                value = NO_PROGRESS_PENALTY;
             } else {
                 value = 0f;
             }
