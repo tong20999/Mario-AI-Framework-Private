@@ -608,10 +608,10 @@ public class MarioWorld {
         float deltaX = mario.x - beforeX;
         boolean tryingToMoveRight = actions[MarioActions.RIGHT.getValue()];
         //boolean tryingToMoveLeft = actions[MarioActions.LEFT.getValue()];
-        boolean onGround = mario.onGround;
+        boolean canJump = mario.mayJump;
         boolean isStuck = Math.abs(deltaX) < 0.1f;
 
-        if (tryingToMoveRight && onGround && isStuck) {
+        if (tryingToMoveRight && canJump && isStuck) {
             this.addEvent(EventType.STUCK, 0);
         }
 
