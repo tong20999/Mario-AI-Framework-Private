@@ -411,7 +411,7 @@ class PPO():
                 # stats
                 evaluation_count +=1
                 # Evaluate over multiple episodes for stability; also get success rate (scale-invariant)
-                eval_eps = 20
+                eval_eps = 10
                 evaluation_score, success_rate, action_list = self.evaluate(evaluation_count, self.policy_model, env, 
                                                                             levelBase64, n_episodes=eval_eps, visual=False)
                 logger.info('evaluation {} mean_return {} success_rate {}% values {} value losses {} entropy {}'.format(

@@ -607,7 +607,7 @@ public class MarioWorld {
 
         float deltaX = mario.x - beforeX;
         boolean tryingToMoveRight = actions[MarioActions.RIGHT.getValue()];
-        boolean tryingToMoveLeft = actions[MarioActions.LEFT.getValue()];
+        //boolean tryingToMoveLeft = actions[MarioActions.LEFT.getValue()];
         boolean onGround = mario.onGround;
         boolean isStuck = Math.abs(deltaX) < 0.1f;
 
@@ -615,9 +615,9 @@ public class MarioWorld {
             this.addEvent(EventType.STUCK, 0);
         }
 
-        if (tryingToMoveLeft && onGround && isStuck) {
-            this.addEvent(EventType.STUCK, 0);
-        }
+//        if (tryingToMoveLeft && onGround && isStuck) {
+//            this.addEvent(EventType.STUCK, 0);
+//        }
 
         sprites.addAll(0, addedSprites);
         sprites.removeAll(removedSprites);

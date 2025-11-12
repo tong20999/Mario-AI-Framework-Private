@@ -129,7 +129,7 @@ public class ProceduralContentGenerationLevel {
             pcg.addEnemy(7,2, pcgLevelDto);
             pcg.addBlock(7, 2, pcgLevelDto);
             pcg.addCoin(7,2, pcgLevelDto);
-            pcg.addPattern(Pattern.getRandomPattern(), 12, 12);
+            //pcg.addPattern(Pattern.getRandomPattern(), 12, 12);
             return pcg;
         }
         catch (IllegalArgumentException ex){
