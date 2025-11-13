@@ -35,7 +35,7 @@ class CNNBase(nn.Module):
         grid_feature_dim = c1 * 16 * 16
 
         # --- 3. Vector Path ---
-        self.mario_phys_dim = 97        
+        self.mario_phys_dim = 100        
         self.objective_dim = 90          
         self.total_vector_dim = self.mario_phys_dim + self.objective_dim
 

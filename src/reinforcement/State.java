@@ -212,9 +212,7 @@ public class State {
         outputStream.write(float2ByteArray(nearestItem[3])); // 356 95
         outputStream.write(float2ByteArray(nearestItem[4])); // 360 96
 
-
         outputStream.write(float2ByteArray(stall)); // 364 97
-
 
         outputStream.write(float2ByteArray(nearestFlag[0])); // 368 98
         outputStream.write(float2ByteArray(nearestFlag[1])); // 372 99
