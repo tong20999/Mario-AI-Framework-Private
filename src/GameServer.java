@@ -16,7 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class GameServer {
-    private final ExecutorService clientPool = Executors.newFixedThreadPool(20);
+    private final ExecutorService clientPool = Executors.newFixedThreadPool(16);
 
     public void start() throws Exception {
         //System.setProperty("sun.java2d.uiScale", "1.2");

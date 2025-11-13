@@ -145,10 +145,6 @@ class PPO():
         logger.info(f'batch_size {self.batch_size}')
         logger.info(f'n_workers {self.n_workers}')
         logger.info(f'load_optimizer {self.load_optimizer}')
-        self.parallel_eval = True
-        # Persistent evaluation envs (created on first use, closed in training cleanup)
-        self._eval_envs = None
-        self._eval_envs_workers = 0
 
     def optimize_model(self):
         all_data = self.episode_buffer.get_data()
@@ -416,14 +412,8 @@ class PPO():
                 evaluation_count +=1
                 # Evaluate over multiple episodes for stability; also get success rate (scale-invariant)
                 eval_eps = 10
-                if self.parallel_eval:
-                    evaluation_score, success_rate, action_list = self.evaluate_parallel(
-                        evaluation_count, self.policy_model, levelBase64, n_episodes=eval_eps, visual=False
-                    )
-                else:
-                    evaluation_score, success_rate, action_list = self.evaluate(
-                        evaluation_count, self.policy_model, env, levelBase64, n_episodes=eval_eps, visual=False
-                    )
+                evaluation_score, success_rate, action_list = self.evaluate(evaluation_count, self.policy_model, env, 
+                                                                            levelBase64, n_episodes=eval_eps, visual=False)
                 logger.info('evaluation {} mean_return {} success_rate {}% values {} value losses {} entropy {}'.format(
                     evaluation_count, np.round(evaluation_score, 2), np.round(success_rate*100, 1), np.round(values, 3) ,np.round(value_losses, 3) , np.round(entropies, 3)))
 
@@ -506,10 +496,6 @@ class PPO():
             if 'envs' in locals():
                 envs.close()
                 del envs
-            # Close persistent evaluation envs if created
-            if self._eval_envs is not None:
-                self._eval_envs.close()
-                self._eval_envs = None
             if evaluation_count > 0:
                 logger.info('saving checkpoint {}'.format(evaluation_count))
                 self.save_checkpoint(evaluation_count)
@@ -603,86 +589,6 @@ class PPO():
         success_rate = float(successes) / float(len(rs)) if len(rs) > 0 else 0.0
         logger.info(f"evaluation mean return: {mean_return:.3f}, success rate: {success_rate*100:.1f}% over {len(rs)} episodes")
         # Keep signature compatible with existing call sites; the second value is success rate
-        return mean_return, success_rate, action_list
-
-    def evaluate_parallel(self, evaluation_count:int, eval_model:CNNActor, level:str, n_episodes:int=10, visual:bool=False) -> tuple[float, float, list]:
-        """Evaluate policy over n_episodes running up to n_workers concurrently.
-
-        Episodes are launched on available workers; when a worker finishes an episode
-        it is immediately reset (if more remain). This drastically reduces wall-clock
-        evaluation time compared with sequential evaluation.
-        """
-        num_envs = min(self.n_workers, max(1, n_episodes))
-        # Create persistent envs once (reuse across evaluations to keep connections open)
-        if self._eval_envs is None or self._eval_envs_workers != num_envs:
-            # Close existing if worker count mismatch
-            if self._eval_envs is not None:
-                self._eval_envs.close()
-            self._eval_envs = self.make_envs_fn(self.make_env_fn, num_envs, self.working_dir)
-            self._eval_envs_workers = num_envs
-        eval_envs = self._eval_envs
-
-        episode_returns = []
-        action_list = []
-        successes = 0
-
-        # Per-worker trackers
-        worker_returns = np.zeros(num_envs, dtype=np.float32)
-        worker_action_hists = [np.zeros(eval_envs.make_env_fn().action_space.n, dtype=int) for _ in range(num_envs)]
-        worker_active = [True]*num_envs
-
-        # Unique episode numbering same as sequential version
-        next_episode_number = (evaluation_count - 1) * n_episodes + 1
-
-        # Initial reset for all workers
-        obs_batch = eval_envs.reset(episodeStart=next_episode_number, ranks=range(num_envs), visual=visual,
-                                    levels=[level]*num_envs, evaluation=True)
-
-        episodes_completed = 0
-        while episodes_completed < n_episodes:
-                # Build action list for currently active workers
-                actions = []
-                for w in range(num_envs):
-                    if not worker_active[w]:
-                        actions.append(0)  # Dummy action (won't be used because env will be immediately reset)
-                        continue
-                    single_state = {k: obs_batch[k][w] for k in obs_batch}
-                    a = eval_model.select_greedy_action(single_state)
-                    actions.append(a)
-                # Step all workers
-                obs_batch, rewards, terminateds, truncateds, infos = eval_envs.step(actions)
-                for w in range(num_envs):
-                    if not worker_active[w]:
-                        continue
-                    a = actions[w]
-                    worker_action_hists[w][a] += 1
-                    worker_returns[w] += rewards[w]
-                    done = terminateds[w] or truncateds[w]
-                    if done:
-                        info = infos[w] if isinstance(infos, (list, tuple)) else {}
-                        if info.get("success", False):
-                            successes += 1
-                        # Store finished episode data
-                        episode_returns.append(float(worker_returns[w]))
-                        action_list.append(worker_action_hists[w].tolist())
-                        episodes_completed += 1
-                        # Prepare for possible next episode on this worker
-                        worker_returns[w] = 0.0
-                        worker_action_hists[w] = np.zeros_like(worker_action_hists[w])
-                        if episodes_completed < n_episodes:
-                            next_episode_number += 1
-                            # Reset only this worker; compute episodeStart so resulting episode matches desired number
-                            episode_start_for_reset = next_episode_number - w
-                            single_obs = eval_envs.reset(episodeStart=episode_start_for_reset, ranks=[w], visual=visual,
-                                                         levels=[level], evaluation=True)
-                            # Inject new obs into batch
-                            for k in obs_batch:
-                                obs_batch[k][w] = single_obs[k][0]
-                        else:
-                            worker_active[w] = False
-        mean_return = float(np.mean(episode_returns)) if episode_returns else 0.0
-        success_rate = float(successes) / float(len(episode_returns)) if episode_returns else 0.0
-        logger.info(f"[EVAL PARALLEL] mean return {mean_return:.3f} success {success_rate*100:.1f}% episodes {len(episode_returns)}")
         return mean_return, success_rate, action_list
             
     def save_checkpoint(self, evaluation_idx: int):

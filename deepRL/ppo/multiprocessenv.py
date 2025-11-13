@@ -57,7 +57,7 @@ class MultiprocessEnv(object):
         
         [w.start() for w in self.workers]
 
-    def reset(self, episodeStart:int, ranks=None, visual = False, playMode = False, levels: list = None, evaluation:bool=False, **kwargs):
+    def reset(self, episodeStart:int, ranks=None, visual = False, playMode = False, levels: list = None, **kwargs):
         if ranks is None:
             ranks = range(self.n_workers)
 
@@ -68,7 +68,7 @@ class MultiprocessEnv(object):
         for i, rank in enumerate(ranks):
             episode = episodeStart + rank
             level_name = levels[i]
-            info = {"episode" : episode, "evaluation" : evaluation, "visual" : visual, "level" :  level_name}
+            info = {"episode" : episode, "evaluation" : False, "visual" : visual, "level" :  level_name}
             kwargs['options'] = info
             self.parent_pipes[rank].send(('reset', kwargs))
         
