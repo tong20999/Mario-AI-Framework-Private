@@ -146,6 +146,9 @@ class PPO():
         logger.info(f'n_workers {self.n_workers}')
         logger.info(f'load_optimizer {self.load_optimizer}')
         self.parallel_eval = True
+        # Persistent evaluation envs (created on first use, closed in training cleanup)
+        self._eval_envs = None
+        self._eval_envs_workers = 0
 
     def optimize_model(self):
         all_data = self.episode_buffer.get_data()
@@ -503,6 +506,10 @@ class PPO():
             if 'envs' in locals():
                 envs.close()
                 del envs
+            # Close persistent evaluation envs if created
+            if self._eval_envs is not None:
+                self._eval_envs.close()
+                self._eval_envs = None
             if evaluation_count > 0:
                 logger.info('saving checkpoint {}'.format(evaluation_count))
                 self.save_checkpoint(evaluation_count)
@@ -606,7 +613,14 @@ class PPO():
         evaluation time compared with sequential evaluation.
         """
         num_envs = min(self.n_workers, max(1, n_episodes))
-        eval_envs = self.make_envs_fn(self.make_env_fn, num_envs, self.working_dir)
+        # Create persistent envs once (reuse across evaluations to keep connections open)
+        if self._eval_envs is None or self._eval_envs_workers != num_envs:
+            # Close existing if worker count mismatch
+            if self._eval_envs is not None:
+                self._eval_envs.close()
+            self._eval_envs = self.make_envs_fn(self.make_env_fn, num_envs, self.working_dir)
+            self._eval_envs_workers = num_envs
+        eval_envs = self._eval_envs
 
         episode_returns = []
         action_list = []
@@ -625,8 +639,7 @@ class PPO():
                                     levels=[level]*num_envs, evaluation=True)
 
         episodes_completed = 0
-        try:
-            while episodes_completed < n_episodes:
+        while episodes_completed < n_episodes:
                 # Build action list for currently active workers
                 actions = []
                 for w in range(num_envs):
@@ -667,9 +680,6 @@ class PPO():
                                 obs_batch[k][w] = single_obs[k][0]
                         else:
                             worker_active[w] = False
-        finally:
-            eval_envs.close()
-
         mean_return = float(np.mean(episode_returns)) if episode_returns else 0.0
         success_rate = float(successes) / float(len(episode_returns)) if episode_returns else 0.0
         logger.info(f"[EVAL PARALLEL] mean return {mean_return:.3f} success {success_rate*100:.1f}% episodes {len(episode_returns)}")
