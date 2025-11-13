@@ -415,7 +415,7 @@ class PPO():
                 # stats
                 evaluation_count +=1
                 # Evaluate over multiple episodes for stability; also get success rate (scale-invariant)
-                eval_eps = 20
+                eval_eps = 10
                 if self.parallel_eval:
                     evaluation_score, success_rate, action_list = self.evaluate_parallel(
                         evaluation_count, self.policy_model, levelBase64, n_episodes=eval_eps, visual=False
