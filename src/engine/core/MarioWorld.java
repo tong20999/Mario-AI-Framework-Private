@@ -51,7 +51,7 @@ public class MarioWorld {
     private Objective enemiesObjective = new Objective();
 
     private ArrayList<Float> xProgressHistory = new ArrayList<>();
-    public static final int NO_PROGRESS_WINDOW = 40;
+    public static final int NO_PROGRESS_WINDOW = 200;
     private final float NO_PROGRESS_THRESHOLD_PIXELS = 16 * 2;
 
 
@@ -597,7 +597,6 @@ public class MarioWorld {
         }
 
         if (this.xProgressHistory.size() == NO_PROGRESS_WINDOW) {
-            // Find the min and max X position in the last 10 steps
             float minX = this.mario.x;
             float maxX = this.mario.x;
             for (Float xPos : this.xProgressHistory) {
@@ -606,7 +605,12 @@ public class MarioWorld {
             }
 
             if (maxX - minX <= NO_PROGRESS_THRESHOLD_PIXELS) {
-                this.addEvent(EventType.NO_PROGRESS, 0);
+                boolean tryingToMoveLeft = actions[MarioActions.LEFT.getValue()];
+                boolean allObjectivesMet = isSubGoalEnemyMet() && isSubGoalBlockMet() && isSubGoalCoinMet();
+
+                if (!tryingToMoveLeft || allObjectivesMet) {
+                    this.addEvent(EventType.NO_PROGRESS, 0);
+                }
                 this.xProgressHistory.clear();
             }
         }
