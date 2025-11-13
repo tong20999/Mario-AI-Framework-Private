@@ -13,7 +13,6 @@ public class Objective {
     private int maxItem = 30;
     public int[] getObjectives() {
         int[] result = new int[maxItem];
-        Arrays.fill(result, 1); // default = undefined
 
         int i = 0;
         for (Integer value : positionMap.values()) {
