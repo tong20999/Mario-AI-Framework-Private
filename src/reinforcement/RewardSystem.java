@@ -52,7 +52,7 @@ public class RewardSystem {
                 reward += FAILURE_TIMEOUT;
             } else if (type == EventType.STUCK.getValue()) {
                 reward += STUCK_PENALTY;
-            }else if (type == EventType.NO_PROGRESS.getValue()) {
+            } else if (type == EventType.NO_PROGRESS.getValue()) {
                 reward += NO_PROGRESS_PENALTY;
             }
         }

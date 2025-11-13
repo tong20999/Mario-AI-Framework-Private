@@ -721,6 +721,19 @@ public class MarioForwardModel {
         return get3NearestObjectScreenPos(this.world.getUnbumpBlocks());
     }
 
+    public float[] getNearestFlagScreenPos(){
+        ArrayList<Point> flagTiles = new ArrayList<>();
+        int poleX = this.world.level.exitTileX;
+        int bottomY = this.world.level.exitTileY; // The base of the pole
+        int topY = Math.max(1, bottomY - 11);    // The top of the pole
+
+        // Add all tile coordinates from the top of the pole down to the base
+        for (int y = topY; y <= bottomY; y++) {
+            flagTiles.add(new Point(poleX, y));
+        }
+        return getNearestObjectScreenPos(flagTiles);
+    }
+
     public float[] getNearestItemScreenPos() {
 
         return get3NearestItemScreenPos();
