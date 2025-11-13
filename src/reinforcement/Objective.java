@@ -13,7 +13,7 @@ public class Objective {
     private int maxItem = 30;
     public int[] getObjectives() {
         int[] result = new int[maxItem];
-        Arrays.fill(result, -1); // default = undefined
+        Arrays.fill(result, 1); // default = undefined
 
         int i = 0;
         for (Integer value : positionMap.values()) {
@@ -36,12 +36,6 @@ public class Objective {
             );
         }
         return copy;
-    }
-
-    public void add(Point point) {
-        if (positionMap.size() < maxItem) { // enforce max 50
-            positionMap.put(point, 1);
-        }
     }
 
     public void addAll(List<Point> points) {
