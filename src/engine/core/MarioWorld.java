@@ -51,7 +51,7 @@ public class MarioWorld {
     private Objective enemiesObjective = new Objective();
 
     private ArrayList<Float> xProgressHistory = new ArrayList<>();
-    public static final int NO_PROGRESS_WINDOW = 20;
+    public static final int NO_PROGRESS_WINDOW = 40;
     private final float NO_PROGRESS_THRESHOLD_PIXELS = 16 * 2;
 
 
