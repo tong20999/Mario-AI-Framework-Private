@@ -9,6 +9,7 @@ import engine.effects.*;
 import engine.graphics.MarioBackground;
 import engine.helper.*;
 import engine.sprites.*;
+import reinforcement.FeatureFlag;
 import reinforcement.Objective;
 import reinforcement.Point;
 
@@ -582,6 +583,11 @@ public class MarioWorld {
             }
         }
         fireballsToCheck.clear();
+        if (FeatureFlag.ENABLE_GATE && isSubGoalEnemyMet() && isSubGoalBlockMet() && isSubGoalCoinMet()){
+            for (var g : this.level.getGates()){
+                this.level.setBlock(g.getX(), g.getY(), 0);
+            }
+        }
 
         this.xProgressHistory.add(this.mario.x);
 
