@@ -156,7 +156,7 @@ public class State {
         float subTileY = (marioPos[1] / 16.0f) - (int) (marioPos[1] / 16);
 
         // Timer
-        float normalizedTimer = (float) model.getRemainingTime() / (float) 20;
+        float normalizedTimer = (float) model.getRemainingTime() / (float) model.getInitialTimer();
 
         float completionCoinObjective = model.getCoinCompletionObjective();
         float completionBlockObjective = model.getBlocksCompletionObjective();
