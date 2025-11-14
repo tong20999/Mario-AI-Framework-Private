@@ -51,7 +51,7 @@ public class MarioWorld {
     private Objective enemiesObjective = new Objective();
 
     private ArrayList<Float> xProgressHistory = new ArrayList<>();
-    public static final int NO_PROGRESS_WINDOW = 200;
+    public static final int NO_PROGRESS_WINDOW = 80;
     private final float NO_PROGRESS_THRESHOLD_PIXELS = 16 * 2;
 
 
@@ -618,10 +618,10 @@ public class MarioWorld {
         float deltaX = mario.x - beforeX;
         boolean tryingToMoveRight = actions[MarioActions.RIGHT.getValue()];
         //boolean tryingToMoveLeft = actions[MarioActions.LEFT.getValue()];
-        boolean canJump = mario.mayJump;
+        boolean isOnGround = mario.onGround;
         boolean isStuck = Math.abs(deltaX) < 0.1f;
 
-        if (tryingToMoveRight && canJump && isStuck) {
+        if (tryingToMoveRight && isOnGround && isStuck) {
             this.addEvent(EventType.STUCK, 0);
         }
 

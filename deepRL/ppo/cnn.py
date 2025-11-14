@@ -28,8 +28,12 @@ class CNNBase(nn.Module):
         self.cnn = nn.Sequential(
             nn.Conv2d(embedding_dim, c1, kernel_size=3, padding=1),
             nn.ReLU(),
-            ResidualBlock2D(c1),
-            ResidualBlock2D(c1)
+            nn.Conv2d(c1, c1, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(c1, c1, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(c1, c1, kernel_size=3, padding=1),
+            nn.ReLU(),
         )
 
         grid_feature_dim = c1 * 16 * 16

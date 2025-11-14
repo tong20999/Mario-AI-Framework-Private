@@ -217,7 +217,6 @@ public class Helper {
         }
 
         if (resultId != -1){
-            if(!status.equals("WIN")){
                 try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbEventPath)) {
                     createRewardEventTable(conn);
 
@@ -247,7 +246,6 @@ public class Helper {
                 } catch (SQLException e) {
                     System.err.println("Database error events: " + e.getMessage());
                 }
-            }
         }
     }
 
