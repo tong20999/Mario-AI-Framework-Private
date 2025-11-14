@@ -620,9 +620,9 @@ public class MarioWorld {
         boolean isOnGround = mario.onGround;
         boolean isStuck = Math.abs(deltaX) < 0.1f;
 
-        if (tryingToMoveRight && isOnGround && isStuck) {
-            this.addEvent(EventType.STUCK, 0);
-        }
+//        if (tryingToMoveRight && isOnGround && isStuck) {
+//            this.addEvent(EventType.STUCK, 0);
+//        }
 
 //        if (tryingToMoveLeft && onGround && isStuck) {
 //            this.addEvent(EventType.STUCK, 0);
