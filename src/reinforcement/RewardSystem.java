@@ -14,7 +14,7 @@ public class RewardSystem {
     private static final float PARTIAL_WIN = 25f;
     private static final float FAILURE_LOSE = -100f;
     private static final float FAILURE_TIMEOUT = -100f;
-    private static final float POWER_UP_REWARD = 50f;
+    private static final float POWER_UP_REWARD = 20f;
     private static final float STUCK_PENALTY = -5f;
     private static final float BONK_PENALTY = -5f;
     private static final float NO_PROGRESS_PENALTY = -15f;
