@@ -18,6 +18,7 @@ public class RewardSystem {
     private static final float STUCK_PENALTY = -5f;
     private static final float BONK_PENALTY = -5f;
     private static final float NO_PROGRESS_PENALTY = -15f;
+    private static final float PROGRESS = 0.2f;
 
     // Weights
     private static final int KILL_REWARD = 30;
@@ -27,7 +28,7 @@ public class RewardSystem {
     private static final List<EventType> ignoreBonk = List.of(EventType.BUMP_KILL, EventType.COLLECT);
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
-        float reward = 0f; // step cost
+        float reward = -0.1f; // step cost
 
         // Events
         for (MarioEvent e : miniStepEvents) {
@@ -58,6 +59,8 @@ public class RewardSystem {
                 reward += STUCK_PENALTY;
             } else if (type == EventType.NO_PROGRESS.getValue()) {
                 reward += NO_PROGRESS_PENALTY;
+            } else if (type == EventType.PROGRESS.getValue()) {
+                reward += PROGRESS;
             } else if (type == EventType.BONK.getValue()) {
                 boolean hasKillOrCollect = miniStepEvents.stream()
                         .anyMatch(me -> ignoreBonk.contains(me.getEventTypeEnum()));
@@ -117,6 +120,8 @@ public class RewardSystem {
                 value = NO_PROGRESS_PENALTY;
             } else if (type == EventType.BONK.getValue()) {
                 value = BONK_PENALTY;
+            } else if (type == EventType.PROGRESS.getValue()) {
+                value = PROGRESS;
             } else {
                 value = 0f;
             }

@@ -21,7 +21,8 @@ public enum EventType {
     TIME_OUT(20),
     NO_PROGRESS(21),
     STUCK(22),
-    HIT_WALL(23);
+    HIT_WALL(23),
+    PROGRESS(24);
 
     private final int value;
 

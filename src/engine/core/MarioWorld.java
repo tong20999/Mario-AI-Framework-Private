@@ -51,8 +51,9 @@ public class MarioWorld {
     private Objective enemiesObjective = new Objective();
 
     private ArrayList<Float> xProgressHistory = new ArrayList<>();
-    public static final int NO_PROGRESS_WINDOW = 80;
+    public static final int NO_PROGRESS_WINDOW = 30;
     private final float NO_PROGRESS_THRESHOLD_PIXELS = 16 * 2;
+    private float lastCompletionPercentage = 0f;
 
 
     public List<MarioSprite> getNearestEnemies(){
@@ -209,6 +210,7 @@ public class MarioWorld {
         world.currentTick = this.currentTick;
         world.level = this.level.clone();
         world.xProgressHistory = new ArrayList<>(this.xProgressHistory);
+        world.lastCompletionPercentage = lastCompletionPercentage;
         // Clone sprites
         for (MarioSprite sprite : this.sprites) {
             MarioSprite cloneSprite = sprite.clone();
@@ -445,6 +447,10 @@ public class MarioWorld {
         return sprite instanceof Enemy || sprite instanceof FlowerEnemy || sprite instanceof BulletBill;
     }
 
+    private float getCompletionPercentage() {
+        return this.mario.x / (this.level.exitTileX * 16);
+    }
+
     public void update(boolean[] actions) {
         this.lastFrameEvents.clear();
         var beforeX = mario.x;
@@ -589,36 +595,41 @@ public class MarioWorld {
             }
         }
 
-        this.xProgressHistory.add(this.mario.x);
-
-        // Keep history to the size of the check window
-        while (this.xProgressHistory.size() > NO_PROGRESS_WINDOW) {
-            this.xProgressHistory.remove(0);
+        if(getCompletionPercentage() > lastCompletionPercentage){
+            lastCompletionPercentage = getCompletionPercentage();
+            this.addEvent(EventType.PROGRESS, 0);
         }
 
-        if (this.xProgressHistory.size() == NO_PROGRESS_WINDOW) {
-            float minX = this.mario.x;
-            float maxX = this.mario.x;
-            for (Float xPos : this.xProgressHistory) {
-                if (xPos < minX) minX = xPos;
-                if (xPos > maxX) maxX = xPos;
-            }
-
-            if (maxX - minX <= NO_PROGRESS_THRESHOLD_PIXELS) {
-                boolean allObjectivesMet = isSubGoalEnemyMet() && isSubGoalBlockMet() && isSubGoalCoinMet();
-
-                if (!allObjectivesMet) {
-                    this.addEvent(EventType.NO_PROGRESS, 0);
-                }
-                this.xProgressHistory.clear();
-            }
-        }
-
-        float deltaX = mario.x - beforeX;
-        boolean tryingToMoveRight = actions[MarioActions.RIGHT.getValue()];
-        //boolean tryingToMoveLeft = actions[MarioActions.LEFT.getValue()];
-        boolean isOnGround = mario.onGround;
-        boolean isStuck = Math.abs(deltaX) < 0.1f;
+//        this.xProgressHistory.add(this.mario.x);
+//
+//        // Keep history to the size of the check window
+//        while (this.xProgressHistory.size() > NO_PROGRESS_WINDOW) {
+//            this.xProgressHistory.remove(0);
+//        }
+//
+//        if (this.xProgressHistory.size() == NO_PROGRESS_WINDOW) {
+//            float minX = this.mario.x;
+//            float maxX = this.mario.x;
+//            for (Float xPos : this.xProgressHistory) {
+//                if (xPos < minX) minX = xPos;
+//                if (xPos > maxX) maxX = xPos;
+//            }
+//
+//            if (maxX - minX <= NO_PROGRESS_THRESHOLD_PIXELS) {
+//                boolean allObjectivesMet = isSubGoalEnemyMet() && isSubGoalBlockMet() && isSubGoalCoinMet();
+//
+//                if (!allObjectivesMet) {
+//                    this.addEvent(EventType.NO_PROGRESS, 0);
+//                }
+//                this.xProgressHistory.clear();
+//            }
+//        }
+//
+//        float deltaX = mario.x - beforeX;
+//        boolean tryingToMoveRight = actions[MarioActions.RIGHT.getValue()];
+//        //boolean tryingToMoveLeft = actions[MarioActions.LEFT.getValue()];
+//        boolean isOnGround = mario.onGround;
+//        boolean isStuck = Math.abs(deltaX) < 0.1f;
 
 //        if (tryingToMoveRight && isOnGround && isStuck) {
 //            this.addEvent(EventType.STUCK, 0);
