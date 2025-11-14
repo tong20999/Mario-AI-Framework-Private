@@ -1424,10 +1424,6 @@ public class MarioForwardModel {
         return (float) complete / total;
     }
 
-    public float getStallCounter(){
-        return world.xProgressHistorySize();
-    }
-
     public MarioWorld getMarioWorld() {
         return world;
     }

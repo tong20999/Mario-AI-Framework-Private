@@ -15,17 +15,12 @@ public class RewardSystem {
     private static final float FAILURE_LOSE = -100f;
     private static final float FAILURE_TIMEOUT = -100f;
     private static final float POWER_UP_REWARD = 20f;
-    private static final float STUCK_PENALTY = -5f;
-    private static final float BONK_PENALTY = -5f;
-    private static final float NO_PROGRESS_PENALTY = -15f;
-    private static final float PROGRESS = 0.5f;
+    private static final float STUCK_PENALTY = -25f;
 
     // Weights
     private static final int KILL_REWARD = 30;
     private static final int BUMP_REWARD = 20;
     private static final int COIN_REWARD = 10;
-
-    private static final List<EventType> ignoreBonk = List.of(EventType.BUMP_KILL, EventType.COLLECT);
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
         float reward = -0.1f; // step cost
@@ -55,16 +50,8 @@ public class RewardSystem {
                 reward += FAILURE_LOSE;
             } else if (type == EventType.TIME_OUT.getValue()) {
                 reward += FAILURE_TIMEOUT;
-            } else if (type == EventType.HIT_WALL.getValue()) {
+            } else if (type == EventType.STUCK_RIGHT.getValue() || type == EventType.STUCK_LEFT.getValue()) {
                 reward += STUCK_PENALTY;
-            } else if (type == EventType.NO_PROGRESS.getValue()) {
-                reward += NO_PROGRESS_PENALTY;
-            } else if (type == EventType.PROGRESS.getValue()) {
-                reward += PROGRESS;
-            } else if (type == EventType.BONK.getValue()) {
-                boolean hasKillOrCollect = miniStepEvents.stream()
-                        .anyMatch(me -> ignoreBonk.contains(me.getEventTypeEnum()));
-                reward += hasKillOrCollect ? 0 : BONK_PENALTY;
             }
         }
         return reward;
@@ -114,14 +101,8 @@ public class RewardSystem {
                 value = FAILURE_LOSE;
             } else if (type == EventType.TIME_OUT.getValue()) {
                 value = FAILURE_TIMEOUT;
-            } else if (type == EventType.HIT_WALL.getValue()) {
+            } else if (type == EventType.STUCK_RIGHT.getValue() || type == EventType.STUCK_LEFT.getValue()) {
                 value = STUCK_PENALTY;
-            } else if (type == EventType.NO_PROGRESS.getValue()) {
-                value = NO_PROGRESS_PENALTY;
-            } else if (type == EventType.BONK.getValue()) {
-                value = BONK_PENALTY;
-            } else if (type == EventType.PROGRESS.getValue()) {
-                value = PROGRESS;
             } else {
                 value = 0f;
             }

@@ -174,8 +174,6 @@ public class State {
         float[] nearestFlower = model.get3NearestShellScreenPos();
         float[] nearestFlag = model.getNearestFlagScreenPos();
 
-        float stall = model.getStallCounter() / MarioWorld.NO_PROGRESS_WINDOW;
-
         int[] coinsObjective = model.getCoinsObjective();
         int[] blocksObjective = model.getBlocksObjective();
         int[] enemiesObjective = model.getEnemiesObjective();
@@ -233,8 +231,6 @@ public class State {
         outputStream.write(float2ByteArray(nearestItem[2])); // 352 94
         outputStream.write(float2ByteArray(nearestItem[3])); // 356 95
         outputStream.write(float2ByteArray(nearestItem[4])); // 360 96
-
-        outputStream.write(float2ByteArray(stall)); // 364 97
 
         outputStream.write(float2ByteArray(nearestFlag[0])); // 368 98
         outputStream.write(float2ByteArray(nearestFlag[1])); // 372 99

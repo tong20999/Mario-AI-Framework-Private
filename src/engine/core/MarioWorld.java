@@ -50,12 +50,6 @@ public class MarioWorld {
     private Objective blocksObjective = new Objective();
     private Objective enemiesObjective = new Objective();
 
-    private ArrayList<Float> xProgressHistory = new ArrayList<>();
-    public static final int NO_PROGRESS_WINDOW = 30;
-    private final float NO_PROGRESS_THRESHOLD_PIXELS = 16 * 2;
-    private float lastCompletionPercentage = 0f;
-
-
     public List<MarioSprite> getNearestEnemies(){
         List<MarioSprite> out = new ArrayList<>();
         for (MarioSprite sprite : sprites) {
@@ -177,7 +171,6 @@ public class MarioWorld {
         this.mario = new Mario(this.visuals, this.level.marioTileX * 16, this.level.marioTileY * 16);
         this.mario.alive = true;
         this.mario.world = this;
-        this.xProgressHistory = new ArrayList<>();
         this.sprites.add(this.mario);
         aliveEnemy.addAll(this.level.getEnemies());
         unbumpBlocks.addAll(this.level.getBumpableBlocks());
@@ -209,8 +202,6 @@ public class MarioWorld {
         world.initTimer = this.initTimer;
         world.currentTick = this.currentTick;
         world.level = this.level.clone();
-        world.xProgressHistory = new ArrayList<>(this.xProgressHistory);
-        world.lastCompletionPercentage = lastCompletionPercentage;
         // Clone sprites
         for (MarioSprite sprite : this.sprites) {
             MarioSprite cloneSprite = sprite.clone();
@@ -295,7 +286,6 @@ public class MarioWorld {
         this.addEvent(killEvent, sprite.type.getValue(), sprite.initialCode);
         aliveEnemy.removeIf(a -> Objects.equals(sprite.initialCode,
                 MessageFormat.format("{0}_{1}_{2}", a.x, a.y, a.type.getValue())));
-        this.xProgressHistory.clear();
         if(sprite.type == SpriteType.BULLET_BILL ||
         sprite.type == SpriteType.ENEMY_FLOWER){
             return;
@@ -454,7 +444,6 @@ public class MarioWorld {
     public void update(boolean[] actions) {
         this.lastFrameEvents.clear();
         var beforeX = mario.x;
-        var beforePosition = new int[] { (int) ((this.mario.x - this.cameraX) / 16), (int) (this.mario.y / 16) };
         if (this.gameStatus != GameStatus.RUNNING) {
             return;
         }
@@ -595,54 +584,23 @@ public class MarioWorld {
             }
         }
 
-        if(getCompletionPercentage() > lastCompletionPercentage){
-            lastCompletionPercentage = getCompletionPercentage();
-            this.addEvent(EventType.PROGRESS, 0);
-        }
-
-//        this.xProgressHistory.add(this.mario.x);
-//
-//        // Keep history to the size of the check window
-//        while (this.xProgressHistory.size() > NO_PROGRESS_WINDOW) {
-//            this.xProgressHistory.remove(0);
-//        }
-//
-//        if (this.xProgressHistory.size() == NO_PROGRESS_WINDOW) {
-//            float minX = this.mario.x;
-//            float maxX = this.mario.x;
-//            for (Float xPos : this.xProgressHistory) {
-//                if (xPos < minX) minX = xPos;
-//                if (xPos > maxX) maxX = xPos;
-//            }
-//
-//            if (maxX - minX <= NO_PROGRESS_THRESHOLD_PIXELS) {
-//                boolean allObjectivesMet = isSubGoalEnemyMet() && isSubGoalBlockMet() && isSubGoalCoinMet();
-//
-//                if (!allObjectivesMet) {
-//                    this.addEvent(EventType.NO_PROGRESS, 0);
-//                }
-//                this.xProgressHistory.clear();
-//            }
-//        }
-//
-//        float deltaX = mario.x - beforeX;
-//        boolean tryingToMoveRight = actions[MarioActions.RIGHT.getValue()];
-//        //boolean tryingToMoveLeft = actions[MarioActions.LEFT.getValue()];
-//        boolean isOnGround = mario.onGround;
-//        boolean isStuck = Math.abs(deltaX) < 0.1f;
-
-//        if (tryingToMoveRight && isOnGround && isStuck) {
-//            this.addEvent(EventType.STUCK, 0);
-//        }
-
-//        if (tryingToMoveLeft && onGround && isStuck) {
-//            this.addEvent(EventType.STUCK, 0);
-//        }
-
         sprites.addAll(0, addedSprites);
         sprites.removeAll(removedSprites);
         addedSprites.clear();
         removedSprites.clear();
+
+        var afterX = mario.x;
+
+        var tryMovingRight = actions[MarioActions.RIGHT.getValue()];
+        var isOnGround = mario.onGround;
+        if (tryMovingRight && isOnGround && afterX - beforeX < 0.1f) {
+            this.addEvent(EventType.STUCK_RIGHT, 0);
+        }
+
+        var tryMovingLeft = actions[MarioActions.LEFT.getValue()];
+        if (tryMovingLeft && isOnGround && beforeX - afterX < 0.1f) {
+            this.addEvent(EventType.STUCK_LEFT, 0);
+        }
 
         // punishing forward model
         if (this.killEvents != null) {
@@ -659,7 +617,6 @@ public class MarioWorld {
         ArrayList<TileFeature> features = TileFeature.getTileType(block);
         if (features.contains(TileFeature.BUMPABLE)) {
             unbumpBlocks.removeIf(b -> b.getX() == xTile && b.getY() == yTile);
-            this.xProgressHistory.clear();
             blocksObjective.mark(new Point(xTile, yTile));
             bumpInto(xTile, yTile - 1);
             this.addEvent(EventType.BUMP, MarioForwardModel.OBS_QUESTION_BLOCK);
@@ -795,7 +752,6 @@ public class MarioWorld {
         this.collectCoin++;
         this.getUnCollectCoin().removeIf(c -> c.getX() == xTile && c.getY() == yTile);
         this.coinsObjective.mark(new Point(xTile, yTile));
-        this.xProgressHistory.clear();
     }
 
     public int[] getCoinsObjective() {
@@ -808,9 +764,5 @@ public class MarioWorld {
 
     public int[] getEnemiesObjective() {
         return enemiesObjective.getObjectives();
-    }
-
-    public float xProgressHistorySize() {
-        return this.xProgressHistory.size();
     }
 }
