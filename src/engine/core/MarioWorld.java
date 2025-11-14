@@ -605,10 +605,9 @@ public class MarioWorld {
             }
 
             if (maxX - minX <= NO_PROGRESS_THRESHOLD_PIXELS) {
-                boolean tryingToMoveLeft = actions[MarioActions.LEFT.getValue()];
                 boolean allObjectivesMet = isSubGoalEnemyMet() && isSubGoalBlockMet() && isSubGoalCoinMet();
 
-                if (!tryingToMoveLeft || allObjectivesMet) {
+                if (!allObjectivesMet) {
                     this.addEvent(EventType.NO_PROGRESS, 0);
                 }
                 this.xProgressHistory.clear();

@@ -16,7 +16,7 @@ class ResidualBlock2D(nn.Module):
 
 class CNNBase(nn.Module):
     def __init__(self, num_stack: int = 4, num_object_types: int = 21,
-                 embedding_dim: int = 32):
+                 embedding_dim: int = 16):
         super().__init__()
 
         # --- 1. Embedding (semantic token representation) ---
@@ -39,7 +39,7 @@ class CNNBase(nn.Module):
         grid_feature_dim = c1 * 16 * 16
 
         # --- 3. Vector Path ---
-        self.mario_phys_dim = 100        
+        self.mario_phys_dim = 102        
         self.objective_dim = 90          
         self.total_vector_dim = self.mario_phys_dim + self.objective_dim
 

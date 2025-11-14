@@ -36,7 +36,7 @@ public class PlayLevel {
         MarioGame game = new MarioGame();
         // printResults(game.playGame(getLevel("../levels/original/lvl-1-basic-move-right.txt"), 200, 0));
         var level = getLevel("./levels/original/lvl-4.txt");
-        var original = getLevel("./levels/evaluation/lvl-1.txt");
+        var original = getLevel("./levels/evaluation/test.txt");
 
         //testPcg(levelFileName);
         int a = 1;
