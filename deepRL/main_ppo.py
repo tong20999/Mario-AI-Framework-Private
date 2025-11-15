@@ -39,8 +39,8 @@ if __name__ == '__main__':
   default_pcg = '''{
     "WidthMin": 25,
     "WidthMax": 36,
-    "TimerMin": 100,
-    "TimerMax": 101,
+    "TimerMin": 50,
+    "TimerMax": 51,
     "Blocks": 2,
     "BlocksHeightOrigin": 10,
     "BlocksHeightBound": 11,
@@ -57,7 +57,7 @@ if __name__ == '__main__':
     "PipesMinHeight": 2,
     "PipesMaxHeight":5,
     "Ramps": 1,
-    "File" : "./levels/original/lvl-1.txt",
+    "File" : "./levels/evaluation/lvl-1.txt",
     "Fps": 40
 }'''
   levelBase64 = sys.argv[1] if len(sys.argv) > 1 else base64.b64encode(default_pcg.encode('utf-8')).decode('utf-8')
@@ -77,7 +77,8 @@ if __name__ == '__main__':
   "NWorkers": 2,
   "BatchSize": 1024,
   "LoadOptimizer": true,
-  "PolicyStoppingKl" : 0.02
+  "PolicyStoppingKl" : 0.02,
+  "Local" : true
 }'''
 
   hyperParamsString = base64.b64decode(sys.argv[2]).decode("utf-8") if len(sys.argv) > 2 else default_hyper_params
@@ -143,25 +144,18 @@ if __name__ == '__main__':
               n_workers,
               batch_size,
               load_optimizer)
-
-  rehearsal_level_tasks = [
-    #["blocks=1,enemies=0,pits=1,pipes=0,width_min=40,width_max=40"],
-    #["blocks=0,enemies=1,pits=1,pipes=0,width_min=50,width_max=50"],
-    # ["block0-enemy1-pit1-pipe0"],
-  ]
-
-  #evaluation_levels = ["file=./levels/evaluation/lvl-1.txt"]
-  # agent.play(make_env_fn, policy_model_fn, levelBase64)
-  #agent.play(make_env_fn, policy_model_fn, "blocks=1,random_block_height=true,enemies=0,pits=0,pipes=0,width_min=15,width_max=20,fps=50")
-  agent.train(make_envs_fn,
-              make_env_fn,
-              gamma,
-              max_minutes,
-              max_episodes,
-              goal_mean_100_reward,
-              levelBase64,
-              hyperParamsString,
-              rehearsal_level_tasks)
+  
+  if hyperParams.get('Local') is not None:
+    agent.play(make_env_fn, policy_model_fn, levelBase64)
+  else:
+    agent.train(make_envs_fn,
+                make_env_fn,
+                gamma,
+                max_minutes,
+                max_episodes,
+                goal_mean_100_reward,
+                levelBase64,
+                hyperParamsString)
 
 
 

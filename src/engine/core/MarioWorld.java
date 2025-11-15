@@ -437,7 +437,7 @@ public class MarioWorld {
         return sprite instanceof Enemy || sprite instanceof FlowerEnemy || sprite instanceof BulletBill;
     }
 
-    private float getCompletionPercentage() {
+    public float getCompletionPercentage() {
         return this.mario.x / (this.level.exitTileX * 16);
     }
 

@@ -290,7 +290,7 @@ class PPO():
 
     def train(self, make_envs_fn:Callable, make_env_fn:Callable, gamma, 
               max_minutes, max_episodes, goal_mean_100_reward, 
-              levelBase64:str, hyper_params:str, rehearsal_level_tasks:list[list]):
+              levelBase64:str, hyper_params:str):
         training_start, last_debug_time = time.time(), float('-inf')
         self.make_envs_fn = make_envs_fn
         self.make_env_fn = make_env_fn
@@ -603,7 +603,7 @@ class PPO():
     def play(self, make_env_fn, policy_model_fn, level):
             env = make_env_fn()
             policy_model = policy_model_fn(env.observation_space, env.action_space.n)
-            checkpoint_path = self.find_model_file_path('checkpoint_')
+            # checkpoint_path = self.find_model_file_path('checkpoint_')
             checkpoint_path = 'C:/thesis_data/training/18/checkpoint_100.tar'
             if checkpoint_path is not None:
                 checkpoint = torch.load(checkpoint_path)
