@@ -26,7 +26,7 @@ class CNNBase(nn.Module):
         c1 = 32
         
         self.cnn = nn.Sequential(
-            nn.Conv2d(embedding_dim, c1, kernel_size=3, padding=1),
+            nn.Conv2d(embedding_dim * num_stack, c1, kernel_size=3, padding=1),
             nn.ReLU(),
             nn.Conv2d(c1, c1, kernel_size=3, padding=1),
             nn.ReLU(),
@@ -63,8 +63,9 @@ class CNNBase(nn.Module):
         vec  = states['vector']
 
         emb = self.embedding(grid.long())                 # (B, H, W, E)
-        emb = emb.permute(0, 3, 1, 2).contiguous()        # (B, E, H, W)
-
+        emb = emb.permute(0, 1, 4, 2, 3).contiguous()     # (B, num_stack, E, H, W)
+        B, S, E, H, W = emb.shape
+        emb = emb.view(B, S * E, H, W)
         grid_feat = self.cnn(emb).flatten(1)              # (B, c2*4*4)
 
         mario_feat = self.mario_mlp(vec[:, :self.mario_phys_dim])
