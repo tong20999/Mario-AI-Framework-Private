@@ -316,7 +316,7 @@ public class ProceduralContentGenerationLevel {
         for (int k = 0; k < pcgLevelDto.getPits(); k++) {
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = rand.nextInt(offsetFromStart, maxIndex);
-            while (!isValidToAdd(addIndex)) {
+            while (!doIsValidToAddPit(addIndex)) {
                 addIndex = rand.nextInt(offsetFromStart, maxIndex);
             }
             int width = rand.nextInt(pcgLevelDto.getPitsMinWidth(), pcgLevelDto.getPitsMaxWidth() + 1);
@@ -532,17 +532,26 @@ public class ProceduralContentGenerationLevel {
         for (int k = 0; k < pcgLevelDto.getRamps(); k++) {
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = rand.nextInt(offsetFromStart, maxIndex);
-            if(!doIsValidToAdd(addIndex, 4)){
-                return;
+            int attempt = 0;
+            while (true){
+                if(attempt == 5){
+                    return;
+                }
+                if(!doIsValidToAddExtra(addIndex, 8)){
+                    addIndex = rand.nextInt(offsetFromStart, maxIndex);
+                    attempt++;
+                } else {
+                    break;
+                }
             }
+
             int pattern = rand.nextInt(0, 2);
-            //pattern = 0;
             switch (pattern){
                 case 0:
                     doAddRamp1(addIndex);
                     boolean secondPyramid = rand.nextInt(2) == 0;
                     if(secondPyramid){
-                        //doAddRamp2(addIndex);
+                        doAddRamp2(addIndex);
                     }
                     continue;
                 case 1:
@@ -587,6 +596,10 @@ public class ProceduralContentGenerationLevel {
 
     private void doAddObstacle(int addIndex) {
         // Random number of vertical obstacles (1 to 4)
+        if(rand.nextBoolean()){
+            doAddObstacle2(addIndex);
+            return;
+        }
         int obstacleCount = rand.nextInt(1, 5);
         int currentIndex = addIndex;
 
@@ -608,6 +621,38 @@ public class ProceduralContentGenerationLevel {
 
             // Move to next obstacle position with random spacing (1–2)
             currentIndex += rand.nextInt(1, 3);
+        }
+    }
+
+    private void doAddObstacle2(int addIndex) {
+        // Random number of vertical obstacles (1 to 4)
+        int obstacleCount = rand.nextInt(1, 2);
+        boolean twin = rand.nextBoolean();
+
+        for (int i = 0; i < obstacleCount; i++) {
+            int obstacleStart = rand.nextInt(0,13);
+            if(obstacleStart == 9){
+                obstacleStart = 8;
+            }
+            for (int height = 0; height < levels.size(); height++) {
+                ArrayList<Character> currentLevel = levels.get(height);
+                if (height == GROUND_1_LEVEL || height == GROUND_2_LEVEL) {
+                    currentLevel.add(addIndex, 'X');
+                    if(twin){
+                        currentLevel.add(addIndex + 1, 'X');
+                    }
+                } else if (height == obstacleStart || height == obstacleStart + 1 || height == obstacleStart + 2 || height == obstacleStart + 3) {
+                    currentLevel.add(addIndex, '#');
+                    if(twin){
+                        currentLevel.add(addIndex + 1, '#');
+                    }
+                } else {
+                    currentLevel.add(addIndex, '-');
+                    if(twin){
+                        currentLevel.add(addIndex + 1, '-');
+                    }
+                }
+            }
         }
     }
 
@@ -732,7 +777,7 @@ public class ProceduralContentGenerationLevel {
             int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
             int addIndex = rand.nextInt(offsetFromStart, maxIndex);
             while (true){
-                if(isValidToAdd(addIndex)){
+                if(doIsValidToAddExtra(addIndex, 4)){
                     break;
                 }
                 addIndex = rand.nextInt(offsetFromStart, maxIndex);
@@ -775,6 +820,55 @@ public class ProceduralContentGenerationLevel {
         return doIsValidToAdd(addIndex, checkLength);
     }
 
+    private boolean doIsValidToAddPit(int addIndex) {
+        int checkLength =4;
+        // check pit level 1
+        for (int i = -2; i < checkLength-2; i++) {
+            if(levels.get(GROUND_1_LEVEL).get(addIndex + i) == '-'){
+                return false;
+            }
+        }
+        for (int i = -2; i < checkLength-2; i++) {
+            if(levels.get(LAN_LEVEL).get(addIndex + i) == 't'){
+                return false;
+            }
+        }
+        for (int i = -2; i < checkLength - 2; i++) {
+            if(levels.get(LAN_LEVEL).get(addIndex + i) == '#'){
+                return false;
+            }
+
+            if(levels.get(LAN_LEVEL - 1).get(addIndex + i) == '#'){
+                return false;
+            }
+
+            if(levels.get(LAN_LEVEL - 2).get(addIndex + i) == '#'){
+                return false;
+            }
+
+            if(levels.get(LAN_LEVEL - 3).get(addIndex + i) == '#'){
+                return false;
+            }
+
+            if(levels.get(LAN_LEVEL - 4).get(addIndex + i) == '#'){
+                return false;
+            }
+        }
+
+        for (int i = -2; i < checkLength - 2; i++) {
+            if(levels.get(LAN_LEVEL).get(addIndex + i) == 'T'){
+                return false;
+            }
+        }
+
+        for (int i = -2; i < checkLength - 2; i++) {
+            if(levels.get(LAN_LEVEL).get(addIndex + i) == '*'){
+                return false;
+            }
+        }
+        return true;
+    }
+
     private boolean doIsValidToAdd(int addIndex, int checkLength) {
         // check pit level 1
         for (int i = -2; i < checkLength-2; i++) {
@@ -790,6 +884,40 @@ public class ProceduralContentGenerationLevel {
         for (int i = -2; i < checkLength - 2; i++) {
             if(levels.get(LAN_LEVEL).get(addIndex + i) == '#'){
                 return false;
+            }
+        }
+
+        for (int i = -2; i < checkLength - 2; i++) {
+            if(levels.get(LAN_LEVEL).get(addIndex + i) == 'T'){
+                return false;
+            }
+        }
+
+        for (int i = -2; i < checkLength - 2; i++) {
+            if(levels.get(LAN_LEVEL).get(addIndex + i) == '*'){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean doIsValidToAddExtra(int addIndex, int checkLength) {
+        // check pit level 1
+        for (int i = -2; i < checkLength-2; i++) {
+            if(levels.get(GROUND_1_LEVEL).get(addIndex + i) == '-'){
+                return false;
+            }
+        }
+        for (int i = -2; i < checkLength-2; i++) {
+            if(levels.get(LAN_LEVEL).get(addIndex + i) == 't'){
+                return false;
+            }
+        }
+        for (int i = -2; i < checkLength - 2; i++) {
+            for (int j = 0; j < levels.size(); j++) {
+                if(levels.get(j).get(addIndex + i) == '#'){
+                    return false;
+                }
             }
         }
 

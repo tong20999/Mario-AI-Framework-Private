@@ -593,14 +593,14 @@ public class MarioWorld {
 
         var tryMovingRight = actions[MarioActions.RIGHT.getValue()];
         var isOnGround = mario.onGround;
-        if (tryMovingRight && isOnGround && afterX - beforeX < 0.1f) {
+        if (tryMovingRight && isOnGround && afterX - beforeX < 0.1f && mario.xa <= 0) {
             this.addEvent(EventType.STUCK_RIGHT, 0);
         }
 
-        var tryMovingLeft = actions[MarioActions.LEFT.getValue()];
-        if (tryMovingLeft && isOnGround && beforeX - afterX < 0.1f) {
-            this.addEvent(EventType.STUCK_LEFT, 0);
-        }
+//        var tryMovingLeft = actions[MarioActions.LEFT.getValue()];
+//        if (tryMovingLeft && isOnGround && beforeX - afterX < 0.1f && mario.xa <= 0) {
+//            this.addEvent(EventType.STUCK_LEFT, 0);
+//        }
 
         // punishing forward model
         if (this.killEvents != null) {

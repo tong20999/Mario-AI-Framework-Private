@@ -146,7 +146,7 @@ if __name__ == '__main__':
               load_optimizer)
   
   if hyperParams.get('Local') is not None:
-    agent.play(make_env_fn, policy_model_fn, levelBase64)
+    agent.play(make_env_fn, policy_model_fn)
   else:
     agent.train(make_envs_fn,
                 make_env_fn,

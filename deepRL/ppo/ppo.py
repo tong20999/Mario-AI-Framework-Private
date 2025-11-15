@@ -600,18 +600,49 @@ class PPO():
             'value_optimizer_state_dict': self.value_optimizer.state_dict(),
         }, checkpoint_path)
 
-    def play(self, make_env_fn, policy_model_fn, level):
+    def play(self, make_env_fn, policy_model_fn):
             env = make_env_fn()
             policy_model = policy_model_fn(env.observation_space, env.action_space.n)
             # checkpoint_path = self.find_model_file_path('checkpoint_')
-            checkpoint_path = 'C:/thesis_data/training/18/checkpoint_100.tar'
+            checkpoint_path = 'C:/thesis_data/training/20/checkpoint_200.tar'
             if checkpoint_path is not None:
                 checkpoint = torch.load(checkpoint_path)
                 logger.info("Loading model states from checkpoint.")
                 policy_model.load_state_dict(checkpoint['policy_model_state_dict'])
                 policy_model.eval()
-                
-            final_eval_score, score_std, _ = self.evaluate(1, policy_model, env, level, n_episodes=10000, visual=True, playMode=True)
+
+            level_json_str = '''{
+                "WidthMin": 25,
+                "WidthMax": 36,
+                "TimerMin": 50,
+                "TimerMax": 51,
+                "Blocks": 2,
+                "BlocksHeightOrigin": 10,
+                "BlocksHeightBound": 11,
+                "Coins": 2,
+                "CoinsHeightOrigin": 10,
+                "CoinsHeightBound": 11,
+                "Enemies": 4,
+                "EnemiesHeightOrigin": 13,
+                "EnemiesHeightBound": 14,
+                "Pits": 1,
+                "PitsMinWidth": 2,
+                "PitsMaxWidth": 5,
+                "Pipes": 1,
+                "PipesMinHeight": 2,
+                "PipesMaxHeight":5,
+                "Ramps": 1,
+                "File" : "./levels/evaluation/lvl-1.txt",
+                "Fps": 40
+            }'''
+
+            for i in range(1, 8):
+                level_config = json.loads(level_json_str)
+                new_file_path = f"./levels/evaluation/lvl-{i}.txt"
+                level_config["File"] = new_file_path
+                updated_levelJson_str = json.dumps(level_config, separators=(',', ':'))
+                level_base64 = base64.b64encode(updated_levelJson_str.encode('utf-8')).decode('utf-8')
+                final_eval_score, score_std, _ = self.evaluate(1, policy_model, env, level_base64, n_episodes=1, visual=True, playMode=True)
 
     def write_info(self, working_dir, filename, value):
         with open(os.path.join(working_dir, filename), "a") as file:
