@@ -93,7 +93,9 @@ public class MarioGameTraining {
 
     private int fps = 0;
     private ProceduralContentGenerationLevel pcg = null;
-    private final int frameSkip = 2;
+    private final int frameSkip = 3;
+    private int stepCount = 0;
+    private static final int MAX_STEP_COUNT = 150;
     /**
      * Create a mario game to be played
      */
@@ -150,6 +152,7 @@ public class MarioGameTraining {
     }
 
     public byte[] reset(Info info) throws Exception {
+        stepCount = 0;
         this.visual = info.isVisual();
         this.episode = info.getEpisode();
         this.evaluation = info.isEvaluation();
@@ -212,10 +215,15 @@ public class MarioGameTraining {
     }
 
     public byte[] step(boolean[] action) throws Exception {
+        stepCount++;
         miniStepEvents.clear();
         for (int i = 0; i < this.frameSkip; i++) {
             var events = miniStep(action);
             miniStepEvents.addAll(events);
+        }
+        if(this.evaluation && stepCount > MAX_STEP_COUNT){
+            this.world.timeout();
+            miniStepEvents.add(new MarioEvent(EventType.TIME_OUT, 0));
         }
         var nextWorldState = this.world.clone();
         var nextState = new MarioForwardModel(nextWorldState, miniStepEvents);

@@ -11,22 +11,22 @@ import java.util.List;
 
 public class RewardSystem {
     private static final float WIN_REWARD = 100f;
-    private static final float PARTIAL_WIN = 25f;
-    private static final float FAILURE_LOSE = -50f;
-    private static final float FAILURE_TIMEOUT = -200f;
-    private static final float POWER_UP_REWARD = 20f;
-    private static final float STUCK_PENALTY = -2.5f;
-    private static final float BONK_PENALTY = -0.5f;
+    private static final float FAILURE_LOSE = -100f;
+    private static final float FAILURE_TIMEOUT = -100f;
+    private static final float STUCK_PENALTY = -1f;
+    private static final float BONK_PENALTY = -1f;
+    private static final float DAMAGE_PENALTY = -10f;
 
     // Weights
-    private static final int KILL_REWARD = 10;
-    private static final int BUMP_REWARD = 8;
-    private static final int COIN_REWARD = 5;
+    private static final float POWER_UP_REWARD = 20f;
+    private static final float KILL_REWARD = 20f;
+    private static final float BUMP_REWARD = 10f;
+    private static final float COIN_REWARD = 10f;
     private static final List<EventType> ignoreBonk = List.of(EventType.BUMP_KILL, EventType.COLLECT);
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
-        float reward = -0.2f; // step cost
-        // Events
+        float reward = -0.5f;
+
         for (MarioEvent e : miniStepEvents) {
             int type = e.getEventType();
             int param = e.getEventParam();
@@ -45,13 +45,15 @@ public class RewardSystem {
                 reward += BUMP_REWARD;
             } else if (type == EventType.COLLECT.getValue() && param == 15) {
                 reward += COIN_REWARD;
+            } else if (type == EventType.DAMAGE.getValue() && param == 15) {
+                reward += DAMAGE_PENALTY;
             } else if (type == EventType.WIN.getValue()) {
-                reward += calculateWinReward(world);
+                reward += WIN_REWARD;
             }  else if (type == EventType.LOSE.getValue()) {
                 reward += FAILURE_LOSE;
             } else if (type == EventType.TIME_OUT.getValue()) {
                 reward += FAILURE_TIMEOUT;
-            } else if (type == EventType.HIT_WALL.getValue()) {
+            } else if (type == EventType.STUCK_RIGHT.getValue()) {
                 reward += STUCK_PENALTY;
             } else if (type == EventType.BONK.getValue()) {
                 boolean hasKillOrCollect = miniStepEvents.stream()
@@ -68,13 +70,6 @@ public class RewardSystem {
         int blocksLeft = world.getUnbumpBlocks().size();
         int coinsLeft = world.getUnCollectCoin().size();
         return enemiesLeft + blocksLeft + coinsLeft;
-    }
-
-    private static float calculateWinReward(MarioWorld world) {
-        // Optionally require all objectives cleared
-        if (computeRemainingWeighted(world) > 0)
-            return PARTIAL_WIN;
-        return WIN_REWARD;
     }
 
     public static ArrayList<RewardEvent> logRewardEvent(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
@@ -100,13 +95,15 @@ public class RewardSystem {
                 value = BUMP_REWARD;
             } else if (type == EventType.COLLECT.getValue() && param == 15) {
                 value = COIN_REWARD;
+            } else if (type == EventType.DAMAGE.getValue() && param == 15) {
+                value = DAMAGE_PENALTY;
             } else if (type == EventType.WIN.getValue()) {
-                value = calculateWinReward(world);
+                value = WIN_REWARD;
             } else if (type == EventType.LOSE.getValue()) {
                 value = FAILURE_LOSE;
             } else if (type == EventType.TIME_OUT.getValue()) {
                 value = FAILURE_TIMEOUT;
-            } else if (type == EventType.HIT_WALL.getValue()) {
+            } else if (type == EventType.STUCK_RIGHT.getValue()) {
                 value = STUCK_PENALTY;
             } else if (type == EventType.BONK.getValue()) {
                 boolean hasKillOrCollect = miniStepEvents.stream()

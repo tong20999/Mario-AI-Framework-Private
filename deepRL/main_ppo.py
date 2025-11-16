@@ -17,7 +17,7 @@ num_stack = 4
 def make_env_fn():
   # Wrap the base environment with our new frame stacker
   env = MarioGame()
-  # env = MultiGridStack(env, num_stack=num_stack)
+  env = MultiGridStack(env, num_stack=num_stack)
   return env
 
 def make_envs_fn(mef, n, working_dir):
@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
   environment_settings = {
       'env_name': 'LunarLander-v2',
-      'gamma': 0.997,
+      'gamma': 0.999,
       'max_minutes': 6000,
       'max_episodes': 100000,
       'goal_mean_100_reward': 25000

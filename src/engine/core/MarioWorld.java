@@ -50,6 +50,11 @@ public class MarioWorld {
     private Objective blocksObjective = new Objective();
     private Objective enemiesObjective = new Objective();
 
+    private ArrayList<Float> xProgressHistory = new ArrayList<>();
+    public static final int NO_PROGRESS_WINDOW = 10;
+    private final float NO_PROGRESS_THRESHOLD_PIXELS = 16 * 2;
+    private float lastCompletePercentage = 0;
+
     public List<MarioSprite> getNearestEnemies(){
         List<MarioSprite> out = new ArrayList<>();
         for (MarioSprite sprite : sprites) {
@@ -167,11 +172,12 @@ public class MarioWorld {
         this.currentTimer = timer;
         this.initTimer = timer;
         this.level = new MarioLevel(level, this.visuals);
-
+        this.xProgressHistory = new ArrayList<>();
         this.mario = new Mario(this.visuals, this.level.marioTileX * 16, this.level.marioTileY * 16);
         this.mario.alive = true;
         this.mario.world = this;
         this.sprites.add(this.mario);
+        this.lastCompletePercentage = 0;
         aliveEnemy.addAll(this.level.getEnemies());
         unbumpBlocks.addAll(this.level.getBumpableBlocks());
         unCollectCoin.addAll(this.level.getCoins());
@@ -202,6 +208,8 @@ public class MarioWorld {
         world.initTimer = this.initTimer;
         world.currentTick = this.currentTick;
         world.level = this.level.clone();
+        world.lastCompletePercentage = lastCompletePercentage;
+        world.xProgressHistory = new ArrayList<>(this.xProgressHistory);
         // Clone sprites
         for (MarioSprite sprite : this.sprites) {
             MarioSprite cloneSprite = sprite.clone();
@@ -283,6 +291,7 @@ public class MarioWorld {
 
     public void kill(MarioSprite sprite, EventType killEvent) {
         this.listKill.add(sprite);
+        this.xProgressHistory.clear();
         this.addEvent(killEvent, sprite.type.getValue(), sprite.initialCode);
         aliveEnemy.removeIf(a -> Objects.equals(sprite.initialCode,
                 MessageFormat.format("{0}_{1}_{2}", a.x, a.y, a.type.getValue())));
@@ -444,6 +453,7 @@ public class MarioWorld {
     public void update(boolean[] actions) {
         this.lastFrameEvents.clear();
         var beforeX = mario.x;
+        var beforePosition = new int[] { (int) ((this.mario.x - this.cameraX) / 16), (int) (this.mario.y / 16) };
         if (this.gameStatus != GameStatus.RUNNING) {
             return;
         }
@@ -590,17 +600,11 @@ public class MarioWorld {
         removedSprites.clear();
 
         var afterX = mario.x;
-
         var tryMovingRight = actions[MarioActions.RIGHT.getValue()];
         var isOnGround = mario.onGround;
         if (tryMovingRight && isOnGround && afterX - beforeX < 0.1f && mario.xa <= 0) {
             this.addEvent(EventType.STUCK_RIGHT, 0);
         }
-
-//        var tryMovingLeft = actions[MarioActions.LEFT.getValue()];
-//        if (tryMovingLeft && isOnGround && beforeX - afterX < 0.1f && mario.xa <= 0) {
-//            this.addEvent(EventType.STUCK_LEFT, 0);
-//        }
 
         // punishing forward model
         if (this.killEvents != null) {
@@ -618,6 +622,7 @@ public class MarioWorld {
         if (features.contains(TileFeature.BUMPABLE)) {
             unbumpBlocks.removeIf(b -> b.getX() == xTile && b.getY() == yTile);
             blocksObjective.mark(new Point(xTile, yTile));
+            this.xProgressHistory.clear();
             bumpInto(xTile, yTile - 1);
             this.addEvent(EventType.BUMP, MarioForwardModel.OBS_QUESTION_BLOCK);
             level.setBlock(xTile, yTile, 14);
@@ -750,6 +755,7 @@ public class MarioWorld {
     public void collectCoin(int block, int xTile, int yTile) {
         this.addEvent(EventType.COLLECT, block);
         this.collectCoin++;
+        this.xProgressHistory.clear();
         this.getUnCollectCoin().removeIf(c -> c.getX() == xTile && c.getY() == yTile);
         this.coinsObjective.mark(new Point(xTile, yTile));
     }
@@ -764,5 +770,9 @@ public class MarioWorld {
 
     public int[] getEnemiesObjective() {
         return enemiesObjective.getObjectives();
+    }
+
+    public float xProgressHistorySize() {
+        return this.xProgressHistory.size();
     }
 }
