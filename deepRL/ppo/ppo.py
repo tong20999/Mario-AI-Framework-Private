@@ -604,7 +604,7 @@ class PPO():
             env = make_env_fn()
             policy_model = policy_model_fn(env.observation_space, env.action_space.n)
             # checkpoint_path = self.find_model_file_path('checkpoint_')
-            checkpoint_path = 'C:/thesis_data/training/32/checkpoint_200.tar'
+            checkpoint_path = 'C:/thesis_data/training/38/checkpoint_100.tar'
             if checkpoint_path is not None:
                 checkpoint = torch.load(checkpoint_path)
                 logger.info("Loading model states from checkpoint.")

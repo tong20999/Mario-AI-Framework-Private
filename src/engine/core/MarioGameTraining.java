@@ -93,9 +93,9 @@ public class MarioGameTraining {
 
     private int fps = 0;
     private ProceduralContentGenerationLevel pcg = null;
-    private final int frameSkip = 3;
+    private final int frameSkip = 2;
     private int stepCount = 0;
-    private static final int MAX_STEP_COUNT = 150;
+    private static final int MAX_STEP_COUNT = 400;
     /**
      * Create a mario game to be played
      */
@@ -221,7 +221,7 @@ public class MarioGameTraining {
             var events = miniStep(action);
             miniStepEvents.addAll(events);
         }
-        if(this.evaluation && stepCount > MAX_STEP_COUNT){
+        if(this.evaluation && stepCount > MAX_STEP_COUNT && this.fps < 30){
             this.world.timeout();
             miniStepEvents.add(new MarioEvent(EventType.TIME_OUT, 0));
         }

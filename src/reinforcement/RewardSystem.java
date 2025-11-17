@@ -13,15 +13,15 @@ public class RewardSystem {
     private static final float WIN_REWARD = 100f;
     private static final float FAILURE_LOSE = -100f;
     private static final float FAILURE_TIMEOUT = -100f;
-    private static final float STUCK_PENALTY = -1f;
-    private static final float BONK_PENALTY = -1f;
+    private static final float STUCK_PENALTY = -2f;
+    private static final float BONK_PENALTY = -2f;
     private static final float DAMAGE_PENALTY = -10f;
 
     // Weights
-    private static final float POWER_UP_REWARD = 20f;
-    private static final float KILL_REWARD = 20f;
-    private static final float BUMP_REWARD = 10f;
-    private static final float COIN_REWARD = 10f;
+    private static final float POWER_UP_REWARD = 10f;
+    private static final float KILL_REWARD = 10f;
+    private static final float BUMP_REWARD = 5f;
+    private static final float COIN_REWARD = 5f;
     private static final List<EventType> ignoreBonk = List.of(EventType.BUMP_KILL, EventType.COLLECT);
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
