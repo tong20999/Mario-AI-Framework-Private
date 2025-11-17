@@ -11,12 +11,14 @@ import java.util.List;
 
 public class RewardSystem {
     private static final float WIN_REWARD = 100f;
-    private static final float PARTIAL_WIN = 25f;
+    private static final float PARTIAL_WIN = 50f;
     private static final float FAILURE_LOSE = -50f;
-    private static final float FAILURE_TIMEOUT = -200f;
-    private static final float POWER_UP_REWARD = 2f;
-    private static final float STUCK_PENALTY = -2.5f;
-    private static final float BONK_PENALTY = -0.5f;
+    private static final float FAILURE_TIMEOUT = -25f;
+    private static final float POWER_UP_REWARD = 10f;
+    private static final float STUCK_PENALTY = -1f;
+    private static final float BONK_PENALTY = -1f;
+    private static final float DAMAGE_PENALTY = -10;
+    private static final float STALL_PENALTY = -2.5f;
 
     // Weights
     private static final int KILL_REWARD = 10;
@@ -25,7 +27,7 @@ public class RewardSystem {
     private static final List<EventType> ignoreBonk = List.of(EventType.BUMP_KILL, EventType.COLLECT);
 
     public static float getReward(MarioWorld world, ArrayList<MarioEvent> miniStepEvents) {
-        float reward = -0.2f; // step cost
+        float reward = 0f; // step cost
 
         // Events
         for (MarioEvent e : miniStepEvents) {
@@ -52,8 +54,12 @@ public class RewardSystem {
                 reward += FAILURE_LOSE;
             } else if (type == EventType.TIME_OUT.getValue()) {
                 reward += FAILURE_TIMEOUT;
-            } else if (type == EventType.HIT_WALL.getValue()) {
+            } else if (type == EventType.STUCK_RIGHT.getValue()) {
                 reward += STUCK_PENALTY;
+            } else if (type == EventType.DAMAGE.getValue()) {
+                reward += DAMAGE_PENALTY;
+            } else if (type == EventType.STALL.getValue()) {
+                reward += STALL_PENALTY;
             } else if (type == EventType.BONK.getValue()) {
                 boolean hasKillOrCollect = miniStepEvents.stream()
                         .anyMatch(me -> ignoreBonk.contains(me.getEventTypeEnum()));
@@ -63,7 +69,6 @@ public class RewardSystem {
         return reward;
     }
 
-    // Weighted remaining that actually changes during play
     private static int computeRemainingWeighted(MarioWorld world) {
         int enemiesLeft = world.getAliveEnemies().size();
         int blocksLeft = world.getUnbumpBlocks().size();
@@ -107,8 +112,12 @@ public class RewardSystem {
                 value = FAILURE_LOSE;
             } else if (type == EventType.TIME_OUT.getValue()) {
                 value = FAILURE_TIMEOUT;
-            } else if (type == EventType.HIT_WALL.getValue()) {
+            } else if (type == EventType.STUCK_RIGHT.getValue()) {
                 value = STUCK_PENALTY;
+            } else if (type == EventType.DAMAGE.getValue()) {
+                value = DAMAGE_PENALTY;
+            } else if (type == EventType.STALL.getValue()) {
+                value = STALL_PENALTY;
             } else if (type == EventType.BONK.getValue()) {
                 boolean hasKillOrCollect = miniStepEvents.stream()
                         .anyMatch(me -> ignoreBonk.contains(me.getEventTypeEnum()));

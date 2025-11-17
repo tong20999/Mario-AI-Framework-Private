@@ -21,7 +21,8 @@ public enum EventType {
     TIME_OUT(20),
     STUCK_RIGHT(21),
     STUCK_LEFT(22),
-    HIT_WALL(23);
+    HIT_WALL(23),
+    STALL(24);
 
     private final int value;
 

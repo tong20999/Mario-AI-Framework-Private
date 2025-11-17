@@ -259,7 +259,7 @@ public class Helper {
             // CAST is used to ensure numeric comparison for training_number, which is safer.
             String sql = MessageFormat.format("SELECT pcg_content FROM results " +
                     "WHERE training_number = {0} " +
-                    "AND final_status IN (''TIME_OUT'', ''LOSE'', ''STALL'')", trainingNumber);
+                    "AND final_status IN (''TIME_OUT'', ''LOSE'')", trainingNumber);
 
             // Using try-with-resources to ensure the Statement and ResultSet are auto-closed
             try (Statement stmt = conn.createStatement();

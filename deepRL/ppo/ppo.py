@@ -604,7 +604,7 @@ class PPO():
             env = make_env_fn()
             policy_model = policy_model_fn(env.observation_space, env.action_space.n)
             # checkpoint_path = self.find_model_file_path('checkpoint_')
-            checkpoint_path = 'C:/thesis_data/training/20/checkpoint_200.tar'
+            checkpoint_path = 'C:/thesis_data/training/23/checkpoint_500.tar'
             if checkpoint_path is not None:
                 checkpoint = torch.load(checkpoint_path)
                 logger.info("Loading model states from checkpoint.")
@@ -612,29 +612,29 @@ class PPO():
                 policy_model.eval()
 
             level_json_str = '''{
-                "WidthMin": 25,
-                "WidthMax": 36,
+                "WidthMin": 50,
+                "WidthMax": 51,
                 "TimerMin": 50,
                 "TimerMax": 51,
-                "Blocks": 2,
+                "Blocks": 6,
+                "RandomNormalBlockLeft": true,
+                "RandomNormalBlockRight": true,
                 "BlocksHeightOrigin": 10,
                 "BlocksHeightBound": 11,
-                "Coins": 2,
-                "CoinsHeightOrigin": 10,
-                "CoinsHeightBound": 11,
-                "Enemies": 4,
-                "EnemiesHeightOrigin": 13,
-                "EnemiesHeightBound": 14,
-                "Pits": 1,
+                "Pits": 0,
                 "PitsMinWidth": 2,
                 "PitsMaxWidth": 5,
-                "Pipes": 1,
+                "Pipes": 0,
                 "PipesMinHeight": 2,
                 "PipesMaxHeight":5,
-                "Ramps": 1,
+                "Ramps": 5,
                 "File" : "./levels/evaluation/lvl-1.txt",
-                "Fps": 40
+                "Fps": 50
             }'''
+
+            for i in range(1, 1000):
+                level_base64 = base64.b64encode(level_json_str.encode('utf-8')).decode('utf-8')
+                final_eval_score, score_std, _ = self.evaluate(1, policy_model, env, level_base64, n_episodes=1, visual=True, playMode=True)
 
             for i in range(1, 8):
                 level_config = json.loads(level_json_str)

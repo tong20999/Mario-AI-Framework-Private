@@ -50,6 +50,10 @@ public class MarioWorld {
     private Objective blocksObjective = new Objective();
     private Objective enemiesObjective = new Objective();
 
+    private ArrayList<Float> xProgressHistory = new ArrayList<>();
+    public static final int NO_PROGRESS_WINDOW = 16;
+    private final float NO_PROGRESS_THRESHOLD_PIXELS = 16 * 2;
+
     public List<MarioSprite> getNearestEnemies(){
         List<MarioSprite> out = new ArrayList<>();
         for (MarioSprite sprite : sprites) {
@@ -167,7 +171,7 @@ public class MarioWorld {
         this.currentTimer = timer;
         this.initTimer = timer;
         this.level = new MarioLevel(level, this.visuals);
-
+        this.xProgressHistory = new ArrayList<>();
         this.mario = new Mario(this.visuals, this.level.marioTileX * 16, this.level.marioTileY * 16);
         this.mario.alive = true;
         this.mario.world = this;
@@ -202,6 +206,7 @@ public class MarioWorld {
         world.initTimer = this.initTimer;
         world.currentTick = this.currentTick;
         world.level = this.level.clone();
+        world.xProgressHistory = new ArrayList<>(this.xProgressHistory);
         // Clone sprites
         for (MarioSprite sprite : this.sprites) {
             MarioSprite cloneSprite = sprite.clone();
@@ -290,6 +295,7 @@ public class MarioWorld {
         sprite.type == SpriteType.ENEMY_FLOWER){
             return;
         }
+        this.xProgressHistory.clear();
         enemiesObjective.mark(sprite.initialCode);
     }
 
@@ -444,6 +450,7 @@ public class MarioWorld {
     public void update(boolean[] actions) {
         this.lastFrameEvents.clear();
         var beforeX = mario.x;
+        var beforePosition = new int[] { (int) ((this.mario.x - this.cameraX) / 16), (int) (this.mario.y / 16) };
         if (this.gameStatus != GameStatus.RUNNING) {
             return;
         }
@@ -589,12 +596,33 @@ public class MarioWorld {
         addedSprites.clear();
         removedSprites.clear();
 
-        var afterX = mario.x;
+//        var afterX = mario.x;
+//
+//        var tryMovingRight = actions[MarioActions.RIGHT.getValue()];
+//        var isOnGround = mario.onGround;
+//        if (tryMovingRight && isOnGround && afterX - beforeX < 0.1f && mario.xa <= 0) {
+//            this.addEvent(EventType.STUCK_RIGHT, 0);
+//        }
 
-        var tryMovingRight = actions[MarioActions.RIGHT.getValue()];
-        var isOnGround = mario.onGround;
-        if (tryMovingRight && isOnGround && afterX - beforeX < 0.1f && mario.xa <= 0) {
-            this.addEvent(EventType.STUCK_RIGHT, 0);
+        this.xProgressHistory.add(this.mario.x);
+
+        // Keep history to the size of the check window
+        while (this.xProgressHistory.size() > NO_PROGRESS_WINDOW) {
+            this.xProgressHistory.remove(0);
+        }
+
+        if (this.xProgressHistory.size() == NO_PROGRESS_WINDOW) {
+            float minX = this.mario.x;
+            float maxX = this.mario.x;
+            for (Float xPos : this.xProgressHistory) {
+                if (xPos < minX) minX = xPos;
+                if (xPos > maxX) maxX = xPos;
+            }
+
+            if (maxX - minX <= NO_PROGRESS_THRESHOLD_PIXELS) {
+                this.addEvent(EventType.STALL, 0);
+                this.xProgressHistory.clear();
+            }
         }
 
 //        var tryMovingLeft = actions[MarioActions.LEFT.getValue()];
@@ -618,6 +646,7 @@ public class MarioWorld {
         if (features.contains(TileFeature.BUMPABLE)) {
             unbumpBlocks.removeIf(b -> b.getX() == xTile && b.getY() == yTile);
             blocksObjective.mark(new Point(xTile, yTile));
+            this.xProgressHistory.clear();
             bumpInto(xTile, yTile - 1);
             this.addEvent(EventType.BUMP, MarioForwardModel.OBS_QUESTION_BLOCK);
             level.setBlock(xTile, yTile, 14);
@@ -752,6 +781,7 @@ public class MarioWorld {
         this.collectCoin++;
         this.getUnCollectCoin().removeIf(c -> c.getX() == xTile && c.getY() == yTile);
         this.coinsObjective.mark(new Point(xTile, yTile));
+        this.xProgressHistory.clear();
     }
 
     public int[] getCoinsObjective() {

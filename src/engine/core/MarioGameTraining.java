@@ -94,6 +94,8 @@ public class MarioGameTraining {
     private int fps = 0;
     private ProceduralContentGenerationLevel pcg = null;
     private final int frameSkip = 2;
+    private final int MAX_STEP = 400;
+    private int stepCount = 0;
     /**
      * Create a mario game to be played
      */
@@ -156,7 +158,7 @@ public class MarioGameTraining {
         if(this.visual){
             setupWindow(info.getEpisode());
         }
-
+        stepCount = 0;
         var b64Level = info.getPayload();
         byte[] decodedBytes = Base64.getDecoder().decode(b64Level);
         String jsonString = new String(decodedBytes, StandardCharsets.UTF_8);
@@ -213,9 +215,14 @@ public class MarioGameTraining {
 
     public byte[] step(boolean[] action) throws Exception {
         miniStepEvents.clear();
+        stepCount++;
         for (int i = 0; i < this.frameSkip; i++) {
             var events = miniStep(action);
             miniStepEvents.addAll(events);
+        }
+        if(stepCount > MAX_STEP && this.evaluation && this.fps < 30){
+            world.timeout();
+            miniStepEvents.add(new MarioEvent(EventType.TIME_OUT, 0));
         }
         var nextWorldState = this.world.clone();
         var nextState = new MarioForwardModel(nextWorldState, miniStepEvents);
