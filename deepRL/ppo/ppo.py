@@ -604,7 +604,7 @@ class PPO():
             env = make_env_fn()
             policy_model = policy_model_fn(env.observation_space, env.action_space.n)
             # checkpoint_path = self.find_model_file_path('checkpoint_')
-            checkpoint_path = 'C:/thesis_data/training/23/checkpoint_500.tar'
+            checkpoint_path = 'C:/thesis_data/training/28/checkpoint_150.tar'
             if checkpoint_path is not None:
                 checkpoint = torch.load(checkpoint_path)
                 logger.info("Loading model states from checkpoint.")
@@ -632,9 +632,9 @@ class PPO():
                 "Fps": 50
             }'''
 
-            for i in range(1, 1000):
-                level_base64 = base64.b64encode(level_json_str.encode('utf-8')).decode('utf-8')
-                final_eval_score, score_std, _ = self.evaluate(1, policy_model, env, level_base64, n_episodes=1, visual=True, playMode=True)
+            # for i in range(1, 1000):
+            #     level_base64 = base64.b64encode(level_json_str.encode('utf-8')).decode('utf-8')
+            #     final_eval_score, score_std, _ = self.evaluate(1, policy_model, env, level_base64, n_episodes=1, visual=True, playMode=True)
 
             for i in range(1, 8):
                 level_config = json.loads(level_json_str)

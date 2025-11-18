@@ -12,7 +12,7 @@ import java.util.List;
 public class RewardSystem {
     private static final float WIN_REWARD = 100f;
     private static final float PARTIAL_WIN = 50f;
-    private static final float FAILURE_LOSE = -50f;
+    private static final float FAILURE_LOSE = -70f;
     private static final float FAILURE_TIMEOUT = -25f;
     private static final float POWER_UP_REWARD = 10f;
     private static final float STUCK_PENALTY = -1f;
