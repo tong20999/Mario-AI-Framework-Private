@@ -22,7 +22,8 @@ public enum EventType {
     STUCK_RIGHT(21),
     STUCK_LEFT(22),
     HIT_WALL(23),
-    STALL(24);
+    STALL(24),
+    JUMP_SPAM(25);
 
     private final int value;
 

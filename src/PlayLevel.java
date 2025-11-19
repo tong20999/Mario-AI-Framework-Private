@@ -47,7 +47,7 @@ public class PlayLevel {
                     , 5 ,14 , 0, 2 ,5 ,5 ,2, 5, 10
                     ,100, null, false));
             pcgLevel.generate();
-            printResults(game.runGame(new agents.human.Agent(), original, 100, 0, true));
+            printResults(game.runGame(new agents.human.Agent(), pcgLevel.getContent(), 100, 0, true));
         }
     }
 

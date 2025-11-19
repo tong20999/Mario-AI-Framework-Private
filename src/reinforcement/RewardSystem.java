@@ -12,13 +12,14 @@ import java.util.List;
 public class RewardSystem {
     private static final float WIN_REWARD = 100f;
     private static final float PARTIAL_WIN = 50f;
-    private static final float FAILURE_LOSE = -70f;
-    private static final float FAILURE_TIMEOUT = -25f;
+    private static final float FAILURE_LOSE = -100f;
+    private static final float FAILURE_TIMEOUT = -50f;
     private static final float POWER_UP_REWARD = 10f;
     private static final float STUCK_PENALTY = -1f;
     private static final float BONK_PENALTY = -1f;
-    private static final float DAMAGE_PENALTY = -10;
-    private static final float STALL_PENALTY = -2.5f;
+    private static final float DAMAGE_PENALTY = -50;
+    private static final float STALL_PENALTY = -0.2f;
+    private static final float JUMP_SPAM_PENALTY = -1f;
 
     // Weights
     private static final int KILL_REWARD = 10;
@@ -54,6 +55,8 @@ public class RewardSystem {
                 reward += FAILURE_LOSE;
             } else if (type == EventType.TIME_OUT.getValue()) {
                 reward += FAILURE_TIMEOUT;
+            } else if (type == EventType.JUMP_SPAM.getValue()) {
+                reward += JUMP_SPAM_PENALTY;
             } else if (type == EventType.STUCK_RIGHT.getValue()) {
                 reward += STUCK_PENALTY;
             } else if (type == EventType.DAMAGE.getValue()) {
@@ -112,6 +115,8 @@ public class RewardSystem {
                 value = FAILURE_LOSE;
             } else if (type == EventType.TIME_OUT.getValue()) {
                 value = FAILURE_TIMEOUT;
+            } else if (type == EventType.JUMP_SPAM.getValue()) {
+                value = JUMP_SPAM_PENALTY;
             } else if (type == EventType.STUCK_RIGHT.getValue()) {
                 value = STUCK_PENALTY;
             } else if (type == EventType.DAMAGE.getValue()) {

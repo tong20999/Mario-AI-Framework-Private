@@ -55,6 +55,29 @@ hyper_params_mapper = {
     "valueStoppingMse" : "value_stopping_mse"
 }
 
+
+
+level_json_str = '''{
+    "WidthMin": 50,
+    "WidthMax": 51,
+    "TimerMin": 50,
+    "TimerMax": 51,
+    "Blocks": 6,
+    "RandomNormalBlockLeft": true,
+    "RandomNormalBlockRight": true,
+    "BlocksHeightOrigin": 10,
+    "BlocksHeightBound": 11,
+    "Pits": 0,
+    "PitsMinWidth": 2,
+    "PitsMaxWidth": 5,
+    "Pipes": 0,
+    "PipesMinHeight": 2,
+    "PipesMaxHeight":5,
+    "Ramps": 5,
+    "IsTrainFailedLevel" : true,
+    "Fps": 80
+}'''
+
 class PPO():
     def __init__(self, 
                  policy_model_fn, 
@@ -414,6 +437,7 @@ class PPO():
                 eval_eps = 10
                 evaluation_score, success_rate, action_list = self.evaluate(evaluation_count, self.policy_model, env, 
                                                                             levelBase64, n_episodes=eval_eps, visual=False)
+                
                 logger.info('evaluation {} mean_return {} success_rate {}% values {} value losses {} entropy {}'.format(
                     evaluation_count, np.round(evaluation_score, 2), np.round(success_rate*100, 1), np.round(values, 3) ,np.round(value_losses, 3) , np.round(entropies, 3)))
 
@@ -559,7 +583,7 @@ class PPO():
             
         self.working_dir = working_dir
 
-    def evaluate(self, evaluation_count, eval_model:CNNActor, eval_env, level:str, n_episodes=1, greedy=True, visual=True, playMode=False) -> tuple[float, float, list]:
+    def evaluate(self, evaluation_count, eval_model:CNNActor, eval_env, level:str, n_episodes=1, greedy=True, visual=True) -> tuple[float, float, list]:
         rs = []
         successes = 0
         action_list = []
@@ -604,45 +628,25 @@ class PPO():
             env = make_env_fn()
             policy_model = policy_model_fn(env.observation_space, env.action_space.n)
             # checkpoint_path = self.find_model_file_path('checkpoint_')
-            checkpoint_path = 'C:/thesis_data/training/28/checkpoint_150.tar'
+            checkpoint_path = 'C:/thesis_data/training/44/checkpoint_227.tar'
             if checkpoint_path is not None:
                 checkpoint = torch.load(checkpoint_path)
                 logger.info("Loading model states from checkpoint.")
                 policy_model.load_state_dict(checkpoint['policy_model_state_dict'])
                 policy_model.eval()
 
-            level_json_str = '''{
-                "WidthMin": 50,
-                "WidthMax": 51,
-                "TimerMin": 50,
-                "TimerMax": 51,
-                "Blocks": 6,
-                "RandomNormalBlockLeft": true,
-                "RandomNormalBlockRight": true,
-                "BlocksHeightOrigin": 10,
-                "BlocksHeightBound": 11,
-                "Pits": 0,
-                "PitsMinWidth": 2,
-                "PitsMaxWidth": 5,
-                "Pipes": 0,
-                "PipesMinHeight": 2,
-                "PipesMaxHeight":5,
-                "Ramps": 5,
-                "File" : "./levels/evaluation/lvl-1.txt",
-                "Fps": 50
-            }'''
-
             # for i in range(1, 1000):
             #     level_base64 = base64.b64encode(level_json_str.encode('utf-8')).decode('utf-8')
             #     final_eval_score, score_std, _ = self.evaluate(1, policy_model, env, level_base64, n_episodes=1, visual=True, playMode=True)
 
-            for i in range(1, 8):
+            for i in range(1, 12):
                 level_config = json.loads(level_json_str)
                 new_file_path = f"./levels/evaluation/lvl-{i}.txt"
                 level_config["File"] = new_file_path
+                level_config["Fps"] = 0
                 updated_levelJson_str = json.dumps(level_config, separators=(',', ':'))
                 level_base64 = base64.b64encode(updated_levelJson_str.encode('utf-8')).decode('utf-8')
-                final_eval_score, score_std, _ = self.evaluate(1, policy_model, env, level_base64, n_episodes=1, visual=True, playMode=True)
+                final_eval_score, score_std, _ = self.evaluate(1, policy_model, env, level_base64, n_episodes=1, visual=False)
 
     def write_info(self, working_dir, filename, value):
         with open(os.path.join(working_dir, filename), "a") as file:

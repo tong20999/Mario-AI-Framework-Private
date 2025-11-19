@@ -120,22 +120,84 @@ public class ProceduralContentGenerationLevel {
         pcg.createEmptyLevel(width);
 
         try{
-
             pcg.addObstacle(9,2, pcgLevelDto);
             pcg.addPit(9,2, pcgLevelDto);
             pcg.addPipe(7, 2, pcgLevelDto);
             //pcg.addCannon(7, 2, pcgLevelDto);
 
             pcg.addEnemy(7,2, pcgLevelDto);
+            //pcg.addSpiky(7,2, pcgLevelDto);
             pcg.addBlock(7, 2, pcgLevelDto);
             pcg.addCoin(7,2, pcgLevelDto);
-            //pcg.addPattern(Pattern.getRandomPattern(), 12, 12);
+            // --- PATTERN INSERTION ---
+
+            // 1. Add the first pattern
+            int offsetForPatterns = pcg.levels.get(0).size() / 2; // Arbitrary safe offset
+
+            // Call the modified addPattern that returns the width of the inserted pattern
+            int width1 = pcg.addPatternAndReturnWidth(Pattern.getRandomPattern(), offsetForPatterns, 12);
+
+            // 2. Set the offset for the second pattern to start AFTER the first pattern
+            // The starting point for the next object must be the insertion index of the
+            // previous object PLUS its width.
+            offsetForPatterns += width1 + 5; // +5 for necessary gap
+
+            // 3. Add the second pattern, starting from the new offset
+            //pcg.addPatternAndReturnWidth(Pattern.getRandomPattern(6), offsetForPatterns, 12);
+
             return pcg;
         }
         catch (IllegalArgumentException ex){
             System.out.println(ex.getMessage());
             System.out.println(MessageFormat.format( "Retry with new width min {0} max {1}", pcgLevelDto.getWidthMin() * 2, pcgLevelDto.getWidthMax() * 2));
             return doParseLevel(pcgLevelDto);
+        }
+    }
+
+    private void addSpiky(int offsetFromStart, int offsetFromFlag, PCGLevelDto pcgLevelDto) {
+        if(pcgLevelDto.getEnemies() < 1){
+            return;
+        }
+        for (int k = 0; k < 2 ; k++) {
+            if(rand.nextBoolean()){
+                continue;
+            }
+            int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
+            int addIndex = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
+            while (!isValidToAdd(addIndex)) {
+                addIndex = rand.nextInt(offsetFromStart, maxIndex);
+            }
+            int height = rand.nextInt(pcgLevelDto.getEnemiesHeightOrigin(), pcgLevelDto.getEnemiesHeightBound());
+            height = 13;
+            boolean randomBrickL = rand.nextInt(2) == 0;
+            randomBrickL = false;
+            boolean randomBrickC = rand.nextInt(2) == 0;
+            boolean randomBrickR = rand.nextInt(2) == 0;
+            randomBrickR = false;
+            for (int i = 0; i < levels.size(); i++) {
+                // Get the current level's list once and reuse it
+                ArrayList<Character> currentLevel = levels.get(i);
+                // Add the characters based on the conditions
+                if (i == GROUND_1_LEVEL || i == GROUND_2_LEVEL) {
+                    currentLevel.add(addIndex - 1, 'X');
+                    currentLevel.add(addIndex + 1, 'X');
+                    currentLevel.add(addIndex, 'X');
+                } else if (i == height) {
+                    currentLevel.add(addIndex, 'y');
+                    currentLevel.add(addIndex - 1, '-');
+                    currentLevel.add(addIndex + 1, '-');
+                } else if (i == LAN_LEVEL - 3){
+                    currentLevel.add(addIndex, randomBrickC ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
+                    currentLevel.add(addIndex - 1, randomBrickL ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
+                    currentLevel.add(addIndex + 1, randomBrickR ? EnumBlockType.NORMAL_BLOCK.getValue() : '-');
+                }
+                else {
+                    // Add '-' at index and index + 1
+                    currentLevel.add(addIndex, '-');
+                    currentLevel.add(addIndex - 1, '-');
+                    currentLevel.add(addIndex + 1, '-');
+                }
+            }
         }
     }
 
@@ -411,32 +473,54 @@ public class ProceduralContentGenerationLevel {
         }
     }
 
-
-    private void addPattern(String pattern, int offsetFromStart, int offsetFromFlag){
+    private int addPatternAndReturnWidth(String pattern, int offsetFromStart, int offsetFromFlag) {
+        // 1. Calculate the safe insertion index
         int maxIndex = levels.get(0).size() - (levels.get(0).size() - getFlagIndex()) - offsetFromFlag;
+
+        // Find a valid spot that doesn't cut through existing pipes/pits
         int index = rand.nextInt(offsetFromStart, maxIndex);
-        while (true){
-            if(isValidToAdd(index)){
-                break;
-            }
+        while (!isValidToAdd(index)) {
             index = getRandomOffsetFromStartIndex(offsetFromStart, maxIndex);
         }
+
+        // 2. Parse the pattern
         String[] lines = pattern.strip().split("\\R");
-
         int prefabHeight = lines.length;
-        int prefabWidth = lines[0].length();
+        // Assume the pattern is rectangular; get width from the first line
+        int prefabWidth = lines.length > 0 ? lines[0].length() : 0;
 
-        for (int y = 0; y < prefabHeight; y++) {
+        if (prefabWidth == 0) return 0; // Return 0 if nothing was inserted
+
+        // 3. Insert the pattern into ALL rows to maintain alignment
+        for (int y = 0; y < levels.size(); y++) {
             ArrayList<Character> row = levels.get(y);
 
-            char[] prefabChars = lines[y].toCharArray();
+            // Determine if this row is covered by the pattern text
+            boolean rowInPattern = y < prefabHeight;
+            char[] patternRowChars = rowInPattern ? lines[y].toCharArray() : new char[0];
 
             for (int x = 0; x < prefabWidth; x++) {
-                int targetX = index + x;
-                // No need to bounds check if you guarantee valid index
-                row.set(targetX, prefabChars[x]);
+                char charToAdd;
+
+                if (rowInPattern && x < patternRowChars.length) {
+                    charToAdd = patternRowChars[x];
+                } else {
+                    if (y == GROUND_1_LEVEL || y == GROUND_2_LEVEL) {
+                        charToAdd = 'X'; // Extend ground
+                    } else {
+                        charToAdd = '-'; // Extend air
+                    }
+                }
+
+                // INSERTION: This shifts all subsequent blocks to the right
+                // Use the calculated index + current character offset
+                row.add(index + x, charToAdd);
             }
         }
+
+        // 4. Update the global width and return the inserted width
+        this.width += prefabWidth;
+        return prefabWidth;
     }
 
     private void doAddBlock(EnumBlockType blockType, int offsetFromStart, int offsetFromFlag, int height, PCGLevelDto pcgLevelDto) throws IllegalArgumentException {
@@ -782,7 +866,8 @@ public class ProceduralContentGenerationLevel {
                 }
                 addIndex = rand.nextInt(offsetFromStart, maxIndex);
             }
-            var pipeType = k % 2 == 0 ? 'T' : 't';
+            //var pipeType = k % 2 == 0 ? 'T' : 't';
+            var pipeType = 'T';
             for (int height = 0; height < levels.size(); height++) {
 
 

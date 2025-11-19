@@ -94,8 +94,10 @@ public class MarioGameTraining {
     private int fps = 0;
     private ProceduralContentGenerationLevel pcg = null;
     private final int frameSkip = 2;
-    private final int MAX_STEP = 400;
+    private final int MAX_STEP = 500;
     private int stepCount = 0;
+    private boolean testMode = false;
+
     /**
      * Create a mario game to be played
      */
@@ -164,7 +166,7 @@ public class MarioGameTraining {
         String jsonString = new String(decodedBytes, StandardCharsets.UTF_8);
         Gson gson = new GsonBuilder().create();
         PCGLevelDto pcgLevel = gson.fromJson(jsonString, PCGLevelDto.class);
-
+        this.testMode = pcgLevel.getFile() != null;
         this.rewardEvents = new ArrayList<>();
         this.world = new MarioWorld(this.killEvents);
         this.world.visuals = visual;
@@ -220,7 +222,7 @@ public class MarioGameTraining {
             var events = miniStep(action);
             miniStepEvents.addAll(events);
         }
-        if(stepCount > MAX_STEP && this.evaluation && this.fps < 30){
+        if(stepCount > MAX_STEP && this.evaluation && !this.testMode && this.world.gameStatus != GameStatus.WIN){
             world.timeout();
             miniStepEvents.add(new MarioEvent(EventType.TIME_OUT, 0));
         }
@@ -238,17 +240,12 @@ public class MarioGameTraining {
             this.episodeTimer = this.world.currentTimer;
         }
 
-        if (this.world.gameStatus != GameStatus.RUNNING && this.evaluation && this.fps < 30) {
+        if (this.world.gameStatus != GameStatus.RUNNING && this.evaluation && !this.testMode) {
             Helper.logEvaluationResultToDataBase(this.episode, this.world.gameStatus.toString(),
                     this.pcg, this.world, this.rewardEvents, this.evaluationReward, this.minTimer, this.maxTimer);
         }
 
-        boolean blockClear = world.getHitBlockCount() == world.level.getBumpableBlocks().size();
-        boolean killClear = world.getKillCount() == world.level.getEnemies().size();
-        boolean coinClear = world.getCollectedCoinCount() == world.level.getCoins().size();
-
-        var isSuccess = this.world.gameStatus == GameStatus.WIN &&
-                (blockClear && killClear && coinClear);
+        var isSuccess = isObjectiveSuccess();
 
         return State.stepResult(State.toByte(nextState), reward,
                 this.world.gameStatus != GameStatus.RUNNING, false, isSuccess);
@@ -278,6 +275,38 @@ public class MarioGameTraining {
             }
         }
         return this.world.lastFrameEvents;
+    }
+
+    public boolean isObjectiveSuccess() {
+        // 1. Calculate the completion percentage for each objective (0.0 to 1.0)
+        // Use (double) casting to ensure floating-point division.
+
+        // Safety check: Avoid division by zero if level data is missing
+        int totalBlocks = this.world.level.getBumpableBlocks().size();
+        double blockPercentage = (totalBlocks > 0)
+                ? (double) this.world.getHitBlockCount() / totalBlocks
+                : 1.0; // Assume 100% if there are no blocks to hit
+
+        int totalEnemies = this.world.level.getEnemies().size();
+        double killPercentage = (totalEnemies > 0)
+                ? (double) this.world.getKillCount() / totalEnemies
+                : 1.0; // Assume 100% if there are no enemies
+
+        int totalCoins = this.world.level.getCoins().size();
+        double coinPercentage = (totalCoins > 0)
+                ? (double) this.world.getCollectedCoinCount() / totalCoins
+                : 1.0; // Assume 100% if there are no coins
+
+        // 2. Calculate the average objective completion
+        // The average is taken over the 3 main objectives: Blocks, Kills, and Coins.
+        double averageCompletion = (blockPercentage + killPercentage + coinPercentage) / 3.0;
+
+        // 3. Define the success condition
+        final double TARGET_COMPLETION = 0.75; // 75%
+
+        boolean objectiveClear = (averageCompletion >= TARGET_COMPLETION);
+
+        return this.world.gameStatus == GameStatus.WIN && objectiveClear;
     }
 
     private MarioEvent createEvent(MarioWorld world, EventType eventType, int eventParam) {

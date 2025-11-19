@@ -51,7 +51,7 @@ public class MarioWorld {
     private Objective enemiesObjective = new Objective();
 
     private ArrayList<Float> xProgressHistory = new ArrayList<>();
-    public static final int NO_PROGRESS_WINDOW = 16;
+    public static final int NO_PROGRESS_WINDOW = 33 * 3;
     private final float NO_PROGRESS_THRESHOLD_PIXELS = 16 * 2;
 
     public List<MarioSprite> getNearestEnemies(){
@@ -65,6 +65,17 @@ public class MarioWorld {
                     sprite.type == SpriteType.RED_KOOPA_WINGED ||
                     sprite.type == SpriteType.SPIKY ||
                     sprite.type == SpriteType.SPIKY_WINGED
+            ){
+                out.add(sprite);
+            }
+        }
+        return out;
+    }
+
+    public List<MarioSprite> getNearestSpiky() {
+        List<MarioSprite> out = new ArrayList<>();
+        for (MarioSprite sprite : sprites) {
+            if(sprite.type == SpriteType.SPIKY
             ){
                 out.add(sprite);
             }
@@ -596,13 +607,17 @@ public class MarioWorld {
         addedSprites.clear();
         removedSprites.clear();
 
-//        var afterX = mario.x;
-//
-//        var tryMovingRight = actions[MarioActions.RIGHT.getValue()];
-//        var isOnGround = mario.onGround;
-//        if (tryMovingRight && isOnGround && afterX - beforeX < 0.1f && mario.xa <= 0) {
-//            this.addEvent(EventType.STUCK_RIGHT, 0);
-//        }
+        var afterX = mario.x;
+
+        var tryMovingRight = actions[MarioActions.RIGHT.getValue()];
+        var isOnGround = mario.onGround;
+        if (tryMovingRight && isOnGround && afterX - beforeX < 0.1f && mario.xa <= 0) {
+            this.addEvent(EventType.STUCK_RIGHT, 0);
+        }
+
+        if(actions[MarioActions.JUMP.getValue()] && !mario.mayJump && !getMarioCanJumpHigher()){
+            this.addEvent(EventType.JUMP_SPAM, 0);
+        }
 
         this.xProgressHistory.add(this.mario.x);
 
@@ -621,7 +636,6 @@ public class MarioWorld {
 
             if (maxX - minX <= NO_PROGRESS_THRESHOLD_PIXELS) {
                 this.addEvent(EventType.STALL, 0);
-                this.xProgressHistory.clear();
             }
         }
 
@@ -669,7 +683,11 @@ public class MarioWorld {
         }
 
         if (MarioForwardModel.isCeilingBlockingTile(block + 16)) {
-            if (block + 16 != MarioForwardModel.OBS_BRICK || !canBreakBricks) {
+            if (block + 16 == MarioForwardModel.OBS_BRICK && !canBreakBricks) {
+                this.addEvent(EventType.BONK, block + 16);
+            }
+
+            if (block + 16 == MarioForwardModel.OBS_USED_BLOCK) {
                 this.addEvent(EventType.BONK, block + 16);
             }
         }
@@ -766,6 +784,10 @@ public class MarioWorld {
 
     public int getKillCount() {
         return this.level.getEnemies().size() - this.getAliveEnemies().size();
+    }
+
+    public boolean getMarioCanJumpHigher() {
+        return this.mario.jumpTime > 0;
     }
 
     public int getHitBlockCount() {

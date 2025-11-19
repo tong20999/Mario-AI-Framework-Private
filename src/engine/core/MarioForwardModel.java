@@ -268,9 +268,7 @@ public class MarioForwardModel {
                             e.getMarioY(),
                             e.getMarioState(),
                             e.getTime(),
-                            e.getSprintCode()
-                    )
-            );
+                            e.getSprintCode()));
         }
         return model;
     }
@@ -721,11 +719,11 @@ public class MarioForwardModel {
         return get3NearestObjectScreenPos(this.world.getUnbumpBlocks());
     }
 
-    public float[] getNearestFlagScreenPos(){
+    public float[] getNearestFlagScreenPos() {
         ArrayList<Point> flagTiles = new ArrayList<>();
         int poleX = this.world.level.exitTileX;
         int bottomY = this.world.level.exitTileY; // The base of the pole
-        int topY = Math.max(1, bottomY - 11);    // The top of the pole
+        int topY = Math.max(1, bottomY - 11); // The top of the pole
 
         // Add all tile coordinates from the top of the pole down to the base
         for (int y = topY; y <= bottomY; y++) {
@@ -743,8 +741,8 @@ public class MarioForwardModel {
         return get3NearestObjectScreenPos(this.world.getUnCollectCoin());
     }
 
-    private static final float[] NO_TARGET_NORM = new float[]{0f, 0f, 0f}; // dx_norm, dy_norm, present=0
-    private static final float[] NO_TARGET_NORM_3 = new float[]{0f, 0f, 0f, 0f, 0f};
+    private static final float[] NO_TARGET_NORM = new float[] { 0f, 0f, 0f }; // dx_norm, dy_norm, present=0
+    private static final float[] NO_TARGET_NORM_3 = new float[] { 0f, 0f, 0f, 0f, 0f };
 
     private static float clamp(float v, float lo, float hi) {
         return Math.max(lo, Math.min(hi, v));
@@ -756,8 +754,8 @@ public class MarioForwardModel {
 
     private static class TrackedObject {
         float d2; // squared distance
-        int px;   // tile x
-        int py;   // tile y
+        int px; // tile x
+        int py; // tile y
 
         TrackedObject(float d2, int px, int py) {
             this.d2 = d2;
@@ -768,8 +766,8 @@ public class MarioForwardModel {
 
     private static class TrackedEnemy {
         float d2; // squared distance
-        int px;   // tile x
-        int py;   // tile y
+        int px; // tile x
+        int py; // tile y
         float xa;
         float ya;
         int facing;
@@ -804,6 +802,7 @@ public class MarioForwardModel {
 
     /**
      * Finds the 3 nearest objects on the screen.
+     * 
      * @return float[9] {dx1, dy1, found1, dx2, dy2, found2, dx3, dy3, found3}
      */
     private float[] get3NearestObjectScreenPos(ArrayList<Point> collections) {
@@ -824,18 +823,18 @@ public class MarioForwardModel {
         final int viewW = 16;
         final int viewH = 16;
 
-        final int camTX   = (int)Math.floor(this.world.cameraX / TILE);
-        final int camTY   = (int)Math.floor(this.world.cameraY / TILE);
-        final int marioTX = (int)Math.floor(this.world.mario.x / TILE);
-        final int marioTY = (int)Math.floor(this.world.mario.y / TILE);
+        final int camTX = (int) Math.floor(this.world.cameraX / TILE);
+        final int camTY = (int) Math.floor(this.world.cameraY / TILE);
+        final int marioTX = (int) Math.floor(this.world.mario.x / TILE);
+        final int marioTY = (int) Math.floor(this.world.mario.y / TILE);
 
         final int marioScreenX = marioTX - camTX;
         final int marioScreenY = marioTY - camTY;
 
         for (Point p : collections) {
             // Assuming p.getX() and p.getY() are in TILES
-            int px = (int)Math.floor(p.getX());
-            int py = (int)Math.floor(p.getY());
+            int px = (int) Math.floor(p.getX());
+            int py = (int) Math.floor(p.getY());
 
             // >>> If p is in pixels, uncomment these two lines and delete the two above:
             // int px = (int)Math.floor(p.getX() / TILE);
@@ -849,7 +848,7 @@ public class MarioForwardModel {
 
             float dx = px - marioTX;
             float dy = py - marioTY;
-            float d2 = dx*dx + dy*dy;
+            float d2 = dx * dx + dy * dy;
 
             // Add to the heap
             topK.add(new TrackedObject(d2, px, py));
@@ -870,9 +869,9 @@ public class MarioForwardModel {
 
         // Get normalization constants (same as your original code)
         float maxRight = (viewW - 1) - marioScreenX;
-        float maxLeft  = marioScreenX;
-        float maxDown  = (viewH - 1) - marioScreenY;
-        float maxUp    = marioScreenY;
+        float maxLeft = marioScreenX;
+        float maxDown = (viewH - 1) - marioScreenY;
+        float maxUp = marioScreenY;
 
         int i = 0;
         // Add all found objects (up to K)
@@ -916,17 +915,18 @@ public class MarioForwardModel {
      * If your Point is in pixels, divide by TILE before use.
      */
     private float[] getNearestObjectScreenPos(ArrayList<Point> collections) {
-        if (collections == null || collections.isEmpty()) return NO_TARGET_NORM.clone();
+        if (collections == null || collections.isEmpty())
+            return NO_TARGET_NORM.clone();
 
-        final int TILE = 16;   // pixels per tile (adjust if different)
-        final int viewW = 16;  // viewport width in tiles
-        final int viewH = 16;  // viewport height in tiles
+        final int TILE = 16; // pixels per tile (adjust if different)
+        final int viewW = 16; // viewport width in tiles
+        final int viewH = 16; // viewport height in tiles
 
         // Camera & Mario in TILES
-        final int camTX   = (int)Math.floor(this.world.cameraX / TILE);
-        final int camTY   = (int)Math.floor(this.world.cameraY / TILE);
-        final int marioTX = (int)Math.floor(this.world.mario.x / TILE);
-        final int marioTY = (int)Math.floor(this.world.mario.y / TILE);
+        final int camTX = (int) Math.floor(this.world.cameraX / TILE);
+        final int camTY = (int) Math.floor(this.world.cameraY / TILE);
+        final int marioTX = (int) Math.floor(this.world.mario.x / TILE);
+        final int marioTY = (int) Math.floor(this.world.mario.y / TILE);
 
         // Mario's on-screen tile position (0..viewW-1, 0..viewH-1)
         final int marioScreenX = marioTX - camTX;
@@ -938,8 +938,8 @@ public class MarioForwardModel {
 
         for (Point p : collections) {
             // If p is in PIXELS, convert:
-            int px = (int)Math.floor(p.getX()); // or (int)Math.floor(p.getX() / TILE) if pixels
-            int py = (int)Math.floor(p.getY()); // or (int)Math.floor(p.getY() / TILE) if pixels
+            int px = (int) Math.floor(p.getX()); // or (int)Math.floor(p.getX() / TILE) if pixels
+            int py = (int) Math.floor(p.getY()); // or (int)Math.floor(p.getY() / TILE) if pixels
 
             // >>> If p is in pixels, uncomment these two lines and delete the two above:
             // int px = (int)Math.floor(p.getX() / TILE);
@@ -953,41 +953,44 @@ public class MarioForwardModel {
 
             float dx = px - marioTX; // tiles
             float dy = py - marioTY; // tiles
-            float d2 = dx*dx + dy*dy;
+            float d2 = dx * dx + dy * dy;
             if (d2 < bestD2) {
                 bestD2 = d2;
-                bestPX = px; bestPY = py;
+                bestPX = px;
+                bestPY = py;
                 found = true;
             }
         }
 
-        if (!found) return NO_TARGET_NORM.clone();
+        if (!found)
+            return NO_TARGET_NORM.clone();
 
         // Tile deltas from Mario
         float dx = bestPX - marioTX;
         float dy = bestPY - marioTY;
 
         // --- Direction-aware normalization to [-1, 1] ---
-        // Max right distance (in tiles) from Mario to the right edge; left distance to left edge.
+        // Max right distance (in tiles) from Mario to the right edge; left distance to
+        // left edge.
         float maxRight = (viewW - 1) - marioScreenX; // >= 0
-        float maxLeft  = marioScreenX;               // >= 0
-        float maxDown  = (viewH - 1) - marioScreenY; // >= 0
-        float maxUp    = marioScreenY;               // >= 0
+        float maxLeft = marioScreenX; // >= 0
+        float maxDown = (viewH - 1) - marioScreenY; // >= 0
+        float maxUp = marioScreenY; // >= 0
 
         // Normalize based on which side the target is on.
         float dxNorm = (dx >= 0)
-                ? safeDiv(dx, Math.max(1f, maxRight))   // right side
-                : safeDiv(dx, Math.max(1f, maxLeft))    // left side (dx is negative)
-                ;
+                ? safeDiv(dx, Math.max(1f, maxRight)) // right side
+                : safeDiv(dx, Math.max(1f, maxLeft)) // left side (dx is negative)
+        ;
         float dyNorm = (dy >= 0)
-                ? safeDiv(dy, Math.max(1f, maxDown))    // down
-                : safeDiv(dy, Math.max(1f, maxUp))      // up (dy is negative)
-                ;
+                ? safeDiv(dy, Math.max(1f, maxDown)) // down
+                : safeDiv(dy, Math.max(1f, maxUp)) // up (dy is negative)
+        ;
 
         dxNorm = clamp(dxNorm, -1f, 1f);
         dyNorm = clamp(dyNorm, -1f, 1f);
 
-        return new float[]{dxNorm, dyNorm, 1f};
+        return new float[] { dxNorm, dyNorm, 1f };
     }
 
     public float[] getNearestAliveEnemyScreenPos() {
@@ -997,15 +1000,22 @@ public class MarioForwardModel {
             return NO_TARGET_NORM.clone();
         }
 
-
         ArrayList<Point> collection = new ArrayList<>();
-        for (MarioSprite s:  aliveEnemies
-             ) {
+        for (MarioSprite s : aliveEnemies) {
             collection.add(new Point(s.getMapX(), s.getMapY()));
-        };
+        }
+        ;
         return getNearestObjectScreenPos(collection);
     }
 
+    public float[] get3NearestSpikyScreenPos() {
+        final int K = 3;
+        List<MarioSprite> sprites = world.getNearestSpiky();
+        if (sprites == null || sprites.isEmpty()) {
+            return getEmptyEnemiesTargets(K, NO_TARGET_NORM_3);
+        }
+        return doGet3NearestSpritesScreenPos(sprites);
+    }
 
     public float[] get3NearestBulletBillScreenPos() {
         final int K = 3;
@@ -1056,10 +1066,10 @@ public class MarioForwardModel {
         final int viewW = 16;
         final int viewH = 16;
 
-        final int camTX   = (int)Math.floor(this.world.cameraX / TILE);
-        final int camTY   = (int)Math.floor(this.world.cameraY / TILE);
-        final int marioTX = (int)Math.floor(this.world.mario.x / TILE);
-        final int marioTY = (int)Math.floor(this.world.mario.y / TILE);
+        final int camTX = (int) Math.floor(this.world.cameraX / TILE);
+        final int camTY = (int) Math.floor(this.world.cameraY / TILE);
+        final int marioTX = (int) Math.floor(this.world.mario.x / TILE);
+        final int marioTY = (int) Math.floor(this.world.mario.y / TILE);
 
         final int marioScreenX = marioTX - camTX;
         final int marioScreenY = marioTY - camTY;
@@ -1081,7 +1091,7 @@ public class MarioForwardModel {
 
             float dx = px - marioTX;
             float dy = py - marioTY;
-            float d2 = dx*dx + dy*dy;
+            float d2 = dx * dx + dy * dy;
 
             // Add to the heap
             topK.add(new TrackedEnemy(d2, px, py, s.xa, s.ya, s.facing));
@@ -1102,9 +1112,9 @@ public class MarioForwardModel {
 
         // Get normalization constants (same as your original code)
         float maxRight = (viewW - 1) - marioScreenX;
-        float maxLeft  = marioScreenX;
-        float maxDown  = (viewH - 1) - marioScreenY;
-        float maxUp    = marioScreenY;
+        float maxLeft = marioScreenX;
+        float maxDown = (viewH - 1) - marioScreenY;
+        float maxUp = marioScreenY;
 
         int i = 0;
         // Add all found objects (up to K)
@@ -1122,8 +1132,8 @@ public class MarioForwardModel {
             float xa = Math.abs(obj.xa) < 0.01f ? 0 : obj.xa;
             float ya = Math.abs(obj.ya) < 0.01f ? 0 : obj.ya;
 
-            float xaNorm = xa/10f;
-            float yaNorm = ya/10f;
+            float xaNorm = xa / 10f;
+            float yaNorm = ya / 10f;
 
             dxNorm = clamp(dxNorm, -1f, 1f);
             dyNorm = clamp(dyNorm, -1f, 1f);
@@ -1169,10 +1179,10 @@ public class MarioForwardModel {
         final int viewW = 16;
         final int viewH = 16;
 
-        final int camTX   = (int)Math.floor(this.world.cameraX / TILE);
-        final int camTY   = (int)Math.floor(this.world.cameraY / TILE);
-        final int marioTX = (int)Math.floor(this.world.mario.x / TILE);
-        final int marioTY = (int)Math.floor(this.world.mario.y / TILE);
+        final int camTX = (int) Math.floor(this.world.cameraX / TILE);
+        final int camTY = (int) Math.floor(this.world.cameraY / TILE);
+        final int marioTX = (int) Math.floor(this.world.mario.x / TILE);
+        final int marioTY = (int) Math.floor(this.world.mario.y / TILE);
 
         final int marioScreenX = marioTX - camTX;
         final int marioScreenY = marioTY - camTY;
@@ -1194,7 +1204,7 @@ public class MarioForwardModel {
 
             float dx = px - marioTX;
             float dy = py - marioTY;
-            float d2 = dx*dx + dy*dy;
+            float d2 = dx * dx + dy * dy;
 
             // Add to the heap
             topK.add(new TrackedEnemy(d2, px, py, s.xa, s.ya, s.facing));
@@ -1215,9 +1225,9 @@ public class MarioForwardModel {
 
         // Get normalization constants (same as your original code)
         float maxRight = (viewW - 1) - marioScreenX;
-        float maxLeft  = marioScreenX;
-        float maxDown  = (viewH - 1) - marioScreenY;
-        float maxUp    = marioScreenY;
+        float maxLeft = marioScreenX;
+        float maxDown = (viewH - 1) - marioScreenY;
+        float maxUp = marioScreenY;
 
         int i = 0;
         // Add all found objects (up to K)
@@ -1235,8 +1245,8 @@ public class MarioForwardModel {
             float xa = Math.abs(obj.xa) < 0.01f ? 0 : obj.xa;
             float ya = Math.abs(obj.ya) < 0.01f ? 0 : obj.ya;
 
-            float xaNorm = xa/10f;
-            float yaNorm = ya/10f;
+            float xaNorm = xa / 10f;
+            float yaNorm = ya / 10f;
 
             dxNorm = clamp(dxNorm, -1f, 1f);
             dyNorm = clamp(dyNorm, -1f, 1f);
@@ -1291,11 +1301,11 @@ public class MarioForwardModel {
             final int shiftedBlockId = world.level.getBlock(targetColumn, sampleRow) + OBS_SCENE_SHIFT;
             boolean collide;
             collide = isCeilingBlockingTile(shiftedBlockId);
-            if(collide){
+            if (collide) {
                 break;
             }
             collide = isCeilingBlockingTile(shiftedBlockId2);
-            if(collide){
+            if (collide) {
                 break;
             }
 
@@ -1308,7 +1318,7 @@ public class MarioForwardModel {
     public float isHeadRoomForwardClearance() {
 
         final int facingDirection = (getMarioFacing() >= 0) ? 1 : -1; // +1 right, -1 left
-        int marioTileX = (int) Math.floor(world.mario.x/ 16f);
+        int marioTileX = (int) Math.floor(world.mario.x / 16f);
         int marioTileX2 = (int) ((world.mario.x - world.mario.width) / 16);
         final int marioTileY = (int) Math.floor(world.mario.y / 16f);
         float minFraction = 1.0f;
@@ -1323,11 +1333,11 @@ public class MarioForwardModel {
                 final int shiftedBlockId2 = world.level.getBlock(targetColumn2, sampleRow) + OBS_SCENE_SHIFT;
                 boolean collide;
                 collide = isCeilingBlockingTile(shiftedBlockId);
-                if(collide){
+                if (collide) {
                     break;
                 }
                 collide = isCeilingBlockingTile(shiftedBlockId2);
-                if(collide){
+                if (collide) {
                     break;
                 }
 
@@ -1335,23 +1345,22 @@ public class MarioForwardModel {
             }
 
             final float fraction = clearTilesCount / 4.0f;
-            if (fraction < minFraction) minFraction = fraction;
+            if (fraction < minFraction)
+                minFraction = fraction;
         }
 
         return minFraction;
     }
 
-
-
-    public float gapAheadDistance(){
+    public float gapAheadDistance() {
         final int marioTileX = (int) Math.floor(world.mario.x / 16f);
         final int marioTileY = (int) Math.floor(world.mario.y / 16f);
         int underMarioFirstLevel = marioTileY + 1;
         int underMarioSecondLevel = marioTileY + 2;
-        if(world.level.getBlock(marioTileX, underMarioFirstLevel) == OBS_NONE &&
-                world.level.getBlock(marioTileX, underMarioSecondLevel) == OBS_NONE){
-            final int tileXWidth = (int) Math.floor((world.mario.x + 16 -1f) / 16f);
-            if(tileXWidth != marioTileX){
+        if (world.level.getBlock(marioTileX, underMarioFirstLevel) == OBS_NONE &&
+                world.level.getBlock(marioTileX, underMarioSecondLevel) == OBS_NONE) {
+            final int tileXWidth = (int) Math.floor((world.mario.x + 16 - 1f) / 16f);
+            if (tileXWidth != marioTileX) {
                 return 0.0f;
             }
         }
@@ -1359,7 +1368,7 @@ public class MarioForwardModel {
 
             final int shiftedBlockIdFloor1 = world.level.getBlock(marioTileX + tilesAhead, underMarioFirstLevel);
             final int shiftedBlockIdFloor2 = world.level.getBlock(marioTileX + tilesAhead, underMarioSecondLevel);
-            if(shiftedBlockIdFloor1 == OBS_NONE && shiftedBlockIdFloor2 == OBS_NONE){
+            if (shiftedBlockIdFloor1 == OBS_NONE && shiftedBlockIdFloor2 == OBS_NONE) {
                 return tilesAhead / (float) 8;
             }
         }
@@ -1375,28 +1384,35 @@ public class MarioForwardModel {
         int near = 0, mid = 0, far = 0;
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                if (enemies[x][y] == 0) continue;
+                if (enemies[x][y] == 0)
+                    continue;
                 int r = Math.max(Math.abs(x - cx), Math.abs(y - cy));
-                if (r >= 1 && r <= 3) near++;
-                else if (r >= 4 && r < 7) mid++;
-                else if (r >= 7 && r <= 12) far++;
+                if (r >= 1 && r <= 3)
+                    near++;
+                else if (r >= 4 && r < 7)
+                    mid++;
+                else if (r >= 7 && r <= 12)
+                    far++;
             }
         }
-        if (near > 3) near = 3;
-        if (mid > 3) mid = 3;
-        if (far > 3) far = 3;
-        return new byte[]{ (byte) near, (byte) mid, (byte) far };
+        if (near > 3)
+            near = 3;
+        if (mid > 3)
+            mid = 3;
+        if (far > 3)
+            far = 3;
+        return new byte[] { (byte) near, (byte) mid, (byte) far };
     }
 
-    public int[] getCoinsObjective(){
+    public int[] getCoinsObjective() {
         return world.getCoinsObjective();
     }
 
-    public int[] getBlocksObjective(){
+    public int[] getBlocksObjective() {
         return world.getBlocksObjective();
     }
 
-    public int[] getEnemiesObjective(){
+    public int[] getEnemiesObjective() {
         return world.getEnemiesObjective();
     }
 

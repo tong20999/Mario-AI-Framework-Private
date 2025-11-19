@@ -169,7 +169,7 @@ public class State {
         float[] nearestCoin = model.getNearestCoinScreenPos();
         float[] nearestItem = model.getNearestItemScreenPos();
         float[] nearestEnemies = model.get3NearestAliveEnemyScreenPos();
-        float[] nearestBulletBill = model.get3NearestBulletBillScreenPos();
+        float[] nearestBulletBill = model.get3NearestSpikyScreenPos();
         float[] nearestShell = model.get3NearestFlowerScreenPos();
         float[] nearestFlower = model.get3NearestShellScreenPos();
         float[] nearestFlag = model.getNearestFlagScreenPos();
@@ -192,7 +192,7 @@ public class State {
         outputStream.write(marioMode); // one hot small, large, fire
         outputStream.write((byte) (model.isMarioOnGround() ? 1 : 0));
         outputStream.write((byte) (model.getMarioCanJumpHigher() ? 1 : 0));
-        outputStream.write((byte) (model.getMarioFacing() == 1 ? 1 : 0)); // 6
+        outputStream.write((byte) (model.mayMarioJump() ? 1 : 0)); // 6
         outputStream.write(float2ByteArray(subTileX)); // 10
         outputStream.write(float2ByteArray(subTileY)); // 14
         outputStream.write(float2ByteArray(normalizedTimer)); // 18
