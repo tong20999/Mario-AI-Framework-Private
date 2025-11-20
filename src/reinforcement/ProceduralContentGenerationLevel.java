@@ -140,7 +140,7 @@ public class ProceduralContentGenerationLevel {
             // 2. Set the offset for the second pattern to start AFTER the first pattern
             // The starting point for the next object must be the insertion index of the
             // previous object PLUS its width.
-            offsetForPatterns += width1 + 5; // +5 for necessary gap
+            //offsetForPatterns += width1 + 5; // +5 for necessary gap
 
             // 3. Add the second pattern, starting from the new offset
             //pcg.addPatternAndReturnWidth(Pattern.getRandomPattern(6), offsetForPatterns, 12);

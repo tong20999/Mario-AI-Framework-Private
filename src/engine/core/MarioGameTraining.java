@@ -93,8 +93,8 @@ public class MarioGameTraining {
 
     private int fps = 0;
     private ProceduralContentGenerationLevel pcg = null;
-    private final int frameSkip = 2;
-    private final int MAX_STEP = 500;
+    private final int frameSkip = 3;
+    private final int MAX_STEP = 300;
     private int stepCount = 0;
     private boolean testMode = false;
 
@@ -278,35 +278,7 @@ public class MarioGameTraining {
     }
 
     public boolean isObjectiveSuccess() {
-        // 1. Calculate the completion percentage for each objective (0.0 to 1.0)
-        // Use (double) casting to ensure floating-point division.
-
-        // Safety check: Avoid division by zero if level data is missing
-        int totalBlocks = this.world.level.getBumpableBlocks().size();
-        double blockPercentage = (totalBlocks > 0)
-                ? (double) this.world.getHitBlockCount() / totalBlocks
-                : 1.0; // Assume 100% if there are no blocks to hit
-
-        int totalEnemies = this.world.level.getEnemies().size();
-        double killPercentage = (totalEnemies > 0)
-                ? (double) this.world.getKillCount() / totalEnemies
-                : 1.0; // Assume 100% if there are no enemies
-
-        int totalCoins = this.world.level.getCoins().size();
-        double coinPercentage = (totalCoins > 0)
-                ? (double) this.world.getCollectedCoinCount() / totalCoins
-                : 1.0; // Assume 100% if there are no coins
-
-        // 2. Calculate the average objective completion
-        // The average is taken over the 3 main objectives: Blocks, Kills, and Coins.
-        double averageCompletion = (blockPercentage + killPercentage + coinPercentage) / 3.0;
-
-        // 3. Define the success condition
-        final double TARGET_COMPLETION = 0.75; // 75%
-
-        boolean objectiveClear = (averageCompletion >= TARGET_COMPLETION);
-
-        return this.world.gameStatus == GameStatus.WIN && objectiveClear;
+        return this.world.gameStatus == GameStatus.WIN;
     }
 
     private MarioEvent createEvent(MarioWorld world, EventType eventType, int eventParam) {
