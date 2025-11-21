@@ -93,11 +93,11 @@ public class MarioGameTraining {
 
     private int fps = 0;
     private ProceduralContentGenerationLevel pcg = null;
-    private final int frameSkip = 3;
-    private final int MAX_STEP = 300;
+    private final int frameSkip = 2;
+    private final int MAX_STEP = 1000;
     private int stepCount = 0;
     private boolean testMode = false;
-
+    private String level;
     /**
      * Create a mario game to be played
      */
@@ -170,15 +170,14 @@ public class MarioGameTraining {
         this.rewardEvents = new ArrayList<>();
         this.world = new MarioWorld(this.killEvents);
         this.world.visuals = visual;
-        this.minTimer = pcgLevel == null ? 200 : pcgLevel.getTimerMin();
-        this.maxTimer = pcgLevel == null ? 201 : pcgLevel.getTimerMax();
+        this.minTimer = pcgLevel.getTimerMin();
+        this.maxTimer = pcgLevel.getTimerMax();
         this.timer = rand.nextInt(this.minTimer, this.maxTimer);
         this.lastMilestone = 0;
         this.lastCoinCount = 0;
-        String level;
 
         if(pcgLevel.getFile() != null){
-            level = Helper.getFileFromLevel(pcgLevel.getFile());
+            level = Helper.getLevelFromFile(pcgLevel.getFile());
             this.fps = pcgLevel.getFps();
         } else{
             this.fps = pcgLevel.getFps();
@@ -187,6 +186,10 @@ public class MarioGameTraining {
                 this.pcg.generate();
             }
             level = this.pcg.getContent();
+        }
+
+        if(pcgLevel.getLevelId() > 0){
+            level = Helper.getLevelFromDatabase(pcgLevel.getLevelId());
         }
 
         this.world.initializeLevel(level, 1000 * this.timer);
@@ -242,7 +245,7 @@ public class MarioGameTraining {
 
         if (this.world.gameStatus != GameStatus.RUNNING && this.evaluation && !this.testMode) {
             Helper.logEvaluationResultToDataBase(this.episode, this.world.gameStatus.toString(),
-                    this.pcg, this.world, this.rewardEvents, this.evaluationReward, this.minTimer, this.maxTimer);
+                    level, this.world, this.rewardEvents, this.evaluationReward, this.minTimer, this.maxTimer);
         }
 
         var isSuccess = isObjectiveSuccess();

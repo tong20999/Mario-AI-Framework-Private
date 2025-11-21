@@ -58,7 +58,8 @@ if __name__ == '__main__':
     "PipesMaxHeight":5,
     "Ramps": 1,
     "File" : "./levels/evaluation/lvl-1.txt",
-    "Fps": 40
+    "Fps": 40,
+    "IsTest": true
 }'''
   levelBase64 = sys.argv[1] if len(sys.argv) > 1 else base64.b64encode(default_pcg.encode('utf-8')).decode('utf-8')
 
@@ -78,7 +79,7 @@ if __name__ == '__main__':
   "BatchSize": 1024,
   "LoadOptimizer": true,
   "PolicyStoppingKl" : 0.02,
-  "Local" : true
+  "Play" : true
 }'''
 
   hyperParamsString = base64.b64decode(sys.argv[2]).decode("utf-8") if len(sys.argv) > 2 else default_hyper_params
@@ -145,20 +146,17 @@ if __name__ == '__main__':
               batch_size,
               load_optimizer)
   
-  if hyperParams.get('Local') is not None:
-    agent.play(make_env_fn, policy_model_fn)
+  if hyperParams.get('Play') is not None:
+    agent.play(make_env_fn, policy_model_fn, levelBase64, hyperParamsString)
   else:
-    agent.train(make_envs_fn,
-                make_env_fn,
-                gamma,
-                max_minutes,
-                max_episodes,
-                goal_mean_100_reward,
-                levelBase64,
-                hyperParamsString)
-
-
-
-                    
-  
-  #agent.save_ewc(level_pool)
+    if hyperParams.get('Test'):
+      agent.test(make_env_fn, policy_model_fn, levelBase64, hyperParamsString)
+    else:
+      agent.train(make_envs_fn,
+                  make_env_fn,
+                  gamma,
+                  max_minutes,
+                  max_episodes,
+                  goal_mean_100_reward,
+                  levelBase64,
+                  hyperParamsString)

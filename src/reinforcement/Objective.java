@@ -59,7 +59,7 @@ public class Objective {
         if (positionMap.containsKey(point)) {
             positionMap.put(point, 0);
         } else {
-            System.out.println("Point not found in objectives: " + point.getX() + "," + point.getY());
+            //System.out.println("Point not found in objectives: " + point.getX() + "," + point.getY());
             //throw new ArrayIndexOutOfBoundsException("Point not found in objectives: " + point.getX() + "," + point.getY());
         }
     }
@@ -70,7 +70,7 @@ public class Objective {
         if (positionMap.containsKey(point)) {
             positionMap.put(point, 0);
         } else {
-            System.out.println("Point not found in objectives: " + point.getX() + "," + point.getY());
+            //System.out.println("Point not found in objectives: " + point.getX() + "," + point.getY());
             //throw new ArrayIndexOutOfBoundsException("Point not found in objectives: " + point.getX() + "," + point.getY());
         }
     }

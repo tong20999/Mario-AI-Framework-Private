@@ -359,4 +359,8 @@ public class MarioResult {
         }
         return bricks;
     }
+
+    public MarioWorld getWorld(){
+        return world;
+    }
 }

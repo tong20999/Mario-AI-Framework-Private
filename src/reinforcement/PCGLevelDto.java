@@ -81,6 +81,9 @@ public class PCGLevelDto {
     @SerializedName("IsTrainFailedLevel")
     private final boolean isTrainFailedLevel;
 
+    @SerializedName("LevelId")
+    private final int levelId;
+
     public PCGLevelDto(int widthMin, int widthMax, int timerMin, int timerMax, int blocks,
                        int blocksHeightOrigin, int blocksHeightBound,
                        boolean randomNormalBlockLeft, boolean randomNormalBlockRight,
@@ -88,7 +91,7 @@ public class PCGLevelDto {
                        int coins, int coinsHeightOrigin,
                        int coinsHeightBound, int enemies, int enemiesHeightOrigin, int enemiesHeightBound,
                        int pits, int pitsMinWidth, int pitsMaxWidth, int pipes, int pipesMinHeight, int pipesMaxHeight,
-                       int ramps, int fps, String file, boolean trainFailedLevel) {
+                       int ramps, int fps, String file, boolean trainFailedLevel, boolean isTest, int levelId) {
         this.widthMin = widthMin;
         this.widthMax = widthMax;
         this.timerMin = timerMin;
@@ -115,6 +118,7 @@ public class PCGLevelDto {
         this.fps = fps;
         this.file = file;
         this.isTrainFailedLevel = trainFailedLevel;
+        this.levelId = levelId;
     }
 
     public int getWidthMin() {
@@ -219,5 +223,9 @@ public class PCGLevelDto {
 
     public boolean isTrainFailedLevel() {
         return isTrainFailedLevel;
+    }
+
+    public int getLevelId() {
+        return levelId;
     }
 }

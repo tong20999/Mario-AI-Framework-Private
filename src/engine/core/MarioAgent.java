@@ -1,11 +1,14 @@
 package engine.core;
 
+import java.util.ArrayList;
+
 /**
  * Interface for agents that want to play in the framework
  *
  * @author AhmedKhalifa
  */
 public interface MarioAgent {
+
     /**
      * initialize and prepare the agent before the game starts
      *
@@ -21,7 +24,7 @@ public interface MarioAgent {
      * @param timer amount of time before the agent has to return the actions.
      * @return an array of the state of the buttons on the controller
      */
-    boolean[] getActions(MarioForwardModel model, MarioTimer timer);
+    boolean[] getActions(MarioForwardModel model, MarioTimer timer, ArrayList<MarioEvent> gameEvents);
 
     /**
      * Return the name of the agent that will be displayed in debug purposes
@@ -29,4 +32,22 @@ public interface MarioAgent {
      * @return
      */
     String getAgentName();
+
+    /**
+     * Print some result after Game finish.
+     *
+     */
+    void getAgentRecord();
+
+    /**
+     * get total state
+     *
+     */
+    int getTotalState();
+
+    /**
+     * get lose state
+     *
+     */
+    int getLoseState();
 }

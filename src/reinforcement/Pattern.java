@@ -52,12 +52,8 @@ public class Pattern {
         // Adjust these integer values to change the pattern chance.
         // Pattern 1 has 5x the chance of Pattern 2.
         Map<Integer, Integer> patternWeights = new TreeMap<>();
-        for (int i = 1; i < 5; i++) {
+        for (int i = 1; i < 15; i++) {
             patternWeights.put(i, 1);
-        }
-
-        for (int i = 5; i < 15; i++) {
-            patternWeights.put(i, 5);
         }
 
         // The sum of all weights determines the maximum random number.
@@ -86,7 +82,7 @@ public class Pattern {
 
         // Fallback: If for some reason the loop fails (e.g., misconfigured weights),
         // revert to equal chance selection using the original logic.
-        return patternMap.get(rand.nextInt(1, patternMap.size() + 1));
+        return patternMap.get(rand.nextInt(1, 14 + 1));
     }
 
     public static String getRandomPattern(int origin) {

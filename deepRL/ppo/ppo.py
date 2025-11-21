@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import json
 import logging
@@ -74,8 +75,9 @@ level_json_str = '''{
     "PipesMinHeight": 2,
     "PipesMaxHeight":5,
     "Ramps": 5,
-    "IsTrainFailedLevel" : true,
-    "Fps": 80
+    "IsTrainFailedLevel" : false,
+    "Fps": 80,
+    "LevelId" : 0
 }'''
 
 class PPO():
@@ -608,7 +610,6 @@ class PPO():
             except KeyboardInterrupt:
                 pass
 
-        logger.info(f"[EVAL] action histogram: {action_hist.tolist()}")
         mean_return = float(np.mean(rs)) if len(rs) > 0 else 0.0
         success_rate = float(successes) / float(len(rs)) if len(rs) > 0 else 0.0
         logger.info(f"evaluation mean return: {mean_return:.3f}, success rate: {success_rate*100:.1f}% over {len(rs)} episodes")
@@ -624,29 +625,54 @@ class PPO():
             'value_optimizer_state_dict': self.value_optimizer.state_dict(),
         }, checkpoint_path)
 
-    def play(self, make_env_fn, policy_model_fn):
+    def test(self, make_env_fn, policy_model_fn, levelBase64, hyper_params):
+            self.create_dir()
+            statistics.write_hyperparameters(
+                self.working_dir,
+                hyper_params,
+                levelBase64,
+            )
+
             env = make_env_fn()
             policy_model = policy_model_fn(env.observation_space, env.action_space.n)
-            # checkpoint_path = self.find_model_file_path('checkpoint_')
+            checkpoint_path = 'C:/thesis_data/training_baseline/22/checkpoint_300.tar'
+            # checkpoint_path = 'C:/thesis_data/training/44/checkpoint_227.tar'
+            checkpoint = torch.load(checkpoint_path)
+            logger.info("Loading model states from checkpoint.")
+            policy_model.load_state_dict(checkpoint['policy_model_state_dict'])
+            policy_model.eval()
+
+            # evaluation_score, success_rate, action_list = self.evaluate(1, policy_model, env, levelBase64, n_episodes=100, visual=False)
+
+            for i in range(1, 101):
+                level_config = json.loads(level_json_str)
+                level_config["Fps"] = 0
+                level_config["LevelId"] = i
+                updated_levelJson_str = json.dumps(level_config, separators=(',', ':'))
+                level_base64 = base64.b64encode(updated_levelJson_str.encode('utf-8')).decode('utf-8')
+                logger.info(f'test level {i}')
+                evaluation_score, success_rate, action_list = self.evaluate(1, policy_model, env, level_base64, n_episodes=1, visual=False)
+    
+    def play(self, make_env_fn, policy_model_fn, levelBase64, hyper_params):
+            env = make_env_fn()
+            policy_model = policy_model_fn(env.observation_space, env.action_space.n)
+            # checkpoint_path = 'C:/thesis_data/training_baseline/22/checkpoint_300.tar'
             checkpoint_path = 'C:/thesis_data/training/44/checkpoint_227.tar'
-            if checkpoint_path is not None:
-                checkpoint = torch.load(checkpoint_path)
-                logger.info("Loading model states from checkpoint.")
-                policy_model.load_state_dict(checkpoint['policy_model_state_dict'])
-                policy_model.eval()
+            checkpoint = torch.load(checkpoint_path)
+            logger.info("Loading model states from checkpoint.")
+            policy_model.load_state_dict(checkpoint['policy_model_state_dict'])
+            policy_model.eval()
 
-            # for i in range(1, 1000):
-            #     level_base64 = base64.b64encode(level_json_str.encode('utf-8')).decode('utf-8')
-            #     final_eval_score, score_std, _ = self.evaluate(1, policy_model, env, level_base64, n_episodes=1, visual=True, playMode=True)
+            # evaluation_score, success_rate, action_list = self.evaluate(1, policy_model, env, levelBase64, n_episodes=100, visual=False)
 
-            for i in range(1, 12):
+            for i in range(1, 15):
                 level_config = json.loads(level_json_str)
                 new_file_path = f"./levels/evaluation/lvl-{i}.txt"
                 level_config["File"] = new_file_path
-                level_config["Fps"] = 0
+                level_config["Fps"] = 70
                 updated_levelJson_str = json.dumps(level_config, separators=(',', ':'))
                 level_base64 = base64.b64encode(updated_levelJson_str.encode('utf-8')).decode('utf-8')
-                final_eval_score, score_std, _ = self.evaluate(1, policy_model, env, level_base64, n_episodes=1, visual=False)
+                final_eval_score, score_std, _ = self.evaluate(1, policy_model, env, level_base64, n_episodes=1, visual=True)
 
     def write_info(self, working_dir, filename, value):
         with open(os.path.join(working_dir, filename), "a") as file:

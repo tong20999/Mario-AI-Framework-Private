@@ -55,7 +55,7 @@ public class Helper {
         return Optional.of(folders[0]);  // Return the most recent folder (first in sorted array)
     }
 
-    public static String getFileFromLevel(String file){
+    public static String getLevelFromFile(String file){
         String content = "";
         try {
             content = new String(Files.readAllBytes(Paths.get(file)));
@@ -144,7 +144,7 @@ public class Helper {
         return dir.getName();
     }
 
-    public static void logEvaluationResultToDataBase(int evaluationEpisode, String gameStatus, ProceduralContentGenerationLevel pcg, MarioWorld world, ArrayList<RewardEvent> rewardEvents, float evaluationReward, int minTimer, int maxTimer) throws IOException {
+    public static void logEvaluationResultToDataBase(int evaluationEpisode, String gameStatus, String level, MarioWorld world, ArrayList<RewardEvent> rewardEvents, float evaluationReward, int minTimer, int maxTimer) throws IOException {
         String dbPath = "C:/thesis_data/training/evaluation_results.db";
         String dbEventPath = "C:/thesis_data/training/evaluation_events.db";
         Optional<File> optional = getWorkingDir(false);
@@ -169,8 +169,6 @@ public class Helper {
             // 2. Ensure the table exists (this method is shown below)
             createResultsTable(conn);
 
-
-
             // --- PART 1: Insert into results table and get ID ---
             String sqlResults = "INSERT INTO results (episode, game_status, final_status, " +
                     "mario_mode, total_block, total_coin, total_enemies, " +
@@ -193,7 +191,7 @@ public class Helper {
                 pstmt.setBoolean(8, blockClear);
                 pstmt.setBoolean(9, killClear);
                 pstmt.setBoolean(10, coinClear);
-                pstmt.setString(11, pcg.getContent()); // PCG Content
+                pstmt.setString(11, level);
                 pstmt.setInt(12, world.initTimer);
                 pstmt.setInt(13, minTimer);
                 pstmt.setInt(14, maxTimer);
@@ -332,5 +330,26 @@ public class Helper {
         try (java.sql.Statement stmt = conn.createStatement()) {
             stmt.execute(sql);
         }
+    }
+
+    public static String getLevelFromDatabase(int id){
+        String dbPath = "C:/thesis_data/pcg_level.db";
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath)) {
+
+            String sql = MessageFormat.format("SELECT pcg_content FROM levels " +
+                    "WHERE id = {0} ", id);
+
+            // Using try-with-resources to ensure the Statement and ResultSet are auto-closed
+            try (Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery(sql)) {
+                String level = rs.getString("pcg_content");
+                return level;
+            } catch (SQLException e) {
+                System.err.println("Database error: " + e.getMessage());
+            }
+        } catch (SQLException e) {
+            System.err.println("Database error: " + e.getMessage());
+        }
+        return null;
     }
 }

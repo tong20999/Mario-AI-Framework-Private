@@ -1,25 +1,22 @@
 package engine.core;
 
-import java.awt.image.VolatileImage;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.util.Arrays;
-import java.util.Random;
-
-import javax.swing.JFrame;
-
 import agents.human.Agent;
-import engine.helper.EventType;
 import engine.helper.GameStatus;
 import engine.helper.MarioActions;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.image.VolatileImage;
+import java.util.ArrayList;
+
+import static java.lang.Thread.sleep;
 
 public class MarioGame {
     /**
      * the maximum time that agent takes for each step
      */
-    public static final long maxTime = 40;
+    public static final long maxTime = 200;
     /**
      * extra time before reporting that the agent is taking more time that it should
      */
@@ -99,7 +96,7 @@ public class MarioGame {
      * @return statistics about the current game
      */
     public MarioResult playGame(String level, int timer) {
-        return this.runGame(new Agent(), level, timer, 0, true, 30, 2);
+        return this.runGame(new Agent(), level, timer, 0, true, true, 200);
     }
 
     /**
@@ -111,7 +108,7 @@ public class MarioGame {
      * @return statistics about the current game
      */
     public MarioResult playGame(String level, int timer, int marioState) {
-        return this.runGame(new Agent(), level, timer, marioState, true, 30, 2);
+        return this.runGame(new Agent(), level, timer, marioState, true, true, 200);
     }
 
     /**
@@ -124,7 +121,7 @@ public class MarioGame {
      * @return statistics about the current game
      */
     public MarioResult playGame(String level, int timer, int marioState, int fps) {
-        return this.runGame(new Agent(), level, timer, marioState, true, fps, 2);
+        return this.runGame(new Agent(), level, timer, marioState, true, true, 200);
     }
 
     /**
@@ -138,7 +135,7 @@ public class MarioGame {
      * @return statistics about the current game
      */
     public MarioResult playGame(String level, int timer, int marioState, int fps, float scale) {
-        return this.runGame(new Agent(), level, timer, marioState, true, fps, scale);
+        return this.runGame(new Agent(), level, timer, marioState, true, fps, true, 200);
     }
 
     /**
@@ -150,7 +147,7 @@ public class MarioGame {
      * @return statistics about the current game
      */
     public MarioResult runGame(MarioAgent agent, String level, int timer) {
-        return this.runGame(agent, level, timer, 0, false, 0, 2);
+        return this.runGame(agent, level, timer, 0, false, 0, true, 200);
     }
 
     /**
@@ -163,7 +160,7 @@ public class MarioGame {
      * @return statistics about the current game
      */
     public MarioResult runGame(MarioAgent agent, String level, int timer, int marioState) {
-        return this.runGame(agent, level, timer, marioState, false, 0, 2);
+        return this.runGame(agent, level, timer, marioState, false, 0, false, 200);
     }
 
     /**
@@ -176,8 +173,16 @@ public class MarioGame {
      * @param visuals    show the game visuals if it is true and false otherwise
      * @return statistics about the current game
      */
+    public MarioResult runGame(MarioAgent agent, String level, int timer, int marioState, boolean visuals, boolean pos, int MaxTime) {
+        return this.runGame(agent, level, timer, marioState, visuals, visuals ? 70 : 0, pos, MaxTime);
+    }
+
     public MarioResult runGame(MarioAgent agent, String level, int timer, int marioState, boolean visuals) {
-        return this.runGame(agent, level, timer, marioState, visuals, visuals ? 30 : 0, 2);
+        return this.runGame(agent, level, timer, marioState, visuals, visuals ? 70 : 0, false, 60);
+    }
+
+    public MarioResult runGame(MarioAgent agent, String level, int timer, int marioState, boolean visuals, boolean pos) {
+        return this.runGame(agent, level, timer, marioState, visuals, visuals ? 70 : 0, pos, 60);
     }
 
     /**
@@ -191,8 +196,8 @@ public class MarioGame {
      * @param fps        the number of frames per second that the update function is following
      * @return statistics about the current game
      */
-    public MarioResult runGame(MarioAgent agent, String level, int timer, int marioState, boolean visuals, int fps) {
-        return this.runGame(agent, level, timer, marioState, visuals, fps, 2);
+    public MarioResult runGame(MarioAgent agent, String level, int timer, int marioState, boolean visuals, int fps, boolean pos,int MaxTime) {
+        return this.runGame(agent, level, timer, marioState, visuals, fps, 2, pos, MaxTime);
     }
 
     /**
@@ -207,7 +212,7 @@ public class MarioGame {
      * @param scale      the screen scale, that scale value is multiplied by the actual width and height
      * @return statistics about the current game
      */
-    public MarioResult runGame(MarioAgent agent, String level, int timer, int marioState, boolean visuals, int fps, float scale) {
+    public MarioResult runGame(MarioAgent agent, String level, int timer, int marioState, boolean visuals, int fps, float scale, boolean pos, int MaxTime) {
         if (visuals) {
             this.window = new JFrame("Mario AI Framework");
             this.render = new MarioRender(scale);
@@ -219,15 +224,20 @@ public class MarioGame {
             this.window.setVisible(true);
         }
         this.setAgent(agent);
-        return this.gameLoop(level, timer, marioState, visuals, fps);
+        return this.gameLoop(level, timer, marioState, visuals, fps, pos, MaxTime);
     }
 
-    private MarioResult gameLoop(String level, int timer, int marioState, boolean visual, int fps) {
+    private MarioResult gameLoop(String level, int timer, int marioState, boolean visual, int fps, boolean pos, int maxTime) {
         this.world = new MarioWorld(this.killEvents);
         this.world.visuals = visual;
         this.world.initializeLevel(level, 1000 * timer);
         if (visual) {
             this.world.initializeVisuals(this.render.getGraphicsConfiguration());
+            try {
+                sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
         this.world.mario.isLarge = marioState > 0;
         this.world.mario.isFire = marioState > 1;
@@ -245,16 +255,16 @@ public class MarioGame {
             this.render.addFocusListener(this.render);
         }
 
-        MarioTimer agentTimer = new MarioTimer(MarioGame.maxTime);
-        this.agent.initialize(new MarioForwardModel(this.world.clone()), agentTimer);
-
+        MarioTimer agentTimer = new MarioTimer(maxTime);
         ArrayList<MarioEvent> gameEvents = new ArrayList<>();
         ArrayList<MarioAgentEvent> agentEvents = new ArrayList<>();
+        this.agent.initialize(new MarioForwardModel(this.world.clone(), gameEvents), agentTimer);
+        ArrayList<Float> MarioPos = new ArrayList<>();
         while (this.world.gameStatus == GameStatus.RUNNING) {
             if (!this.pause) {
                 //get actions
-                agentTimer = new MarioTimer(MarioGame.maxTime);
-                boolean[] actions = this.agent.getActions(new MarioForwardModel(this.world.clone(),this.world.lastFrameEvents), agentTimer);
+                agentTimer = new MarioTimer(maxTime);
+                boolean[] actions = this.agent.getActions(new MarioForwardModel(this.world.clone(), gameEvents), agentTimer, gameEvents);
                 if (MarioGame.verbose) {
                     if (agentTimer.getRemainingTime() < 0 && Math.abs(agentTimer.getRemainingTime()) > MarioGame.graceTime) {
                         System.out.println("The Agent is slowing down the game by: "
@@ -263,6 +273,10 @@ public class MarioGame {
                 }
                 // update world
                 this.world.update(actions);
+                if(pos){
+                    MarioPos.add(this.world.mario.x);
+                    MarioPos.add(this.world.mario.y);
+                }
                 gameEvents.addAll(this.world.lastFrameEvents);
                 agentEvents.add(new MarioAgentEvent(actions, this.world.mario.x,
                         this.world.mario.y, (this.world.mario.isLarge ? 1 : 0) + (this.world.mario.isFire ? 1 : 0),
@@ -277,12 +291,13 @@ public class MarioGame {
             if (this.getDelay(fps) > 0) {
                 try {
                     currentTime += this.getDelay(fps);
-                    Thread.sleep(Math.max(0, currentTime - System.currentTimeMillis()));
+                    sleep(Math.max(0, currentTime - System.currentTimeMillis()));
                 } catch (InterruptedException e) {
                     break;
                 }
             }
         }
+//        this.agent.getAgentRecord();
         return new MarioResult(this.world, gameEvents, agentEvents);
     }
 }
