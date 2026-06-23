@@ -51,6 +51,9 @@ hyper_params_mapper = {
     "maxBufferEpisodes": "max_buffer_episodes",
     "maxBufferEpisodeSteps": "max_buffer_episode_steps",
     "entropyLossWeight": "entropy_loss_weight",
+    "entropyAnneal": "entropy_anneal",
+    "entropyAnnealEndFactor": "entropy_anneal_end_factor",
+    "entropyAnnealTotalIters": "entropy_anneal_total_iters",
     "batchSize": "batch_size",
     "valueStoppingMse" : "value_stopping_mse"
 }
@@ -105,7 +108,10 @@ class PPO():
                  tau,
                  n_workers,
                  batch_size, 
-                 load_optimizer:bool):
+                 load_optimizer:bool,
+                 entropy_anneal:bool=False,
+                 entropy_anneal_end_factor:float=0.5,
+                 entropy_anneal_total_iters:int=500):
         assert n_workers > 1
         assert max_buffer_episodes >= n_workers
         setup_logging(logging.INFO)
@@ -144,6 +150,14 @@ class PPO():
         self.load_optimizer = load_optimizer
         self.visual_train:bool = False
 
+        # Entropy annealing params
+        # When enabled, entropy_loss_weight is annealed from its initial
+        # value down to initial * entropy_anneal_end_factor over
+        # entropy_anneal_total_iters evaluation steps.
+        self.entropy_anneal = entropy_anneal
+        self.entropy_anneal_end_factor = entropy_anneal_end_factor
+        self.entropy_anneal_total_iters = entropy_anneal_total_iters
+
         self.grid_keys = [
             'gridSolid', 'gridBlocks', 'gridCoins', 'gridGoomba', 'gridGoombaWing',
             'gridGreenKoompa', 'gridGreenKoompaWing', 'gridRedKoompa', 'gridRedKoompaWing',
@@ -168,6 +182,7 @@ class PPO():
         logger.info(f'batch_size {self.batch_size}')
         logger.info(f'n_workers {self.n_workers}')
         logger.info(f'load_optimizer {self.load_optimizer}')
+        logger.info(f'entropy_anneal {self.entropy_anneal} end_factor {self.entropy_anneal_end_factor} total_iters {self.entropy_anneal_total_iters}')
 
     def optimize_model(self):
         all_data = self.episode_buffer.get_data()
@@ -421,9 +436,12 @@ class PPO():
                 #self.policy_scheduler.step()
                 #self.value_scheduler.step()
 
-                # decay_factor = evaluation_count / total_iterations
-                # end_value = initial_entropy_weight * end_factor
-                # self.entropy_loss_weight = initial_entropy_weight - (initial_entropy_weight - end_value) * min(1.0, decay_factor)
+                # Optional entropy annealing (controlled by self.entropy_anneal)
+                if getattr(self, 'entropy_anneal', False):
+                    decay_factor = evaluation_count / float(max(1, self.entropy_anneal_total_iters))
+                    end_value = initial_entropy_weight * float(self.entropy_anneal_end_factor)
+                    self.entropy_loss_weight = initial_entropy_weight - (initial_entropy_weight - end_value) * min(1.0, decay_factor)
+                    logger.info(f'entropy weight annealed to: {self.entropy_loss_weight:.6f}')
 
                 # logger.info(f'policy LR: {self.policy_scheduler.get_last_lr()[0]}')
                 # logger.info(f'value LR: {self.value_scheduler.get_last_lr()[0]}')
@@ -497,9 +515,16 @@ class PPO():
                             parameter_name = hyper_params_mapper.get(parameterName)
                             new_value = value.get('value')
                             if parameter_name is not None and hasattr(self, parameter_name) and new_value is not None:
-                                if isinstance(getattr(self, parameter_name), float):
+                                # preserve original types when updating via socket
+                                current_val = getattr(self, parameter_name)
+                                if isinstance(current_val, bool):
+                                    if isinstance(new_value, str):
+                                        new_value = new_value.lower() in ("1", "true", "yes", "y")
+                                    else:
+                                        new_value = bool(new_value)
+                                elif isinstance(current_val, float):
                                     new_value = float(new_value)
-                                elif isinstance(getattr(self, parameter_name), int):
+                                elif isinstance(current_val, int):
                                     new_value = int(new_value)
                                 setattr(self, parameter_name, new_value)
                                 logger.warning(f"updated {parameter_name} to {new_value}")
@@ -643,10 +668,29 @@ class PPO():
                 level_config = json.loads(level_json_str)
                 new_file_path = f"./levels/evaluation/lvl-{i}.txt"
                 level_config["File"] = new_file_path
-                level_config["Fps"] = 0
+                level_config["Fps"] = 30
                 updated_levelJson_str = json.dumps(level_config, separators=(',', ':'))
                 level_base64 = base64.b64encode(updated_levelJson_str.encode('utf-8')).decode('utf-8')
-                final_eval_score, score_std, _ = self.evaluate(1, policy_model, env, level_base64, n_episodes=1, visual=False)
+                final_eval_score, score_std, _ = self.evaluate(1, policy_model, env, level_base64, n_episodes=1, visual=True)
+
+    def benchmark(self, make_env_fn, policy_model_fn, checkpoint_path, levels = []):
+        env = make_env_fn()
+        policy_model = policy_model_fn(env.observation_space, env.action_space.n)
+        if checkpoint_path is not None:
+            checkpoint = torch.load(checkpoint_path)
+            logger.info("Loading model states from checkpoint.")
+            policy_model.load_state_dict(checkpoint['policy_model_state_dict'])
+            policy_model.eval()
+
+        for level in levels:
+            level_config = json.loads(level_json_str)
+            level_config["File"] = level
+            level_config["Fps"] = 30
+            level_config["TimerMin"] = 50
+            level_config["TimerMax"] = 100
+            updated_levelJson_str = json.dumps(level_config, separators=(',', ':'))
+            level_base64 = base64.b64encode(updated_levelJson_str.encode('utf-8')).decode('utf-8')
+            final_eval_score, score_std, _ = self.evaluate(1, policy_model, env, level_base64, n_episodes=1, visual=True)
 
     def write_info(self, working_dir, filename, value):
         with open(os.path.join(working_dir, filename), "a") as file:

@@ -78,7 +78,7 @@ if __name__ == '__main__':
   "BatchSize": 1024,
   "LoadOptimizer": true,
   "PolicyStoppingKl" : 0.02,
-  "Local" : true
+  "Mode" : "benchmark"
 }'''
 
   hyperParamsString = base64.b64decode(sys.argv[2]).decode("utf-8") if len(sys.argv) > 2 else default_hyper_params
@@ -143,10 +143,24 @@ if __name__ == '__main__':
               tau,
               n_workers,
               batch_size,
-              load_optimizer)
+              load_optimizer,
+              True)
   
-  if hyperParams.get('Local') is not None:
+  if hyperParams.get('Mode') == 'play':
     agent.play(make_env_fn, policy_model_fn)
+  elif hyperParams.get('Mode') == 'benchmark':
+    levels = (
+    #[f"./levels/benchmark/backtracking/lvl-{i}.txt" for i in range(3, 4)]
+    #[f"./levels/benchmark/navigation/lvl-{i}.txt" for i in range(1, 2)] +
+    [f"./levels/benchmark/isolate-coin/lvl-{i}.txt" for i in range(1, 4)] 
+    #[f"./levels/benchmark/isolate-block/lvl-{i}.txt" for i in range(2, 3)]
+    #[f"./levels/benchmark/obstacles/lvl-{i}.txt" for i in range(1, 3)]
+    #[f"./levels/benchmark/repetition/lvl-{i}.txt" for i in range(1, 5)]
+    #[f"./levels/benchmark/timing/lvl-{i}.txt" for i in range(1, 3)]
+    )
+    
+    checkpoint_path = 'C:/thesis_data/training/51/checkpoint_250.tar'
+    agent.benchmark(make_env_fn, policy_model_fn, checkpoint_path, levels)
   else:
     agent.train(make_envs_fn,
                 make_env_fn,

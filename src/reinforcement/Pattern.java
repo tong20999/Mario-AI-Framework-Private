@@ -2,6 +2,11 @@ package reinforcement;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -9,9 +14,12 @@ import java.util.TreeMap;
 
 public class Pattern {
     public static final Map<Integer, String> patternMap = new HashMap<>();
+    private static final List<Integer> patternOrder = new ArrayList<>();
+    private static final Deque<Integer> shuffledPatternBag = new ArrayDeque<>();
     private static Random rand = new Random();
     static {
         loadPatterns();
+        rebuildPatternOrder();
     }
 
     private static void loadPatterns() {
@@ -39,12 +47,35 @@ public class Pattern {
         }
     }
 
+    private static synchronized void rebuildPatternOrder() {
+        patternOrder.clear();
+        patternOrder.addAll(patternMap.keySet());
+        Collections.sort(patternOrder);
+        reshufflePatternBag();
+    }
+
+    private static void reshufflePatternBag() {
+        List<Integer> shuffled = new ArrayList<>(patternOrder);
+        Collections.shuffle(shuffled, rand);
+        shuffledPatternBag.clear();
+        shuffledPatternBag.addAll(shuffled);
+    }
+
     public static String getPattern(int index) {
         return patternMap.get(index);
     }
 
-    public static String getRandomPattern() {
-        return patternMap.get(rand.nextInt(1, patternMap.size() + 1));
+    public static synchronized String getRandomPattern() {
+        if (shuffledPatternBag.isEmpty()) {
+            reshufflePatternBag();
+        }
+
+        Integer patternKey = shuffledPatternBag.pollFirst();
+        if (patternKey == null) {
+            return null;
+        }
+
+        return patternMap.get(patternKey);
     }
 
     public static String getRandomPatternWithWeight() {
