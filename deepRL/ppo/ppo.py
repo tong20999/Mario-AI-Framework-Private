@@ -415,6 +415,9 @@ class PPO():
         try:
             while True:
                 try:
+                    if evaluation_count > 1000:
+                        logger.warning(f'Maximum evaluation count reached. Stopping training.')
+                        break
                     start_time = time.time()
                     episode_timestep, episode_reward, episode_exploration, \
                     episode_seconds, gaes_mean = self.episode_buffer.fill(
