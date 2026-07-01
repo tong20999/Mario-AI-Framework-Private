@@ -174,9 +174,10 @@ class EpisodeBuffer():
         self.values_mem = np.concatenate([row[:ep_t[i]] for i, row in enumerate(self.values_mem[ep_idxs])])
         gaes_mean_for_logging = np.mean(self.gaes_mem)
 
-        # Normalize returns and advantages for the entire batch
-        returns_mean = np.mean(self.returns_mem)
-        self.returns_mem = self.returns_mem - returns_mean * 0.0
+        # Returns are intentionally NOT normalized.
+        # The reward gap (WIN=150 vs PARTIAL_WIN=20) is the primary signal
+        # for the value network to distinguish perfect vs partial wins.
+        # Normalizing returns would collapse this gap and remove that signal.
 
         gaes_std = np.std(self.gaes_mem)
         self.gaes_mem = (self.gaes_mem - gaes_mean_for_logging) / (gaes_std + 1e-8)

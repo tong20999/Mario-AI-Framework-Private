@@ -1,5 +1,6 @@
 import logging
 import os, sys, base64, json
+import time
 from marioGame import MarioGame
 from multigridstack import MultiGridStack
 from ppo.cnn import CNNActor, CNNCritic
@@ -150,19 +151,20 @@ if __name__ == '__main__':
     agent.play(make_env_fn, policy_model_fn)
   elif hyperParams.get('Mode') == 'benchmark':
     levels = (
-    #[f"./levels/benchmark/backtracking/lvl-{i}.txt" for i in range(3, 4)]
-    #[f"./levels/benchmark/navigation/lvl-{i}.txt" for i in range(1, 2)] +
-    [f"./levels/benchmark/isolate-coin/lvl-{i}.txt" for i in range(1, 4)] 
-    #[f"./levels/benchmark/isolate-block/lvl-{i}.txt" for i in range(2, 3)]
-    #[f"./levels/benchmark/obstacles/lvl-{i}.txt" for i in range(1, 3)]
-    #[f"./levels/benchmark/repetition/lvl-{i}.txt" for i in range(1, 5)]
-    #[f"./levels/benchmark/timing/lvl-{i}.txt" for i in range(1, 3)]
+    [f"./levels/benchmark/navigation/lvl-{i}.txt" for i in range(1, 8)] +
+    [f"./levels/benchmark/isolate-coin/lvl-{i}.txt" for i in range(1, 7)] +
+    [f"./levels/benchmark/isolate-block/lvl-{i}.txt" for i in range(1, 4)] +
+    [f"./levels/benchmark/isolate-enemy/lvl-{i}.txt" for i in range(1, 7)] +
+    [f"./levels/benchmark/combined/lvl-{i}.txt" for i in range(1, 5)]
+    #[f"./levels/benchmark/example-perfect-win/lvl-{i}.txt" for i in range(1, 4)]
     )
     
-    checkpoint_path = 'C:/thesis_data/training/51/checkpoint_250.tar'
-    agent.benchmark(make_env_fn, policy_model_fn, checkpoint_path, levels)
+    checkpoint_path = 'C:/thesis_data/training/57/checkpoint_250.tar'
+    agent.benchmark(make_env_fn, policy_model_fn, checkpoint_path, levels, fps=100)
   else:
-    agent.train(make_envs_fn,
+    for i in range(1, 2):
+        logger.info(f'Starting training session {i}...')
+        agent.train(make_envs_fn,
                 make_env_fn,
                 gamma,
                 max_minutes,
@@ -170,9 +172,6 @@ if __name__ == '__main__':
                 goal_mean_100_reward,
                 levelBase64,
                 hyperParamsString)
-
-
-
-                    
-  
-  #agent.save_ewc(level_pool)
+        logger.info(f'Training session {i} completed.')
+        logger.info(f'Waiting for 30 seconds before starting the next session...')
+        time.sleep(30)

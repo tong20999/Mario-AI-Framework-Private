@@ -98,9 +98,9 @@ public class State {
 //                else if(enemy == MarioForwardModel.OBS_GREEN_KOOPA_WINGED){
 //                    grid[col][row] = 12;
 //                }
-//                else if(enemy == MarioForwardModel.OBS_RED_KOOPA){
-//                    grid[col][row] = 11;
-//                }
+                else if(enemy == MarioForwardModel.OBS_RED_KOOPA){
+                    grid[col][row] = 14;
+                }
 //                else if(enemy == MarioForwardModel.OBS_RED_KOOPA_WINGED){
 //                    grid[col][row] = 12;
 //                }

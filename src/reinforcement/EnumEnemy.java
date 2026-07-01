@@ -3,7 +3,7 @@ package reinforcement;
 public enum EnumEnemy {
     GOOMBA('g'),
     GREEN_KOOPA('k'),
-    GREEN_KOOPA_WINGED('K');
+    RED_KOOPA('r');
 
     private final char value;
 

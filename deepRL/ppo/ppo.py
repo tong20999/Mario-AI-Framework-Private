@@ -111,7 +111,7 @@ class PPO():
                  load_optimizer:bool,
                  entropy_anneal:bool=False,
                  entropy_anneal_end_factor:float=0.5,
-                 entropy_anneal_total_iters:int=500):
+                 entropy_anneal_total_iters:int=300):
         assert n_workers > 1
         assert max_buffer_episodes >= n_workers
         setup_logging(logging.INFO)
@@ -415,7 +415,7 @@ class PPO():
         try:
             while True:
                 try:
-                    if evaluation_count > 1000:
+                    if evaluation_count > 999:
                         logger.warning(f'Maximum evaluation count reached. Stopping training.')
                         break
                     start_time = time.time()
@@ -676,7 +676,7 @@ class PPO():
                 level_base64 = base64.b64encode(updated_levelJson_str.encode('utf-8')).decode('utf-8')
                 final_eval_score, score_std, _ = self.evaluate(1, policy_model, env, level_base64, n_episodes=1, visual=True)
 
-    def benchmark(self, make_env_fn, policy_model_fn, checkpoint_path, levels = []):
+    def benchmark(self, make_env_fn, policy_model_fn, checkpoint_path, levels = [], fps = 30):
         env = make_env_fn()
         policy_model = policy_model_fn(env.observation_space, env.action_space.n)
         if checkpoint_path is not None:
@@ -688,9 +688,9 @@ class PPO():
         for level in levels:
             level_config = json.loads(level_json_str)
             level_config["File"] = level
-            level_config["Fps"] = 30
+            level_config["Fps"] = fps
             level_config["TimerMin"] = 50
-            level_config["TimerMax"] = 100
+            level_config["TimerMax"] = 51
             updated_levelJson_str = json.dumps(level_config, separators=(',', ':'))
             level_base64 = base64.b64encode(updated_levelJson_str.encode('utf-8')).decode('utf-8')
             final_eval_score, score_std, _ = self.evaluate(1, policy_model, env, level_base64, n_episodes=1, visual=True)

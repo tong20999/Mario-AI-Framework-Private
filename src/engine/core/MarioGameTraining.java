@@ -94,7 +94,7 @@ public class MarioGameTraining {
     private int fps = 0;
     private ProceduralContentGenerationLevel pcg = null;
     private final int frameSkip = 2;
-    private final int MAX_STEP = 500;
+    private final int MAX_STEP = 1000;
     private int stepCount = 0;
     private boolean testMode = false;
 
