@@ -7,3 +7,4 @@ deepRL/model.*
 deepRL/checkpoint_*
 levels/
 .idea/workspace.xml
+level-screenshot/*

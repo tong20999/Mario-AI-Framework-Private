@@ -5,6 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "java",
+            "name": "LevelScreenshot",
+            "request": "launch",
+            "mainClass": "LevelScreenshot",
+            "projectName": "Mario-AI-Framework-Private_f00eb3be"
+        },
+        {
+            "type": "java",
+            "name": "PlayLevel",
+            "request": "launch",
+            "mainClass": "PlayLevel",
+            "projectName": "Mario-AI-Framework-Private_f00eb3be"
+        },
+        {
             "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",
