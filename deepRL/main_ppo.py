@@ -159,7 +159,7 @@ if __name__ == '__main__':
     #[f"./levels/benchmark/example-perfect-win/lvl-{i}.txt" for i in range(1, 4)]
     )
     
-    checkpoint_path = 'C:/thesis_data/training/57/checkpoint_250.tar'
+    checkpoint_path = 'C:/thesis_data/training/56/checkpoint_1000.tar'
     agent.benchmark(make_env_fn, policy_model_fn, checkpoint_path, levels, fps=100)
   else:
     for i in range(1, 2):
